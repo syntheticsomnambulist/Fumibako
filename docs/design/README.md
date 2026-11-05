@@ -104,6 +104,26 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
 - Corner tape always comes in pairs on opposing corners (upper left and lower right).
 - Vertical strips on stacked cards stop well short of each other (about 5px overhang with a 16px gap).
 
+## Remaining screens (agreed 2026-11-05; mockups on the "Remaining screens" design canvas)
+
+- **Fields are index cards:** a box, a thin header rule in ink with the field's label, and ruled
+  lines the text sits on (the ruling is aligned to the text baseline).
+- **Numbers are steppers** (− value +), and tapping the value lets you type it.
+- **Memory book:** a diary by date, with filter tabs by kind (always in mind, about you, what
+  happened, the persona's thoughts) and filters (feeling, who it's about). Presented as a scrapbook:
+  date stamps, polaroids of pictures from letters, torn strips quoting lines from letters, label
+  slips for facts, older months tucked into envelopes, tape placed differently on each piece.
+- **Memories carry an emotion word.** By default it is the persona's mood when the memory was kept;
+  the persona can revise it while reflecting, and the original is kept alongside. How importance
+  works is open (research under way).
+- **Persona editor:** edit directly on the persona page, one entry at a time, with the tape placed
+  differently on each card (strip left, corner pair, top piece, strip right).
+- **Settings:** a notebook contents page (一 to 八, each line showing its current value), opening a
+  page per section. Heartbeat may become model-specific (to be confirmed).
+- **Your personas:** a management screen like the personas gallery (polaroids, a page per persona
+  with "About you", what each persona remembers about them, and their letters), reached from the
+  Personas screen.
+
 ## Typography (to revisit)
 
 The mockup uses Cormorant Garamond (display), Literata (letter text), LINE Seed JP (UI) and
@@ -113,4 +133,4 @@ to fonts later.**
 ## Next
 
 - v0.1 scope and order of work: [`../plan-v0.1.md`](../plan-v0.1.md).
-- Still to design: the memory book, the persona editor, settings, and fonts.
+- Still open: importance in memories (research), heartbeat per model, fonts.
