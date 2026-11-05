@@ -102,6 +102,9 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
   colours reads on that ink.
 
 - Corner tape always comes in pairs on opposing corners (upper left and lower right).
+- Placements: a strip on the left or right edge, opposing corners, one piece at the top, or two
+  pieces at the top corners. Each screen uses its own mix, never the same placement on two cards
+  in a row, chosen from the screen and persona so it stays the same between visits.
 - Vertical strips on stacked cards stop well short of each other (about 5px overhang with a 16px gap).
 
 ## Remaining screens (agreed 2026-11-05; mockups on the "Remaining screens" design canvas)
@@ -123,15 +126,24 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
   Background: [`../research/memory-systems.md`](../research/memory-systems.md).
 - **Memories belong to the persona.** You can always read them; changing them (text, level,
   feeling) or making a persona forget is behind **Settings › Memory › Let me edit memories**, off by
-  default.
+  default. With it on, a memory still opens read-only, with an **Edit** button (then **Done**), like
+  the persona editor.
+- **Emotion marks in the memory book:** words get busy in the scrapbook. Options on the canvas:
+  small ink stamps with an icon per feeling family (nine families), on strong feelings only, with
+  the word on tap; later, a sticker from the persona's pack. To be decided.
 - **Forgetting is visible.** Memories fade (lighter ink, yellowing paper), then wear (creased,
   stained, a torn corner) as they go dormant: no longer recalled on their own but still searchable,
   and freshened when they come up again. Replaced facts are struck through and kept as history.
-  Letting a memory go plays a burning animation, with a short undo. Both can be turned off.
+  Letting a memory go plays a burn: a noise-shaped front from one corner with a flickering
+  white-hot edge, charring ahead of it and a few embers, about 1.6 seconds. Undo stays until you
+  leave the screen. Both effects can be turned off.
 - **Persona editor:** edit directly on the persona page, one entry at a time, with the tape placed
   differently on each card (strip left, corner pair, top piece, strip right).
 - **Settings:** a notebook contents page (一 to 八, each line showing its current value), opening a
   page per section.
+- **Building note: the heartbeat is the start of an "agent home".** Today it writes up
+  conversations, tends memories and writes letters; more activities for personas to do while
+  you're away will follow, so the heartbeat is built as a list of activities that can grow.
 - **Heartbeat per persona:** Settings › Heartbeat holds the usual settings; a persona's page can
   switch to its own (interval, quiet hours, limits, and which model runs its heartbeats), and the
   Settings page lists the personas that do.
@@ -148,4 +160,4 @@ to fonts later.**
 ## Next
 
 - v0.1 scope and order of work: [`../plan-v0.1.md`](../plan-v0.1.md).
-- Still open: fonts, and the v0.2 scope.
+- v0.2 plan: [`../plan-v0.2.md`](../plan-v0.2.md). Still open: emotion marks, level names, fonts.

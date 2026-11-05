@@ -9,7 +9,8 @@
   [`docs/going-public.md`](docs/going-public.md): the committed debug signing key must be replaced.
   CI fails on a public repository while `app/debug.keystore` exists.
 - **Where things are:**
-  - Plan and progress: [`docs/plan-v0.1.md`](docs/plan-v0.1.md).
+  - Plans and progress: [`docs/plan-v0.2.md`](docs/plan-v0.2.md) (current),
+    [`docs/plan-v0.1.md`](docs/plan-v0.1.md).
   - Design decisions: [`docs/design/README.md`](docs/design/README.md).
   - Architecture: [`README.md`](README.md).
 - **Checks:**

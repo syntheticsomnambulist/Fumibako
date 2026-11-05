@@ -178,8 +178,8 @@ HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests 
 
 The visual direction (madoromi ink colours, letter-style messages, washi tape, stickers) is written
 up in [`docs/design/`](docs/design/README.md), with interactive mockups; v0.1 builds all of it except
-stickers. Fonts are bundled placeholders (SIL OFL, see `app/src/main/assets/licenses/fonts.txt`). The plan for
-v0.1 is in [`docs/plan-v0.1.md`](docs/plan-v0.1.md).
+stickers. Fonts are bundled placeholders (SIL OFL, see `app/src/main/assets/licenses/fonts.txt`). Plans:
+[`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md).
 
 ## Known limitations / next steps
 
