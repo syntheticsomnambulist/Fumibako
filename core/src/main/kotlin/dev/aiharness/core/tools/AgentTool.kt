@@ -29,6 +29,8 @@ data class ToolContext(
     val settings: AppSettings,
     /** True during background heartbeats (the user is not watching). */
     val background: Boolean,
+    /** The persona's message that made this tool call (memories link back to it). */
+    val messageId: String? = null,
 )
 
 data class ToolOutcome(

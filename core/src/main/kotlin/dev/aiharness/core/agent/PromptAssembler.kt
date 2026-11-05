@@ -47,10 +47,12 @@ class PromptAssembler {
                 if ("memory_save" in toolNames) {
                     append(
                         " Use memory_save for things worth remembering: facts about $userName, preferences, promises, " +
-                            "important moments, and your own feelings or goals. Use memory_search when you need details, " +
-                            "and memory_update / memory_forget to correct or remove memories. Don't save trivia or repeats.",
+                            "important moments, and your own feelings or goals. Use memory_search when you need details " +
+                            "(it also finds things that have faded), memory_update to correct a memory or change how much it " +
+                            "matters or how you feel about it, and memory_forget to let one go. Don't save trivia or repeats.",
                     )
                 }
+                append(" Memories come with how you felt about them; let that colour how you speak of them.")
                 if (coreMemories.isNotEmpty()) {
                     append("\n\nThings you always keep in mind:\n")
                     coreMemories.forEach { append("- ").append(it.content).append('\n') }

@@ -123,6 +123,15 @@ class RoomMemoryRepository(private val dao: HarnessDao) : MemoryRepository {
         dao.upsertMemories(updated)
     }
 
+    override suspend fun markUsed(ids: Collection<String>, at: Long) {
+        if (ids.isEmpty()) return
+        val updated = dao.memoriesById(ids.toList()).map { row ->
+            val entry = s.decode(row.json)
+            entry.copy(lastUsedAt = at, useCount = entry.useCount + 1, lastAccessedAt = at, accessCount = entry.accessCount + 1).toEntity()
+        }
+        dao.upsertMemories(updated)
+    }
+
     override suspend fun getVectors(personaId: String, model: String): Map<String, FloatArray> =
         dao.vectors(personaId, model).associate { it.memoryId to it.vector.toFloatArray() }
 

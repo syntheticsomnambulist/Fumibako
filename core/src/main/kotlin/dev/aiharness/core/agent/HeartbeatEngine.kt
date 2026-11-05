@@ -1,6 +1,7 @@
 package dev.aiharness.core.agent
 
 import dev.aiharness.core.Harness
+import dev.aiharness.core.memory.MemoryService
 import dev.aiharness.core.model.ActivityKind
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.ContentPart
@@ -137,7 +138,10 @@ class HeartbeatEngine(private val h: Harness) {
             if (saved > 0) h.logActivity(persona.id, ActivityKind.SAVED_MEMORIES, initial.id, saved)
 
             val text = MoodTags.strip(outcome.finalText).trim()
-            if (outcome.refused || text.isEmpty() || outcome.finalText.contains(SILENT)) {
+            val silent = outcome.refused || text.isEmpty() || outcome.finalText.contains(SILENT)
+            // Memories kept in a quiet heartbeat lose their link to the discarded message.
+            h.agent.settleMemories(persona.id, outcome.messages, outcome.finalText, setup.conversation, keepSource = !silent)
+            if (silent) {
                 h.logActivity(persona.id, ActivityKind.STAYED_QUIET, initial.id)
                 return HeartbeatOutcome.Silent(persona.id, initial.id)
             }
@@ -198,9 +202,10 @@ class HeartbeatEngine(private val h: Harness) {
             personaId = setup.persona.id,
             content = "Conversation recap: ${summary.trim()}",
             kind = MemoryKind.EPISODE,
-            importance = 6,
             tags = listOf("episode"),
             sourceConversationId = conversation.id,
+            sourceMessageId = pending.firstOrNull { it.role == MessageRole.ASSISTANT }?.id,
+            feltMood = MemoryService.peakEndMood(pending, settings.learnedFeelings),
         )
         h.logActivity(setup.persona.id, ActivityKind.RECORDED_EPISODE, conversation.id)
         return h.updateConversation(conversation.id) { it.copy(lastEpisodeMessageId = pending.last().id) }

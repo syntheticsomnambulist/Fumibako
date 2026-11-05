@@ -8,6 +8,13 @@ in [`design/README.md`](design/README.md); the background research is
 
 Stickers (including per-persona unread marks and emotion stickers) move to v0.3.
 
+## Progress
+
+- **Step 1, memory engine: done.** Three levels, felt and current feelings with revision limits,
+  the nine-family word list, derived salience and strength, dormant and replaced memories, links
+  to the source letter, the updated tools, and recall that tells the persona how it felt. Tested
+  with unit tests and a four-month fixture.
+
 ## What v0.2 includes
 
 1. **Memory book** as a scrapbook: a diary by date with tabs by kind (always in mind, about you,

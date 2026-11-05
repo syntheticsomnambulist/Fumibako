@@ -28,6 +28,7 @@ import dev.aiharness.core.model.ThemeSettings
 import dev.aiharness.core.model.TimeOfDay
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.MemoryKind
+import dev.aiharness.core.model.MemoryLevel
 import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.ModelProfile
@@ -194,8 +195,8 @@ class ScreenshotTour {
         h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.SAVED_MEMORIES, now - 2 * 3_600_000L - 60_000, conversation.id, count = 2))
         h.activity.add(ActivityEntry(newId(), juno.id, ActivityKind.STAYED_QUIET, now - 5 * 3_600_000L))
 
-        h.memory.save(aria.id, "Sam is writing a thesis on urban ecology", importance = 8, pinned = true)
-        h.memory.save(aria.id, "Sam finished the first draft of the thesis", kind = MemoryKind.EPISODE, importance = 7)
-        h.memory.save(aria.id, "Sam drinks too much coffee when stressed", importance = 4)
+        h.memory.save(aria.id, "Sam is writing a thesis on urban ecology", level = MemoryLevel.MATTERS_DEEPLY, pinned = true, feltMood = "proud")
+        h.memory.save(aria.id, "Sam finished the first draft of the thesis", kind = MemoryKind.EPISODE, feltMood = "delighted")
+        h.memory.save(aria.id, "Sam drinks too much coffee when stressed", level = MemoryLevel.IN_PASSING, feltMood = "fond")
     }
 }

@@ -1,5 +1,6 @@
 package dev.aiharness.core.model
 
+import dev.aiharness.core.memory.Feeling
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -17,6 +18,8 @@ data class AppSettings(
     /** Ask personas to end replies with a `[mood: ...]` tag (shown beside their name). */
     val moodTags: Boolean = true,
     val theme: ThemeSettings = ThemeSettings(),
+    /** Mood words the built-in list didn't know, sorted once by a model and remembered. */
+    val learnedFeelings: Map<String, Feeling> = emptyMap(),
 ) {
     companion object {
         const val DEFAULT_BASE_INSTRUCTIONS: String =
@@ -67,6 +70,14 @@ data class MemorySettings(
     val embedding: EmbeddingSettings? = null,
     /** Background upkeep folds this many new messages into an episode memory. */
     val episodeEveryMessages: Int = 40,
+    /** Lets the user change, re-feel or forget a persona's memories in the app. Personas always can. */
+    val userCanEdit: Boolean = false,
+    /** Most memories a persona can keep at "matters deeply"; the heartbeat asks it to let others settle. */
+    val deepLimit: Int = 20,
+    /** Show memories fading and wearing in the memory book. */
+    val showAgeing: Boolean = true,
+    /** Play the burn when a memory is let go. */
+    val burnOnForget: Boolean = true,
 )
 
 @Serializable

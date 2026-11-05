@@ -32,7 +32,7 @@ class AgentRunnerTest {
             .then(
                 LlmTurnResult(
                     text = "I'll remember that.",
-                    toolCalls = listOf(LlmToolCall("c1", "memory_save", """{"content":"Sam loves green tea","importance":6}""")),
+                    toolCalls = listOf(LlmToolCall("c1", "memory_save", """{"content":"Sam loves green tea","weight":"worth_keeping"}""")),
                     stopReason = StopReason.TOOL_USE,
                     replay = "replay-1",
                 ),
@@ -96,7 +96,7 @@ class AgentRunnerTest {
     fun turnContextCarriesTimeAndRecalledMemories() = runTest {
         val provider = ScriptedProvider().then(LlmTurnResult(text = "ok"))
         val env = TestEnv(provider).apply { seed() }
-        env.harness.memory.save(env.persona.id, "Sam's dog is called Biscuit", importance = 7)
+        env.harness.memory.save(env.persona.id, "Sam's dog is called Biscuit", level = dev.aiharness.core.model.MemoryLevel.MATTERS_DEEPLY)
         val conversation = env.harness.createConversation(env.persona.id)
 
         env.harness.agent.send(conversation.id, "Biscuit chewed my shoes again").toList()

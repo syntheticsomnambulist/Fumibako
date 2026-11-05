@@ -230,7 +230,7 @@ class AgentRunner(private val h: Harness) {
             // Don't run tools from a truncated turn: their arguments may be incomplete.
             if (turn.toolCalls.isEmpty() || turn.stopReason == StopReason.MAX_TOKENS) break
 
-            val toolContext = ToolContext(conversation, setup.persona, setup.userPersona, setup.settings, background)
+            val toolContext = ToolContext(conversation, setup.persona, setup.userPersona, setup.settings, background, messageId = assistant.id)
             val resultParts = mutableListOf<ContentPart>()
             turn.toolCalls.forEach { call ->
                 emit(AgentEvent.ToolStarted(call.name, call.argumentsJson))
@@ -254,8 +254,21 @@ class AgentRunner(private val h: Harness) {
             emit(AgentEvent.MessageSaved(toolMessage))
         }
 
-        if (!background) recordReply(conversation.id, produced)
+        if (!background) {
+            recordReply(conversation.id, produced)
+            settleMemories(setup.persona.id, produced, finalText, conversation, keepSource = true)
+        }
         return TurnOutcome(produced, finalText, refused = false)
+    }
+
+    /**
+     * Memories kept during a turn take the letter's mood once the reply is finished (its mood tag
+     * comes at the end). The heartbeat calls this too, dropping the message link when it stays quiet.
+     */
+    internal suspend fun settleMemories(personaId: String, produced: List<ChatMessage>, finalText: String, conversation: Conversation, keepSource: Boolean) {
+        val ids = produced.filter { it.role == MessageRole.ASSISTANT }.map { it.id }
+        val mood = MoodTags.parse(finalText) ?: h.conversations.get(conversation.id)?.mood ?: conversation.mood
+        runCatching { h.memory.settleTurn(personaId, ids, mood, keepSource) }.onFailure { h.log("Couldn't settle memory moods: ${it.message}") }
     }
 
     /** Bumps the conversation and records the latest visible reply's time and mood (for the letters list). */

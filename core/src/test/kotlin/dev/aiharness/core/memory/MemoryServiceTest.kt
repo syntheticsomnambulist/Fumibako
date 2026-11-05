@@ -4,6 +4,7 @@ import dev.aiharness.core.FakeClock
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.EmbeddingProviderType
 import dev.aiharness.core.model.EmbeddingSettings
+import dev.aiharness.core.model.MemoryLevel
 import dev.aiharness.core.model.MemorySettings
 import dev.aiharness.core.storage.inmemory.InMemoryMemoryRepository
 import dev.aiharness.core.storage.inmemory.InMemorySettingsRepository
@@ -22,18 +23,22 @@ class MemoryServiceTest {
     @Test
     fun mergesNearDuplicates() = runTest {
         val memory = service()
-        val first = memory.save("p", "Sam's sister is called Ria", importance = 4)
-        val second = memory.save("p", "Sam's sister is called Ria.", importance = 7)
+        val first = memory.save("p", "Sam's sister is called Ria", level = MemoryLevel.IN_PASSING)
+        val second = memory.save("p", "Sam's sister is called Ria.", level = MemoryLevel.WORTH_KEEPING)
         assertTrue(second.mergedWithExisting)
         assertEquals(first.entry.id, second.entry.id)
-        assertEquals(7, memory.all("p").single().importance)
+        val merged = memory.all("p").single()
+        assertEquals(MemoryLevel.IN_PASSING, merged.level, "merging only raises a memory to matters deeply")
+        assertEquals(1, merged.useCount, "coming up again counts as use")
+        memory.save("p", "Sam's sister is called Ria!", level = MemoryLevel.MATTERS_DEEPLY)
+        assertEquals(MemoryLevel.MATTERS_DEEPLY, memory.all("p").single().level)
     }
 
     @Test
     fun recallsRelevantMemoriesFirstAndRespectsScope() = runTest {
         val memory = service()
-        memory.save("p", "Sam loves hiking in the Alps every summer", importance = 6)
-        memory.save("p", "Sam is allergic to cats", importance = 8)
+        memory.save("p", "Sam loves hiking in the Alps every summer")
+        memory.save("p", "Sam is allergic to cats", level = MemoryLevel.MATTERS_DEEPLY)
         memory.save("p", "Alex (another persona) prefers chess", aboutUserPersonaId = "other-user")
         memory.save("q", "A different persona's memory about hiking")
 
@@ -41,15 +46,17 @@ class MemoryServiceTest {
         assertEquals("Sam loves hiking in the Alps every summer", results.first().entry.content)
         assertTrue(results.none { it.entry.content.contains("chess") }, "scoped memory of another user persona excluded")
         assertTrue(results.none { it.entry.personaId != "p" })
-        // Accessing updates recency bookkeeping.
-        assertEquals(1, repo.get(results.first().entry.id)!!.accessCount)
+        // Automatic recall records that it came up, but isn't real use.
+        val recalled = repo.get(results.first().entry.id)!!
+        assertEquals(1, recalled.accessCount)
+        assertEquals(0, recalled.useCount)
     }
 
     @Test
     fun coreMemoriesAreThoseMarkedCore() = runTest {
         val memory = service()
-        memory.save("p", "Mira and Sam have been friends for years", pinned = true, importance = 9)
-        memory.save("p", "Sam had pasta on Tuesday", importance = 2)
+        memory.save("p", "Mira and Sam have been friends for years", pinned = true, level = MemoryLevel.MATTERS_DEEPLY)
+        memory.save("p", "Sam had pasta on Tuesday", level = MemoryLevel.IN_PASSING)
         assertEquals(listOf("Mira and Sam have been friends for years"), memory.core("p", null).map { it.content })
     }
 

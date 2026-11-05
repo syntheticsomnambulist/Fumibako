@@ -294,23 +294,80 @@ enum class MemoryKind {
     REFLECTION,
 }
 
+/** How much a memory matters, chosen by the persona in words. */
+@Serializable
+enum class MemoryLevel(val label: String, val toolValue: String) {
+    IN_PASSING("In passing", "in_passing"),
+    WORTH_KEEPING("Worth keeping", "worth_keeping"),
+    MATTERS_DEEPLY("Matters deeply", "matters_deeply"),
+    ;
+
+    companion object {
+        /** Lenient parsing for tool input: the three names, common synonyms, or an old 1 to 10 score. */
+        fun parse(raw: String?): MemoryLevel? {
+            val value = raw?.trim()?.lowercase()?.replace(' ', '_')?.replace('-', '_') ?: return null
+            value.toIntOrNull()?.let { n ->
+                return when {
+                    n <= 3 -> IN_PASSING
+                    n <= 7 -> WORTH_KEEPING
+                    else -> MATTERS_DEEPLY
+                }
+            }
+            return when (value) {
+                "in_passing", "passing", "minor", "low", "small", "trivial", "light" -> IN_PASSING
+                "worth_keeping", "keeping", "normal", "medium", "default", "moderate" -> WORTH_KEEPING
+                "matters_deeply", "deeply", "major", "high", "deep", "important", "critical", "defining" -> MATTERS_DEEPLY
+                else -> null
+            }
+        }
+    }
+}
+
 @Serializable
 data class MemoryEntry(
     val id: String,
     val personaId: String,
     val content: String,
     val kind: MemoryKind = MemoryKind.FACT,
-    /** 1 (trivial) .. 10 (defining). */
-    val importance: Int = 5,
+    val level: MemoryLevel = MemoryLevel.WORTH_KEEPING,
     val tags: List<String> = emptyList(),
+    /** Always in mind: kept in the system prompt (different from "matters deeply"). */
     val pinned: Boolean = false,
     /** Memories about the user can be scoped to one user persona; null means "always relevant". */
     val aboutUserPersonaId: String? = null,
     val sourceConversationId: String? = null,
+    /** The persona's message the memory was kept in, for "open the letter it came from". */
+    val sourceMessageId: String? = null,
+    /** The persona's mood word when the memory was kept. Never changes once set. */
+    val feltMood: String? = null,
+    /** Whether the persona chose [feltMood] itself (rather than it coming from the letter's mood). */
+    val feltMoodChosen: Boolean = false,
+    /** How the persona feels about it now, when that has changed; null means "as it felt". */
+    val mood: String? = null,
+    /** The persona's one-line reason for the change of feeling. */
+    val moodReason: String? = null,
+    val moodRevisedAt: Long? = null,
+    val moodRevisions: Int = 0,
+    /** A newer memory that replaced this one; replaced memories stay as history but aren't recalled. */
+    val replacedById: String? = null,
+    val replacedAt: Long? = null,
+    /** The user wrote, edited or confirmed this memory. */
+    val userTouched: Boolean = false,
     val createdAt: Long,
     val updatedAt: Long,
+    /** Last time it came up at all, including automatic recall into a letter. */
     val lastAccessedAt: Long,
     val accessCount: Int = 0,
+    /** Last real use (searched for, cited in a reflection, kept again, edited): this keeps it strong. */
+    val lastUsedAt: Long = createdAt,
+    val useCount: Int = 0,
 ) {
     val isCore: Boolean get() = pinned || kind == MemoryKind.CORE
+    val isReplaced: Boolean get() = replacedById != null
+
+    /** How it feels now: the revised feeling, or the one it was kept with. */
+    val currentMood: String? get() = mood ?: feltMood
+
+    /** Whether the persona picked the feeling deliberately (when kept, or by revising it). */
+    val feelingChosen: Boolean get() = feltMoodChosen || mood != null
 }

@@ -127,6 +127,14 @@ class InMemoryMemoryRepository : MemoryRepository {
         }
     }
 
+    override suspend fun markUsed(ids: Collection<String>, at: Long) {
+        ids.forEach { id ->
+            table.get(id)?.let {
+                table.upsert(it.copy(lastUsedAt = at, useCount = it.useCount + 1, lastAccessedAt = at, accessCount = it.accessCount + 1))
+            }
+        }
+    }
+
     override suspend fun getVectors(personaId: String, model: String): Map<String, FloatArray> {
         val ids = table.all().filter { it.personaId == personaId }.map { it.id }.toSet()
         return vectors.value.filterKeys { it.second == model && it.first in ids }.mapKeys { it.key.first }

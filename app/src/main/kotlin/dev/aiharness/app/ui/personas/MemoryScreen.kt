@@ -22,7 +22,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -44,6 +43,7 @@ import dev.aiharness.app.ui.relativeTime
 import dev.aiharness.core.memory.TextTokens
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.MemoryKind
+import dev.aiharness.core.model.MemoryLevel
 import kotlinx.coroutines.launch
 
 /** Browse, search and hand-edit a persona's long-term memory. */
@@ -89,7 +89,7 @@ fun MemoryScreen(nav: NavController, personaId: String) {
                         headlineContent = { Text(memory.content) },
                         supportingContent = {
                             Text(
-                                "${memory.kind.name.lowercase()} · importance ${memory.importance} · ${relativeTime(memory.updatedAt)}" +
+                                "${memory.kind.name.lowercase()} · ${memory.level.label.lowercase()} · ${relativeTime(memory.updatedAt)}" +
                                     if (memory.tags.isNotEmpty()) " · ${memory.tags.joinToString()}" else "",
                                 style = MaterialTheme.typography.bodySmall,
                             )
@@ -105,9 +105,9 @@ fun MemoryScreen(nav: NavController, personaId: String) {
         MemoryEditor(
             initial = null,
             onDismiss = { adding = false },
-            onSave = { content, importance, pinned, kind ->
+            onSave = { content, level, pinned, kind ->
                 adding = false
-                scope.launch { harness.memory.save(personaId, content, kind = kind, importance = importance, pinned = pinned) }
+                scope.launch { harness.memory.save(personaId, content, kind = kind, level = level, pinned = pinned, userTouched = true) }
             },
         )
     }
@@ -115,10 +115,10 @@ fun MemoryScreen(nav: NavController, personaId: String) {
         MemoryEditor(
             initial = memory,
             onDismiss = { editing = null },
-            onSave = { content, importance, pinned, kind ->
+            onSave = { content, level, pinned, kind ->
                 editing = null
                 scope.launch {
-                    harness.memory.update(memory.id, content = content, importance = importance, pinned = pinned)
+                    harness.memory.update(memory.id, content = content, level = level, pinned = pinned, byUser = true)
                     harness.memory.get(memory.id)?.let { harness.memories.upsert(it.copy(kind = kind)) }
                 }
             },
@@ -134,11 +134,11 @@ fun MemoryScreen(nav: NavController, personaId: String) {
 private fun MemoryEditor(
     initial: MemoryEntry?,
     onDismiss: () -> Unit,
-    onSave: (String, Int, Boolean, MemoryKind) -> Unit,
+    onSave: (String, MemoryLevel, Boolean, MemoryKind) -> Unit,
     onDelete: (() -> Unit)? = null,
 ) {
     var content by remember { mutableStateOf(initial?.content.orEmpty()) }
-    var importance by remember { mutableStateOf((initial?.importance ?: 5).toFloat()) }
+    var level by remember { mutableStateOf(initial?.level ?: MemoryLevel.WORTH_KEEPING) }
     var pinned by remember { mutableStateOf(initial?.pinned ?: false) }
     var kind by remember { mutableStateOf(initial?.kind ?: MemoryKind.FACT) }
     AlertDialog(
@@ -147,8 +147,7 @@ private fun MemoryEditor(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(content, { content = it }, label = { Text("Memory") }, minLines = 3, modifier = Modifier.fillMaxWidth())
-                Text("Importance: ${importance.toInt()}", style = MaterialTheme.typography.bodyMedium)
-                Slider(value = importance, onValueChange = { importance = it }, valueRange = 1f..10f, steps = 8)
+                dev.aiharness.app.ui.paper.PaperChoice(MemoryLevel.entries.map { it to it.label }, level, { level = it })
                 PickerField("Kind", MemoryKind.entries, kind, { it.name.lowercase() }, { kind = it ?: MemoryKind.FACT })
                 SwitchRow("Core memory", pinned, { pinned = it }, subtitle = "Always included in the persona's prompt.")
                 if (onDelete != null) {
@@ -158,7 +157,7 @@ private fun MemoryEditor(
                 }
             }
         },
-        confirmButton = { TextButton(enabled = content.isNotBlank(), onClick = { onSave(content, importance.toInt(), pinned, kind) }) { Text("Save") } },
+        confirmButton = { TextButton(enabled = content.isNotBlank(), onClick = { onSave(content, level, pinned, kind) }) { Text("Save") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }

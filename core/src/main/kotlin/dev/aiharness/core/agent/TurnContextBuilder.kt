@@ -1,6 +1,8 @@
 package dev.aiharness.core.agent
 
+import dev.aiharness.core.memory.MemoryAge
 import dev.aiharness.core.memory.MemoryService
+import dev.aiharness.core.memory.MemoryWeights
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.ContextState
@@ -8,6 +10,7 @@ import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.tools.feelingNote
 import dev.aiharness.core.util.Clock
 import dev.aiharness.core.util.humanizeDuration
 import java.time.Instant
@@ -70,8 +73,13 @@ class TurnContextBuilder(
             if (recalled.isNotEmpty()) {
                 lines += "Memories that come to mind:"
                 recalled.forEach { scored ->
-                    val date = dateFormat.format(Instant.ofEpochMilli(scored.entry.createdAt).atZone(clock.zone))
-                    lines += "- ($date) ${scored.entry.content}"
+                    val entry = scored.entry
+                    val notes = buildList {
+                        add(dateFormat.format(Instant.ofEpochMilli(entry.createdAt).atZone(clock.zone)))
+                        feelingNote(entry)?.let { add(it) }
+                        if (MemoryWeights.age(entry, now, memory.feelingOf(entry)) == MemoryAge.FADING) add("a little hazy")
+                    }
+                    lines += "- (${notes.joinToString(", ")}) ${entry.content}"
                 }
             }
         }

@@ -79,7 +79,11 @@ interface MemoryRepository {
     suspend fun get(id: String): MemoryEntry?
     suspend fun upsert(entry: MemoryEntry)
     suspend fun delete(id: String)
+    /** It came up (including automatic recall): updates `lastAccessedAt` and `accessCount`. */
     suspend fun markAccessed(ids: Collection<String>, at: Long)
+
+    /** It was really used: updates `lastUsedAt` and `useCount`, which keep a memory strong. */
+    suspend fun markUsed(ids: Collection<String>, at: Long)
 
     /** Embedding vectors keyed by memory id, for one embedding model. */
     suspend fun getVectors(personaId: String, model: String): Map<String, FloatArray>

@@ -203,9 +203,10 @@ class ContextBuilder(
             personaId = input.persona.id,
             content = "Conversation recap ($span): $summary",
             kind = MemoryKind.EPISODE,
-            importance = 6,
             tags = listOf("episode"),
             sourceConversationId = input.conversation.id,
+            sourceMessageId = chunk.firstOrNull { it.role == MessageRole.ASSISTANT && !it.hidden }?.id,
+            feltMood = MemoryService.peakEndMood(chunk, input.settings.learnedFeelings),
         )
     }
 
@@ -293,7 +294,7 @@ class ContextBuilder(
         const val CONVERSATION_START = "(The conversation begins.)"
 
         /** Bump when [PromptAssembler]'s wording changes, so conversations pick up the new prompt. */
-        private const val PROMPT_VERSION = "2"
+        private const val PROMPT_VERSION = "3"
         private const val MIN_BUDGET = 2_000
         private const val TAIL_FRACTION = 0.45
         private const val SUMMARY_FRACTION = 0.15

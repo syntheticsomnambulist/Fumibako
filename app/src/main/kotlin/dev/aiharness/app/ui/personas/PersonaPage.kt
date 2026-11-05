@@ -245,7 +245,7 @@ private fun MemoryBookPreview(memories: List<MemoryEntry>, ink: Color) {
         Text("Nothing yet. Memories gather here as you talk.", style = PaperType.prose.copy(fontStyle = FontStyle.Italic), color = paper.usuzumi0)
         return
     }
-    val core = memories.filter { it.isCore }.sortedByDescending { it.importance }.take(3)
+    val core = memories.filter { it.isCore && !it.isReplaced }.sortedByDescending { it.level.ordinal }.take(3)
     val recent = memories.filter { !it.isCore && (it.kind == MemoryKind.EPISODE || it.kind == MemoryKind.REFLECTION) }
         .sortedByDescending { it.createdAt }.take(2)
     val facts = if (core.size + recent.size < 3) memories.filter { !it.isCore && it.kind == MemoryKind.FACT }.sortedByDescending { it.createdAt }.take(3 - core.size - recent.size) else emptyList()
