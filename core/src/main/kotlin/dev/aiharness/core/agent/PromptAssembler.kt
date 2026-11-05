@@ -1,0 +1,95 @@
+package dev.aiharness.core.agent
+
+import dev.aiharness.core.model.AppSettings
+import dev.aiharness.core.model.HeartbeatMode
+import dev.aiharness.core.model.MemoryEntry
+import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.UserPersona
+
+/**
+ * Builds the system prompt for a context epoch. Output depends only on its inputs (no clock), so the
+ * same inputs always produce the same bytes, which keeps provider prompt caches warm.
+ */
+class PromptAssembler {
+
+    fun buildSystemPrompt(
+        persona: Persona,
+        userPersona: UserPersona?,
+        settings: AppSettings,
+        coreMemories: List<MemoryEntry>,
+        summary: String?,
+        toolNames: Set<String>,
+    ): String {
+        val userName = userPersona?.name?.takeIf { it.isNotBlank() } ?: "the user"
+        val sections = mutableListOf<String>()
+
+        val override = persona.systemPromptOverride?.takeIf { it.isNotBlank() }
+        if (override != null) {
+            sections += override
+        } else {
+            sections += buildString {
+                append("You are ${persona.name}, talking with $userName.")
+                persona.description.ifNotBlank { append("\n\n").append(it) }
+                persona.personality.ifNotBlank { append("\n\n## Personality\n").append(it) }
+                persona.scenario.ifNotBlank { append("\n\n## Scenario\n").append(it) }
+                persona.exampleDialogue.ifNotBlank { append("\n\n## Example dialogue\n").append(it) }
+            }
+        }
+
+        userPersona?.let { user ->
+            if (user.description.isNotBlank()) sections += "## About ${user.name}\n${user.description}"
+        }
+
+        if (settings.memory.enabled) {
+            sections += buildString {
+                append("## Memory\n")
+                append("You have a long-term memory that persists between conversations.")
+                if ("memory_save" in toolNames) {
+                    append(
+                        " Use memory_save for things worth remembering: facts about $userName, preferences, promises, " +
+                            "important moments, and your own feelings or goals. Use memory_search when you need details, " +
+                            "and memory_update / memory_forget to correct or remove memories. Don't save trivia or repeats.",
+                    )
+                }
+                if (coreMemories.isNotEmpty()) {
+                    append("\n\nThings you always keep in mind:\n")
+                    coreMemories.forEach { append("- ").append(it.content).append('\n') }
+                }
+            }.trimEnd()
+        }
+
+        summary?.takeIf { it.isNotBlank() }?.let {
+            sections += "## Earlier in this conversation\n$it"
+        }
+
+        sections += buildString {
+            append("## Context notes\n")
+            append(
+                "Messages from $userName may begin with a <context> block written by the app, not by $userName. " +
+                    "It can contain recalled memories",
+            )
+            if (settings.heartbeat.mode != HeartbeatMode.OFF) append(" and the current time")
+            append(". Use it naturally and never mention the block itself.")
+            if (settings.heartbeat.mode == HeartbeatMode.PROACTIVE) {
+                append(
+                    " Occasionally you will receive a <heartbeat> message instead: a private moment while $userName is away, " +
+                        "in which you may reflect, tend your memories, and decide whether to reach out.",
+                )
+            }
+            if ("generate_image" in toolNames) {
+                append(" You can show images with generate_image when it fits the moment or $userName asks.")
+            }
+        }
+
+        settings.baseInstructions.ifNotBlank { sections += "## Guidelines\n$it" }
+
+        return substitute(sections.joinToString("\n\n"), persona.name, userName)
+    }
+
+    fun substitute(text: String, charName: String, userName: String): String =
+        text.replace("{{char}}", charName, ignoreCase = true).replace("{{user}}", userName, ignoreCase = true)
+
+    private inline fun String.ifNotBlank(block: (String) -> Unit) {
+        if (isNotBlank()) block(trim())
+    }
+}
