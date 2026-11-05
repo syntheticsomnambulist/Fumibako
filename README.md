@@ -161,6 +161,11 @@ To render the main screens to PNGs with sample data (for design review, no devic
 HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests '*ScreenshotTour*'
 ```
 
+## Design
+
+The planned visual direction (madoromi ink colours, letter-style messages, washi tape, stickers)
+is written up in [`docs/design/`](docs/design/README.md), with an interactive mockup.
+
 ## Known limitations / next steps
 
 - Generation runs in the app process; Android may stop a long reply if the app is backgrounded for a

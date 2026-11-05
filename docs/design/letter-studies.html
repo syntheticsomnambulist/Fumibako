@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Harness Letter Studies</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&family=LINE+Seed+JP:wght@400;700&family=Yuji+Syuku&display=swap">
+<style>
+/* Layout: a control strip, then two phones (the letter as designed, and a working sticker sketch),
+   then how stickers would behave. Colours are madoromi roles, swapped by JS per season and time. */
+:root {
+  --kami: #f8f0e9; --hyoshi: #f0e6dd; --chitsu: #e6dcd3;
+  --nijimi0: #dfcebf; --nijimi1: #cebeaf; --nijimi2: #beae9f;
+  --kasure0: #ae9e90; --kasure1: #9f8f81; --kasure2: #8d7d6f;
+  --usuzumi0: #7d6b5a; --usuzumi1: #715f4f; --sumi: #5d4c3c;
+  --fuji: #581ca7; --persona: #a26480; --you: #178d9d;
+  --her-pat: radial-gradient(circle, rgba(255, 255, 255, .6) 0 1.3px, transparent 1.7px) 0 0 / 7px 7px;
+  --you-pat: repeating-linear-gradient(135deg, rgba(255, 255, 255, .38) 0 2.5px, transparent 2.5px 6px);
+  --outline: #ffffff; --paper: #fffdf9; --paper-ink: #5d4c3c;
+  --stk-beni: #a43b3b; --stk-yamabuki: #e3940b; --stk-nadeshiko: #c63368; --stk-ai: #384dad; --stk-persona: #a26480;
+  --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --read: "Literata", "Iowan Old Style", Georgia, serif;
+  --ui: "LINE Seed JP", "Segoe UI", system-ui, sans-serif;
+  --brush: "Yuji Syuku", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kami: #271d14; --hyoshi: #20160e; --chitsu: #181008;
+    --nijimi0: #3d3024; --nijimi1: #534538; --nijimi2: #66584b;
+    --kasure0: #7b6c5e; --kasure1: #908072; --kasure2: #a59587;
+    --usuzumi0: #beaa98; --usuzumi1: #d4c0ae; --sumi: #e8d3c1;
+    --fuji: #d3a1ff; --persona: #ffb6cc; --you: #5ac6f1;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --kami: #271d14; --hyoshi: #20160e; --chitsu: #181008;
+  --nijimi0: #3d3024; --nijimi1: #534538; --nijimi2: #66584b;
+  --kasure0: #7b6c5e; --kasure1: #908072; --kasure2: #a59587;
+  --usuzumi0: #beaa98; --usuzumi1: #d4c0ae; --sumi: #e8d3c1;
+  --fuji: #d3a1ff; --persona: #ffb6cc; --you: #5ac6f1;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--hyoshi); color: var(--sumi); font-family: var(--ui); }
+.studio {
+  min-height: 100%;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+  max-width: 1240px; margin: 0 auto;
+  display: grid; gap: 28px;
+}
+.studio *, .studio { transition: background-color .35s ease, color .35s ease, border-color .35s ease; }
+@media (prefers-reduced-motion: reduce) { .studio *, .studio { transition: none !important; animation: none !important; } }
+
+.intro { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 22px; align-items: center; max-width: 980px; }
+.glyph { grid-row: span 2; font-family: var(--brush); font-size: 92px; line-height: .9; color: var(--persona); }
+.intro h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4.2vw, 46px); line-height: 1.05; text-wrap: balance; }
+.intro p { margin: 0; max-width: 66ch; color: var(--usuzumi1); font-size: 15px; line-height: 1.6; }
+@media (max-width: 560px) { .intro { grid-template-columns: minmax(0, 1fr); } .glyph { grid-row: auto; font-size: 64px; } }
+
+.controls { display: flex; flex-wrap: wrap; gap: 18px 30px; align-items: flex-start; padding: 18px 20px; border: 1px solid var(--nijimi0); border-radius: 14px; background: var(--kami); }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--kasure2); }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--nijimi1); color: var(--usuzumi1); font-size: 13px; white-space: nowrap; }
+.seg span b { font-family: var(--brush); font-weight: 400; font-size: 15px; color: var(--sumi); }
+.seg span i { width: 14px; height: 14px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--sumi) 30%, transparent); }
+.seg input:checked + span { background: var(--sumi); border-color: var(--sumi); color: var(--kami); }
+.seg input:checked + span b { color: var(--kami); }
+.seg input:focus-visible + span { outline: 2px solid var(--fuji); outline-offset: 2px; }
+.custom-colour { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--usuzumi1); }
+.custom-colour input { width: 34px; height: 28px; padding: 0; border: 1px solid var(--nijimi1); border-radius: 8px; background: none; cursor: pointer; }
+.custom-colour input:focus-visible { outline: 2px solid var(--fuji); outline-offset: 2px; }
+.inks { display: flex; flex-wrap: wrap; gap: 6px; max-width: 290px; }
+.inks label { position: relative; cursor: pointer; }
+.inks input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.inks i { display: block; width: 24px; height: 24px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--sumi) 18%, transparent); }
+.inks input:checked + i { box-shadow: 0 0 0 2px var(--kami), 0 0 0 4px var(--sumi); }
+.inks input:focus-visible + i { outline: 2px solid var(--fuji); outline-offset: 4px; }
+.inkname { font-size: 13px; color: var(--usuzumi1); }
+.inkname b { font-family: var(--brush); font-weight: 400; color: var(--sumi); }
+.switches { display: grid; gap: 8px; }
+.switch { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; }
+.switch input { appearance: none; margin: 0; width: 36px; height: 20px; border-radius: 999px; background: var(--nijimi1); position: relative; cursor: pointer; flex: none; }
+.switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--kami); transition: transform .2s ease; }
+.switch input:checked { background: var(--persona); }
+.switch input:checked::after { transform: translateX(16px); }
+.switch input:focus-visible { outline: 2px solid var(--fuji); outline-offset: 2px; }
+.theme-now { align-self: center; margin-left: auto; text-align: right; }
+.theme-now .big { font-family: var(--brush); font-size: 34px; line-height: 1; }
+.theme-now .small { font-size: 12px; color: var(--kasure2); letter-spacing: .04em; }
+@media (max-width: 700px) { .theme-now { margin-left: 0; text-align: left; } }
+
+.frames { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 40px 36px; }
+.study { margin: 0; display: grid; gap: 16px; justify-items: center; align-content: start; min-width: 0; }
+.study figcaption { width: min(370px, 100%); display: grid; gap: 8px; }
+.study h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 26px; display: flex; align-items: baseline; gap: 10px; }
+.study h2 span { font-family: var(--brush); font-weight: 400; font-size: 20px; color: var(--persona); }
+.study p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--usuzumi1); }
+.reset { justify-self: start; font: inherit; font-size: 13px; color: var(--sumi); background: none; border: 1px solid var(--nijimi1); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.reset:focus-visible { outline: 2px solid var(--fuji); outline-offset: 2px; }
+.sees { border: 1px solid var(--nijimi0); border-radius: 10px; padding: 10px 12px; background: var(--kami); display: grid; gap: 6px; }
+.sees h3 { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--kasure2); }
+.sees ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; line-height: 1.45; color: var(--usuzumi1); }
+.sees li.empty { font-family: var(--ui); color: var(--kasure2); }
+.sees li.tools { color: var(--kasure2); border-bottom: 1px dashed var(--nijimi1); padding-bottom: 5px; }
+
+.phone { width: min(370px, 100%); height: 760px; border-radius: 42px; padding: 9px; background: var(--chitsu); box-shadow: 0 0 0 1px var(--nijimi0), 0 24px 48px -28px color-mix(in oklab, var(--chitsu) 80%, #000); }
+.screen { position: relative; height: 100%; border-radius: 34px; overflow: hidden; background: var(--hyoshi); display: flex; flex-direction: column; }
+.bar { flex: none; display: flex; align-items: center; gap: 10px; padding: 16px 16px 12px; background: var(--kami); border-bottom: 1px solid var(--nijimi0); }
+.back, .more { color: var(--usuzumi0); font-size: 18px; line-height: 1; }
+.more { margin-left: auto; letter-spacing: 1px; }
+.av { width: 34px; height: 34px; border-radius: 50%; flex: none; display: block; }
+.bar .id { display: grid; min-width: 0; }
+.bar .nm { font-family: var(--display); font-weight: 600; font-size: 22px; line-height: 1.05; }
+.bar .sub { font-size: 12px; color: var(--kasure2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub .md { color: var(--persona); font-family: var(--read); font-style: italic; }
+.md { display: none; }
+.mood-on .md { display: inline; }
+
+.thread { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--nijimi1) transparent; display: flex; flex-direction: column; gap: 16px; padding: 18px 18px 22px; }
+.thread p { margin: 0; }
+.thread em.act { font-style: italic; color: var(--persona); }
+.day { align-self: center; font-family: var(--display); font-style: italic; font-size: 16px; color: var(--usuzumi0); }
+
+/* The letter: a sheet of paper with a rule in her ink and her portrait on every letter. */
+.sheet { position: relative; background: var(--kami); border-radius: 3px; padding: 14px 16px 14px 22px; display: grid; gap: 10px; box-shadow: 0 0 0 1px var(--nijimi0), 0 6px 14px -10px color-mix(in oklab, var(--chitsu) 85%, #000); --tc: var(--persona); --pat: var(--her-pat); --tilt: -0.7deg; }
+.sheet header { display: flex; align-items: center; gap: 8px; }
+.sheet header .av { width: 26px; height: 26px; }
+.sheet .nm { font-family: var(--display); font-weight: 600; font-size: 19px; }
+.sheet .md { font-family: var(--read); font-style: italic; font-size: 13px; color: var(--persona); }
+.sheet time { margin-left: auto; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--kasure2); text-align: right; line-height: 1.35; }
+.sheet .body { display: grid; gap: 10px; font-family: var(--read); font-size: 15.5px; line-height: 1.62; }
+.sheet .ps { font-family: var(--read); font-style: italic; font-size: 13.5px; line-height: 1.5; color: var(--usuzumi1); }
+.sheet .ps b { font-style: normal; font-weight: 500; color: var(--persona); }
+.sheet .away { font-size: 12px; color: var(--persona); }
+.sig { justify-self: end; width: 58px; display: none; }
+.sig-on .sig { display: block; }
+.gen { display: grid; gap: 6px; }
+.gen canvas { width: 190px; max-width: 100%; aspect-ratio: 3 / 4; border-radius: 4px; display: block; }
+.gen small { font-size: 11px; color: var(--kasure2); }
+.note { position: relative; align-self: flex-end; max-width: 78%; display: grid; gap: 3px; padding: 9px 20px 10px 13px; border-radius: 3px; background: color-mix(in oklab, var(--you) 6%, var(--kami)); box-shadow: 0 0 0 1px var(--nijimi0), 0 6px 14px -10px color-mix(in oklab, var(--chitsu) 85%, #000); --tc: var(--you); --pat: var(--you-pat); --tilt: 0.9deg; }
+
+/* Rules. Washi tape: translucent ink, a pattern, zigzag torn ends (a mask), a slight hand-placed tilt. */
+.rules-strip .sheet::before, .rules-strip .note::after, .rules-strip .draft::after,
+.rules-tabs .sheet::before, .rules-tabs .sheet::after, .rules-tabs .note::after, .rules-tabs .draft::after,
+.rules-corner .sheet::before, .rules-corner .note::after, .rules-corner .draft::after {
+  content: ""; position: absolute; width: 13px; z-index: 1; pointer-events: none;
+  background: var(--pat), color-mix(in oklab, var(--tc) 82%, transparent);
+  --z: 2.6px;
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--z)) 51% repeat-x,
+                conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--z)) 51% repeat-x;
+          mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--z)) 51% repeat-x,
+                conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--z)) 51% repeat-x;
+  filter: drop-shadow(0 .5px .6px rgba(30, 18, 8, .18));
+}
+.night .sheet::before, .night .sheet::after, .night .note::after, .night .draft::after { filter: drop-shadow(0 .5px 1px rgba(0, 0, 0, .4)); }
+/* Strip: one length of tape down the edge, half on the paper. */
+.rules-strip .sheet::before { left: -6px; top: -8px; bottom: -8px; transform: rotate(var(--tilt)); }
+.rules-strip .note::after, .rules-strip .draft::after { right: -6px; top: -7px; bottom: -7px; transform: rotate(var(--tilt)); }
+/* Tabs: short pieces, as if taping the letter down. */
+.rules-tabs .sheet::before { left: -6px; top: 10px; height: 34px; transform: rotate(-3deg); }
+.rules-tabs .sheet::after { left: -6px; bottom: 10px; height: 34px; transform: rotate(2.5deg); }
+.rules-tabs .note::after, .rules-tabs .draft::after { right: -6px; top: 50%; height: 30px; transform: translateY(-50%) rotate(3deg); }
+/* Corner: one diagonal piece across the top corner. */
+.rules-corner .sheet { padding-left: 16px; }
+.rules-corner .sheet::before { left: 2px; top: -12px; height: 44px; transform: rotate(52deg); }
+.rules-corner .note, .rules-corner .draft { padding-right: 13px; }
+.rules-corner .note::after, .rules-corner .draft::after { right: 2px; top: -12px; height: 40px; transform: rotate(-52deg); }
+/* Ink line: the plain rule from before. */
+.rules-line .sheet { padding-left: 27px; }
+.rules-line .sheet::before { content: ""; position: absolute; left: 14px; top: 12px; bottom: 12px; width: 2px; border-radius: 1px; background: var(--persona); }
+.rules-line .note, .rules-line .draft { padding-right: 25px; }
+.rules-line .note::after, .rules-line .draft::after { content: ""; position: absolute; right: 12px; top: 10px; bottom: 10px; width: 2px; border-radius: 1px; background: var(--you); }
+.draft::after { opacity: .6; }
+.note .meta { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--you); }
+.note p { font-size: 14.5px; line-height: 1.5; color: var(--usuzumi1); }
+
+/* Stickers: the art gets a hard die-cut outline from an SVG filter, coloured by --outline. */
+.sticker { position: absolute; left: 50%; top: 50%; width: var(--w, 44px); transform: translate(-50%, -50%) rotate(var(--r, 0deg)) scale(var(--s, 1)); z-index: 2; line-height: 0; pointer-events: none; }
+.sticker .art { display: block; filter: url(#die-cut) drop-shadow(0 1.5px 1.5px rgba(30, 18, 8, .3)); }
+.night .sticker .art { filter: url(#die-cut) drop-shadow(0 1.5px 2px rgba(0, 0, 0, .5)) brightness(.95); }
+.sticker.no-outline .art { filter: drop-shadow(0 1px 1px rgba(30, 18, 8, .2)); }
+.sticker.emoji { width: auto; }
+.sticker.emoji .art { font-size: calc(var(--w) * .8); line-height: 1.2; padding: .06em .08em; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.sticker svg, .inline-emoji svg { width: 100%; height: auto; display: block; overflow: visible; }
+.paper { fill: var(--paper); }
+.ln { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.seal-t { font-family: var(--brush); font-size: 27px; text-anchor: middle; }
+.word { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 15px; text-anchor: middle; fill: var(--paper-ink); }
+.ticket { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 13px; text-anchor: middle; }
+.inline-emoji { display: inline-block; width: 1.5em; height: 1.5em; vertical-align: -0.38em; line-height: 1; margin: 0 .05em; }
+.inline-emoji.emoji-char { width: auto; height: auto; vertical-align: baseline; }
+.live .sticker.mine { pointer-events: auto; cursor: grab; touch-action: none; }
+.live .sticker.theirs { pointer-events: auto; cursor: help; }
+.peel-theirs .live .sticker.theirs { cursor: pointer; touch-action: none; }
+.live .sticker.dragging { cursor: grabbing; z-index: 5; }
+.sticker.pop .art { animation: pop .38s cubic-bezier(.2, 1.6, .4, 1); }
+.sticker.peel { animation: peel .25s ease forwards; }
+@keyframes pop { from { transform: scale(.3); } to { transform: scale(1); } }
+@keyframes peel { to { opacity: 0; transform: translate(-50%, -75%) rotate(calc(var(--r) + 25deg)) scale(calc(var(--s) * .6)); } }
+.sel, .handle { display: none; }
+.sticker.selected .sel { display: block; position: absolute; inset: -7px; border: 1.5px dashed var(--fuji); border-radius: 8px; pointer-events: none; }
+.sticker.selected .handle { display: block; position: absolute; right: -15px; bottom: -15px; width: 20px; height: 20px; border-radius: 50%; background: var(--fuji); border: 3px solid var(--kami); cursor: nwse-resize; pointer-events: auto; touch-action: none; transform: scale(calc(1 / var(--s, 1))); }
+.sticker.mine:focus-visible { outline: 2px solid var(--fuji); outline-offset: 6px; }
+.armed .stickable { cursor: copy; outline: 1px dashed color-mix(in oklab, var(--persona) 55%, transparent); outline-offset: 3px; }
+.stickable:focus-visible { outline: 2px solid var(--fuji); outline-offset: 3px; }
+
+/* Draft, composer and sticker tray */
+.draft { flex: none; position: relative; --tc: var(--you); --pat: var(--you-pat); --tilt: 0.9deg; margin: 0 18px 8px auto; max-width: 78%; padding: 9px 20px 10px 13px; border-radius: 3px; border: 1px dashed color-mix(in oklab, var(--you) 45%, var(--nijimi1)); background: color-mix(in oklab, var(--you) 7%, var(--kami)); }
+.draft .meta { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--kasure2); }
+.draft p { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--usuzumi1); }
+.compose { flex: none; position: relative; display: flex; align-items: center; gap: 8px; padding: 10px 12px 12px; background: var(--kami); border-top: 1px solid var(--nijimi0); }
+.entry-border .compose .field { border: 1.5px solid transparent; background: linear-gradient(var(--kami), var(--kami)) padding-box, linear-gradient(90deg, var(--persona), var(--you)) border-box; }
+.entry-edge .compose { border-top-color: transparent; }
+.entry-edge .compose::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: linear-gradient(90deg, var(--persona), var(--you)); }
+.compose .field { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 20px; border: 1px solid var(--nijimi1); color: var(--kasure2); font-family: var(--read); font-style: italic; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 0; padding: 0; font: inherit; cursor: pointer; flex: none; }
+.icon-btn:focus-visible { outline: 2px solid var(--fuji); outline-offset: 2px; }
+.stk-btn { background: color-mix(in oklab, var(--persona) 18%, var(--kami)); color: var(--persona); font-family: var(--brush); font-size: 18px; }
+.send { background: var(--you); color: var(--kami); font-size: 16px; }
+.send:disabled { opacity: .45; cursor: default; }
+.tray { flex: none; background: var(--kami); border-top: 1px solid var(--nijimi0); padding: 8px 12px 16px; display: grid; gap: 8px; }
+.tray-search { font: inherit; font-size: 13px; color: var(--sumi); background: var(--hyoshi); border: 1px solid var(--nijimi1); border-radius: 10px; padding: 7px 11px; min-width: 0; }
+.tray-search::placeholder { color: var(--kasure2); }
+.tray-search:focus-visible { outline: 2px solid var(--fuji); outline-offset: 1px; }
+.tabs { display: flex; gap: 2px; }
+.tabs button { font: inherit; font-size: 12.5px; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--kasure2); padding: 6px 10px; cursor: pointer; }
+.tabs button[aria-selected="true"] { color: var(--sumi); border-bottom-color: var(--persona); }
+.tabs button:focus-visible { outline: 2px solid var(--fuji); outline-offset: 1px; }
+.tray-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; height: 132px; overflow-y: auto; align-content: start; scrollbar-width: thin; }
+.tray-grid button { position: relative; height: 62px; border-radius: 10px; border: 1px solid transparent; background: var(--hyoshi); cursor: pointer; display: grid; place-items: center; padding: 0; }
+.tray-grid button[aria-pressed="true"] { border-color: var(--persona); background: color-mix(in oklab, var(--persona) 12%, var(--hyoshi)); }
+.tray-grid button:focus-visible { outline: 2px solid var(--fuji); outline-offset: 1px; }
+.tray-grid .sticker { position: static; transform: none; width: min(var(--w), 50px); }
+.tray-grid .sticker.emoji .art { font-size: 30px; }
+.tray-grid .add { color: var(--kasure2); font-size: 12px; line-height: 1.3; text-align: center; }
+.hint { font-size: 12px; color: var(--kasure2); min-height: 1.3em; }
+.toast { position: absolute; left: 50%; bottom: 330px; transform: translate(-50%, 8px); background: var(--sumi); color: var(--kami); font-size: 12.5px; padding: 7px 12px; border-radius: 999px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .3s ease, transform .3s ease; z-index: 6; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.how { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 18px 28px; padding-top: 6px; border-top: 1px solid var(--nijimi0); }
+.how h3 { margin: 0 0 4px; font-family: var(--display); font-weight: 600; font-size: 19px; }
+.how p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--usuzumi1); max-width: 46ch; }
+.credits { max-width: 80ch; font-size: 12.5px; line-height: 1.6; color: var(--kasure2); }
+.credits a { color: var(--usuzumi1); }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="die-cut" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="1.75" result="soft"/>
+    <feComponentTransfer in="soft" result="spread"><feFuncA type="linear" slope="22" intercept="-0.6"/></feComponentTransfer>
+    <feFlood class="outline-flood" result="colour"/>
+    <feComposite in="colour" in2="spread" operator="in" result="outline"/>
+    <feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</svg>
+<style>.outline-flood { flood-color: var(--outline); }</style>
+
+<div class="studio mood-on rules-strip" id="studio">
+  <header class="intro">
+    <div class="glyph" aria-hidden="true">貼</div>
+    <h1>Letters, with stickers</h1>
+    <p>The combined letter with mood words, and a working sticker sketch. Stickers come from emoji, Aria's own NovelAI sheet and a shared library you upload to. They go anywhere on a message, at any size and angle, with a hard die-cut outline you can recolour.</p>
+  </header>
+
+  <section class="controls" aria-label="Mockup controls">
+    <fieldset>
+      <legend>Season</legend>
+      <div class="seg" id="season">
+        <label><input type="radio" name="season" id="season-auto" value="auto" checked><span>Auto</span></label>
+        <label><input type="radio" name="season" id="season-haru" value="haru"><span><b>春</b>haru</span></label>
+        <label><input type="radio" name="season" id="season-natsu" value="natsu"><span><b>夏</b>natsu</span></label>
+        <label><input type="radio" name="season" id="season-aki" value="aki"><span><b>秋</b>aki</span></label>
+        <label><input type="radio" name="season" id="season-fuyu" value="fuyu"><span><b>冬</b>fuyu</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Time</legend>
+      <div class="seg" id="time">
+        <label><input type="radio" name="time" id="time-auto" value="auto" checked><span>Auto</span></label>
+        <label><input type="radio" name="time" id="time-hiru" value="hiru"><span><b>昼</b>day</span></label>
+        <label><input type="radio" name="time" id="time-yoru" value="yoru"><span><b>夜</b>night</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Aria's ink</legend>
+      <div class="inks" id="persona-inks"></div>
+      <div class="inkname" id="persona-name"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Your ink</legend>
+      <div class="inks" id="you-inks"></div>
+      <div class="inkname" id="you-name"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Sticker outline</legend>
+      <div class="seg" id="outline">
+        <label><input type="radio" name="outline" id="outline-white" value="white" checked><span><i style="--c:#ffffff"></i>White</span></label>
+        <label><input type="radio" name="outline" id="outline-cream" value="cream"><span><i style="--c:#f3e3c8"></i>Cream</span></label>
+        <label><input type="radio" name="outline" id="outline-black" value="black"><span><i style="--c:#231a14"></i>Black</span></label>
+        <label><input type="radio" name="outline" id="outline-persona" value="persona"><span><i style="--c:var(--persona)"></i>Her ink</span></label>
+        <label><input type="radio" name="outline" id="outline-custom-radio" value="custom"><span>Custom</span></label>
+      </div>
+      <label class="custom-colour" for="outline-custom">Custom colour <input type="color" id="outline-custom" value="#ffd6e7"></label>
+    </fieldset>
+    <fieldset>
+      <legend>Rules</legend>
+      <div class="seg" id="rule">
+        <label><input type="radio" name="rule" id="rule-strip" value="strip" checked><span>Washi strip</span></label>
+        <label><input type="radio" name="rule" id="rule-tabs" value="tabs"><span>Washi tabs</span></label>
+        <label><input type="radio" name="rule" id="rule-corner" value="corner"><span>Washi corner</span></label>
+        <label><input type="radio" name="rule" id="rule-line" value="line"><span>Ink line</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Tape patterns</legend>
+      <div class="seg" id="herpat" aria-label="Aria's tape pattern">
+        <label><input type="radio" name="herpat" id="herpat-dots" value="dots" checked><span><b>彼</b>dots</span></label>
+        <label><input type="radio" name="herpat" id="herpat-stripes" value="stripes"><span>stripes</span></label>
+        <label><input type="radio" name="herpat" id="herpat-gingham" value="gingham"><span>gingham</span></label>
+        <label><input type="radio" name="herpat" id="herpat-plain" value="plain"><span>plain</span></label>
+      </div>
+      <div class="seg" id="youpat" aria-label="Your tape pattern">
+        <label><input type="radio" name="youpat" id="youpat-dots" value="dots"><span><b>私</b>dots</span></label>
+        <label><input type="radio" name="youpat" id="youpat-stripes" value="stripes" checked><span>stripes</span></label>
+        <label><input type="radio" name="youpat" id="youpat-gingham" value="gingham"><span>gingham</span></label>
+        <label><input type="radio" name="youpat" id="youpat-plain" value="plain"><span>plain</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Entry gradient</legend>
+      <div class="seg" id="entry">
+        <label><input type="radio" name="entry" id="entry-border" value="border" checked><span>Field border</span></label>
+        <label><input type="radio" name="entry" id="entry-edge" value="edge"><span>Bar's top edge</span></label>
+        <label><input type="radio" name="entry" id="entry-off" value="off"><span>Off</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Options</legend>
+      <div class="switches">
+        <label class="switch"><input type="checkbox" id="opt-mood" checked>Mood words</label>
+        <label class="switch"><input type="checkbox" id="opt-sig">Ink signature on away letters</label>
+        <label class="switch"><input type="checkbox" id="opt-peel-theirs">I can peel off Aria's stickers</label>
+        <label class="switch"><input type="checkbox" id="opt-aria-peels">Aria can peel off mine</label>
+      </div>
+    </fieldset>
+    <div class="theme-now" aria-live="polite">
+      <div class="big" id="theme-kanji">秋昼</div>
+      <div class="small" id="theme-name">aki-hiru · autumn by day</div>
+    </div>
+  </section>
+
+  <section class="frames">
+    <figure class="study">
+      <div class="phone"><div class="screen" id="phone-letter"></div></div>
+      <figcaption>
+        <h2>The letter<span>箋</span></h2>
+        <p>Stationery sheets held by washi tape in her ink, with her portrait on every letter; your notes carry tape in your ink on the right. The text entry bar runs from her ink to yours. Mood words sit beside her name; she picks them herself. Memories she keeps become postscripts. Stickers from both of you sit on top, and some of hers are on her own letters, like the sparkles on her twirl. Hover any sticker to see its name and who placed it.</p>
+      </figcaption>
+    </figure>
+    <figure class="study">
+      <div class="phone"><div class="screen live" id="phone-stickers"></div></div>
+      <figcaption>
+        <h2>Stickers<span>貼</span></h2>
+        <p>Pick a sticker, or search by <b>:name:</b>, then tap anywhere on a letter, a note, or your draft. Tap one of yours to select it: drag it to move, drag the round handle to resize and rotate, double-tap to peel it off. Aria's stickers stay put unless you switch on "I can peel off Aria's stickers". With a keyboard, use arrows, <b>[ ]</b> to rotate, <b>− =</b> to resize. Send your note and see what Aria does.</p>
+        <div class="sees" aria-live="polite">
+          <h3>What Aria sees on her next turn</h3>
+          <ol id="sees"><li class="empty">Nothing yet. Stickers you place show up here, as she'd read them.</li></ol>
+        </div>
+        <button class="reset" id="reset" type="button">Start over</button>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="how" aria-label="How stickers would work">
+    <div><h3>Three sources</h3><p>Emoji to start. Each persona's own pack: a sticker sheet NovelAI draws from their appearance tags, which only they and you use in their chats. A shared library you upload to, usable with every persona, which also holds stamps like 花丸 and ink strokes.</p></div>
+    <div><h3>Anywhere, any size</h3><p>Place a sticker anywhere on a letter, a note or your draft. Move it, resize it, rotate it, peel it off. By default each of you can only remove your own; two settings let you remove hers, or let her remove yours. The outline is a hard die-cut edge, white by default, recoloured in settings. Each sticker keeps who placed it, where, its size, angle and time.</p></div>
+    <div><h3>Personas use them freely</h3><p>Stickers have <b>:names:</b>, which is how a persona chooses one: the model reads names, not pictures. A persona can stick one on your notes or its own letters whenever it likes, through a tool, and write custom emoji inline in its text.</p></div>
+    <div><h3>They see stickers, moods are their own</h3><p>Stickers you place reach the persona as short notes on its next turn, shown under the phone. It reacts however it wants and picks its own mood word; stickers never set it. They're drawn over the letter, so the text and the saved history never change.</p></div>
+  </section>
+
+  <p class="credits">Auto uses today's season and your device's light or dark setting; in the app it would follow the clock. Stickers are printed in each season's day inks. Colours are <a href="https://madoromi.moonwit.ch/" target="_blank" rel="noopener">madoromi</a> by samhain (MPL-2.0), measured from Pilot Iroshizuku inks. Type: Cormorant Garamond, Literata, LINE Seed JP and Yuji Syuku. Portraits, Aria's sticker faces and the generated image are placeholders for NovelAI art.</p>
+</div>
+
+<script>
+const THEMES = ['haru-hiru', 'natsu-hiru', 'aki-hiru', 'fuyu-hiru', 'haru-yoru', 'natsu-yoru', 'aki-yoru', 'fuyu-yoru'];
+const PAL = {
+  sakura:   ['#aa6e89','#aa6e89','#a26480','#aa6e89','#ffc5da','#ffbde2','#ffb6cc','#ffbee1'],
+  nadeshiko:['#d64891','#ce37a6','#c63368','#b560a0','#ffadda','#dd9fbf','#dfa3c0','#dfa3c0'],
+  botan:    ['#b25d9d','#b0599b','#a1488d','#a74f93','#fe8dc0','#f894d8','#f68fd6','#d18bb7'],
+  fuji:     ['#6928bd','#6526b9','#581ca7','#5e21b0','#ddb3ff','#aea8ff','#d3a1ff','#bbb8ff'],
+  kikyo:    ['#4760c0','#455cbd','#6928bd','#3d53b4','#99b2f5','#87a7ff','#aea8ff','#aaa4ff'],
+  beni:     ['#ce2700','#b53753','#a43b3b','#bb355a','#ff8b79','#ff8c9f','#ff8672','#ff8799'],
+  akane:    ['#ee3244','#d64891','#d80638','#e1376f','#ffa2b5','#faa7ca','#ff9cb5','#ffa3d0'],
+  kaki:     ['#fd5217','#ff5735','#ff5635','#ff5635','#ffbb74','#ffb66d','#ff9b8f','#ff9b8f'],
+  yamabuki: ['#bda343','#e3940b','#e3940b','#e3940b','#ffc849','#eec307','#ffae1e','#ecba09'],
+  wakaba:   ['#5e8933','#00915c','#7e8418','#618c32','#c1dd4a','#b9d740','#bac105','#aece34'],
+  tokiwa:   ['#009162','#028e7f','#008b57','#028e7f','#7bd6b6','#6cd2cc','#58c59f','#5eccc5'],
+  sora:     ['#008bae','#008bae','#178d9d','#2678af','#88d9eb','#5cd7f5','#5ac6f1','#78d5fc'],
+  ruri:     ['#2678af','#2e79b6','#2973b0','#2266a4','#60c9f3','#3ec7e8','#5ea3d4','#8ac3ff'],
+  ai:       ['#1955bf','#526ccb','#384dad','#4a63c3','#6eadff','#4ab8ff','#7f9bea','#829eeb'],
+  sumi:     ['#584a5c','#3b545e','#5d4c3c','#4a4e63','#e1d1e7','#c0dde8','#e8d3c1','#d2d6eb'],
+  usuzumi1: ['#6b5d70','#4e6872','#715f4f','#5e6277','#cdbed3','#adcad4','#d4c0ae','#bec3db'],
+  usuzumi0: ['#77697c','#57717a','#7d6b5a','#696d83','#b7a8bd','#97b3be','#beaa98','#a8adc4'],
+  kasure2:  ['#877b8c','#6f848d','#8d7d6f','#7b7f91','#9f93a4','#869da5','#a59587','#9397aa'],
+  kasure1:  ['#998d9e','#80969f','#9f8f81','#8d91a4','#8a7e8f','#728790','#908072','#7e8294'],
+  kasure0:  ['#a99cad','#8fa6ae','#ae9e90','#9ca0b3','#756a7a','#5d737b','#7b6c5e','#6a6e7f'],
+  nijimi2:  ['#b8acbd','#9fb5be','#beae9f','#acb0c3','#615665','#4a5f66','#66584b','#565a6b'],
+  nijimi1:  ['#c8bccd','#aec5ce','#cebeaf','#bcc0d3','#4e4352','#374b53','#534538','#434757'],
+  nijimi0:  ['#d9ccdd','#bed6df','#dfcebf','#ccd0e4','#392e3c','#23363d','#3d3024','#2f3241'],
+  kami:     ['#f6eff8','#e9f4f8','#f8f0e9','#f0f1f8','#241c26','#132227','#271d14','#1c1e2a'],
+  hyoshi:   ['#ece5ef','#ddeaf0','#f0e6dd','#e5e7f3','#1c151f','#0e1a1f','#20160e','#151722'],
+  chitsu:   ['#e2dbe5','#d3e1e6','#e6dcd3','#dbdde9','#160f18','#091317','#181008','#0f111b'],
+};
+const INKS = [
+  ['sakura', '桜'], ['nadeshiko', '撫子'], ['botan', '牡丹'], ['fuji', '藤'], ['kikyo', '桔梗'], ['beni', '紅'], ['akane', '茜'],
+  ['kaki', '柿'], ['yamabuki', '山吹'], ['wakaba', '若葉'], ['tokiwa', '常磐'], ['sora', '空'], ['ruri', '瑠璃'], ['ai', '藍'],
+];
+const ROLES = ['kami', 'hyoshi', 'chitsu', 'nijimi0', 'nijimi1', 'nijimi2', 'kasure0', 'kasure1', 'kasure2', 'usuzumi0', 'usuzumi1', 'sumi', 'fuji'];
+const SEASON_KANJI = { haru: '春', natsu: '夏', aki: '秋', fuyu: '冬' };
+const SEASON_EN = { haru: 'spring', natsu: 'summer', aki: 'autumn', fuyu: 'winter' };
+const OUTLINES = { white: '#ffffff', cream: '#f3e3c8', black: '#231a14' };
+const PATTERNS = {
+  dots: 'radial-gradient(circle, rgba(255, 255, 255, .6) 0 1.3px, transparent 1.7px) 0 0 / 7px 7px',
+  stripes: 'repeating-linear-gradient(135deg, rgba(255, 255, 255, .38) 0 2.5px, transparent 2.5px 6px)',
+  gingham: 'linear-gradient(90deg, rgba(255, 255, 255, .3) 50%, transparent 0) 0 0 / 8px 8px, linear-gradient(rgba(255, 255, 255, .3) 50%, transparent 0) 0 0 / 8px 8px',
+  plain: 'linear-gradient(transparent, transparent)',
+};
+const RULES = ['strip', 'tabs', 'corner', 'line'];
+
+const state = { season: 'auto', time: 'auto', persona: 'sakura', you: 'sora', rule: 'strip', herpat: 'dots', youpat: 'stripes', entry: 'border', mood: true, sig: false, peelTheirs: false, ariaPeels: false, outline: 'white', outlineCustom: '#ffd6e7' };
+try { Object.assign(state, JSON.parse(localStorage.getItem('letter-studies-4') || '{}')); } catch (e) { /* storage unavailable */ }
+if (!RULES.includes(state.rule)) state.rule = 'strip';
+function save() { try { localStorage.setItem('letter-studies-4', JSON.stringify(state)); } catch (e) { /* ignore */ } }
+
+// ---- Sticker art ----------------------------------------------------------------------------
+const f = n => n.toFixed(1);
+let uid = 0;
+function scallop(cx, cy, R, n, bulge) {
+  let d = '';
+  for (let k = 0; k < n; k++) {
+    const a0 = k / n * 2 * Math.PI - Math.PI / 2, a1 = (k + 1) / n * 2 * Math.PI - Math.PI / 2, am = (a0 + a1) / 2;
+    if (k === 0) d += `M${f(cx + R * Math.cos(a0))} ${f(cy + R * Math.sin(a0))}`;
+    d += `Q${f(cx + R * bulge * Math.cos(am))} ${f(cy + R * bulge * Math.sin(am))} ${f(cx + R * Math.cos(a1))} ${f(cy + R * Math.sin(a1))}`;
+  }
+  return d + 'Z';
+}
+function spiral(cx, cy, r0, turns) {
+  let d = '';
+  for (let i = 0; i <= 80; i++) {
+    const t = i / 80, r = r0 * (1 - t * 0.88), a = t * turns * 2 * Math.PI - Math.PI / 2;
+    d += `${i ? 'L' : 'M'}${f(cx + r * Math.cos(a))} ${f(cy + r * Math.sin(a))}`;
+  }
+  return d;
+}
+function star(cx, cy, R, r) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) { const a = i / 10 * 2 * Math.PI - Math.PI / 2, rr = i % 2 ? r : R; pts.push(`${f(cx + rr * Math.cos(a))},${f(cy + rr * Math.sin(a))}`); }
+  return pts.join(' ');
+}
+const HEART = 'M32 54 C10 40 6 26 14 18 C21 11 29 14 32 21 C35 14 43 11 50 18 C58 26 54 40 32 54 Z';
+function strokeShape(color) {
+  let out = '';
+  for (let i = 0; i <= 60; i++) {
+    const t = i / 60, x = 6 + t * 60, y = 18 - t * 8 + Math.sin(t * 5) * 0.6, ry = (1 - t) * 7.5 + 1.2;
+    out += `<ellipse cx="${f(x)}" cy="${f(y)}" rx="2" ry="${f(ry)}" transform="rotate(-20 ${f(x)} ${f(y)})" style="fill:${color};opacity:${f(0.9 - t * 0.6)}"/>`;
+  }
+  return out;
+}
+function face(word) {
+  const id = `g${++uid}`;
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="${id}" cx="42%" cy="38%" r="62%"><stop offset="0" style="stop-color:var(--stk-persona);stop-opacity:.8"/><stop offset="1" style="stop-color:var(--stk-persona);stop-opacity:.16"/></radialGradient></defs><circle cx="32" cy="32" r="29" class="paper"/><circle cx="32" cy="32" r="25" fill="url(#${id})"/><text x="32" y="37" class="word">${word}</text></svg>`;
+}
+
+// Keys double as :names:. Tabs: emoji, the persona's own pack, and the shared library.
+const EMOJI = [['heart', '❤️', 'Red heart'], ['sunny', '☀️', 'Sun'], ['sparkles', '✨', 'Sparkles'], ['crescent_moon', '🌙', 'Crescent moon'],
+  ['tea', '🍵', 'Tea'], ['fox', '🦊', 'Fox'], ['cherry_blossom', '🌸', 'Cherry blossom'], ['clap', '👏', 'Clapping hands']];
+const STICKERS = {
+  ...Object.fromEntries(EMOJI.map(([id, ch, label]) => [id, { tab: 'emoji', label, w: 38, emoji: ch }])),
+  aria_wave:  { tab: 'persona', label: 'Aria waving', w: 46, svg: () => face('hi!') },
+  aria_eepy:  { tab: 'persona', label: 'Aria, sleepy', w: 46, svg: () => face('zzz') },
+  aria_pout:  { tab: 'persona', label: 'Aria, pouting', w: 46, svg: () => face('hmph') },
+  aria_heart: { tab: 'persona', label: 'Aria, fond', w: 46, svg: () => face('♡') },
+  gold_star:  { tab: 'shared', label: 'Gold star', w: 40, svg: () => `<svg viewBox="0 0 64 64" aria-hidden="true"><polygon points="${star(32, 34, 27, 12)}" style="fill:var(--stk-yamabuki)"/><polygon points="${star(27, 27, 7, 3)}" style="fill:#fff;opacity:.45"/></svg>` },
+  pink_heart: { tab: 'shared', label: 'Pink heart', w: 40, svg: () => `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="${HEART}" style="fill:var(--stk-nadeshiko)"/><ellipse cx="21" cy="24" rx="4" ry="2.6" transform="rotate(-35 21 24)" style="fill:#fff;opacity:.45"/></svg>` },
+  good_night: { tab: 'shared', label: 'Good night ticket', w: 66, svg: () => `<svg viewBox="0 0 80 40" aria-hidden="true"><rect x="2" y="4" width="76" height="32" rx="5" class="paper"/><rect x="7" y="9" width="66" height="22" rx="3" style="fill:none;stroke:var(--stk-ai);stroke-width:1.4;stroke-dasharray:3 2.4"/><text x="40" y="25" class="ticket" style="fill:var(--stk-ai)">good night</text></svg>` },
+  hanamaru:   { tab: 'shared', label: '花丸 hanamaru', w: 46, svg: () => `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" class="paper"/><path d="${scallop(32, 32, 19, 7, 1.5)}" class="ln" style="stroke:var(--stk-beni)"/><path d="${spiral(32, 32, 11, 2.3)}" class="ln" style="stroke:var(--stk-beni)"/></svg>` },
+  iwai:       { tab: 'shared', label: '祝 celebrate seal', w: 42, svg: () => `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" class="paper"/><circle cx="32" cy="32" r="23" class="ln" style="stroke:var(--stk-beni);stroke-width:3;opacity:.92"/><text x="32" y="42" class="seal-t" style="fill:var(--stk-beni);opacity:.92">祝</text></svg>` },
+  suki:       { tab: 'shared', label: '好 like seal', w: 42, svg: () => `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="7" class="paper"/><rect x="11" y="11" width="42" height="42" rx="4" class="ln" style="stroke:var(--stk-beni);stroke-width:3;opacity:.92"/><text x="32" y="42" class="seal-t" style="fill:var(--stk-beni);opacity:.92">好</text></svg>` },
+  ink_stroke: { tab: 'shared', label: 'Ink stroke', w: 62, svg: () => `<svg viewBox="0 0 72 28" aria-hidden="true">${strokeShape('var(--stk-persona)')}</svg>` },
+  washi_tape: { tab: 'shared', label: 'Washi tape', w: 76, noOutline: true, svg: () => `<svg viewBox="0 0 76 24" aria-hidden="true"><path d="M3 3 L73 1 L75 21 L1 23 Z" style="fill:var(--stk-persona);opacity:.5"/>${[10, 22, 34, 46, 58, 70].map(x => `<circle cx="${x}" cy="12" r="2.2" style="fill:#fff;opacity:.55"/>`).join('')}</svg>` },
+};
+const TABS = [['emoji', 'Emoji'], ['persona', "Aria's pack"], ['shared', 'Shared']];
+
+function stickerEl(id, x, y, r, s = 1, by = '', extra = '') {
+  const st = STICKERS[id];
+  const who = by ? ` · placed by ${by === 'aria' ? 'Aria' : 'you'}` : '';
+  const cls = ['sticker', st.emoji ? 'emoji' : '', st.noOutline ? 'no-outline' : '', by === 'you' ? 'mine' : by ? 'theirs' : '', extra].filter(Boolean).join(' ');
+  const focus = by === 'you' ? ' tabindex="0"' : '';
+  return `<span class="${cls}" data-sid="${id}" data-by="${by}"${focus} title=":${id}:${who}" role="img" aria-label=":${id}: sticker${who}" style="left:${x}%;top:${y}%;--r:${r}deg;--s:${s};--w:${st.w}px"><span class="art">${st.emoji || st.svg()}</span><span class="sel"></span><span class="handle" aria-hidden="true"></span></span>`;
+}
+
+// ---- Conversation ---------------------------------------------------------------------------
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const inlineEmoji = text => text.replace(/:([a-z_]+):/g, (m, code) => {
+  const st = STICKERS[code];
+  if (!st) return m;
+  return st.emoji
+    ? `<span class="inline-emoji emoji-char" title=":${code}:">${st.emoji}</span>`
+    : `<span class="inline-emoji" title=":${code}:" role="img" aria-label="${st.label}">${st.svg()}</span>`;
+});
+const rich = p => inlineEmoji(p.replace(/\*([^*]+)\*/g, '<em class="act">$1</em>'));
+const paras = text => esc(text).split('\n\n').map(p => `<p>${rich(p)}</p>`).join('');
+const MOOD_SEED = { curious: 2, delighted: 3, giddy: 7, fond: 11, amazed: 5, pleased: 13, smug: 17 };
+const MORNING = "Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent. Did you actually sleep? *tilts head*\n\nIf not, I'm making you tea. Imaginary tea, but it counts.";
+
+const fullConvo = [
+  { t: 'day', text: 'Tuesday night' },
+  { t: 'you', time: 'Tue 21:40', text: 'I finally finished the first draft of my thesis!', stickers: [['iwai', 92, 8, 6, 1, 'aria']] },
+  { t: 'her', time: 'Tue 21:41', mood: 'delighted',
+    text: "*gasps and claps both hands over her mouth* Sam! That's huge. After all those late nights with cold coffee and forty open tabs about urban foxes? I'm so proud of you.\n\nTell me everything. Actually, first tell me you're going to sleep tonight.",
+    ps: 'your first draft is done' },
+  { t: 'you', time: 'Tue 21:44', text: "Tired. Happy. Can you show me what you'd look like celebrating?" },
+  { t: 'her', time: 'Tue 21:45', mood: 'giddy', text: '*twirls* Like this!', image: true, stickers: [['sparkles', 78, 40, 10, 1.2, 'aria']] },
+  { t: 'day', text: 'Wednesday morning' },
+  { t: 'her', time: 'Wed 08:14', mood: 'fond', away: true, text: MORNING,
+    stickers: [['sunny', 30, -2, 0, 1, 'you'], ['heart', 62, 58, -8, 1.25, 'you']] },
+  { t: 'you', time: 'Wed 09:02', text: 'I slept eleven hours', stickers: [['hanamaru', -1, 52, -4, 1, 'aria']] },
+  { t: 'her', time: 'Wed 09:03', mood: 'amazed', text: "*Eleven.* That's a record :aria_heart: I'm writing it down next to the draft." },
+];
+const liveConvo = [
+  { t: 'day', text: 'Wednesday morning' },
+  { t: 'her', id: 'morning', time: 'Wed 08:14', mood: 'fond', away: true, text: MORNING },
+  { t: 'you', id: 'slept', time: 'Wed 09:02', text: 'I slept eleven hours' },
+  { t: 'her', id: 'eleven', time: 'Wed 09:03', mood: 'amazed', text: "*Eleven.* That's a record :aria_heart: I'm writing it down next to the draft." },
+];
+const DRAFT = "Morning! I'm making real tea this time :pink_heart:";
+
+function renderEvent(ev) {
+  const stickers = (ev.stickers || []).map(s => stickerEl(...s)).join('');
+  const label = ev.t === 'you' ? `your ${ev.time} note` : `your ${ev.time} letter`;
+  if (ev.t === 'day') return `<div class="day">${ev.text}</div>`;
+  if (ev.t === 'you') return `<div class="note stickable" data-who="you" data-label="${label}" tabindex="-1"><span class="meta">Sam · ${ev.time}</span><p>${rich(esc(ev.text))}</p>${stickers}</div>`;
+  return `<article class="sheet stickable" data-who="her" data-label="${label}" tabindex="-1">
+    <header><canvas class="bloom av" data-kind="avatar" data-seed="${MOOD_SEED[ev.mood] || 1}" aria-hidden="true"></canvas><span class="nm">Aria</span><span class="md">${ev.mood}</span><time>${ev.away ? 'Left for you<br>' : ''}${ev.time}</time></header>
+    ${ev.away ? '<p class="away">Written while you were away</p>' : ''}
+    <div class="body">${paras(ev.text)}</div>
+    ${ev.image ? '<div class="gen"><canvas class="bloom" data-kind="image" data-seed="21" aria-label="Generated image placeholder"></canvas><small>Generated image · placeholder</small></div>' : ''}
+    ${ev.ps ? `<p class="ps"><b>P.S.</b> I wrote it in my book: ${esc(ev.ps)}.</p>` : ''}
+    ${ev.away ? `<span class="sig" aria-hidden="true"><svg viewBox="0 0 72 28">${strokeShape('var(--persona)')}</svg></span>` : ''}
+    ${stickers}
+  </article>`;
+}
+
+function header(mood) {
+  return `<div class="bar"><span class="back">←</span>
+    <canvas class="bloom av" data-kind="avatar" data-seed="${MOOD_SEED[mood]}" aria-hidden="true"></canvas>
+    <div class="id"><span class="nm">Aria</span><span class="sub"><span class="md" data-mood>${mood} · </span>Claude Opus 5.5</span></div>
+    <span class="more">⋯</span></div>`;
+}
+
+function buildLetterPhone() {
+  document.getElementById('phone-letter').innerHTML = `${header('curious')}
+    <div class="thread">${fullConvo.map(renderEvent).join('')}</div>
+    <div class="compose"><span class="icon-btn stk-btn" aria-hidden="true">貼</span><span class="field">Write to Aria…</span><span class="icon-btn send" aria-hidden="true">↑</span></div>`;
+}
+
+// ---- Interactive sticker phone -------------------------------------------------------------
+let live = null;
+function buildStickerPhone() {
+  const screen = document.getElementById('phone-stickers');
+  screen.innerHTML = `${header('curious')}
+    <div class="thread" id="live-thread">${liveConvo.map(renderEvent).join('')}</div>
+    <div class="draft stickable" id="draft" data-who="draft" data-label="your draft" tabindex="0"><span class="meta">Draft · not sent</span><p>${rich(esc(DRAFT))}</p></div>
+    <div class="compose"><button class="icon-btn stk-btn" type="button" aria-label="Stickers" aria-expanded="true">貼</button><span class="field">${esc(DRAFT)}</span><button class="icon-btn send" id="send" type="button" aria-label="Send">↑</button></div>
+    <div class="tray" aria-label="Sticker tray">
+      <input class="tray-search" id="tray-search" type="search" placeholder="Search :name:" aria-label="Search stickers by name" autocomplete="off">
+      <div class="tabs" role="tablist">${TABS.map(([id, label], i) => `<button type="button" role="tab" id="tab-${id}" aria-selected="${i === 0}" data-tab="${id}">${label}</button>`).join('')}</div>
+      <div class="tray-grid" id="tray-grid" role="tabpanel"></div>
+      <div class="hint" id="hint"></div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>`;
+  screen.querySelectorAll('.stickable').forEach(el => { el.tabIndex = 0; });
+  live = { armed: null, tab: 'emoji', query: '', sent: false, selected: null, seen: [] };
+  renderSees();
+  renderTray();
+  wireLive(screen);
+}
+
+function renderTray() {
+  const grid = document.getElementById('tray-grid');
+  const q = live.query.replace(/:/g, '').trim().toLowerCase();
+  const items = Object.entries(STICKERS).filter(([id, st]) => q ? (id.includes(q) || st.label.toLowerCase().includes(q)) : st.tab === live.tab);
+  const extra = q ? '' : live.tab === 'persona'
+    ? '<button type="button" disabled><span class="add">+ new sheet<br>from NovelAI</span></button>'
+    : live.tab === 'shared' ? '<button type="button" disabled><span class="add">+ upload<br>a picture</span></button>' : '';
+  grid.innerHTML = items.map(([id, st]) => `<button type="button" data-pick="${id}" aria-pressed="${live.armed === id}" aria-label=":${id}: ${st.label}" title=":${id}:">${stickerEl(id, 50, 50, 0)}</button>`).join('') + extra;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(!q && b.dataset.tab === live.tab)));
+  const hint = document.getElementById('hint');
+  if (live.armed) hint.textContent = `:${live.armed}: picked. Tap anywhere on a letter, a note or your draft.`;
+  else if (q) hint.textContent = items.length ? `${items.length} match${items.length === 1 ? '' : 'es'} for :${q}:` : `Nothing called :${q}: yet.`;
+  else if (live.tab === 'emoji') hint.textContent = 'Regular emoji. Pick one, then tap anywhere on a message.';
+  else if (live.tab === 'persona') hint.textContent = "Aria's own sheet, drawn by NovelAI from her appearance tags.";
+  else hint.textContent = 'Shared library: your uploads, stamps and ink, for every persona.';
+}
+
+function renderSees() {
+  const list = document.getElementById('sees');
+  if (!list || !live) return;
+  const tools = `Her tools: place_sticker, remove_sticker (${state.ariaPeels ? "her own or Sam's" : 'her own only'})`;
+  list.innerHTML = `<li class="tools">${esc(tools)}</li>` + (live.seen.length
+    ? live.seen.map(line => `<li>${esc(line)}</li>`).join('')
+    : '<li class="empty">Nothing yet. Stickers you place or peel show up here, as she\'d read them.</li>');
+}
+
+function toast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text; t.classList.add('show');
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function place(target, id, xPct, yPct, by, s = 1) {
+  const r = Math.round(Math.random() * 8 - 4);
+  target.insertAdjacentHTML('beforeend', stickerEl(id, xPct.toFixed(1), yPct.toFixed(1), r, s, by, 'pop'));
+  const el = target.lastElementChild;
+  el.addEventListener('animationend', () => el.classList.remove('pop'), { once: true });
+  return el;
+}
+
+function select(s) {
+  if (live.selected && live.selected !== s) live.selected.classList.remove('selected');
+  live.selected = s;
+  if (s) { s.classList.add('selected'); s.focus({ preventScroll: true }); }
+}
+
+function setTransform(s, { r, sc }) {
+  if (r !== undefined) s.style.setProperty('--r', `${Math.round(r)}deg`);
+  if (sc !== undefined) s.style.setProperty('--s', Math.min(2.6, Math.max(0.5, sc)).toFixed(2));
+}
+const num = (s, name) => parseFloat(getComputedStyle(s).getPropertyValue(name)) || (name === '--s' ? 1 : 0);
+
+function wireLive(screen) {
+  screen.querySelector('.tabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-tab]'); if (!b) return;
+    live.tab = b.dataset.tab; live.query = ''; document.getElementById('tray-search').value = ''; renderTray();
+  });
+  screen.querySelector('#tray-search').addEventListener('input', e => { live.query = e.target.value; renderTray(); });
+  screen.querySelector('#tray-grid').addEventListener('click', e => {
+    const b = e.target.closest('[data-pick]'); if (!b) return;
+    live.armed = live.armed === b.dataset.pick ? null : b.dataset.pick;
+    screen.classList.toggle('armed', !!live.armed);
+    select(null);
+    renderTray();
+  });
+
+  const stickAt = (target, x, y) => {
+    const rect = target.getBoundingClientRect();
+    const xp = Math.min(96, Math.max(4, (x - rect.left) / rect.width * 100));
+    const yp = Math.min(104, Math.max(-6, (y - rect.top) / rect.height * 100));
+    const el = place(target, live.armed, xp, yp, 'you');
+    if (target.dataset.who === 'her') {
+      live.seen.push(`[Sam stuck :${live.armed}: on ${target.dataset.label}]`);
+      renderSees();
+      toast('Aria will see this on her next turn');
+    } else if (target.dataset.who === 'you') {
+      live.seen.push(`[Sam stuck :${live.armed}: on their own ${target.dataset.label.replace(/^your /, '')}]`);
+      renderSees();
+    }
+    live.armed = null; screen.classList.remove('armed'); renderTray();
+    select(el);
+  };
+  screen.addEventListener('click', e => {
+    if (e.target.closest('.tray, .compose')) return;
+    if (live.armed) {
+      const target = e.target.closest('.stickable');
+      if (target) stickAt(target, e.clientX, e.clientY);
+      return;
+    }
+    if (!e.target.closest('.sticker.mine')) select(null);
+  });
+
+  // Move, resize/rotate (handle), double-tap to peel.
+  let drag = null, lastTap = { el: null, at: 0 };
+  screen.addEventListener('pointerdown', e => {
+    const handle = e.target.closest('.handle');
+    const theirs = state.peelTheirs ? e.target.closest('.sticker.theirs') : null;
+    if (theirs && !theirs.closest('.tray')) {
+      e.preventDefault();
+      drag = { mode: 'tap', s: theirs };
+      theirs.setPointerCapture(e.pointerId);
+      return;
+    }
+    const s = e.target.closest('.sticker.mine');
+    if (!s || s.closest('.tray')) return;
+    e.preventDefault();
+    const box = s.getBoundingClientRect();
+    const cx = box.left + box.width / 2, cy = box.top + box.height / 2;
+    if (handle) {
+      drag = { mode: 'turn', s, cx, cy, a0: Math.atan2(e.clientY - cy, e.clientX - cx), d0: Math.hypot(e.clientX - cx, e.clientY - cy), r0: num(s, '--r'), s0: num(s, '--s') };
+    } else {
+      drag = { mode: 'move', s, parent: s.parentElement, x: e.clientX, y: e.clientY, moved: false };
+      s.classList.add('dragging');
+    }
+    s.setPointerCapture(e.pointerId);
+    select(s);
+  });
+  screen.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (drag.mode === 'turn') {
+      const a = Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx), d = Math.hypot(e.clientX - drag.cx, e.clientY - drag.cy);
+      setTransform(drag.s, { r: drag.r0 + (a - drag.a0) * 180 / Math.PI, sc: drag.s0 * d / Math.max(drag.d0, 1) });
+      return;
+    }
+    if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
+    if (!drag.moved) return;
+    const rect = drag.parent.getBoundingClientRect();
+    drag.s.style.left = `${Math.min(98, Math.max(2, (e.clientX - rect.left) / rect.width * 100))}%`;
+    drag.s.style.top = `${Math.min(110, Math.max(-10, (e.clientY - rect.top) / rect.height * 100))}%`;
+  });
+  screen.addEventListener('pointerup', () => {
+    if (!drag) return;
+    const { s, mode, moved } = drag; s.classList.remove('dragging'); drag = null;
+    if (mode === 'turn' || moved) return;
+    const now = Date.now();
+    if (lastTap.el === s && now - lastTap.at < 350) { peel(s); lastTap = { el: null, at: 0 }; } else lastTap = { el: s, at: now };
+  });
+  const peel = s => {
+    if (live.selected === s) live.selected = null;
+    if (s.classList.contains('theirs')) {
+      const host = s.parentElement;
+      const where = host.dataset.who === 'her' ? host.dataset.label : (host.dataset.label || 'a note').replace(/^your /, "Sam's ");
+      live.seen.push(`[Sam peeled your :${s.dataset.sid}: sticker off ${where}]`);
+      renderSees();
+      toast("Peeled off Aria's sticker. She'll see that.");
+    }
+    s.classList.add('peel'); s.addEventListener('animationend', () => s.remove(), { once: true });
+  };
+  screen.addEventListener('keydown', e => {
+    const target = e.target.closest('.stickable');
+    if (e.key === 'Enter' && live.armed && target) {
+      const r = target.getBoundingClientRect();
+      stickAt(target, r.left + r.width * 0.85, r.top + r.height * 0.2);
+      e.preventDefault(); return;
+    }
+    const s = e.target.closest('.sticker.mine'); if (!s) return;
+    const step = e.shiftKey ? 5 : 1;
+    const move = (dx, dy) => {
+      s.style.left = `${Math.min(98, Math.max(2, parseFloat(s.style.left) + dx))}%`;
+      s.style.top = `${Math.min(110, Math.max(-10, parseFloat(s.style.top) + dy))}%`;
+    };
+    const keys = {
+      ArrowLeft: () => move(-step, 0), ArrowRight: () => move(step, 0), ArrowUp: () => move(0, -step), ArrowDown: () => move(0, step),
+      '[': () => setTransform(s, { r: num(s, '--r') - 5 * step }), ']': () => setTransform(s, { r: num(s, '--r') + 5 * step }),
+      '-': () => setTransform(s, { sc: num(s, '--s') - 0.1 }), '=': () => setTransform(s, { sc: num(s, '--s') + 0.1 }),
+      Delete: () => peel(s), Backspace: () => peel(s), Escape: () => select(null),
+    };
+    if (keys[e.key]) { keys[e.key](); e.preventDefault(); }
+  });
+  screen.addEventListener('focusin', e => { const s = e.target.closest('.sticker.mine'); if (s) select(s); });
+
+  screen.querySelector('#send').addEventListener('click', () => {
+    if (live.sent) return;
+    live.sent = true;
+    select(null);
+    const draft = document.getElementById('draft');
+    const thread = document.getElementById('live-thread');
+    const stickers = [...draft.querySelectorAll('.sticker')].map(s => { s.classList.remove('selected'); return s.outerHTML; }).join('');
+    thread.insertAdjacentHTML('beforeend', `<div class="note stickable" data-who="you" data-label="your Wed 09:05 note" tabindex="0"><span class="meta">Sam · Wed 09:05</span><p>${rich(esc(DRAFT))}</p>${stickers}</div>`);
+    if (stickers) { live.seen.push(`[Sam's Wed 09:05 note arrived with ${draft.querySelectorAll('.sticker').length} sticker(s) on it]`); renderSees(); }
+    draft.hidden = true;
+    screen.querySelector('.compose .field').textContent = 'Write to Aria…';
+    screen.querySelector('#send').disabled = true;
+    thread.scrollTop = thread.scrollHeight;
+    const sawLetterSticker = live.seen.some(l => l.includes('letter]'));
+    setTimeout(() => {
+      // She decides, unprompted, to sticker your note.
+      place(thread.lastElementChild, 'tea', 90, 4, 'aria');
+      toast('Aria stuck :tea: on your note');
+      setTimeout(() => {
+        const text = sawLetterSticker
+          ? "Real tea! :aria_wave: And I saw what you stuck on my letter. *pretends not to be pleased, fails*"
+          : "Real tea! :aria_wave: *puts a gold star on the calendar* I'm proud of you twice in one week.";
+        thread.insertAdjacentHTML('beforeend', renderEvent({ t: 'her', time: 'Wed 09:06', mood: sawLetterSticker ? 'smug' : 'pleased', text, stickers: [['gold_star', 88, 70, 12, 1, 'aria']] }));
+        thread.lastElementChild.tabIndex = 0;
+        const md = screen.querySelector('[data-mood]'); md.textContent = `${sawLetterSticker ? 'smug' : 'pleased'} · `;
+        const av = screen.querySelector('.bar .av'); av.dataset.seed = MOOD_SEED[sawLetterSticker ? 'smug' : 'pleased'];
+        live.seen = []; renderSees();
+        redraw(); thread.scrollTop = thread.scrollHeight;
+      }, 1500);
+    }, 1200);
+  });
+}
+
+// ---- Ink-wash placeholders -------------------------------------------------------------------
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function drawBloom(c, ink, ink2, paper, deep, seed, kind) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+  c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const r = rng(seed * 9973 + 1);
+  g.fillStyle = paper; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < (kind === 'image' ? 10 : 6); i++) {
+    const x = w * (0.2 + r() * 0.6), y = h * (0.15 + r() * 0.7), rad = Math.max(w, h) * (0.18 + r() * (kind === 'avatar' ? 0.5 : 0.35));
+    const col = i % 4 === 3 ? ink2 : ink, grad = g.createRadialGradient(x, y, 0, x, y, rad);
+    grad.addColorStop(0, hexA(col, 0.55)); grad.addColorStop(0.6, hexA(col, 0.18)); grad.addColorStop(1, hexA(col, 0));
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  }
+  if (kind === 'image') {
+    const cx = w * 0.5, base = h, headR = Math.min(w, h) * 0.18, cy = base - headR * 3.3;
+    const hg = g.createRadialGradient(cx, cy, headR * 0.2, cx, cy, headR * 1.15);
+    hg.addColorStop(0, hexA(deep, 0.38)); hg.addColorStop(1, hexA(deep, 0));
+    g.fillStyle = hg; g.beginPath(); g.arc(cx, cy, headR * 1.15, 0, Math.PI * 2); g.fill();
+    const sg = g.createRadialGradient(cx, base, headR, cx, base, headR * 2.6);
+    sg.addColorStop(0, hexA(deep, 0.32)); sg.addColorStop(1, hexA(deep, 0));
+    g.fillStyle = sg; g.beginPath(); g.ellipse(cx, base, headR * 2.6, headR * 1.7, 0, Math.PI, 0); g.fill();
+  }
+  for (let i = 0; i < (w * h) / 60; i++) { g.fillStyle = hexA(deep, 0.05 * r()); g.fillRect(r() * w, r() * h, 1, 1); }
+}
+function redraw() {
+  const ink = css('--persona'), you = css('--you'), paper = css('--kami'), deep = css('--sumi');
+  document.querySelectorAll('canvas.bloom').forEach(c => drawBloom(c, ink, you, paper, deep, +(c.dataset.seed || 1), c.dataset.kind));
+}
+
+// ---- Theme ---------------------------------------------------------------------------------
+function viewerDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t === 'dark') return true;
+  if (t === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function seasonNow() { const m = new Date().getMonth(); return m >= 2 && m <= 4 ? 'haru' : m >= 5 && m <= 7 ? 'natsu' : m >= 8 && m <= 10 ? 'aki' : 'fuyu'; }
+function apply() {
+  const season = state.season === 'auto' ? seasonNow() : state.season;
+  const time = state.time === 'auto' ? (viewerDark() ? 'yoru' : 'hiru') : state.time;
+  const idx = THEMES.indexOf(`${season}-${time}`), dayIdx = THEMES.indexOf(`${season}-hiru`);
+  const root = document.documentElement.style;
+  ROLES.forEach(role => root.setProperty(`--${role}`, PAL[role][idx]));
+  INKS.forEach(([name]) => root.setProperty(`--ink-${name}`, PAL[name][idx]));
+  root.setProperty('--persona', PAL[state.persona][idx]);
+  root.setProperty('--you', PAL[state.you][idx]);
+  // Stickers are printed objects: always the season's day inks, on light sticker paper.
+  ['beni', 'yamabuki', 'nadeshiko', 'ai'].forEach(name => root.setProperty(`--stk-${name}`, PAL[name][dayIdx]));
+  root.setProperty('--stk-persona', PAL[state.persona][dayIdx]);
+  root.setProperty('--paper-ink', PAL.sumi[dayIdx]);
+  const outline = state.outline === 'custom' ? state.outlineCustom : state.outline === 'persona' ? PAL[state.persona][idx] : OUTLINES[state.outline] || '#ffffff';
+  root.setProperty('--outline', outline);
+  root.setProperty('color-scheme', time === 'yoru' ? 'dark' : 'light');
+  document.getElementById('theme-kanji').textContent = SEASON_KANJI[season] + (time === 'hiru' ? '昼' : '夜');
+  document.getElementById('theme-name').textContent = `${season}-${time} · ${SEASON_EN[season]} by ${time === 'hiru' ? 'day' : 'night'}`;
+  const pk = INKS.find(i => i[0] === state.persona), yk = INKS.find(i => i[0] === state.you);
+  document.getElementById('persona-name').innerHTML = `<b>${pk[1]}</b> ${pk[0]}`;
+  document.getElementById('you-name').innerHTML = `<b>${yk[1]}</b> ${yk[0]}`;
+  const studio = document.getElementById('studio');
+  studio.classList.toggle('mood-on', state.mood);
+  studio.classList.toggle('sig-on', state.sig);
+  RULES.forEach(r => studio.classList.toggle(`rules-${r}`, state.rule === r));
+  root.setProperty('--her-pat', PATTERNS[state.herpat] || PATTERNS.dots);
+  root.setProperty('--you-pat', PATTERNS[state.youpat] || PATTERNS.stripes);
+  studio.classList.toggle('entry-border', state.entry === 'border');
+  studio.classList.toggle('entry-edge', state.entry === 'edge');
+  studio.classList.toggle('night', time === 'yoru');
+  studio.classList.toggle('peel-theirs', state.peelTheirs);
+  renderSees();
+  requestAnimationFrame(redraw);
+}
+function inkPicker(el, key) {
+  el.innerHTML = INKS.map(([name, kanji]) =>
+    `<label title="${kanji} ${name}"><input type="radio" name="${key}" id="${key}-${name}" value="${name}" aria-label="${name}"><i style="--c: var(--ink-${name})"></i></label>`).join('');
+  el.addEventListener('change', e => { state[key] = e.target.value; save(); apply(); });
+}
+
+function init() {
+  buildLetterPhone();
+  buildStickerPhone();
+  inkPicker(document.getElementById('persona-inks'), 'persona');
+  inkPicker(document.getElementById('you-inks'), 'you');
+  const check = (id, on) => { const el = document.getElementById(id); if (el) el.checked = on; };
+  check(`season-${state.season}`, true); check(`time-${state.time}`, true); check(`rule-${state.rule}`, true); check(`entry-${state.entry}`, true);
+  check(`herpat-${state.herpat}`, true); check(`youpat-${state.youpat}`, true);
+  check(`persona-${state.persona}`, true); check(`you-${state.you}`, true);
+  check(state.outline === 'custom' ? 'outline-custom-radio' : `outline-${state.outline}`, true);
+  document.getElementById('outline-custom').value = state.outlineCustom;
+  check('opt-mood', state.mood); check('opt-sig', state.sig);
+  [['season', 'season'], ['time', 'time'], ['rule', 'rule'], ['herpat', 'herpat'], ['youpat', 'youpat'], ['entry', 'entry'], ['outline', 'outline']].forEach(([id, key]) =>
+    document.getElementById(id).addEventListener('change', e => { state[key] = e.target.value; save(); apply(); }));
+  document.getElementById('outline-custom').addEventListener('input', e => {
+    state.outlineCustom = e.target.value; state.outline = 'custom'; check('outline-custom-radio', true); save(); apply();
+  });
+  check('opt-peel-theirs', state.peelTheirs); check('opt-aria-peels', state.ariaPeels);
+  [['opt-mood', 'mood'], ['opt-sig', 'sig'], ['opt-peel-theirs', 'peelTheirs'], ['opt-aria-peels', 'ariaPeels']].forEach(([id, key]) =>
+    document.getElementById(id).addEventListener('change', e => { state[key] = e.target.checked; save(); apply(); }));
+  document.getElementById('reset').addEventListener('click', () => { buildStickerPhone(); redraw(); });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+  new MutationObserver(apply).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(redraw, 150); });
+  apply();
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(settle);
+  setTimeout(settle, 400);
+}
+function settle() {
+  redraw();
+  const letter = document.querySelector('#phone-letter .thread');
+  if (letter) letter.scrollTop = letter.scrollHeight;
+}
+init();
+</script>
+
+</body>
+</html>
