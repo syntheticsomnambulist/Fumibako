@@ -76,6 +76,9 @@ legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; lett
 .seg input:checked + span b { color: var(--kami); }
 .seg input:focus-visible + span { outline: 2px solid var(--fuji); outline-offset: 2px; }
 .switches { display: grid; gap: 8px; }
+.custom-colour { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--usuzumi1); }
+.custom-colour input { width: 34px; height: 28px; padding: 0; border: 1px solid var(--nijimi1); border-radius: 8px; background: none; cursor: pointer; }
+.custom-colour input:focus-visible { outline: 2px solid var(--fuji); outline-offset: 2px; }
 .switch { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; }
 .switch input { appearance: none; margin: 0; width: 36px; height: 20px; border-radius: 999px; background: var(--nijimi1); position: relative; cursor: pointer; flex: none; }
 .switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--kami); transition: transform .2s ease; }
@@ -109,10 +112,13 @@ legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; lett
 .nav b { font-family: var(--brush); font-weight: 400; font-size: 20px; line-height: 1.2; color: var(--usuzumi0); }
 .nav .on { color: var(--sumi); }
 .nav .on b { color: var(--sumi); }
-.nav .on::before { content: ""; position: absolute; bottom: -3px; left: 50%; width: 40px; height: 9px; transform: translateX(-50%) rotate(-2deg); z-index: -1; background: var(--pat-stripes), color-mix(in oklab, var(--you) 55%, transparent); --z: 2px;
+.nav .lbl { position: relative; padding: 1px 9px 2px; isolation: isolate; }
+.nav .on .lbl::before { content: ""; position: absolute; inset: -1px -3px; z-index: -1; transform: rotate(-2deg);
+  background: color-mix(in oklab, var(--you) 42%, transparent); --z: 2px;
   -webkit-mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% calc(2 * var(--z)) repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% calc(2 * var(--z)) repeat-y;
           mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% calc(2 * var(--z)) repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% calc(2 * var(--z)) repeat-y; }
-.nav span { isolation: isolate; }
+.nav .on .lbl { color: var(--sumi); font-weight: 700; }
+
 .label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--kasure2); }
 
 /* Shared parts: paper, washi tape (vertical strip and horizontal piece), portraits, moods. */
@@ -132,6 +138,11 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 .sticker .art { display: block; filter: url(#die-cut) drop-shadow(0 1.5px 1.5px rgba(30, 18, 8, .3)); }
 .night .sticker .art { filter: url(#die-cut) drop-shadow(0 1.5px 2px rgba(0, 0, 0, .5)) brightness(.95); }
 .sticker svg { width: 100%; height: auto; display: block; overflow: visible; }
+.sticker.emoji { width: auto; }
+.sticker.emoji .art { font-size: calc(var(--w) * .8); line-height: 1.2; padding: .06em .08em; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.mark-row { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--usuzumi1); padding-top: 4px; border-top: 1px dashed var(--nijimi1); }
+.mark-row .slot { position: relative; width: 40px; height: 40px; }
+.mark-row .more { margin-left: auto; color: var(--tc); font-size: 12px; }
 .paper { fill: var(--paper); }
 .seal-t { font-family: var(--brush); font-size: 27px; text-anchor: middle; }
 .word { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 15px; text-anchor: middle; fill: #4a3b30; }
@@ -144,7 +155,8 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 .away li .dot { width: 20px; height: 20px; border-radius: 50%; overflow: hidden; }
 .away li time { font-size: 11px; color: var(--kasure2); font-variant-numeric: tabular-nums; }
 .away li b { color: var(--tc); font-weight: 700; }
-.away .tape-h { left: -8px; top: -6px; width: 46px; transform: rotate(-28deg); }
+.away .tape-h { left: -9px; top: -4px; width: 44px; transform: rotate(-35deg); }
+.away .tape-h.br { left: auto; top: auto; right: -9px; bottom: -4px; }
 .away[hidden] { display: none; }
 .corr { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; padding: 12px 14px 12px 22px; }
 .corr .tape-v { left: -6px; top: -5px; bottom: -5px; transform: rotate(var(--tilt, -.7deg)); }
@@ -162,17 +174,18 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 
 /* 2. Personas gallery: polaroids taped to the page */
 .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 14px; padding-top: 8px; }
-.polaroid { position: relative; background: var(--kami); padding: 8px 8px 10px; border-radius: 2px; transform: rotate(var(--tilt, 0deg)); box-shadow: 0 0 0 1px var(--nijimi0), 0 8px 16px -10px color-mix(in oklab, var(--chitsu) 85%, #000); display: grid; gap: 6px; text-align: center; }
-.polaroid .pic { aspect-ratio: 4 / 5; overflow: hidden; border-radius: 1px; }
+.polaroid { position: relative; background: var(--frame); padding: 10px 10px 0; border-radius: 3px; transform: rotate(var(--tilt, 0deg)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--frame) 70%, var(--nijimi2)), 0 10px 18px -10px color-mix(in oklab, var(--chitsu) 85%, #000); display: grid; text-align: center; color: var(--frame-ink); }
+.polaroid .pic { aspect-ratio: 1 / 1; overflow: hidden; border-radius: 1px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06); }
+.polaroid .cap { display: grid; gap: 1px; padding: 9px 2px 13px; }
 .polaroid .nm { font-family: var(--display); font-weight: 600; font-size: 19px; line-height: 1.05; }
-.polaroid .md { font-size: 12.5px; }
-.polaroid .meta { font-size: 10.5px; color: var(--kasure2); }
-.polaroid .tape-h { left: 50%; top: -7px; width: 58px; transform: translateX(-50%) rotate(var(--ttilt, -4deg)); }
-.polaroid.new { background: transparent; box-shadow: none; border: 1.5px dashed var(--nijimi2); color: var(--kasure2); place-content: center; min-height: 100%; font-size: 13px; line-height: 1.4; }
+.polaroid .md { font-size: 12.5px; color: var(--frame-tc); }
+.polaroid .meta { font-size: 10.5px; color: color-mix(in oklab, var(--frame-ink) 62%, var(--frame)); }
+.polaroid .tape-h { left: 50%; top: -8px; width: 58px; transform: translateX(-50%) rotate(var(--ttilt, -4deg)); }
+.polaroid.new { background: transparent; box-shadow: none; border: 2px dashed color-mix(in oklab, var(--frame) 55%, var(--nijimi2)); color: var(--kasure2); place-content: center; min-height: 100%; font-size: 13px; line-height: 1.4; }
 .polaroid.new b { display: block; font-family: var(--display); font-size: 34px; font-weight: 500; line-height: 1; color: var(--usuzumi0); }
-.writing-as { display: grid; gap: 10px; }
+.writing-as { display: grid; gap: 16px; }
 .me { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px 10px 20px; }
-.me .tape-v { left: -6px; top: -6px; bottom: -6px; transform: rotate(.8deg); }
+.me .tape-v { left: -6px; top: -5px; bottom: -5px; transform: rotate(.8deg); }
 .me .pic { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; }
 .me .nm { font-family: var(--display); font-weight: 600; font-size: 18px; }
 .me .sub { font-size: 12px; color: var(--kasure2); }
@@ -180,9 +193,9 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 
 /* 3. A persona's page */
 .hero { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 16px; align-items: center; padding-top: 10px; }
-.hero .polaroid { padding: 7px 7px 18px; }
+.hero .polaroid { padding: 8px 8px 26px; }
 .hero .tape-h.l { left: -10px; top: -4px; width: 40px; transform: rotate(-40deg); }
-.hero .tape-h.r { left: auto; right: -10px; top: -4px; width: 40px; transform: rotate(38deg); }
+.hero .tape-h.r { left: auto; top: auto; right: -10px; bottom: -4px; width: 40px; transform: rotate(-40deg); }
 .hero .who { display: grid; gap: 6px; min-width: 0; }
 .hero .nm { font-family: var(--display); font-weight: 600; font-size: 38px; line-height: .95; }
 .hero .md { font-size: 15px; }
@@ -196,7 +209,7 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 .btn.primary { background: var(--tc); color: var(--kami); }
 .btn.quiet { border: 1px solid var(--nijimi1); color: var(--sumi); background: var(--kami); }
 .entry { padding: 14px 16px 14px 22px; display: grid; gap: 9px; }
-.entry .tape-v { left: -6px; top: -8px; bottom: -8px; transform: rotate(var(--tilt, -.7deg)); }
+.entry .tape-v { left: -6px; top: -5px; bottom: -5px; transform: rotate(var(--tilt, -.7deg)); }
 .entry h4 { margin: 0; display: flex; align-items: baseline; gap: 8px; font-family: var(--display); font-weight: 600; font-size: 19px; }
 .entry h4 small { font-family: var(--ui); font-size: 11px; font-weight: 400; color: var(--kasure2); }
 .entry .more { margin-left: auto; font-family: var(--ui); font-size: 12px; font-weight: 400; color: var(--tc); }
@@ -204,7 +217,8 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 .slips { display: grid; gap: 7px; }
 .slip { position: relative; font-family: var(--read); font-size: 13.5px; line-height: 1.45; color: var(--usuzumi1); padding: 7px 10px; border-radius: 2px; background: var(--hyoshi); }
 .slip.core { color: var(--sumi); }
-.slip.core .tape-h { left: -8px; top: -6px; width: 30px; transform: rotate(-32deg); }
+.slip.core .tape-h { left: -8px; top: -5px; width: 30px; transform: rotate(-32deg); }
+.slip.core .tape-h.br { left: auto; top: auto; right: -8px; bottom: -5px; }
 .slip.reflection { font-style: italic; }
 .slip small { display: block; font-family: var(--ui); font-style: normal; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--kasure2); margin-bottom: 2px; }
 .pack { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -260,6 +274,23 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
       </div>
     </fieldset>
     <fieldset>
+      <legend>Sticker outline</legend>
+      <div class="seg" id="outline">
+        <label><input type="radio" name="outline" id="outline-white" value="white" checked><span>White</span></label>
+        <label><input type="radio" name="outline" id="outline-cream" value="cream"><span>Cream</span></label>
+        <label><input type="radio" name="outline" id="outline-black" value="black"><span>Black</span></label>
+        <label><input type="radio" name="outline" id="outline-custom-radio" value="custom"><span>Custom</span></label>
+      </div>
+      <label class="custom-colour" for="outline-custom">Custom colour <input type="color" id="outline-custom" value="#ffd6e7"></label>
+    </fieldset>
+    <fieldset>
+      <legend>Polaroid frames</legend>
+      <div class="seg" id="frame">
+        <label><input type="radio" name="frame" id="frame-match" value="match" checked><span>Match sticker outline</span></label>
+        <label><input type="radio" name="frame" id="frame-paper" value="paper"><span>Paper</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
       <legend>Try</legend>
       <div class="switches">
         <label class="switch"><input type="checkbox" id="opt-away" checked>"While you were away" card</label>
@@ -277,28 +308,29 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
       <div class="phone"><div class="screen" id="phone-list"></div></div>
       <figcaption>
         <h2>Letters<span>文</span></h2>
-        <p>Each conversation is a card held by its persona's washi strip, with a portrait, mood and the last line in a book face. A letter you haven't read yet wears a <b>新</b> seal. The optional card at the top sums up what happened while you were away.</p>
+        <p>Each conversation is a card held by its persona's washi strip, with a portrait, mood and the last line in a book face. An unread letter wears that persona's own unread mark: Aria's is a <b>新</b> seal, Juno's a 💌. The optional card at the top sums up what happened while you were away.</p>
       </figcaption>
     </figure>
     <figure class="study">
       <div class="phone"><div class="screen" id="phone-gallery"></div></div>
       <figcaption>
         <h2>Personas<span>人</span></h2>
-        <p>Personas are polaroids taped into the page, each with their own ink and tape pattern, mood and memory count. Below, your own personas: who you're writing as, with your ink and tape. Tap a polaroid to open that persona's page.</p>
+        <p>Personas are polaroids taped into the page, with thick frames in the sticker outline colour, each with their own ink and tape pattern, mood and memory count. Below, your own personas: who you're writing as, with your ink and tape. Tap a polaroid to open that persona's page.</p>
       </figcaption>
     </figure>
     <figure class="study">
       <div class="phone"><div class="screen" id="phone-page"></div></div>
       <figcaption>
         <h2>Aria's page<span>頁</span></h2>
-        <p>A journal page about one persona: her polaroid, mood, ink and tape, then entries for who she is, her memory book, her sticker pack and her heartbeat. Editing opens the same page as a form.</p>
+        <p>A journal page about one persona: her polaroid, mood, ink and tape, then entries for who she is, her memory book, her sticker pack and unread mark, and her heartbeat. Editing opens the same page as a form.</p>
       </figcaption>
     </figure>
   </section>
 
   <section class="notes" aria-label="Notes">
     <div><h3>Identity carries through</h3><p>A persona's ink and tape pattern appear on its list card, its polaroid, its page and its letters, so you can tell who's who at a glance. Your own ink and tape do the same for your notes and the active tab.</p></div>
-    <div><h3>Unread is a sticker</h3><p>The new-letter mark is a die-cut <b>新</b> seal in the persona's ink, using the same outline setting as every other sticker.</p></div>
+    <div><h3>Unread is a sticker</h3><p>Each persona picks its own unread mark: a seal, an emoji, or anything from its pack. It uses the same die-cut outline as every other sticker.</p></div>
+    <div><h3>Tape rules</h3><p>Corner tape always comes in pairs, on opposing corners. Strips on stacked cards stop well short of each other. The active tab's label is written on plain tape.</p></div>
     <div><h3>Memory, at a glance</h3><p>Her page shows a few memories as slips: core ones taped down, episodes dated, her own reflections in italic. The full book opens from there.</p></div>
   </section>
 
@@ -346,17 +378,19 @@ const PATTERNS = {
   plain: 'linear-gradient(transparent, transparent)',
 };
 
-const state = { season: 'auto', time: 'auto', away: true, mood: true };
-try { Object.assign(state, JSON.parse(localStorage.getItem('screen-studies') || '{}')); } catch (e) { /* storage unavailable */ }
-function save() { try { localStorage.setItem('screen-studies', JSON.stringify(state)); } catch (e) { /* ignore */ } }
+const state = { season: 'auto', time: 'auto', away: true, mood: true, outline: 'white', outlineCustom: '#ffd6e7', frame: 'match' };
+const OUTLINES = { white: '#ffffff', cream: '#f3e3c8', black: '#231a14' };
+function lum(hex) { const n = parseInt(hex.slice(1), 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
+try { Object.assign(state, JSON.parse(localStorage.getItem('screen-studies-2') || '{}')); } catch (e) { /* storage unavailable */ }
+function save() { try { localStorage.setItem('screen-studies-2', JSON.stringify(state)); } catch (e) { /* ignore */ } }
 
 // ---- Sample people --------------------------------------------------------------------------
 const PERSONAS = [
   { id: 'aria', name: 'Aria', ink: 'sakura', pat: 'dots', kanji: '桜', mood: 'fond', seed: 11, tilt: -2.2, ttilt: -5,
     preview: "Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent…",
-    time: '08:14', unread: true, left: 'Left for you while you were away', memories: 214, talked: 'today' },
+    time: '08:14', unread: true, mark: { seal: '新', label: '新 seal' }, left: 'Left for you while you were away', memories: 214, talked: 'today' },
   { id: 'juno', name: 'Juno', ink: 'kikyo', pat: 'gingham', kanji: '桔梗', mood: 'smug', seed: 17, tilt: 1.8, ttilt: 4,
-    preview: "Bring the router by tomorrow. I'll fix it for free. Once.", time: 'Mon', memories: 96, talked: '2 days ago' },
+    preview: "Bring the router by tomorrow. I'll fix it for free. Once.", time: 'Yesterday', unread: true, mark: { emoji: '💌', label: 'love letter emoji' }, memories: 96, talked: 'yesterday' },
   { id: 'kestrel', name: 'Kestrel', ink: 'tokiwa', pat: 'plain', kanji: '常磐', mood: 'watchful', seed: 5, tilt: 1.2, ttilt: -3,
     preview: 'The road north is quiet tonight. I kept the fire going for you.', time: 'Sat', memories: 41, talked: '5 days ago' },
 ];
@@ -371,8 +405,12 @@ let uid = 0;
 const face = (word, inkName) => { const id = `f${++uid}`; return `<svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="${id}" cx="42%" cy="38%" r="62%"><stop offset="0" style="stop-color:var(--stk-${inkName});stop-opacity:.8"/><stop offset="1" style="stop-color:var(--stk-${inkName});stop-opacity:.16"/></radialGradient></defs><circle cx="32" cy="32" r="29" class="paper"/><circle cx="32" cy="32" r="25" fill="url(#${id})"/><text x="32" y="37" class="word">${word}</text></svg>`; };
 const sticker = (svg, w, x, y, r, label) => `<span class="sticker" role="img" aria-label="${label}" style="--w:${w}px;left:${x}%;top:${y}%;--r:${r}deg"><span class="art">${svg}</span></span>`;
 
+// Each persona picks its own unread mark: a seal, an emoji, or any sticker from its pack.
+const unreadMark = (p, x, y, r) => p.mark.emoji
+  ? `<span class="sticker emoji" role="img" aria-label="Unread letter (${p.mark.label})" style="--w:34px;left:${x}%;top:${y}%;--r:${r}deg"><span class="art">${p.mark.emoji}</span></span>`
+  : sticker(seal(p.mark.seal, p.ink), 34, x, y, r, `Unread letter (${p.mark.label})`);
 const nav = active => `<nav class="nav" aria-label="Sections">${[['文', 'Letters'], ['人', 'Personas'], ['設', 'Settings']].map(([k, l]) =>
-  `<span class="${l === active ? 'on' : ''}"><b>${k}</b>${l}</span>`).join('')}</nav>`;
+  `<span class="${l === active ? 'on' : ''}"><b>${k}</b><span class="lbl">${l}</span></span>`).join('')}</nav>`;
 
 function buildList() {
   const aria = PERSONAS[0], juno = PERSONAS[1], kestrel = PERSONAS[2];
@@ -380,7 +418,7 @@ function buildList() {
     <div class="appbar"><h3>Letters</h3><span class="season" data-season-kanji></span><span class="act">Search</span></div>
     <div class="content">
       <section class="paper-card away" id="away-card" style="--tc: var(--fuji); --pat: var(--pat-stripes);" aria-label="While you were away">
-        <span class="tape-h"></span>
+        <span class="tape-h"></span><span class="tape-h br"></span>
         <h4>While you were away</h4>
         <ul>
           <li style="${ink(aria)}"><span class="dot">${portrait(aria, 'avatar')}</span><span><b>Aria</b> wrote you a letter</span><time>08:14</time></li>
@@ -397,7 +435,7 @@ function buildList() {
             ${p.left ? `<span class="left">${p.left}</span>` : ''}
             <p class="pv${p.unread ? ' unread' : ''}">${p.preview}</p>
           </div>
-          ${p.unread ? sticker(seal('新', p.ink), 34, 97, 84, 8, 'Unread letter') : ''}
+          ${p.unread ? unreadMark(p, 97, 84, 8) : ''}
         </article>`).join('')}
     </div>
     <span class="fab"><b>筆</b>New letter</span>
@@ -411,12 +449,14 @@ function buildGallery() {
       <span class="label">Your correspondents</span>
       <div class="gallery">
         ${PERSONAS.map(p => `
-          <article class="polaroid" style="${ink(p)}; --tilt: ${p.tilt}deg; --ttilt: ${p.ttilt}deg">
+          <article class="polaroid" style="${ink(p)}; --frame-tc: var(--frame-ink-${p.ink}); --tilt: ${p.tilt}deg; --ttilt: ${p.ttilt}deg">
             <span class="tape-h"></span>
             <div class="pic">${portrait(p)}</div>
-            <span class="nm">${p.name}</span>
-            <span class="md">${p.mood}</span>
-            <span class="meta">${p.memories} memories · ${p.talked}</span>
+            <div class="cap">
+              <span class="nm">${p.name}</span>
+              <span class="md">${p.mood}</span>
+              <span class="meta">${p.memories} memories · ${p.talked}</span>
+            </div>
           </article>`).join('')}
         <div class="polaroid new" style="--tilt: -1deg"><b>+</b>New persona</div>
       </div>
@@ -464,7 +504,7 @@ function buildPage() {
         <span class="tape-v"></span>
         <h4>Her memory book <small>214 memories</small><span class="more">Open</span></h4>
         <div class="slips">
-          <p class="slip core"><span class="tape-h"></span><small>Core</small>Sam is writing a thesis on urban ecology.</p>
+          <p class="slip core"><span class="tape-h"></span><span class="tape-h br"></span><small>Core</small>Sam is writing a thesis on urban ecology.</p>
           <p class="slip"><small>Episode · Tue 21:41</small>Sam finished the first draft of the thesis and finally slept.</p>
           <p class="slip reflection"><small>Her reflection · Wed 07:58</small>I think Sam works best when someone checks in gently, not too often.</p>
         </div>
@@ -476,6 +516,7 @@ function buildPage() {
           ${['hi!', 'zzz', 'hmph', '♡'].map((w, i) => `<span class="slot">${sticker(face(w, p.ink), 46, 50, 50, [-4, 3, -2, 5][i], `Aria sticker: ${w}`)}</span>`).join('')}
           <span class="add">+ New sheet</span>
         </div>
+        <div class="mark-row"><span>Her unread mark</span><span class="slot">${unreadMark(p, 50, 50, 6)}</span><span class="more">Change</span></div>
       </section>
       <section class="paper-card entry" style="--tilt: .7deg">
         <span class="tape-v"></span>
@@ -533,6 +574,15 @@ function apply() {
   ACCENTS.forEach(name => { root.setProperty(`--ink-${name}`, PAL[name][idx]); root.setProperty(`--stk-${name}`, PAL[name][dayIdx]); });
   Object.entries(PATTERNS).forEach(([name, value]) => root.setProperty(`--pat-${name}`, value));
   root.setProperty('--you', PAL.sora[idx]);
+  const outline = state.outline === 'custom' ? state.outlineCustom : OUTLINES[state.outline] || '#ffffff';
+  root.setProperty('--outline', outline);
+  // Polaroid frames: the sticker outline colour by default, or the page's paper.
+  const frame = state.frame === 'paper' ? PAL.kami[idx] : outline;
+  const lightFrame = lum(frame) > 0.35;
+  root.setProperty('--frame', frame);
+  root.setProperty('--frame-ink', lightFrame ? '#3b2f27' : '#f1e8df');
+  // Ink text on the frame: day inks on a light frame, night inks on a dark one.
+  ACCENTS.forEach(name => root.setProperty(`--frame-ink-${name}`, PAL[name][lightFrame ? dayIdx : THEMES.indexOf(`${season}-yoru`)]));
   root.setProperty('color-scheme', time === 'yoru' ? 'dark' : 'light');
   const kanji = SEASON_KANJI[season] + (time === 'hiru' ? '昼' : '夜');
   document.getElementById('theme-kanji').textContent = kanji;
@@ -550,7 +600,10 @@ function init() {
   const check = (id, on) => { const el = document.getElementById(id); if (el) el.checked = on; };
   check(`season-${state.season}`, true); check(`time-${state.time}`, true);
   check('opt-away', state.away); check('opt-mood', state.mood);
-  [['season', 'season'], ['time', 'time']].forEach(([id, key]) =>
+  check(state.outline === 'custom' ? 'outline-custom-radio' : `outline-${state.outline}`, true); check(`frame-${state.frame}`, true);
+  document.getElementById('outline-custom').value = state.outlineCustom;
+  document.getElementById('outline-custom').addEventListener('input', e => { state.outlineCustom = e.target.value; state.outline = 'custom'; check('outline-custom-radio', true); save(); apply(); });
+  [['season', 'season'], ['time', 'time'], ['outline', 'outline'], ['frame', 'frame']].forEach(([id, key]) =>
     document.getElementById(id).addEventListener('change', e => { state[key] = e.target.value; save(); apply(); }));
   [['opt-away', 'away'], ['opt-mood', 'mood']].forEach(([id, key]) =>
     document.getElementById(id).addEventListener('change', e => { state[key] = e.target.checked; save(); apply(); }));

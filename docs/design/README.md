@@ -68,17 +68,24 @@ also published as private claude.ai artifacts.
 ## Letters list and persona screens (draft, see `screen-studies.html`)
 
 - **Letters list:** each conversation is a paper card held by its persona's washi strip, with a
-  portrait, mood word, time, and the last line in the book face. An unread letter wears a die-cut
-  新 seal in the persona's ink. An optional "While you were away" card at the top summarises
-  heartbeat activity. A "New letter" button in the user's ink.
-- **Personas gallery:** personas as polaroids taped into the page (their ink and tape pattern,
-  slight tilts), with mood and memory count; a dashed "New persona" polaroid. Below, the user's
+  portrait, mood word, time, and the last line in the book face. An unread letter wears the
+  persona's own **unread mark**, chosen per persona: a seal (Aria's 新), an emoji (Juno's 💌) or any
+  sticker from its pack, with the usual die-cut outline. A "While you were away" card at the top
+  summarises heartbeat activity (kept). A "New letter" button in the user's ink.
+- **Personas gallery (loved):** personas as polaroids taped into the page (their ink and tape
+  pattern, slight tilts), with mood and memory count; a dashed "New persona" polaroid. Polaroids
+  have **thick frames in the sticker outline colour** by default (setting: match stickers, or paper). Below, the user's
   own personas ("Writing as"), each with their own ink and tape.
 - **A persona's page:** a journal page with the persona's polaroid, mood, ink, tape and model,
   then taped entries: about, memory book (core memories taped down, dated episodes, reflections
-  in italic), sticker pack, heartbeat status.
-- **Bottom navigation:** kanji labels 文 Letters, 人 Personas, 設 Settings; the active tab is
-  marked by a small piece of the user's tape.
+  in italic), sticker pack and unread mark, heartbeat status. A good start; to be revisited.
+- **Bottom navigation:** kanji labels 文 Letters, 人 Personas, 設 Settings; the active tab's label is
+  written on a strip of plain tape in the user's ink.
+
+### Tape rules
+
+- Corner tape always comes in pairs on opposing corners (upper left and lower right).
+- Vertical strips on stacked cards stop well short of each other (about 5px overhang with a 16px gap).
 
 ## Typography (to revisit)
 
