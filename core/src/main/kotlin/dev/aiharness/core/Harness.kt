@@ -117,8 +117,15 @@ class Harness(
         updateConversation(conversationId) { if ((it.lastReadAt ?: 0L) >= now) it else it.copy(lastReadAt = now) }
     }
 
-    suspend fun logActivity(personaId: String, kind: ActivityKind, conversationId: String? = null, count: Int = 1) {
-        activity.add(ActivityEntry(newId(), personaId, kind, clock.nowMillis(), conversationId, count))
+    suspend fun logActivity(
+        personaId: String,
+        kind: ActivityKind,
+        conversationId: String? = null,
+        count: Int = 1,
+        note: String? = null,
+        tags: List<String> = emptyList(),
+    ) {
+        activity.add(ActivityEntry(newId(), personaId, kind, clock.nowMillis(), conversationId, count, note, tags))
     }
 
     suspend fun apiKey(credentialId: String?): String? =

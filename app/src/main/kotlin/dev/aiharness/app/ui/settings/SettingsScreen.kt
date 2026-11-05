@@ -93,26 +93,26 @@ fun SettingsScreen(nav: NavController) {
             )
             if (s.heartbeat.mode == HeartbeatMode.PROACTIVE) {
                 val intervals = listOf(15, 30, 60, 120, 240, 480)
-                PickerField("Wake every", intervals, s.heartbeat.intervalMinutes, { if (it < 60) "$it minutes" else "${it / 60} hour(s)" }, { v ->
-                    v?.let { update { s2 -> s2.copy(heartbeat = s2.heartbeat.copy(intervalMinutes = it)) } }
+                PickerField("Wake every", intervals, s.heartbeat.rhythm.intervalMinutes, { if (it < 60) "$it minutes" else "${it / 60} hour(s)" }, { v ->
+                    v?.let { update { s2 -> s2.copy(heartbeat = s2.heartbeat.copy(rhythm = s2.heartbeat.rhythm.copy(intervalMinutes = it))) } }
                 })
                 val hours = (0..23).toList()
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PickerField("Quiet from", hours, s.heartbeat.quietHoursStart, { "%02d:00".format(it) }, { v ->
-                        update { it.copy(heartbeat = it.heartbeat.copy(quietHoursStart = v)) }
+                    PickerField("Quiet from", hours, s.heartbeat.rhythm.quietHoursStart, { "%02d:00".format(it) }, { v ->
+                        update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(quietHoursStart = v))) }
                     }, Modifier.weight(1f), noneLabel = "No quiet hours")
-                    PickerField("Until", hours, s.heartbeat.quietHoursEnd, { "%02d:00".format(it) }, { v ->
-                        update { it.copy(heartbeat = it.heartbeat.copy(quietHoursEnd = v)) }
+                    PickerField("Until", hours, s.heartbeat.rhythm.quietHoursEnd, { "%02d:00".format(it) }, { v ->
+                        update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(quietHoursEnd = v))) }
                     }, Modifier.weight(1f), noneLabel = "—")
                 }
-                NumberField("Only reach out after this many minutes of silence", s.heartbeat.minSilenceMinutes, { v ->
-                    v.toIntOrNull()?.let { n -> update { it.copy(heartbeat = it.heartbeat.copy(minSilenceMinutes = n.coerceAtLeast(0))) } }
+                NumberField("Only reach out after this many minutes of silence", s.heartbeat.rhythm.minSilenceMinutes, { v ->
+                    v.toIntOrNull()?.let { n -> update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(minSilenceMinutes = n.coerceAtLeast(0)))) } }
                 })
-                NumberField("Max proactive messages per day", s.heartbeat.maxProactivePerDay, { v ->
-                    v.toIntOrNull()?.let { n -> update { it.copy(heartbeat = it.heartbeat.copy(maxProactivePerDay = n.coerceAtLeast(0))) } }
+                NumberField("Max proactive messages per day", s.heartbeat.rhythm.maxProactivePerDay, { v ->
+                    v.toIntOrNull()?.let { n -> update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(maxProactivePerDay = n.coerceAtLeast(0)))) } }
                 })
-                NumberField("Max unanswered messages in a row", s.heartbeat.maxUnansweredProactive, { v ->
-                    v.toIntOrNull()?.let { n -> update { it.copy(heartbeat = it.heartbeat.copy(maxUnansweredProactive = n.coerceAtLeast(0))) } }
+                NumberField("Max unanswered messages in a row", s.heartbeat.rhythm.maxUnansweredProactive, { v ->
+                    v.toIntOrNull()?.let { n -> update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(maxUnansweredProactive = n.coerceAtLeast(0)))) } }
                 })
                 SwitchRow("Only on unmetered networks", s.heartbeat.requireUnmeteredNetwork, { v ->
                     update { it.copy(heartbeat = it.heartbeat.copy(requireUnmeteredNetwork = v)) }

@@ -149,6 +149,9 @@ class InMemoryActivityRepository : ActivityRepository {
     override fun observeSince(since: Long): Flow<List<ActivityEntry>> =
         entries.map { list -> list.filter { it.createdAt > since }.sortedBy { it.createdAt } }
 
+    override suspend fun forPersona(personaId: String, since: Long): List<ActivityEntry> =
+        entries.value.filter { it.personaId == personaId && it.createdAt > since }.sortedBy { it.createdAt }
+
     override suspend fun add(entry: ActivityEntry) = entries.update { it + entry }
     override suspend fun deleteBefore(time: Long) = entries.update { list -> list.filter { it.createdAt >= time } }
 }

@@ -112,6 +112,9 @@ interface HarnessDao {
     @Query("SELECT * FROM activity WHERE createdAt > :since ORDER BY createdAt")
     fun observeActivity(since: Long): Flow<List<ActivityEntity>>
 
+    @Query("SELECT * FROM activity WHERE createdAt > :since ORDER BY createdAt")
+    suspend fun activitySince(since: Long): List<ActivityEntity>
+
     @Upsert suspend fun upsertActivity(entity: ActivityEntity)
     @Query("DELETE FROM activity WHERE createdAt < :time") suspend fun deleteActivityBefore(time: Long)
 

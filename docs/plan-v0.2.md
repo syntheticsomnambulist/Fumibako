@@ -14,6 +14,11 @@ Stickers (including per-persona unread marks and emotion stickers) move to v0.3.
   the nine-family word list, derived salience and strength, dormant and replaced memories, links
   to the source letter, the updated tools, and recall that tells the persona how it felt. Tested
   with unit tests and a four-month fixture.
+- **Step 2, heartbeat: done.** A list of activities (episodes, reflect, revisit, settle, sort
+  feelings) feeding one private moment that only happens when something is due or the persona may
+  write; per-persona rhythm and heartbeat model; scheduling at the shortest interval; every wakeup
+  logged (including why it rested). The heartbeat settings now live under a "rhythm", so the
+  installed app's heartbeat timings reset to the defaults once.
 
 ## What v0.2 includes
 

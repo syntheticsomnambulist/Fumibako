@@ -44,6 +44,19 @@ enum class HeartbeatMode {
 @Serializable
 data class HeartbeatSettings(
     val mode: HeartbeatMode = HeartbeatMode.PROACTIVE,
+    /** The usual rhythm; a persona can have its own ([Persona.ownHeartbeat]). */
+    val rhythm: HeartbeatRhythm = HeartbeatRhythm(),
+    /** Mention the elapsed time in a turn when the gap since the last message exceeds this. */
+    val timeGapNoteMinutes: Int = 30,
+    val requireUnmeteredNetwork: Boolean = false,
+) {
+    /** The rhythm a persona's heartbeats follow. */
+    fun rhythmFor(persona: Persona): HeartbeatRhythm = persona.ownHeartbeat ?: rhythm
+}
+
+/** How often a persona wakes, and when and how often it may write on its own. */
+@Serializable
+data class HeartbeatRhythm(
     /** WorkManager clamps periodic work to >= 15 minutes. */
     val intervalMinutes: Int = 60,
     /** Local hour [0, 23] at which quiet hours begin, or null for none. */
@@ -54,9 +67,6 @@ data class HeartbeatSettings(
     val maxProactivePerDay: Int = 3,
     /** Stop reaching out after this many unanswered proactive messages in a row. */
     val maxUnansweredProactive: Int = 1,
-    /** Mention the elapsed time in a turn when the gap since the last message exceeds this. */
-    val timeGapNoteMinutes: Int = 30,
-    val requireUnmeteredNetwork: Boolean = false,
 )
 
 @Serializable

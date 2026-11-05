@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -74,8 +75,11 @@ class AppContainer(private val context: Context) {
     fun start() {
         appScope.launch { seedDefaultsOnce() }
         appScope.launch {
-            harness.settings.settings.map { it.heartbeat }.distinctUntilChanged().collect { heartbeat ->
-                runCatching { HeartbeatScheduler.apply(context, heartbeat) }
+            // Reschedule when the heartbeat settings, or any persona's own rhythm, change.
+            combine(harness.settings.settings.map { it.heartbeat }, harness.personas.observeAll()) { heartbeat, personas ->
+                heartbeat to harness.heartbeat.shortestIntervalMinutes(personas, heartbeat.rhythm)
+            }.distinctUntilChanged().collect { (heartbeat, interval) ->
+                runCatching { HeartbeatScheduler.apply(context, heartbeat, interval) }
                     .onFailure { Log.w("Harness", "Couldn't schedule heartbeat", it) }
             }
         }

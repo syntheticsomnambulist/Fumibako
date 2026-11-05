@@ -164,7 +164,7 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
             }
         }
         item {
-            val last = activity.lastOrNull { it.personaId == p.id }
+            val last = activity.lastOrNull { it.personaId == p.id && it.kind.isBeat }
             val mode = settings?.heartbeat?.mode
             val status = when {
                 mode == HeartbeatMode.OFF -> "Heartbeats are off for everyone (Settings)."
@@ -172,15 +172,7 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
                 !p.heartbeatEnabled -> "${p.name} won't wake up in the background."
                 else -> "Wakes up now and then to reflect, tend memories, and maybe write to you."
             }
-            val lastLine = last?.let {
-                val what = when (it.kind) {
-                    ActivityKind.WROTE_LETTER -> "wrote you a letter"
-                    ActivityKind.STAYED_QUIET -> "stayed quiet"
-                    ActivityKind.SAVED_MEMORIES -> "saved memories"
-                    ActivityKind.RECORDED_EPISODE -> "wrote up your recent talks"
-                }
-                "Last heartbeat: $what, ${letterTime(it.createdAt)}."
-            }
+            val lastLine = last?.let { "Last heartbeat: ${dev.aiharness.app.ui.activityPhrase(it.kind, it.count, it.note)}, ${letterTime(it.createdAt)}." }
             Entry(p, "Heartbeat") {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(

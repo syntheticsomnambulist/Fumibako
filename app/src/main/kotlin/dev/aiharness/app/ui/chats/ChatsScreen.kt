@@ -96,7 +96,7 @@ fun ChatsScreen(nav: NavController) {
             if (profiles?.isEmpty() == true) {
                 item { SetupCard { nav.navigate(Routes.MODELS) } }
             }
-            if (activity.isNotEmpty()) {
+            if (activity.any { it.kind != ActivityKind.RESTED }) {
                 item { AwayCard(activity, personas, onDismiss = container::dismissAway) }
             }
             if (visible.isEmpty()) {
@@ -257,16 +257,12 @@ private fun AwayCard(entries: List<ActivityEntry>, personas: List<Persona>, onDi
 }
 
 private data class AwayRow(val personaId: String, val kind: ActivityKind, val count: Int, val at: Long) {
-    fun describe(): String = when (kind) {
-        ActivityKind.WROTE_LETTER -> if (count == 1) "wrote you a letter" else "wrote you $count letters"
-        ActivityKind.SAVED_MEMORIES -> if (count == 1) "saved a memory" else "saved $count memories"
-        ActivityKind.STAYED_QUIET -> if (count == 1) "thought things over and stayed quiet" else "thought things over $count times and stayed quiet"
-        ActivityKind.RECORDED_EPISODE -> "wrote up your recent talks"
-    }
+    fun describe(): String = dev.aiharness.app.ui.activityPhrase(kind, count)
 }
 
+/** One line per persona and kind; wakeups that only rested aren't news. */
 private fun summarise(entries: List<ActivityEntry>): List<AwayRow> =
-    entries.groupBy { it.personaId to it.kind }
+    entries.filter { it.kind != ActivityKind.RESTED }.groupBy { it.personaId to it.kind }
         .map { (key, group) -> AwayRow(key.first, key.second, group.sumOf { it.count }, group.maxOf { it.createdAt }) }
         .sortedByDescending { it.at }
 

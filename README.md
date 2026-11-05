@@ -105,16 +105,22 @@ that always sit in the system prompt. Memories about you can be scoped to one us
 
 Pick a mode in **Settings → Heartbeat**:
 
-- **Proactive** (default): WorkManager wakes the app every N minutes (15-minute minimum). For each
-  persona with heartbeats enabled, it folds new conversation into episode memories, backfills
-  embeddings, and, unless blocked by quiet hours, recency, the daily limit or an unanswered
-  message, gives the persona a private `<heartbeat>` turn with its memory tools. The persona may
-  reflect, then either write you a message (posted to the chat and as a notification) or reply
-  `[SILENT]`. Silent heartbeats are discarded and never enter the history.
+- **Proactive** (default): WorkManager wakes the app at the shortest interval any persona needs
+  (15-minute minimum); each persona keeps its own rhythm (the usual one, or its own: interval,
+  quiet hours, limits, and optionally its own model for heartbeats). A heartbeat runs a list of
+  **activities** (`core/agent/HeartbeatActivities.kt`): writing up recent conversation, inviting a
+  reflection when strong feelings pile up, offering recently recalled memories back to revisit how
+  they feel, keeping "matters deeply" rare, and sorting unknown mood words. If anything is due, or
+  the persona may write to you right now (not quiet hours, not too soon, under the daily limit, not
+  waiting for a reply), it gets one private `<heartbeat>` moment with its memory tools, built from
+  those invitations. It may then write you a letter (posted and notified) or reply `[SILENT]`;
+  quiet moments are discarded from the history, but what it did with its memories stays. Every
+  wakeup is logged for "While you were away" and the persona's page. New activities are how the
+  persona's "home" will grow.
 - **Time-aware**: no background work; each turn includes the current time and elapsed time.
 - **Off**: no background work and no time information.
 
-**Run a heartbeat now** in Settings triggers one immediately for testing.
+**Run a heartbeat now** in Settings triggers one immediately for every persona, whatever their pace.
 
 ### Providers
 

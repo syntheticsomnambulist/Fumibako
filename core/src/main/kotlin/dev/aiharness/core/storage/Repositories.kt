@@ -93,6 +93,9 @@ interface MemoryRepository {
 /** Background activity log (heartbeat outcomes, upkeep), newest last. */
 interface ActivityRepository {
     fun observeSince(since: Long): Flow<List<ActivityEntry>>
+
+    /** One persona's entries since [since], oldest first. */
+    suspend fun forPersona(personaId: String, since: Long): List<ActivityEntry>
     suspend fun add(entry: ActivityEntry)
     suspend fun deleteBefore(time: Long)
 }

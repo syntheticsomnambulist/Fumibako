@@ -28,11 +28,17 @@ import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.HeartbeatSettings
 import java.util.concurrent.TimeUnit
 
+private const val KEY_FORCE = "force"
+private const val KEY_PERSONA = "persona"
+
 /** WorkManager entry point for the persona heartbeat (reflection, memory upkeep, proactive messages). */
 class HeartbeatWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val container = (applicationContext as HarnessApp).container
-        val outcomes = container.harness.heartbeat.run()
+        val outcomes = container.harness.heartbeat.run(
+            force = inputData.getBoolean(KEY_FORCE, false),
+            onlyPersonaId = inputData.getString(KEY_PERSONA),
+        )
         outcomes.filterIsInstance<HeartbeatOutcome.Sent>().forEach { container.notifier.notifyMessage(it) }
         return Result.success()
     }
@@ -42,21 +48,26 @@ object HeartbeatScheduler {
     private const val PERIODIC = "persona-heartbeat"
     private const val ONE_SHOT = "persona-heartbeat-now"
 
-    fun apply(context: Context, settings: HeartbeatSettings) {
+    /**
+     * Schedules the background job at [intervalMinutes]: the shortest interval any persona needs
+     * (each persona then keeps its own pace inside [dev.aiharness.core.agent.HeartbeatEngine]).
+     */
+    fun apply(context: Context, settings: HeartbeatSettings, intervalMinutes: Int) {
         val workManager = WorkManager.getInstance(context)
         if (settings.mode != HeartbeatMode.PROACTIVE) {
             workManager.cancelUniqueWork(PERIODIC)
             return
         }
-        val request = PeriodicWorkRequestBuilder<HeartbeatWorker>(settings.intervalMinutes.coerceAtLeast(15).toLong(), TimeUnit.MINUTES)
+        val request = PeriodicWorkRequestBuilder<HeartbeatWorker>(intervalMinutes.coerceAtLeast(15).toLong(), TimeUnit.MINUTES)
             .setConstraints(constraints(settings))
             .build()
         workManager.enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, request)
     }
 
-    /** Runs one heartbeat right away (useful for testing a persona's proactive behaviour). */
-    fun runNow(context: Context, settings: HeartbeatSettings) {
-        val request = OneTimeWorkRequestBuilder<HeartbeatWorker>().setConstraints(constraints(settings)).build()
+    /** Runs a heartbeat right away for every persona, or just [personaId] (for trying a persona out). */
+    fun runNow(context: Context, settings: HeartbeatSettings, personaId: String? = null) {
+        val data = androidx.work.Data.Builder().putBoolean(KEY_FORCE, true).apply { personaId?.let { putString(KEY_PERSONA, it) } }.build()
+        val request = OneTimeWorkRequestBuilder<HeartbeatWorker>().setConstraints(constraints(settings)).setInputData(data).build()
         WorkManager.getInstance(context).enqueueUniqueWork(ONE_SHOT, ExistingWorkPolicy.REPLACE, request)
     }
 

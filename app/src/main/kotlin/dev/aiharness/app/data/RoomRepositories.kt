@@ -154,6 +154,9 @@ class RoomActivityRepository(private val dao: HarnessDao) : ActivityRepository {
     override fun observeSince(since: Long): Flow<List<ActivityEntry>> =
         dao.observeActivity(since).map { rows -> rows.map { s.decode(it.json) } }
 
+    override suspend fun forPersona(personaId: String, since: Long): List<ActivityEntry> =
+        dao.activitySince(since).map { s.decode(it.json) }.filter { it.personaId == personaId }
+
     override suspend fun add(entry: ActivityEntry) = dao.upsertActivity(ActivityEntity(entry.id, entry.createdAt, s.encode(entry)))
     override suspend fun deleteBefore(time: Long) = dao.deleteActivityBefore(time)
 }

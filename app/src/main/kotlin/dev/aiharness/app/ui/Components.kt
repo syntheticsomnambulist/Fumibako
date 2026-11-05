@@ -234,3 +234,19 @@ fun seasonKanji(themeKey: String): String {
     val s = when (season) { "haru" -> "春"; "natsu" -> "夏"; "aki" -> "秋"; else -> "冬" }
     return s + if (time == "yoru") "夜" else "昼"
 }
+
+/** How an activity reads after the persona's name: "wrote you a letter", "saved 2 memories". */
+fun activityPhrase(kind: dev.aiharness.core.model.ActivityKind, count: Int = 1, note: String? = null): String {
+    fun n(one: String, many: String) = if (count == 1) one else many.replace("#", count.toString())
+    return when (kind) {
+        dev.aiharness.core.model.ActivityKind.WROTE_LETTER -> n("wrote you a letter", "wrote you # letters")
+        dev.aiharness.core.model.ActivityKind.STAYED_QUIET -> n("thought things over and stayed quiet", "thought things over # times and stayed quiet")
+        dev.aiharness.core.model.ActivityKind.RESTED -> "rested" + (note?.let { ": $it" } ?: "")
+        dev.aiharness.core.model.ActivityKind.SAVED_MEMORIES -> n("saved a memory", "saved # memories")
+        dev.aiharness.core.model.ActivityKind.RECORDED_EPISODE -> "wrote up your recent talks"
+        dev.aiharness.core.model.ActivityKind.REFLECTED -> n("wrote a reflection", "wrote # reflections")
+        dev.aiharness.core.model.ActivityKind.REVISITED_FEELINGS -> n("felt differently about a memory", "felt differently about # memories")
+        dev.aiharness.core.model.ActivityKind.SETTLED_MEMORIES -> n("let a memory settle", "let # memories settle")
+        dev.aiharness.core.model.ActivityKind.LET_GO -> n("let a memory go", "let # memories go")
+    }
+}

@@ -316,6 +316,20 @@ class LlmSummarizer(private val h: Harness) {
         )
         return result.text.takeIf { result.stopReason != StopReason.REFUSAL }
     }
+
+    /** A short behind-the-scenes question for the utility model (e.g. sorting mood words). */
+    suspend fun ask(fallbackProfile: ModelProfile, settings: AppSettings, system: String, prompt: String): String? {
+        val profile = settings.utilityModelProfileId?.let { h.profiles.get(it) } ?: fallbackProfile
+        val result = h.providers.forProfile(profile.copy(toolMode = ToolMode.NONE)).complete(
+            LlmRequest(
+                profile = profile.copy(maxOutputTokens = profile.maxOutputTokens.coerceAtMost(2_000)),
+                apiKey = h.apiKey(profile.credentialId),
+                system = system,
+                messages = listOf(LlmMessage.User(listOf(LlmPart.Text(prompt)))),
+            ),
+        )
+        return result.text.takeIf { result.stopReason != StopReason.REFUSAL }
+    }
 }
 
 internal fun ChatMessage.isVisibleReply() =

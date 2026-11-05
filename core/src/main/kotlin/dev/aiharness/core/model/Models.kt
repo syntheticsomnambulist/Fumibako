@@ -105,6 +105,10 @@ data class Persona(
     val avatarRef: String? = null,
     val defaultModelProfileId: String? = null,
     val heartbeatEnabled: Boolean = true,
+    /** This persona's own heartbeat rhythm; null follows the usual settings. */
+    val ownHeartbeat: HeartbeatRhythm? = null,
+    /** A model for this persona's heartbeats (e.g. a stronger one for tending memories); null uses its letters' model. */
+    val heartbeatModelProfileId: String? = null,
     /** Signature ink: one of the madoromi accent ink names (see `docs/design`). */
     val ink: String = "sakura",
     val tapePattern: TapePattern = TapePattern.DOTS,
@@ -353,6 +357,8 @@ data class MemoryEntry(
     val replacedAt: Long? = null,
     /** The user wrote, edited or confirmed this memory. */
     val userTouched: Boolean = false,
+    /** Last time a heartbeat offered it back to the persona to revisit (a cooldown). */
+    val revisitedAt: Long? = null,
     val createdAt: Long,
     val updatedAt: Long,
     /** Last time it came up at all, including automatic recall into a letter. */
