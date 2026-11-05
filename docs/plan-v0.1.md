@@ -19,7 +19,9 @@ core loop (chat, personas, memory, heartbeat, images) verified against the real 
 **In:**
 
 1. Everything that exists today, verified on a device and against Anthropic and NovelAI.
-2. **The madoromi theme:** auto season by date, day/night by clock, with a manual override.
+2. **The madoromi theme:** season by date, and day/night by one of three modes chosen in settings:
+   fixed hours (default, 06:00 to 18:00, adjustable), sunrise and sunset for your location, or a
+   static theme you pick.
 3. **Identity:** each persona and user persona gets an ink and a tape pattern.
 4. **Letters (chat):** persona letters on paper with the washi strip, the per-letter portrait, mood
    words, memory saves as a P.S., and "written while you were away" on heartbeat letters. Your notes
@@ -32,7 +34,7 @@ core loop (chat, personas, memory, heartbeat, images) verified against the real 
    "Edit" opens the existing editor with light restyling and the new identity fields.
 9. **Bottom nav** with kanji labels on tape.
 
-**Proposed for v0.2 (decision 1 below):** stickers. That covers emoji, the shared library and
+**v0.2:** stickers. That covers emoji, the shared library and
 uploads, custom `:name:` emoji inline, placement with move, resize and rotate, the die-cut outline,
 persona sticker tools and removal permissions, and per-persona unread marks.
 
@@ -57,8 +59,10 @@ persona editor redesign, the settings redesign, and the final fonts.
   you last opened the app.
 - **Memory P.S.:** pair each `memory_save` result with the letter that triggered it, so the UI can
   show it as a postscript. This is a UI-side join; storage doesn't change.
-- **Day/night by clock:** the theme controller picks day or night from the local time. Decision 2
-  covers how.
+- **Day/night:** a `ThemeSettings` block in `AppSettings` with the mode (fixed hours, sun, static),
+  the day start and end hours, the static theme, and a saved location. Sunrise and sunset are
+  computed on the phone from latitude and longitude (the NOAA solar formula, no network). The
+  location comes from coarse location, asked for only when you pick that mode, or typed in by hand.
 
 ## Compose building blocks
 
@@ -75,19 +79,21 @@ Each part is built once and reused across screens:
 - `PaperCard`, `Polaroid` (thick frame in the outline colour or paper), `InkPortrait` (the ink-wash
   stand-in until there's real art) and `MoodWord`.
 - `LetterSheet`, `NoteSlip`, `EntryBar`, `TapeNavBar`.
-- Fonts: the placeholder faces through Google's downloadable fonts, so swapping them later is a
-  one-line change. Decision 4 covers this.
+- Fonts: the placeholder faces (Cormorant Garamond, Literata, LINE Seed JP, Yuji Syuku) through
+  Google's downloadable fonts, with system fallbacks, so swapping them later is a one-line change.
 
 ## Order of work
 
 Each step ends with its tests green and a push.
 
-1. **Live check of the engine.** This needs a new session so the API keys you added are loaded. Run
-   the live smoke tests and fix what the real APIs disagree with. Known questions:
+1. **Live check of the engine.** This needs a session that has the API keys you added (they are
+   not visible in the current one). Run the live smoke tests and fix what the real APIs disagree
+   with. It can happen at any point before step 7. Known questions:
    - whether the Anthropic SDK's auth header form works as sent;
    - whether NovelAI accepts the image request format;
    - whether NovelAI text model names are current.
-2. **First device run.** I send you today's debug APK (stock look) so we can catch device-only
+2. **Build workflow and first device run.** A GitHub Actions workflow runs the tests and builds a
+   debug APK on every push. I also send you today's debug APK (stock look) so we can catch device-only
    problems early: Keystore, notifications permission, WorkManager, Anthropic SDK size and start-up
    time. You do a quick chat, a memory save, an image and a "Run a heartbeat now".
 3. **Engine changes:** identity fields, mood tags, `lastReadAt`, the activity log, with unit tests.
@@ -97,8 +103,8 @@ Each step ends with its tests green and a push.
    **persona page**, then the nav. Screenshot tour after each.
 6. **Polish and test pass:** update the Robolectric smoke test for the new UI, run the full unit
    suite, the live smoke tests and a release build.
-7. **v0.1 build to your phone** with a manual test checklist (below). Fix what you find, bump
-   `versionName` to 0.1.0, and push.
+7. **v0.1 build to your phone** with a manual test checklist (below). Fix what you find and push
+   (the app's `versionName` is already 0.1.0).
 
 ## Testing
 
@@ -106,7 +112,8 @@ Each step ends with its tests green and a push.
   release build to catch R8 problems.
 - **Live API smoke tests** (`HARNESS_LIVE_TESTS=1`): Claude tool round trip with thinking replay,
   NovelAI text model list, one NovelAI image. These run in a session that has your keys.
-- **On your phone:** I send the debug APK through the Claude app (decision 3). Checklist:
+- **On your phone:** I send the debug APK here at each milestone, and every push also leaves one
+  in GitHub Actions. Checklist:
   - First launch: notification permission, the sample persona, theme matches season and time.
   - Add an Anthropic key and a model profile; Test succeeds.
   - Chat: streaming reply, mood word appears and changes, a memory save shows as a P.S.
@@ -115,7 +122,8 @@ Each step ends with its tests green and a push.
   - Heartbeat: "Run a heartbeat now", get a notification, and the letter shows as unread with the
     away label; the "While you were away" card fills in.
   - Leave the chat mid-reply and come back; rotate the phone; kill the app and reopen it.
-  - Day and night themes, and a manual season override.
+  - Theme modes: fixed hours (change the hours), sunrise and sunset (location permission or typed
+    location), and a static theme.
 
 ## Risks
 
@@ -132,15 +140,10 @@ Each step ends with its tests green and a push.
 - **Canvas-drawn tape and polaroids in scrolling lists** need care: cache the drawn tape, and keep
   portraits as bitmaps rather than redrawing them every frame.
 
-## Decisions for you
+## Decisions (made 2026-11-05)
 
-1. **Stickers in v0.1 or v0.2?** My recommendation is v0.2. Stickers are a full system of their own
-   (library, gestures, outline rendering, persona tools, context notes), and leaving them out gets
-   v0.1 onto your phone sooner. The entry bar would leave room for the sticker button.
-2. **Day/night switching:** fixed hours you can adjust (recommended: day 06:00 to 18:00), or sunrise
-   and sunset for your location (needs a location permission)?
-3. **How you get builds:** I send the APK file to you here in the Claude app (works today), and/or a
-   GitHub Actions workflow builds an APK on every push for you to download. The workflow may need
-   extra GitHub permission to push.
-4. **Fonts for v0.1:** keep the placeholder faces (downloadable, easy to swap), or use the phone's
-   system fonts until we choose real ones?
+1. **Stickers:** v0.2. The entry bar keeps room for the sticker button.
+2. **Day/night:** fixed hours by default; sunrise and sunset, and a static theme, as options in
+   settings.
+3. **Builds:** sent here in the Claude app, and a GitHub Actions workflow on every push.
+4. **Fonts:** the placeholder faces for now.
