@@ -23,6 +23,8 @@ core loop (chat, personas, memory, heartbeat, images) verified against the real 
 - **2026-11-05:** steps 4 and 5 done: theme, fonts, tape and paper components, and the restyled
   letters list, letters, personas gallery, persona page, navigation and Look settings. Screenshot
   tours in day and night. Next: your test on the phone (step 7) and the live API check (step 1).
+- **2026-11-05:** on the phone, NovelAI image generation works (Aria's avatar was generated from her
+  appearance tags). NovelAI text models are still untested live.
 - **2026-11-05:** no data compatibility before 1.0: schema changes wipe local data (no migrations or
   backfills). Before the repository goes public, follow `docs/going-public.md` (replace the shared
   debug key; CI enforces it).
