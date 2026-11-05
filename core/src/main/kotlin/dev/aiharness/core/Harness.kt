@@ -160,20 +160,22 @@ class Harness(
             lastAgentMessageAt = now.takeIf { persona.greeting.isNotBlank() },
             lastReadAt = now,
         )
-        conversations.upsert(conversation)
-        if (persona.greeting.isNotBlank()) {
+        val greeting = persona.greeting.takeIf { it.isNotBlank() }?.let { prompts.substitute(it, persona.name, userPersona?.name ?: "you") }
+        val created = conversation.copy(preview = greeting?.let { Conversation.previewOf(MoodTags.strip(it)) })
+        conversations.upsert(created)
+        if (greeting != null) {
             conversations.appendMessage(
                 ChatMessage(
                     id = newId(),
                     conversationId = conversation.id,
                     role = MessageRole.ASSISTANT,
-                    parts = listOf(ContentPart.Text(prompts.substitute(persona.greeting, persona.name, userPersona?.name ?: "you"))),
+                    parts = listOf(ContentPart.Text(greeting)),
                     createdAt = now,
                     origin = MessageOrigin.AGENT,
                 ),
             )
         }
-        return conversation
+        return created
     }
 
     /**
@@ -183,12 +185,31 @@ class Harness(
     suspend fun deleteMessages(conversationId: String, ids: Collection<String>) {
         conversations.deleteMessages(ids)
         invalidateContext(conversationId)
+        refreshPreview(conversationId)
     }
 
     suspend fun editMessage(message: ChatMessage, newText: String) {
         val parts = message.parts.filterNot { it is ContentPart.Text } + ContentPart.Text(newText)
         conversations.updateMessage(message.copy(parts = parts, replay = null, mood = MoodTags.parse(newText) ?: message.mood))
         invalidateContext(message.conversationId)
+        refreshPreview(message.conversationId)
+    }
+
+    /** Recomputes the letters-list preview from the messages (after edits, deletes, or for old data). */
+    suspend fun refreshPreview(conversationId: String): Conversation? {
+        val reply = conversations.getMessages(conversationId).lastOrNull {
+            it.role == MessageRole.ASSISTANT && !it.hidden && !it.excludedFromContext && it.displayText.isNotBlank()
+        }
+        return updateConversation(conversationId) {
+            it.copy(
+                preview = reply?.let { r -> Conversation.previewOf(r.displayText) },
+                previewFromHeartbeat = reply?.origin == MessageOrigin.HEARTBEAT,
+                mood = it.mood ?: reply?.mood,
+                lastAgentMessageAt = it.lastAgentMessageAt ?: reply?.createdAt,
+                // Conversations from before read tracking count as read.
+                lastReadAt = it.lastReadAt ?: clock.nowMillis(),
+            )
+        }
     }
 
     suspend fun invalidateContext(conversationId: String) {

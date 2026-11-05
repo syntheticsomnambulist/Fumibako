@@ -5,10 +5,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.core.view.WindowCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.aiharness.app.ui.AppNavigation
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.theme.HarnessTheme
+import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.core.model.TapePattern
+import dev.aiharness.core.model.ThemeSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
@@ -21,12 +30,39 @@ class MainActivity : ComponentActivity() {
         openConversation.value = intent?.getStringExtra(EXTRA_CONVERSATION_ID)
         val container = (application as HarnessApp).container
         setContent {
-            HarnessTheme {
-                CompositionLocalProvider(LocalAppContainer provides container) {
-                    AppNavigation(openConversation)
-                }
+            CompositionLocalProvider(LocalAppContainer provides container) {
+                AppTheme { AppNavigation(openConversation) }
             }
         }
+    }
+
+    @Composable
+    private fun AppTheme(content: @Composable () -> Unit) {
+        val container = (application as HarnessApp).container
+        val settings by container.harness.settings.settings.collectAsStateWithLifecycle(initialValue = null)
+        val usersFlow = remember { container.harness.userPersonas.observeAll() }
+        val users by usersFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+        val you = users.firstOrNull { it.id == settings?.activeUserPersonaId } ?: users.firstOrNull()
+        HarnessTheme(settings?.theme ?: ThemeSettings(), you?.ink, you?.tapePattern ?: TapePattern.STRIPES) {
+            val night = stationery.isNight
+            SideEffect {
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = !night
+                    isAppearanceLightNavigationBars = !night
+                }
+            }
+            content()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        (application as HarnessApp).container.onForeground()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) (application as HarnessApp).container.onBackground()
     }
 
     override fun onNewIntent(intent: Intent) {

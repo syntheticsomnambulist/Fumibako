@@ -147,6 +147,10 @@ data class Conversation(
     val lastReadAt: Long? = null,
     /** The persona's latest self-chosen mood in this conversation (see [MoodTags]). */
     val mood: String? = null,
+    /** The start of the latest visible persona letter, for the letters list. */
+    val preview: String? = null,
+    /** Whether that letter came from a heartbeat ("left for you while you were away"). */
+    val previewFromHeartbeat: Boolean = false,
     /** Frozen prompt state for the current context epoch (see ContextBuilder). */
     val context: ContextState? = null,
     /** Last message already folded into an episode memory by background upkeep. */
@@ -155,6 +159,13 @@ data class Conversation(
 ) {
     val hasUnread: Boolean
         get() = lastAgentMessageAt != null && lastAgentMessageAt > (lastReadAt ?: 0L)
+
+    companion object {
+        /** One line of [text] for a preview. */
+        fun previewOf(text: String): String = text.replace(Regex("\\s+"), " ").trim().take(PREVIEW_LENGTH)
+
+        private const val PREVIEW_LENGTH = 220
+    }
 }
 
 /**

@@ -215,3 +215,23 @@ fun relativeTime(millis: Long, now: Long = System.currentTimeMillis()): String {
         else -> java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT).format(java.util.Date(millis))
     }
 }
+
+/** Times on letters and cards: "08:14" today, "Yesterday", a weekday this week, else "12 Oct". */
+fun letterTime(millis: Long, now: Long = System.currentTimeMillis(), zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): String {
+    val time = java.time.Instant.ofEpochMilli(millis).atZone(zone)
+    val today = java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+    val date = time.toLocalDate()
+    return when {
+        date == today -> "%02d:%02d".format(time.hour, time.minute)
+        date == today.minusDays(1) -> "Yesterday"
+        date.isAfter(today.minusDays(7)) -> time.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault())
+        else -> "${date.dayOfMonth} ${date.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault())}"
+    }
+}
+
+/** 秋昼 for `aki-hiru`: the season and time of the current theme, as written in the app bar. */
+fun seasonKanji(themeKey: String): String {
+    val (season, time) = themeKey.split('-').let { it.getOrElse(0) { "" } to it.getOrElse(1) { "" } }
+    val s = when (season) { "haru" -> "春"; "natsu" -> "夏"; "aki" -> "秋"; else -> "冬" }
+    return s + if (time == "yoru") "夜" else "昼"
+}

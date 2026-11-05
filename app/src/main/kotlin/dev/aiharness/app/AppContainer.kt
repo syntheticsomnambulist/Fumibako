@@ -23,6 +23,7 @@ import dev.aiharness.core.util.newId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -49,6 +50,23 @@ class AppContainer(private val context: Context) {
     )
 
     val generation = GenerationManager(harness, appScope)
+
+    private val appState = context.getSharedPreferences("app_state", Context.MODE_PRIVATE)
+
+    /** When the user last left the app; the letters list sums up background activity since then. */
+    val awaySince = MutableStateFlow(Long.MAX_VALUE)
+
+    fun onForeground() {
+        val left = appState.getLong(KEY_LAST_SEEN, 0L)
+        awaySince.value = if (left == 0L) System.currentTimeMillis() else left
+    }
+
+    fun onBackground() = appState.edit().putLong(KEY_LAST_SEEN, System.currentTimeMillis()).apply()
+
+    /** Hides the "While you were away" card until the next time the user leaves. */
+    fun dismissAway() {
+        awaySince.value = System.currentTimeMillis()
+    }
     val notifier = Notifier(context)
 
     fun start() {
@@ -81,5 +99,9 @@ class AppContainer(private val context: Context) {
         )
         harness.settings.update { it.copy(activeUserPersonaId = user.id) }
         prefs.edit().putBoolean("seeded", true).apply()
+    }
+
+    private companion object {
+        const val KEY_LAST_SEEN = "last_seen_at"
     }
 }

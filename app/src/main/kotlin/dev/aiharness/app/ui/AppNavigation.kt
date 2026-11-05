@@ -50,6 +50,7 @@ object Routes {
     const val USER_PERSONAS = "user_personas"
     fun chat(id: String) = "chat/$id"
     fun persona(id: String) = "persona/$id"
+    fun personaPage(id: String) = "page/$id"
     fun memory(personaId: String) = "memory/$personaId"
     fun model(id: String) = "model/$id"
     const val NEW = "new"
@@ -98,6 +99,7 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
             composable("chat/{id}") { entry -> ChatScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.PERSONAS) { PersonasScreen(nav) }
             composable("persona/{id}") { entry -> PersonaEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
+            composable("page/{id}") { entry -> PersonaEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("memory/{id}") { entry -> MemoryScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.SETTINGS) { SettingsScreen(nav) }
             composable(Routes.MODELS) { ModelsScreen(nav) }

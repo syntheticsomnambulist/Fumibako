@@ -16,7 +16,14 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.aiharness.core.model.ActivityEntry
+import dev.aiharness.core.model.ActivityKind
 import dev.aiharness.core.model.ChatMessage
+import dev.aiharness.core.model.DayNightMode
+import dev.aiharness.core.model.Season
+import dev.aiharness.core.model.TapePattern
+import dev.aiharness.core.model.ThemeSettings
+import dev.aiharness.core.model.TimeOfDay
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.MemoryKind
 import dev.aiharness.core.model.MessageOrigin
@@ -61,21 +68,14 @@ class ScreenshotTour {
     private fun click(text: String) = compose.onAllNodesWithText(text).onFirst().performClick()
 
     @Test
-    @Config(qualifiers = "+night")
-    fun darkTour() = tour("dark")
+    fun nightTour() = tour("night", TimeOfDay.YORU)
 
     @Test
-    fun lightChat() {
-        assumeTrue(outDir != null)
-        seed()
-        click("Aria")
-        waitFor("actually sleep")
-        shot("light_chat")
-    }
+    fun dayTour() = tour("day", TimeOfDay.HIRU)
 
-    private fun tour(prefix: String) {
+    private fun tour(prefix: String, time: TimeOfDay) {
         assumeTrue(outDir != null)
-        seed()
+        seed(time)
         waitFor("Kestrel")
         shot("${prefix}_1_chats")
 
@@ -107,7 +107,7 @@ class ScreenshotTour {
         return ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
     }
 
-    private fun seed() = runBlocking {
+    private fun seed(time: TimeOfDay) = runBlocking {
         val container = ApplicationProvider.getApplicationContext<HarnessApp>().container
         val h = container.harness
         // Wait for first-launch seeding (Aria + default user persona).
@@ -115,21 +115,34 @@ class ScreenshotTour {
         val now = System.currentTimeMillis()
         val aria = h.personas.getAll().first { it.name == "Aria" }
 
-        val sam = UserPersona(newId(), "Sam", "A grad student who writes too late at night.", createdAt = now, updatedAt = now)
+        val sam = UserPersona(newId(), "Sam", "A grad student who writes too late at night.", ink = "sora", tapePattern = TapePattern.STRIPES, createdAt = now, updatedAt = now)
         h.userPersonas.upsert(sam)
         val profile = ModelProfile(id = newId(), name = "Claude Opus 5.5", provider = ProviderType.ANTHROPIC, modelId = "claude-opus-5-5")
         h.profiles.upsert(profile)
-        h.settings.update { it.copy(activeUserPersonaId = sam.id, defaultModelProfileId = profile.id) }
+        h.settings.update {
+            it.copy(
+                activeUserPersonaId = sam.id,
+                defaultModelProfileId = profile.id,
+                theme = ThemeSettings(dayNight = DayNightMode.STATIC, staticSeason = Season.AKI, staticTime = time),
+            )
+        }
 
-        listOf(
-            Persona(newId(), "Kestrel", "A stoic knight-errant sworn to an order that no longer exists.", personality = "Dry humour, fiercely loyal.", createdAt = now, updatedAt = now),
-            Persona(newId(), "Juno", "A sharp-tongued tech witch who runs a repair shop in a rainy megacity.", personality = "Sarcastic, secretly soft.", createdAt = now, updatedAt = now),
-        ).forEach {
-            h.personas.upsert(it)
-            h.createConversation(it.id, sam.id)
+        val kestrel = Persona(
+            newId(), "Kestrel", "A stoic knight-errant sworn to an order that no longer exists.", personality = "Dry humour, fiercely loyal.",
+            greeting = "You keep late hours. So do I. Sit, if you like.", ink = "tokiwa", tapePattern = TapePattern.STRIPES, createdAt = now, updatedAt = now,
+        )
+        val juno = Persona(
+            newId(), "Juno", "A sharp-tongued tech witch who runs a repair shop in a rainy megacity.", personality = "Sarcastic, secretly soft.",
+            greeting = "Shop's open. Don't touch the cat, she bites the curious.", ink = "kikyo", tapePattern = TapePattern.GINGHAM, createdAt = now, updatedAt = now,
+        )
+        listOf(kestrel to "watchful", juno to "smug").forEach { (persona, mood) ->
+            h.personas.upsert(persona)
+            val c = h.createConversation(persona.id, sam.id)
+            h.updateConversation(c.id) { it.copy(mood = mood, updatedAt = now - 86_400_000L, lastAgentMessageAt = now - 86_400_000L) }
         }
 
         val conversation = h.createConversation(aria.id, sam.id)
+        h.conversations.deleteMessages(h.conversations.getMessages(conversation.id).map { it.id })
         val image = h.blobs.put(placeholderImage(), "png")
         var t = now - 3 * 3_600_000L
         fun msg(role: MessageRole, vararg parts: ContentPart, origin: MessageOrigin = MessageOrigin.AGENT) =
@@ -140,16 +153,25 @@ class ScreenshotTour {
                 MessageRole.ASSISTANT,
                 ContentPart.Reasoning("Sam has been working on this for months. This is a big milestone worth remembering."),
                 ContentPart.Text("*gasps and claps both hands over her mouth* Sam! That's **huge**. After all those late nights?"),
-                ContentPart.ToolCall("t1", "memory_save", "{}"),
+                ContentPart.ToolCall("t1", "memory_save", """{"content":"Sam finished the first draft of the thesis"}"""),
             ),
             msg(MessageRole.TOOL, ContentPart.ToolResult("t1", "memory_save", "Saved.")),
             msg(MessageRole.ASSISTANT, ContentPart.Text("I'm writing this one down. How do you feel?")),
             msg(MessageRole.USER, ContentPart.Text("Tired. Happy. Can you show me what you'd look like celebrating?"), origin = MessageOrigin.USER),
             msg(MessageRole.ASSISTANT, ContentPart.Text("*twirls* Like this!"), ContentPart.ToolCall("t2", "generate_image", "{}")),
             msg(MessageRole.TOOL, ContentPart.ToolResult("t2", "generate_image", "Shown."), ContentPart.Image(image, caption = "celebrating")),
-            msg(MessageRole.ASSISTANT, ContentPart.Text("Good morning! Did you actually sleep after all that writing? *tilts head*"), origin = MessageOrigin.HEARTBEAT),
+            msg(MessageRole.ASSISTANT, ContentPart.Text("Good morning! Did you actually sleep after all that writing? *tilts head* [mood: fond]"), origin = MessageOrigin.HEARTBEAT),
         ).forEach { h.conversations.appendMessage(it) }
-        h.conversations.upsert(h.conversations.get(conversation.id)!!.copy(updatedAt = now + 1))
+        h.refreshPreview(conversation.id)
+        h.updateConversation(conversation.id) {
+            it.copy(updatedAt = now + 1, mood = "fond", lastAgentMessageAt = t, lastReadAt = now - 4 * 3_600_000L)
+        }
+
+        // Background activity since the user "left".
+        container.awaySince.value = now - 10 * 3_600_000L
+        h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.WROTE_LETTER, now - 2 * 3_600_000L, conversation.id))
+        h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.SAVED_MEMORIES, now - 2 * 3_600_000L - 60_000, conversation.id, count = 2))
+        h.activity.add(ActivityEntry(newId(), juno.id, ActivityKind.STAYED_QUIET, now - 5 * 3_600_000L))
 
         h.memory.save(aria.id, "Sam is writing a thesis on urban ecology", importance = 8, pinned = true)
         h.memory.save(aria.id, "Sam finished the first draft of the thesis", kind = MemoryKind.EPISODE, importance = 7)

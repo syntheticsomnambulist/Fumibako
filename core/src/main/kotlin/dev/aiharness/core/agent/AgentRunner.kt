@@ -267,6 +267,8 @@ class AgentRunner(private val h: Harness) {
                 updatedAt = now,
                 lastAgentMessageAt = reply?.createdAt ?: it.lastAgentMessageAt,
                 mood = reply?.mood ?: it.mood,
+                preview = reply?.let { r -> Conversation.previewOf(r.displayText) } ?: it.preview,
+                previewFromHeartbeat = reply?.let { r -> r.origin == MessageOrigin.HEARTBEAT } ?: it.previewFromHeartbeat,
             )
         }
     }

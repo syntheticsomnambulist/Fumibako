@@ -32,8 +32,8 @@ jobs:
       - name: Unit tests (core + Robolectric)
         run: ./gradlew :core:test :app:testDebugUnitTest
 
-      - name: Build debug and release APKs
-        run: ./gradlew :app:assembleDebug :app:assembleRelease
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v6
@@ -42,6 +42,10 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 30
+
+      # Last, because R8 over the Anthropic SDK is slow; it catches shrinking problems.
+      - name: Build release APK (R8 check)
+        run: ./gradlew :app:assembleRelease
 
       - name: Upload test reports
         if: failure()

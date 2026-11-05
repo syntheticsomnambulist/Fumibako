@@ -77,7 +77,7 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     /** Changing the user persona starts a new context epoch automatically (the system prompt changes). */
     fun switchUserPersona(user: UserPersona) = updateConversation { it.copy(userPersonaId = user.id) }
 
-    fun deleteMessage(message: ChatMessage) = viewModelScope.launch { harness.deleteMessages(conversationId, listOf(message.id)) }
+    fun deleteMessages(messages: List<ChatMessage>) = viewModelScope.launch { harness.deleteMessages(conversationId, messages.map { it.id }) }
     /** Edits show the text without its mood tag; the tag is put back so the stored history keeps it. */
     fun editMessage(message: ChatMessage, text: String) = viewModelScope.launch {
         val tag = message.mood?.takeIf { message.role == MessageRole.ASSISTANT && MoodTags.parse(text) == null }
