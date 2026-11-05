@@ -17,6 +17,7 @@ import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.ModelProfile
+import dev.aiharness.core.model.MoodTags
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.ToolMode
 import dev.aiharness.core.model.UserPersona
@@ -92,8 +93,8 @@ class AgentRunner(private val h: Harness) {
                 turnContext = turnContext,
             )
             h.conversations.appendMessage(userMessage)
-            val conversation = setup.conversation.copy(updatedAt = now, lastUserMessageAt = now)
-            h.conversations.upsert(conversation)
+            val conversation = h.updateConversation(conversationId) { it.copy(updatedAt = now, lastUserMessageAt = now) }
+                ?: setup.conversation
             send(AgentEvent.UserMessageSaved(userMessage))
 
             runGuarded(setup.copy(conversation = conversation), history + userMessage) { send(it) }
@@ -180,11 +181,10 @@ class AgentRunner(private val h: Harness) {
                 ),
             )
             if (prepared.state != conversation.context || prepared.episodeThroughMessageId != null) {
-                conversation = conversation.copy(
-                    context = prepared.state,
-                    lastEpisodeMessageId = prepared.episodeThroughMessageId ?: conversation.lastEpisodeMessageId,
-                )
-                h.conversations.upsert(conversation)
+                val update: (Conversation) -> Conversation = {
+                    it.copy(context = prepared.state, lastEpisodeMessageId = prepared.episodeThroughMessageId ?: it.lastEpisodeMessageId)
+                }
+                conversation = h.updateConversation(conversation.id, update) ?: update(conversation)
             }
 
             val request = LlmRequest(setup.profile, setup.apiKey, prepared.state.systemPrompt, prepared.messages, specs)
@@ -218,6 +218,7 @@ class AgentRunner(private val h: Harness) {
                 excludedFromContext = refused,
                 errorMessage = if (refused) refusalMessage(turn) else null,
                 usage = turn.usage,
+                mood = MoodTags.parse(turn.text),
             )
             sink.append(assistant)
             transcript += assistant
@@ -253,8 +254,21 @@ class AgentRunner(private val h: Harness) {
             emit(AgentEvent.MessageSaved(toolMessage))
         }
 
-        if (!background) h.conversations.get(conversation.id)?.let { h.conversations.upsert(it.copy(updatedAt = h.clock.nowMillis())) }
+        if (!background) recordReply(conversation.id, produced)
         return TurnOutcome(produced, finalText, refused = false)
+    }
+
+    /** Bumps the conversation and records the latest visible reply's time and mood (for the letters list). */
+    internal suspend fun recordReply(conversationId: String, produced: List<ChatMessage>) {
+        val now = h.clock.nowMillis()
+        val reply = produced.lastOrNull { it.isVisibleReply() }
+        h.updateConversation(conversationId) {
+            it.copy(
+                updatedAt = now,
+                lastAgentMessageAt = reply?.createdAt ?: it.lastAgentMessageAt,
+                mood = reply?.mood ?: it.mood,
+            )
+        }
     }
 
     private fun refusalMessage(turn: LlmTurnResult): String {
@@ -288,3 +302,6 @@ class LlmSummarizer(private val h: Harness) {
         return result.text.takeIf { result.stopReason != StopReason.REFUSAL }
     }
 }
+
+internal fun ChatMessage.isVisibleReply() =
+    role == MessageRole.ASSISTANT && !hidden && !excludedFromContext && displayText.isNotBlank()

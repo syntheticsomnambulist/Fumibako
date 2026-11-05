@@ -1,6 +1,7 @@
 package dev.aiharness.app.data.db
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -41,6 +42,9 @@ data class MemoryEntity(@PrimaryKey val id: String, val personaId: String, val u
 
 @Entity(tableName = "memory_vectors", primaryKeys = ["memoryId", "model"], indices = [Index("personaId")])
 data class MemoryVectorEntity(val memoryId: String, val model: String, val personaId: String, val vector: ByteArray)
+
+@Entity(tableName = "activity", indices = [Index("createdAt")])
+data class ActivityEntity(@PrimaryKey val id: String, val createdAt: Long, val json: String)
 
 @Dao
 interface HarnessDao {
@@ -104,6 +108,13 @@ interface HarnessDao {
     @Query("SELECT * FROM memory_vectors WHERE personaId = :personaId AND model = :model")
     suspend fun vectors(personaId: String, model: String): List<MemoryVectorEntity>
 
+    // Background activity log
+    @Query("SELECT * FROM activity WHERE createdAt > :since ORDER BY createdAt")
+    fun observeActivity(since: Long): Flow<List<ActivityEntity>>
+
+    @Upsert suspend fun upsertActivity(entity: ActivityEntity)
+    @Query("DELETE FROM activity WHERE createdAt < :time") suspend fun deleteActivityBefore(time: Long)
+
     @Upsert suspend fun upsertVector(entity: MemoryVectorEntity)
     @Query("DELETE FROM memory_vectors WHERE memoryId = :memoryId") suspend fun deleteVectors(memoryId: String)
 }
@@ -112,9 +123,11 @@ interface HarnessDao {
     entities = [
         PersonaEntity::class, UserPersonaEntity::class, ModelProfileEntity::class, CredentialEntity::class,
         ConversationEntity::class, MessageEntity::class, MemoryEntity::class, MemoryVectorEntity::class,
+        ActivityEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 abstract class HarnessDatabase : RoomDatabase() {
     abstract fun dao(): HarnessDao

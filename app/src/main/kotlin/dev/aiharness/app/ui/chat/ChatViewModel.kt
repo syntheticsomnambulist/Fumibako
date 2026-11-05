@@ -7,6 +7,8 @@ import dev.aiharness.app.engine.GenerationState
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.ModelProfile
+import dev.aiharness.core.model.MessageRole
+import dev.aiharness.core.model.MoodTags
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
 import kotlinx.coroutines.flow.SharingStarted
@@ -76,14 +78,20 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     fun switchUserPersona(user: UserPersona) = updateConversation { it.copy(userPersonaId = user.id) }
 
     fun deleteMessage(message: ChatMessage) = viewModelScope.launch { harness.deleteMessages(conversationId, listOf(message.id)) }
-    fun editMessage(message: ChatMessage, text: String) = viewModelScope.launch { harness.editMessage(message, text) }
+    /** Edits show the text without its mood tag; the tag is put back so the stored history keeps it. */
+    fun editMessage(message: ChatMessage, text: String) = viewModelScope.launch {
+        val tag = message.mood?.takeIf { message.role == MessageRole.ASSISTANT && MoodTags.parse(text) == null }
+        harness.editMessage(message, if (tag != null) "$text [mood: $tag]" else text)
+    }
     fun refreshContext() = viewModelScope.launch { harness.invalidateContext(conversationId) }
     fun deleteConversation(done: () -> Unit) = viewModelScope.launch {
         harness.conversations.delete(conversationId)
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) { done() }
     }
 
+    fun markRead() = viewModelScope.launch { harness.markRead(conversationId) }
+
     private fun updateConversation(transform: (Conversation) -> Conversation) = viewModelScope.launch {
-        harness.conversations.get(conversationId)?.let { harness.conversations.upsert(transform(it)) }
+        harness.updateConversation(conversationId, transform)
     }
 }

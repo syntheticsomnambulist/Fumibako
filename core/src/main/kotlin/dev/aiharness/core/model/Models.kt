@@ -84,6 +84,10 @@ data class ProviderOptions(
 // Personas
 // ---------------------------------------------------------------------------
 
+/** Washi tape patterns, part of a persona's (and the user's) look alongside its ink. */
+@Serializable
+enum class TapePattern { PLAIN, DOTS, STRIPES, GINGHAM }
+
 /** An agent persona. Each persona owns its own memories. */
 @Serializable
 data class Persona(
@@ -101,6 +105,11 @@ data class Persona(
     val avatarRef: String? = null,
     val defaultModelProfileId: String? = null,
     val heartbeatEnabled: Boolean = true,
+    /** Signature ink: one of the madoromi accent ink names (see `docs/design`). */
+    val ink: String = "sakura",
+    val tapePattern: TapePattern = TapePattern.DOTS,
+    /** What an unread letter from this persona wears; null is the default seal. Stickers come in v0.2. */
+    val unreadMark: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
 )
@@ -112,6 +121,8 @@ data class UserPersona(
     val name: String,
     val description: String = "",
     val avatarRef: String? = null,
+    val ink: String = "sora",
+    val tapePattern: TapePattern = TapePattern.STRIPES,
     val createdAt: Long,
     val updatedAt: Long,
 )
@@ -130,12 +141,21 @@ data class Conversation(
     val createdAt: Long,
     val updatedAt: Long,
     val lastUserMessageAt: Long? = null,
+    /** When the latest visible persona message arrived, for unread marks and the letters list. */
+    val lastAgentMessageAt: Long? = null,
+    /** When the user last had this conversation open. */
+    val lastReadAt: Long? = null,
+    /** The persona's latest self-chosen mood in this conversation (see [MoodTags]). */
+    val mood: String? = null,
     /** Frozen prompt state for the current context epoch (see ContextBuilder). */
     val context: ContextState? = null,
     /** Last message already folded into an episode memory by background upkeep. */
     val lastEpisodeMessageId: String? = null,
     val archived: Boolean = false,
-)
+) {
+    val hasUnread: Boolean
+        get() = lastAgentMessageAt != null && lastAgentMessageAt > (lastReadAt ?: 0L)
+}
 
 /**
  * The prompt state of one context "epoch". Within an epoch the system prompt and tool set are frozen
@@ -219,9 +239,16 @@ data class ChatMessage(
     val excludedFromContext: Boolean = false,
     val errorMessage: String? = null,
     val usage: TokenUsage? = null,
+    /** Mood the persona chose for this message, parsed from its `[mood: ...]` tag. */
+    val mood: String? = null,
 ) {
+    /** The text as stored and replayed to the model, including any mood tag. */
     val text: String
         get() = parts.filterIsInstance<ContentPart.Text>().joinToString("\n") { it.text }
+
+    /** The text as shown to the user: mood tags removed. */
+    val displayText: String
+        get() = MoodTags.strip(text)
 
     val toolCalls: List<ContentPart.ToolCall>
         get() = parts.filterIsInstance<ContentPart.ToolCall>()

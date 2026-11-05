@@ -1,6 +1,7 @@
 package dev.aiharness.core.agent
 
 import dev.aiharness.core.Harness
+import dev.aiharness.core.model.ActivityKind
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.Conversation
@@ -9,6 +10,7 @@ import dev.aiharness.core.model.HeartbeatSettings
 import dev.aiharness.core.model.MemoryKind
 import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
+import dev.aiharness.core.model.MoodTags
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.util.humanizeDuration
 import dev.aiharness.core.util.newId
@@ -41,6 +43,7 @@ class HeartbeatEngine(private val h: Harness) {
     suspend fun run(): List<HeartbeatOutcome> {
         val settings = h.settings.current()
         if (settings.heartbeat.mode != HeartbeatMode.PROACTIVE) return emptyList()
+        runCatching { h.activity.deleteBefore(h.clock.nowMillis() - ACTIVITY_RETENTION_MILLIS) }
         val outcomes = mutableListOf<HeartbeatOutcome>()
         val conversations = h.conversations.getAll().filter { !it.archived }
         h.personas.getAll().filter { it.heartbeatEnabled }.forEach { persona ->
@@ -93,7 +96,9 @@ class HeartbeatEngine(private val h: Harness) {
                 }
                 append(".\nThen decide whether to message $userName now. Only reach out for a genuine reason: following up on ")
                 append("something they mentioned, sharing a thought, or checking in after a long silence. They may be busy.\n")
-                append("If you decide to write, reply with only the message itself, addressed to $userName. ")
+                append("If you decide to write, reply with only the message itself, addressed to $userName")
+                if (setup.settings.moodTags) append(", ending with your mood tag")
+                append(". ")
                 append("Otherwise reply with exactly $SILENT.\n")
                 append("</heartbeat>")
             }
@@ -127,15 +132,21 @@ class HeartbeatEngine(private val h: Harness) {
                 allowCompaction = false,
                 emit = {},
             )
-            val text = outcome.finalText.trim()
-            if (outcome.refused || text.isEmpty() || text.contains(SILENT)) {
+            // Memories saved in the turn stay saved even when the persona then stays quiet.
+            val saved = outcome.messages.sumOf { m -> m.toolResults.count { it.name == "memory_save" && !it.isError } }
+            if (saved > 0) h.logActivity(persona.id, ActivityKind.SAVED_MEMORIES, initial.id, saved)
+
+            val text = MoodTags.strip(outcome.finalText).trim()
+            if (outcome.refused || text.isEmpty() || outcome.finalText.contains(SILENT)) {
+                h.logActivity(persona.id, ActivityKind.STAYED_QUIET, initial.id)
                 return HeartbeatOutcome.Silent(persona.id, initial.id)
             }
 
             h.conversations.appendMessage(heartbeatMessage)
             buffered.forEach { h.conversations.appendMessage(it) }
+            h.agent.recordReply(initial.id, buffered)
+            h.logActivity(persona.id, ActivityKind.WROTE_LETTER, initial.id)
             val latest = h.conversations.get(initial.id) ?: setup.conversation
-            h.conversations.upsert(latest.copy(updatedAt = h.clock.nowMillis()))
             val finalMessage = buffered.last { it.role == MessageRole.ASSISTANT }
             return HeartbeatOutcome.Sent(latest, persona, finalMessage)
         } finally {
@@ -191,12 +202,13 @@ class HeartbeatEngine(private val h: Harness) {
             tags = listOf("episode"),
             sourceConversationId = conversation.id,
         )
-        val updated = (h.conversations.get(conversation.id) ?: conversation).copy(lastEpisodeMessageId = pending.last().id)
-        h.conversations.upsert(updated)
-        return updated
+        h.logActivity(setup.persona.id, ActivityKind.RECORDED_EPISODE, conversation.id)
+        return h.updateConversation(conversation.id) { it.copy(lastEpisodeMessageId = pending.last().id) }
+            ?: conversation.copy(lastEpisodeMessageId = pending.last().id)
     }
 
     companion object {
         const val SILENT = "[SILENT]"
+        private const val ACTIVITY_RETENTION_MILLIS = 14L * 86_400_000L
     }
 }

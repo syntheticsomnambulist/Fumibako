@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.aiharness.app.data.RoomActivityRepository
 import dev.aiharness.app.data.RoomConversationRepository
 import dev.aiharness.app.data.RoomMemoryRepository
 import dev.aiharness.app.data.db.HarnessDatabase
+import dev.aiharness.core.model.ActivityEntry
+import dev.aiharness.core.model.ActivityKind
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.ContextState
@@ -78,5 +81,19 @@ class RoomRepositoriesTest {
 
         repo.delete("x")
         assertEquals(emptyMap(), repo.getVectors("p", "model-a"))
+    }
+
+    @Test
+    fun activityLogFiltersByTimeAndPrunes() = runTest {
+        val repo = RoomActivityRepository(db.dao())
+        repo.add(ActivityEntry("a1", "p1", ActivityKind.STAYED_QUIET, createdAt = 100))
+        repo.add(ActivityEntry("a2", "p1", ActivityKind.WROTE_LETTER, createdAt = 300, conversationId = "c1"))
+        repo.add(ActivityEntry("a3", "p1", ActivityKind.SAVED_MEMORIES, createdAt = 200, count = 2))
+
+        assertEquals(listOf("a3", "a2"), repo.observeSince(150).first().map { it.id })
+        assertEquals(2, repo.observeSince(150).first().first().count)
+
+        repo.deleteBefore(250)
+        assertEquals(listOf("a2"), repo.observeSince(0).first().map { it.id })
     }
 }

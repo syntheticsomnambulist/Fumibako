@@ -1,5 +1,6 @@
 package dev.aiharness.core.storage
 
+import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Conversation
@@ -83,6 +84,13 @@ interface MemoryRepository {
     /** Embedding vectors keyed by memory id, for one embedding model. */
     suspend fun getVectors(personaId: String, model: String): Map<String, FloatArray>
     suspend fun putVector(memoryId: String, personaId: String, model: String, vector: FloatArray)
+}
+
+/** Background activity log (heartbeat outcomes, upkeep), newest last. */
+interface ActivityRepository {
+    fun observeSince(since: Long): Flow<List<ActivityEntry>>
+    suspend fun add(entry: ActivityEntry)
+    suspend fun deleteBefore(time: Long)
 }
 
 interface SettingsRepository {

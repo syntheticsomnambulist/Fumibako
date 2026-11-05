@@ -14,6 +14,9 @@ data class AppSettings(
     /** Global guidance appended to every persona's system prompt. */
     val baseInstructions: String = DEFAULT_BASE_INSTRUCTIONS,
     val maxToolRounds: Int = 6,
+    /** Ask personas to end replies with a `[mood: ...]` tag (shown beside their name). */
+    val moodTags: Boolean = true,
+    val theme: ThemeSettings = ThemeSettings(),
 ) {
     companion object {
         const val DEFAULT_BASE_INSTRUCTIONS: String =
@@ -94,4 +97,43 @@ data class ImageGenSettings(
     /** UC preset name: heavy, light, human, none. */
     val ucPreset: String = "heavy",
     val negativePrompt: String = "",
+)
+
+@Serializable
+enum class Season { HARU, NATSU, AKI, FUYU }
+
+@Serializable
+enum class TimeOfDay { HIRU, YORU }
+
+@Serializable
+enum class DayNightMode {
+    /** Day between two clock times (default 06:00 to 18:00). */
+    FIXED_HOURS,
+
+    /** Day between sunrise and sunset at the saved location. Falls back to fixed hours without one. */
+    SUN,
+
+    /** Always the theme picked in [ThemeSettings.staticSeason] and [ThemeSettings.staticTime]. */
+    STATIC,
+}
+
+@Serializable
+enum class FrameStyle { MATCH_OUTLINE, PAPER }
+
+@Serializable
+data class ThemeSettings(
+    val dayNight: DayNightMode = DayNightMode.FIXED_HOURS,
+    /** Minutes after local midnight. */
+    val dayStartMinute: Int = 6 * 60,
+    val dayEndMinute: Int = 18 * 60,
+    val staticSeason: Season = Season.HARU,
+    val staticTime: TimeOfDay = TimeOfDay.HIRU,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val locationLabel: String? = null,
+    /** Die-cut outline colour for stickers (v0.2), also the default polaroid frame colour. */
+    val outlineColor: String = "#FFFFFF",
+    val polaroidFrame: FrameStyle = FrameStyle.MATCH_OUTLINE,
+    /** Brush-stroke signature under letters written while the user was away. */
+    val inkSignature: Boolean = false,
 )

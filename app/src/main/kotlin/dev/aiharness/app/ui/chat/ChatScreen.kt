@@ -78,6 +78,7 @@ import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
+import dev.aiharness.core.model.MoodTags
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,6 +104,8 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     LaunchedEffect(messages.size, generation.streamingText.length > 0) {
         if (messages.isNotEmpty()) listState.animateScrollToItem(0)
     }
+    // Everything on screen counts as read, including letters that arrive while it is open.
+    LaunchedEffect(messages.lastOrNull()?.id) { vm.markRead() }
 
     Scaffold(
         topBar = {
@@ -265,7 +268,7 @@ private fun MessageItem(message: ChatMessage, personaName: String, onLongPress: 
         }
         MessageRole.USER, MessageRole.ASSISTANT -> {
             val mine = message.role == MessageRole.USER
-            val text = message.text
+            val text = message.displayText
             if (text.isBlank() && message.images.isEmpty() && message.errorMessage == null) return
             Column(Modifier.fillMaxWidth(), horizontalAlignment = if (mine) Alignment.End else Alignment.Start) {
                 if (!mine && message.origin == MessageOrigin.HEARTBEAT) {
@@ -324,7 +327,8 @@ private fun ReasoningToggle(reasoning: String) {
 }
 
 @Composable
-private fun StreamingBubble(text: String, reasoning: String, status: String) {
+private fun StreamingBubble(rawText: String, reasoning: String, status: String) {
+    val text = MoodTags.stripStreaming(rawText)
     Column(Modifier.fillMaxWidth()) {
         if (text.isNotEmpty()) {
             Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.widthIn(max = 320.dp)) {
@@ -355,7 +359,7 @@ private fun MessageActions(message: ChatMessage, vm: ChatViewModel, onDismiss: (
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
     var editing by remember { mutableStateOf(false) }
-    var text by remember { mutableStateOf(message.text) }
+    var text by remember { mutableStateOf(message.displayText) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (editing) "Edit message" else "Message") },
@@ -365,7 +369,7 @@ private fun MessageActions(message: ChatMessage, vm: ChatViewModel, onDismiss: (
             } else {
                 Column {
                     TextButton(onClick = {
-                        scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("message", message.text))) }
+                        scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("message", message.displayText))) }
                         onDismiss()
                     }) { Text("Copy") }
                     TextButton(onClick = { editing = true }) { Text("Edit") }

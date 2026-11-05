@@ -5,6 +5,7 @@ import android.util.Log
 import dev.aiharness.app.data.DataStoreSettingsRepository
 import dev.aiharness.app.data.FileBlobStore
 import dev.aiharness.app.data.KeystoreSecretStore
+import dev.aiharness.app.data.RoomActivityRepository
 import dev.aiharness.app.data.RoomConversationRepository
 import dev.aiharness.app.data.RoomCredentialRepository
 import dev.aiharness.app.data.RoomMemoryRepository
@@ -43,6 +44,7 @@ class AppContainer(private val context: Context) {
         memories = RoomMemoryRepository(database.dao()),
         settings = DataStoreSettingsRepository(context),
         blobs = blobStore,
+        activity = RoomActivityRepository(database.dao()),
         log = { Log.d("Harness", it) },
     )
 

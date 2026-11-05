@@ -18,12 +18,16 @@ import dev.aiharness.core.llm.gemini.GeminiProvider
 import dev.aiharness.core.llm.openai.OpenAiCompatibleProvider
 import dev.aiharness.core.memory.EmbedderFactory
 import dev.aiharness.core.memory.MemoryService
+import dev.aiharness.core.model.ActivityEntry
+import dev.aiharness.core.model.ActivityKind
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.ModelProfile
+import dev.aiharness.core.model.MoodTags
+import dev.aiharness.core.storage.ActivityRepository
 import dev.aiharness.core.storage.BlobStore
 import dev.aiharness.core.storage.ConversationRepository
 import dev.aiharness.core.storage.CredentialRepository
@@ -70,6 +74,7 @@ class Harness(
     val memories: MemoryRepository,
     val settings: SettingsRepository,
     val blobs: BlobStore,
+    val activity: ActivityRepository,
     val clock: Clock = SystemClock,
     val providers: ProviderRegistry = defaultProviders(),
     imageGenerator: ImageGenerator = NovelAiImageGenerator(),
@@ -94,6 +99,27 @@ class Harness(
     val locks = ConversationLocks()
     val agent = AgentRunner(this)
     val heartbeat = HeartbeatEngine(this)
+    private val conversationRows = Mutex()
+
+    /**
+     * Read-modify-write of a conversation row. Turns, heartbeats and the UI all update conversations
+     * (context epoch, mood, read state, model); going through here keeps one writer from undoing
+     * another's change with a stale copy.
+     */
+    suspend fun updateConversation(id: String, transform: (Conversation) -> Conversation): Conversation? =
+        conversationRows.withLock {
+            conversations.get(id)?.let(transform)?.also { conversations.upsert(it) }
+        }
+
+    /** The user has seen everything in this conversation up to now. */
+    suspend fun markRead(conversationId: String) {
+        val now = clock.nowMillis()
+        updateConversation(conversationId) { if ((it.lastReadAt ?: 0L) >= now) it else it.copy(lastReadAt = now) }
+    }
+
+    suspend fun logActivity(personaId: String, kind: ActivityKind, conversationId: String? = null, count: Int = 1) {
+        activity.add(ActivityEntry(newId(), personaId, kind, clock.nowMillis(), conversationId, count))
+    }
 
     suspend fun apiKey(credentialId: String?): String? =
         credentialId?.let { secrets.get(SecretStore.credentialKey(it)) }
@@ -130,6 +156,9 @@ class Harness(
             title = persona.name,
             createdAt = now,
             updatedAt = now,
+            // The greeting is read as soon as the new conversation opens; it isn't unread news.
+            lastAgentMessageAt = now.takeIf { persona.greeting.isNotBlank() },
+            lastReadAt = now,
         )
         conversations.upsert(conversation)
         if (persona.greeting.isNotBlank()) {
@@ -158,14 +187,14 @@ class Harness(
 
     suspend fun editMessage(message: ChatMessage, newText: String) {
         val parts = message.parts.filterNot { it is ContentPart.Text } + ContentPart.Text(newText)
-        conversations.updateMessage(message.copy(parts = parts, replay = null))
+        conversations.updateMessage(message.copy(parts = parts, replay = null, mood = MoodTags.parse(newText) ?: message.mood))
         invalidateContext(message.conversationId)
     }
 
     suspend fun invalidateContext(conversationId: String) {
         // Keep the summary and window position; a fingerprint mismatch forces a new epoch.
-        conversations.get(conversationId)?.let { conversation ->
-            conversations.upsert(conversation.copy(context = conversation.context?.copy(configFingerprint = INVALIDATED)))
+        updateConversation(conversationId) { conversation ->
+            conversation.copy(context = conversation.context?.copy(configFingerprint = INVALIDATED))
         }
     }
 

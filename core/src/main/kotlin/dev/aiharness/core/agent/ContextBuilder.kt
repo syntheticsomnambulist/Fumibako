@@ -262,14 +262,26 @@ class ContextBuilder(
         return out
     }
 
+    /**
+     * Covers everything the system prompt is built from, and nothing else: changing a persona's ink or
+     * avatar must not start a new epoch (which would drop replay data and cold-start the cache).
+     */
     private fun configFingerprint(input: ContextInput) = sha256Hex(
+        PROMPT_VERSION,
         input.persona.id,
-        input.persona.updatedAt.toString(),
+        input.persona.name,
+        input.persona.description,
+        input.persona.personality,
+        input.persona.scenario,
+        input.persona.exampleDialogue,
+        input.persona.systemPromptOverride,
         input.userPersona?.id,
-        input.userPersona?.updatedAt?.toString(),
+        input.userPersona?.name,
+        input.userPersona?.description,
         input.settings.baseInstructions,
         input.settings.heartbeat.mode.name,
         input.settings.memory.enabled.toString(),
+        input.settings.moodTags.toString(),
     )
 
     private fun toolFingerprint(input: ContextInput) = sha256Hex(
@@ -279,6 +291,9 @@ class ContextBuilder(
 
     companion object {
         const val CONVERSATION_START = "(The conversation begins.)"
+
+        /** Bump when [PromptAssembler]'s wording changes, so conversations pick up the new prompt. */
+        private const val PROMPT_VERSION = "2"
         private const val MIN_BUDGET = 2_000
         private const val TAIL_FRACTION = 0.45
         private const val SUMMARY_FRACTION = 0.15
@@ -290,7 +305,7 @@ class ContextBuilder(
                 when (m.role) {
                     MessageRole.USER -> if (m.text.isNotBlank()) append("$userName: ${m.text}\n")
                     MessageRole.ASSISTANT -> {
-                        if (m.text.isNotBlank()) append("$charName: ${m.text}\n")
+                        if (m.displayText.isNotBlank()) append("$charName: ${m.displayText}\n")
                         m.toolCalls.forEach { append("[$charName used ${it.name}]\n") }
                     }
                     MessageRole.TOOL -> m.images.forEach { append("[$charName showed an image: ${it.caption.orEmpty()}]\n") }

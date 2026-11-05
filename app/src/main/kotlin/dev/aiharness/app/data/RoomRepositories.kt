@@ -1,5 +1,6 @@
 package dev.aiharness.app.data
 
+import dev.aiharness.app.data.db.ActivityEntity
 import dev.aiharness.app.data.db.ConversationEntity
 import dev.aiharness.app.data.db.CredentialEntity
 import dev.aiharness.app.data.db.HarnessDao
@@ -9,6 +10,7 @@ import dev.aiharness.app.data.db.MessageEntity
 import dev.aiharness.app.data.db.ModelProfileEntity
 import dev.aiharness.app.data.db.PersonaEntity
 import dev.aiharness.app.data.db.UserPersonaEntity
+import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.Credential
@@ -16,6 +18,7 @@ import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.storage.ActivityRepository
 import dev.aiharness.core.storage.ConversationRepository
 import dev.aiharness.core.storage.CredentialRepository
 import dev.aiharness.core.storage.MemoryRepository
@@ -135,4 +138,13 @@ class RoomMemoryRepository(private val dao: HarnessDao) : MemoryRepository {
         val buffer = ByteBuffer.wrap(this).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer()
         return FloatArray(buffer.remaining()).also { buffer.get(it) }
     }
+}
+
+class RoomActivityRepository(private val dao: HarnessDao) : ActivityRepository {
+    private val s = ActivityEntry.serializer()
+    override fun observeSince(since: Long): Flow<List<ActivityEntry>> =
+        dao.observeActivity(since).map { rows -> rows.map { s.decode(it.json) } }
+
+    override suspend fun add(entry: ActivityEntry) = dao.upsertActivity(ActivityEntity(entry.id, entry.createdAt, s.encode(entry)))
+    override suspend fun deleteBefore(time: Long) = dao.deleteActivityBefore(time)
 }

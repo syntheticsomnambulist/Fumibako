@@ -14,6 +14,13 @@ core loop (chat, personas, memory, heartbeat, images) verified against the real 
 - **Not yet done:** the app has never run on a real device, and the engine has never called a real
   API. The design in `docs/design/` exists only as mockups.
 
+## Progress
+
+- **2026-11-05:** the stock-look debug APK installed and works on your phone: a Claude Haiku chat
+  through the Anthropic SDK, with time awareness. This answers the auth-header question from step 1.
+  CI builds on every push. Engine changes from step 3 are in (identity fields, mood tags, unread
+  state, activity log, theme settings with sunrise and sunset), with a tested database migration.
+
 ## What v0.1 includes
 
 **In:**

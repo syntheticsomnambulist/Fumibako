@@ -81,6 +81,12 @@ class PromptAssembler {
             }
         }
 
+        if (settings.moodTags) {
+            sections += "## Mood\n" +
+                "End every reply with your current mood in a tag, such as [mood: curious]: one or two lowercase words, " +
+                "chosen honestly by you. $userName sees it as a small label beside your name, not as part of your message."
+        }
+
         settings.baseInstructions.ifNotBlank { sections += "## Guidelines\n$it" }
 
         return substitute(sections.joinToString("\n\n"), persona.name, userName)

@@ -1,5 +1,6 @@
 package dev.aiharness.core.storage.inmemory
 
+import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Conversation
@@ -8,6 +9,7 @@ import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.storage.ActivityRepository
 import dev.aiharness.core.storage.BlobStore
 import dev.aiharness.core.storage.ConversationRepository
 import dev.aiharness.core.storage.CredentialRepository
@@ -132,6 +134,15 @@ class InMemoryMemoryRepository : MemoryRepository {
 
     override suspend fun putVector(memoryId: String, personaId: String, model: String, vector: FloatArray) =
         vectors.update { it + ((memoryId to model) to vector) }
+}
+
+class InMemoryActivityRepository : ActivityRepository {
+    private val entries = MutableStateFlow<List<ActivityEntry>>(emptyList())
+    override fun observeSince(since: Long): Flow<List<ActivityEntry>> =
+        entries.map { list -> list.filter { it.createdAt > since }.sortedBy { it.createdAt } }
+
+    override suspend fun add(entry: ActivityEntry) = entries.update { it + entry }
+    override suspend fun deleteBefore(time: Long) = entries.update { list -> list.filter { it.createdAt >= time } }
 }
 
 class InMemorySettingsRepository(initial: AppSettings = AppSettings()) : SettingsRepository {

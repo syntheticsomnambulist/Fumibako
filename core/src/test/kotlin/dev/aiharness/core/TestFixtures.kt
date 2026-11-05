@@ -10,6 +10,7 @@ import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.ProviderType
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.storage.inmemory.InMemoryActivityRepository
 import dev.aiharness.core.storage.inmemory.InMemoryBlobStore
 import dev.aiharness.core.storage.inmemory.InMemoryConversationRepository
 import dev.aiharness.core.storage.inmemory.InMemoryCredentialRepository
@@ -66,6 +67,7 @@ class TestEnv(
     val conversations = InMemoryConversationRepository()
     val memories = InMemoryMemoryRepository()
     val settingsRepo = InMemorySettingsRepository(settings)
+    val activity = InMemoryActivityRepository()
     val logs = mutableListOf<String>()
 
     val harness = Harness(
@@ -78,6 +80,7 @@ class TestEnv(
         memories = memories,
         settings = settingsRepo,
         blobs = InMemoryBlobStore(),
+        activity = activity,
         clock = clock,
         providers = ProviderRegistry(listOf(provider)),
         embedderFactory = null,
