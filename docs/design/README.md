@@ -133,4 +133,5 @@ to fonts later.**
 ## Next
 
 - v0.1 scope and order of work: [`../plan-v0.1.md`](../plan-v0.1.md).
-- Still open: importance in memories (research), heartbeat per model, fonts.
+- Still open: importance in memories (see [`../research/memory-systems.md`](../research/memory-systems.md)),
+  heartbeat per model, fonts.
