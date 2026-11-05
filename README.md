@@ -32,6 +32,12 @@ tested without a device and reused elsewhere.
 5. **Settings → Image generation** → pick your NovelAI key to enable images.
 6. Start a chat from **Chats → +**. A sample persona, *Aria*, is created on first launch.
 
+### Builds
+
+Every push runs the tests and builds a debug APK in GitHub Actions (**Actions → Build → the run →
+Artifacts**). Debug builds are signed with a shared debug-only key (`app/debug.keystore`), so a new
+build installs over the old one without wiping app data. It is not a release key.
+
 ## Architecture
 
 ```
