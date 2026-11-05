@@ -114,12 +114,27 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
   date stamps, polaroids of pictures from letters, torn strips quoting lines from letters, label
   slips for facts, older months tucked into envelopes, tape placed differently on each piece.
 - **Memories carry an emotion word.** By default it is the persona's mood when the memory was kept;
-  the persona can revise it while reflecting, and the original is kept alongside. How importance
-  works is open (research under way).
+  the persona can revise it while reflecting (with a short reason), and the original is kept
+  alongside. Whether it mentions a change of heart to the user is up to the persona.
+- **Emotion changes how memories are told, not which are recalled.** No mood-matched recall.
+- **Importance is three levels** (shown as "in passing", "worth keeping", "matters deeply"), with
+  the rest derived by the app (emotional intensity, real use, whether the user wrote it). "Always in
+  mind" stays a separate switch: "matters deeply" and "must always know" are different things.
+  Background: [`../research/memory-systems.md`](../research/memory-systems.md).
+- **Memories belong to the persona.** You can always read them; changing them (text, level,
+  feeling) or making a persona forget is behind **Settings › Memory › Let me edit memories**, off by
+  default.
+- **Forgetting is visible.** Memories fade (lighter ink, yellowing paper), then wear (creased,
+  stained, a torn corner) as they go dormant: no longer recalled on their own but still searchable,
+  and freshened when they come up again. Replaced facts are struck through and kept as history.
+  Letting a memory go plays a burning animation, with a short undo. Both can be turned off.
 - **Persona editor:** edit directly on the persona page, one entry at a time, with the tape placed
   differently on each card (strip left, corner pair, top piece, strip right).
 - **Settings:** a notebook contents page (一 to 八, each line showing its current value), opening a
-  page per section. Heartbeat may become model-specific (to be confirmed).
+  page per section.
+- **Heartbeat per persona:** Settings › Heartbeat holds the usual settings; a persona's page can
+  switch to its own (interval, quiet hours, limits, and which model runs its heartbeats), and the
+  Settings page lists the personas that do.
 - **Your personas:** a management screen like the personas gallery (polaroids, a page per persona
   with "About you", what each persona remembers about them, and their letters), reached from the
   Personas screen.
@@ -133,5 +148,4 @@ to fonts later.**
 ## Next
 
 - v0.1 scope and order of work: [`../plan-v0.1.md`](../plan-v0.1.md).
-- Still open: importance in memories (see [`../research/memory-systems.md`](../research/memory-systems.md)),
-  heartbeat per model, fonts.
+- Still open: fonts, and the v0.2 scope.
