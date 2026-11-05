@@ -128,9 +128,10 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
   feeling) or making a persona forget is behind **Settings › Memory › Let me edit memories**, off by
   default. With it on, a memory still opens read-only, with an **Edit** button (then **Done**), like
   the persona editor.
-- **Emotion marks in the memory book:** words get busy in the scrapbook. Options on the canvas:
-  small ink stamps with an icon per feeling family (nine families), on strong feelings only, with
-  the word on tap; later, a sticker from the persona's pack. To be decided.
+- **Emotion marks in the memory book:** small ink stamps with an icon per feeling family (bright,
+  fond, proud, calm, sad, uneasy, cross, wonder, wistful), on strong feelings only, with the word
+  on tap. They should look like real rubber stamps (uneven ink, a slightly worn rim). Later, a
+  persona's pack can supply its own sticker for a feeling.
 - **Forgetting is visible.** Memories fade (lighter ink, yellowing paper), then wear (creased,
   stained, a torn corner) as they go dormant: no longer recalled on their own but still searchable,
   and freshened when they come up again. Replaced facts are struck through and kept as history.
@@ -160,4 +161,4 @@ to fonts later.**
 ## Next
 
 - v0.1 scope and order of work: [`../plan-v0.1.md`](../plan-v0.1.md).
-- v0.2 plan: [`../plan-v0.2.md`](../plan-v0.2.md). Still open: emotion marks, level names, fonts.
+- v0.2 plan: [`../plan-v0.2.md`](../plan-v0.2.md). Still open: fonts.

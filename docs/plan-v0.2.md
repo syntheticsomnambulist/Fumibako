@@ -131,10 +131,10 @@ is wiped on update.
 - **The burn on older phones** runs on the CPU; it should be fine for one slip at a time, but is
   untested on low-end devices.
 
-## Decisions for you
+## Decisions (made 2026-11-05)
 
-1. **Emotion marks in the scrapbook:** A words (now), B small ink stamps with icons on strong
-   feelings only (recommended for v0.2), or something else. C (the persona's own sticker) comes
-   with stickers in v0.3 either way.
-2. **Level names:** "In passing", "Worth keeping", "Matters deeply" are placeholders. Keep them?
-3. **The burn:** is the prototype on the canvas close enough to build from?
+1. **Emotion marks:** B, small ink stamps with an icon per feeling family, on strong feelings
+   only. Make them look more like real rubber stamps when building the memory book. C (the
+   persona's own sticker) comes with stickers in v0.3.
+2. **Level names:** "In passing", "Worth keeping", "Matters deeply".
+3. **The burn:** the canvas prototype is the one to build.
