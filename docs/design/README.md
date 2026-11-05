@@ -1,8 +1,9 @@
 # Design direction
 
 Working notes for the app's visual design. Nothing here is implemented in the app yet; the current
-Compose UI is still stock Material 3. Open `letter-studies.html` in a browser to see the interactive
-mockup these notes describe (it is also published as a private claude.ai artifact).
+Compose UI is still stock Material 3. Open `letter-studies.html` (chat) and `screen-studies.html`
+(letters list and persona screens) in a browser to see the mockups these notes describe; both are
+also published as private claude.ai artifacts.
 
 **Goal:** character-focused, nice to look at, not generic. Bullet-journal stationery more than chat app.
 
@@ -64,6 +65,21 @@ mockup these notes describe (it is also published as a private claude.ai artifac
   Sketch: `Sticker(id, messageId, ref, placedBy, x, y, rotationDeg, scale, createdAt)`, with `x`/`y`
   as fractions of the message box.
 
+## Letters list and persona screens (draft, see `screen-studies.html`)
+
+- **Letters list:** each conversation is a paper card held by its persona's washi strip, with a
+  portrait, mood word, time, and the last line in the book face. An unread letter wears a die-cut
+  新 seal in the persona's ink. An optional "While you were away" card at the top summarises
+  heartbeat activity. A "New letter" button in the user's ink.
+- **Personas gallery:** personas as polaroids taped into the page (their ink and tape pattern,
+  slight tilts), with mood and memory count; a dashed "New persona" polaroid. Below, the user's
+  own personas ("Writing as"), each with their own ink and tape.
+- **A persona's page:** a journal page with the persona's polaroid, mood, ink, tape and model,
+  then taped entries: about, memory book (core memories taped down, dated episodes, reflections
+  in italic), sticker pack, heartbeat status.
+- **Bottom navigation:** kanji labels 文 Letters, 人 Personas, 設 Settings; the active tab is
+  marked by a small piece of the user's tape.
+
 ## Typography (to revisit)
 
 The mockup uses Cormorant Garamond (display), Literata (letter text), LINE Seed JP (UI) and
@@ -72,6 +88,6 @@ to fonts later.**
 
 ## Next
 
-- Conversation list and persona screens in this style.
+- Review the letters list and persona screens.
 - Then an implementation plan: theme tokens in Compose, letter and note components, the sticker data
   model and tools, NovelAI sticker-sheet generation, and how sticker events reach the persona's context.
