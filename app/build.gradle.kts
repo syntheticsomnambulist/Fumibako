@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -18,13 +20,20 @@ android {
     }
 
     signingConfigs {
-        // A shared debug-only key committed to the repo, so builds from any machine or CI run
-        // install over each other without wiping app data. Never used for release builds.
-        getByName("debug") {
-            storeFile = file("debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+        // Debug builds from every machine and CI run share one signing key, so a new build installs
+        // over the old one. The key comes from (first match):
+        //   HARNESS_DEBUG_KEYSTORE      path to a keystore file
+        //   HARNESS_DEBUG_KEYSTORE_B64  the keystore, base64 (CI secret / cloud environment variable)
+        //   app/debug.keystore          committed while the repo is private; see docs/going-public.md
+        // With none of these, the machine's own Android debug key is used. Store and key passwords
+        // default to "android" (HARNESS_DEBUG_KEYSTORE_PASSWORD overrides both).
+        sharedDebugKeystore()?.let { keystore ->
+            getByName("debug") {
+                storeFile = keystore
+                storePassword = providers.environmentVariable("HARNESS_DEBUG_KEYSTORE_PASSWORD").orNull ?: "android"
+                keyAlias = providers.environmentVariable("HARNESS_DEBUG_KEY_ALIAS").orNull ?: "androiddebugkey"
+                keyPassword = providers.environmentVariable("HARNESS_DEBUG_KEYSTORE_PASSWORD").orNull ?: "android"
+            }
         }
     }
 
@@ -46,10 +55,6 @@ android {
     buildFeatures {
         compose = true
     }
-
-    // Exported Room schemas, read by MigrationTestHelper in the Robolectric tests. Robolectric only
-    // sees the app's merged assets, so they ride along in debug builds (a few KB, never in release).
-    sourceSets.getByName("debug").assets.srcDir("$projectDir/schemas")
 
     testOptions {
         unitTests {
@@ -74,9 +79,6 @@ android {
     }
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
 
 dependencies {
     implementation(project(":core"))
@@ -108,8 +110,19 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.androidx.work.testing)
-    testImplementation(libs.androidx.room.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
+}
+
+/** The shared debug signing key, if one is configured (see the signingConfigs block). */
+fun sharedDebugKeystore(): File? {
+    providers.environmentVariable("HARNESS_DEBUG_KEYSTORE").orNull?.takeIf { it.isNotBlank() }?.let { return file(it) }
+    providers.environmentVariable("HARNESS_DEBUG_KEYSTORE_B64").orNull?.takeIf { it.isNotBlank() }?.let { encoded ->
+        val out = layout.buildDirectory.file("signing/debug.keystore").get().asFile
+        out.parentFile.mkdirs()
+        out.writeBytes(Base64.getMimeDecoder().decode(encoded.trim()))
+        return out
+    }
+    return file("debug.keystore").takeIf { it.exists() }
 }

@@ -37,8 +37,12 @@ tested without a device and reused elsewhere.
 ### Builds
 
 Every push runs the tests and builds a debug APK in GitHub Actions (**Actions → Build → the run →
-Artifacts**). Debug builds are signed with a shared debug-only key (`app/debug.keystore`), so a new
-build installs over the old one without wiping app data. It is not a release key.
+Artifacts**). Debug builds share one signing key, so a new build installs over the old one. While
+the repository is private that key is committed (`app/debug.keystore`). It must be replaced before
+the repository goes public: see [`docs/going-public.md`](docs/going-public.md), which CI enforces.
+
+**Stored data before 1.0:** there are no migrations. A database schema change wipes the app's data
+and it starts fresh, re-creating the sample persona.
 
 ## Architecture
 
@@ -144,7 +148,8 @@ editor can generate an avatar.
   through the prompt protocol, or not at all, depending on each model profile's tool mode.
 - **New image backend**: implement `ImageGenerator` and pass it to `Harness(imageGenerator = …)`.
 - **Different storage**: implement the interfaces in `core/storage/Repositories.kt`.
-- Domain objects are stored as JSON documents, so adding fields with defaults needs no database migration.
+- Domain objects are stored as JSON documents, so adding fields with defaults needs no schema change.
+  Before 1.0, a schema change simply bumps `HarnessDatabase`'s version, which wipes local data.
 
 ## Testing
 

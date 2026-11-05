@@ -67,6 +67,11 @@ class KeystoreSecretStore(context: Context) : SecretStore {
         prefs.edit().remove(key).apply()
     }
 
+    /** Forgets every stored secret (used when the database is wiped: their credentials are gone). */
+    fun clearAll() {
+        prefs.edit().clear().commit()
+    }
+
     private companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
         const val ALIAS = "ai_harness_secrets"
@@ -113,6 +118,11 @@ class FileBlobStore(context: Context) : BlobStore {
 
     override suspend fun delete(ref: String) {
         withContext(Dispatchers.IO) { fileFor(ref)?.delete() }
+    }
+
+    /** Deletes every stored image (used when the database is wiped: nothing refers to them any more). */
+    fun clearAll() {
+        dir.listFiles()?.forEach { it.delete() }
     }
 
     private companion object {

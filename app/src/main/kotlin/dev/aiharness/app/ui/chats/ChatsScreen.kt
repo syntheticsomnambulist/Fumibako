@@ -24,7 +24,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -84,11 +83,6 @@ fun ChatsScreen(nav: NavController) {
     var picking by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf<Conversation?>(null) }
     val visible = conversations.filter { !it.archived }
-
-    // Conversations from before previews existed get theirs once.
-    LaunchedEffect(visible.map { it.id to (it.preview == null) }) {
-        visible.filter { it.preview == null && it.context != null }.forEach { harness.refreshPreview(it.id) }
-    }
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(

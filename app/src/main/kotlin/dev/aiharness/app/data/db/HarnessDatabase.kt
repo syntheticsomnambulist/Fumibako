@@ -1,7 +1,6 @@
 package dev.aiharness.app.data.db
 
 import android.content.Context
-import androidx.room.AutoMigration
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -11,6 +10,7 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Upsert
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 /*
@@ -125,15 +125,26 @@ interface HarnessDao {
         ConversationEntity::class, MessageEntity::class, MemoryEntity::class, MemoryVectorEntity::class,
         ActivityEntity::class,
     ],
+    // Before 1.0 there are no migrations: bump the version on any schema change and the database is
+    // recreated empty (see onWiped). Field changes on domain models need neither; rows are JSON.
     version = 2,
-    exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    exportSchema = false,
 )
 abstract class HarnessDatabase : RoomDatabase() {
     abstract fun dao(): HarnessDao
 
     companion object {
-        fun create(context: Context): HarnessDatabase =
-            Room.databaseBuilder(context, HarnessDatabase::class.java, "harness.db").build()
+        /** [onWiped] runs, while the database opens, when a version change has just emptied it. */
+        fun create(context: Context, onWiped: () -> Unit = {}, name: String = "harness.db"): HarnessDatabase =
+            Room.databaseBuilder(context, HarnessDatabase::class.java, name)
+                // Covers upgrades and downgrades. (Don't add fallbackToDestructiveMigrationOnDowngrade:
+                // it switches upgrades back to requiring a migration.)
+                .fallbackToDestructiveMigration(dropAllTables = true)
+                .addCallback(
+                    object : Callback() {
+                        override fun onDestructiveMigration(db: SupportSQLiteDatabase) = onWiped()
+                    },
+                )
+                .build()
     }
 }

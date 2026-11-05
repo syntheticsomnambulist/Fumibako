@@ -17,6 +17,7 @@ import dev.aiharness.app.engine.GenerationManager
 import dev.aiharness.app.heartbeat.HeartbeatScheduler
 import dev.aiharness.app.heartbeat.Notifier
 import dev.aiharness.core.Harness
+import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.util.newId
@@ -32,15 +33,16 @@ import kotlinx.coroutines.launch
 class AppContainer(private val context: Context) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val database = HarnessDatabase.create(context)
+    private val secrets = KeystoreSecretStore(context)
     val blobStore = FileBlobStore(context)
+    private val database = HarnessDatabase.create(context, onWiped = ::forgetEverythingElse)
 
     val harness = Harness(
         personas = RoomPersonaRepository(database.dao()),
         userPersonas = RoomUserPersonaRepository(database.dao()),
         profiles = RoomModelProfileRepository(database.dao()),
         credentials = RoomCredentialRepository(database.dao()),
-        secrets = KeystoreSecretStore(context),
+        secrets = secrets,
         conversations = RoomConversationRepository(database.dao()),
         memories = RoomMemoryRepository(database.dao()),
         settings = DataStoreSettingsRepository(context),
@@ -79,9 +81,21 @@ class AppContainer(private val context: Context) {
         }
     }
 
+    /**
+     * Before 1.0 a schema change empties the database (see [HarnessDatabase]). Everything that pointed
+     * into it goes too, so the app starts over as if freshly installed: keys, images, app state, and
+     * (when [seedDefaultsOnce] runs next) settings.
+     */
+    private fun forgetEverythingElse() {
+        appState.edit().clear().commit()
+        secrets.clearAll()
+        blobStore.clearAll()
+    }
+
     private suspend fun seedDefaultsOnce() {
-        val prefs = context.getSharedPreferences("app_state", Context.MODE_PRIVATE)
-        if (prefs.getBoolean("seeded", false)) return
+        // Opening the database first lets a pending wipe happen (and clear the flag) before we check it.
+        harness.personas.getAll()
+        if (appState.getBoolean(KEY_SEEDED, false)) return
         val now = System.currentTimeMillis()
         val user = UserPersona(id = newId(), name = "You", createdAt = now, updatedAt = now)
         harness.userPersonas.upsert(user)
@@ -97,11 +111,12 @@ class AppContainer(private val context: Context) {
                 updatedAt = now,
             ),
         )
-        harness.settings.update { it.copy(activeUserPersonaId = user.id) }
-        prefs.edit().putBoolean("seeded", true).apply()
+        harness.settings.update { AppSettings(activeUserPersonaId = user.id) }
+        appState.edit().putBoolean(KEY_SEEDED, true).apply()
     }
 
     private companion object {
         const val KEY_LAST_SEEN = "last_seen_at"
+        const val KEY_SEEDED = "seeded"
     }
 }

@@ -16,8 +16,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      # Optional repository secret holding the shared debug signing key (docs/going-public.md).
+      HARNESS_DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
     steps:
       - uses: actions/checkout@v5
+
+      # The committed debug key is only acceptable while the repository is private.
+      - name: Public repository guard
+        if: ${{ github.event.repository.private == false }}
+        run: |
+          if [ -f app/debug.keystore ]; then
+            echo "::error file=app/debug.keystore::This repository is public but the shared debug signing key is still committed. Follow docs/going-public.md before building."
+            exit 1
+          fi
 
       - uses: actions/setup-java@v5
         with:

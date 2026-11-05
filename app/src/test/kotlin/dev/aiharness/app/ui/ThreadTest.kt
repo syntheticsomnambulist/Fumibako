@@ -7,6 +7,7 @@ import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
+import dev.aiharness.core.model.MoodTags
 import org.junit.Test
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
@@ -18,7 +19,13 @@ class ThreadTest {
     private var n = 0
 
     private fun msg(role: MessageRole, vararg parts: ContentPart, origin: MessageOrigin = MessageOrigin.AGENT, hidden: Boolean = false, at: Long? = null) =
-        ChatMessage("m${n++}", "c", role, parts.toList(), createdAt = at ?: t.also { t += 60_000 }, origin = origin, hidden = hidden)
+        ChatMessage(
+            "m${n++}", "c", role, parts.toList(),
+            createdAt = at ?: t.also { t += 60_000 },
+            origin = origin,
+            hidden = hidden,
+            mood = parts.filterIsInstance<ContentPart.Text>().firstNotNullOfOrNull { MoodTags.parse(it.text) },
+        )
 
     @Test
     fun groupsATurnIntoOneLetterWithPostscriptsAndPicturesInOrder() {

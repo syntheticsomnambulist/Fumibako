@@ -19,10 +19,13 @@ core loop (chat, personas, memory, heartbeat, images) verified against the real 
 - **2026-11-05:** the stock-look debug APK installed and works on your phone: a Claude Haiku chat
   through the Anthropic SDK, with time awareness. This answers the auth-header question from step 1.
   CI builds on every push. Engine changes from step 3 are in (identity fields, mood tags, unread
-  state, activity log, theme settings with sunrise and sunset), with a tested database migration.
+  state, activity log, theme settings with sunrise and sunset).
 - **2026-11-05:** steps 4 and 5 done: theme, fonts, tape and paper components, and the restyled
   letters list, letters, personas gallery, persona page, navigation and Look settings. Screenshot
   tours in day and night. Next: your test on the phone (step 7) and the live API check (step 1).
+- **2026-11-05:** no data compatibility before 1.0: schema changes wipe local data (no migrations or
+  backfills). Before the repository goes public, follow `docs/going-public.md` (replace the shared
+  debug key; CI enforces it).
 
 ## What v0.1 includes
 

@@ -4,7 +4,6 @@ import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
-import dev.aiharness.core.model.MoodTags
 import dev.aiharness.core.util.HarnessJson
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -32,7 +31,7 @@ sealed interface ThreadRow {
         override val key get() = "letter-${messages.first().id}"
         val createdAt: Long get() = messages.first().createdAt
         val paragraphs: List<String> get() = messages.filter { it.role == MessageRole.ASSISTANT }.map { it.displayText }.filter { it.isNotBlank() }
-        val mood: String? get() = messages.lastOrNull { it.mood != null }?.mood ?: messages.mapNotNull { MoodTags.parse(it.text) }.lastOrNull()
+        val mood: String? get() = messages.lastOrNull { it.mood != null }?.mood
         val fromHeartbeat: Boolean get() = messages.any { it.role == MessageRole.ASSISTANT && it.origin == MessageOrigin.HEARTBEAT }
         val reasoning: String? get() = messages.mapNotNull { it.reasoning }.joinToString("\n\n").ifBlank { null }
         val images: List<ContentPart.Image> get() = messages.flatMap { it.images }

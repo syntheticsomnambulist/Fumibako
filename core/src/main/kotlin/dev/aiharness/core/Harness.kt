@@ -195,7 +195,7 @@ class Harness(
         refreshPreview(message.conversationId)
     }
 
-    /** Recomputes the letters-list preview from the messages (after edits, deletes, or for old data). */
+    /** Recomputes the letters-list summary of the latest reply after edits and deletes. */
     suspend fun refreshPreview(conversationId: String): Conversation? {
         val reply = conversations.getMessages(conversationId).lastOrNull {
             it.role == MessageRole.ASSISTANT && !it.hidden && !it.excludedFromContext && it.displayText.isNotBlank()
@@ -204,10 +204,7 @@ class Harness(
             it.copy(
                 preview = reply?.let { r -> Conversation.previewOf(r.displayText) },
                 previewFromHeartbeat = reply?.origin == MessageOrigin.HEARTBEAT,
-                mood = it.mood ?: reply?.mood,
-                lastAgentMessageAt = it.lastAgentMessageAt ?: reply?.createdAt,
-                // Conversations from before read tracking count as read.
-                lastReadAt = it.lastReadAt ?: clock.nowMillis(),
+                lastAgentMessageAt = reply?.createdAt,
             )
         }
     }
