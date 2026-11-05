@@ -155,6 +155,12 @@ HARNESS_LIVE_TESTS=1 ANTHROPIC_API_KEY=… NOVELAI_API_KEY=… ./gradlew :core:t
 They make a two-turn Claude tool round trip with thinking replay, list NovelAI text models, and
 generate one NovelAI image (`NOVELAI_OUTPUT=/path/out.png` saves it).
 
+To render the main screens to PNGs with sample data (for design review, no device needed):
+
+```
+HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests '*ScreenshotTour*'
+```
+
 ## Known limitations / next steps
 
 - Generation runs in the app process; Android may stop a long reply if the app is backgrounded for a
