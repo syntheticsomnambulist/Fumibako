@@ -22,14 +22,14 @@ import kotlin.math.hypot
 import kotlin.math.sqrt
 
 /*
- * Washi tape, drawn rather than imaged so any ink and pattern works: translucent ink (about 82%),
+ * Washi tape, drawn rather than imaged so any ink and pattern works: translucent ink (fully opaque),
  * a pattern in white, zigzag torn ends and a slight hand-placed tilt. Measurements follow the
  * mockups in docs/design (13dp strips, 14dp pieces, 2.6dp teeth).
  */
 
 /** How a piece of tape looks. */
 @Stable
-data class Tape(val ink: Color, val pattern: TapePattern, val alpha: Float = 0.82f, val shadow: Boolean = true)
+data class Tape(val ink: Color, val pattern: TapePattern, val alpha: Float = 1f, val shadow: Boolean = true)
 
 /**
  * Draws one piece of tape along the line from [start] to [end] (its torn ends sit on those points).

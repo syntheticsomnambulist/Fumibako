@@ -1,5 +1,7 @@
 package dev.aiharness.app.ui.settings
 
+import dev.aiharness.app.ui.paper.PaperCorner
+import dev.aiharness.app.ui.paper.PaperChoice
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -18,13 +20,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,14 +67,8 @@ fun LookSection(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) 
 
     SectionTitle("Look")
     Text("Day and night", style = PaperType.label, color = paper.kasure2)
-    val modes = listOf(DayNightMode.FIXED_HOURS to "Set hours", DayNightMode.SUN to "Sun", DayNightMode.STATIC to "Fixed theme")
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        modes.forEachIndexed { i, (mode, label) ->
-            SegmentedButton(selected = theme.dayNight == mode, onClick = { updateTheme { it.copy(dayNight = mode) } }, shape = SegmentedButtonDefaults.itemShape(i, modes.size)) {
-                Text(label)
-            }
-        }
-    }
+    val modes = listOf(DayNightMode.FIXED_HOURS to "Set hours", DayNightMode.SUN to "Sun", DayNightMode.STATIC to "Fixed")
+    PaperChoice(modes, theme.dayNight, { mode -> updateTheme { it.copy(dayNight = mode) } })
     when (theme.dayNight) {
         DayNightMode.FIXED_HOURS -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NumberField("Day starts (hour)", theme.dayStartMinute / 60, { v ->
@@ -89,21 +81,9 @@ fun LookSection(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) 
         DayNightMode.SUN -> SunLocation(theme, ::updateTheme)
         DayNightMode.STATIC -> {
             val seasons = listOf(Season.HARU to "春", Season.NATSU to "夏", Season.AKI to "秋", Season.FUYU to "冬")
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                seasons.forEachIndexed { i, (season, label) ->
-                    SegmentedButton(selected = theme.staticSeason == season, onClick = { updateTheme { it.copy(staticSeason = season) } }, shape = SegmentedButtonDefaults.itemShape(i, seasons.size)) {
-                        Text(label, maxLines = 1)
-                    }
-                }
-            }
+            PaperChoice(seasons, theme.staticSeason, { season -> updateTheme { it.copy(staticSeason = season) } })
             val times = listOf(TimeOfDay.HIRU to "昼 day", TimeOfDay.YORU to "夜 night")
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                times.forEachIndexed { i, (time, label) ->
-                    SegmentedButton(selected = theme.staticTime == time, onClick = { updateTheme { it.copy(staticTime = time) } }, shape = SegmentedButtonDefaults.itemShape(i, times.size)) {
-                        Text(label)
-                    }
-                }
-            }
+            PaperChoice(times, theme.staticTime, { time -> updateTheme { it.copy(staticTime = time) } })
         }
     }
 
@@ -122,8 +102,8 @@ fun LookSection(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) 
                 Box(
                     Modifier
                         .size(32.dp)
-                        .border(if (on) 2.dp else 1.dp, if (on) paper.sumi else paper.nijimi1, CircleShape)
-                        .clip(CircleShape)
+                        .border(if (on) 2.dp else 1.dp, if (on) paper.sumi else paper.nijimi1, PaperCorner)
+                        .clip(PaperCorner)
                         .background(parseHex(hex) ?: paper.kami),
                 )
                 Text(label, style = PaperType.meta, color = paper.usuzumi1)
@@ -142,14 +122,8 @@ fun LookSection(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) 
         )
     }
     Text("Polaroid frames", style = PaperType.label, color = paper.kasure2)
-    val frames = listOf(FrameStyle.MATCH_OUTLINE to "Match sticker outline", FrameStyle.PAPER to "Paper")
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        frames.forEachIndexed { i, (style, label) ->
-            SegmentedButton(selected = theme.polaroidFrame == style, onClick = { updateTheme { it.copy(polaroidFrame = style) } }, shape = SegmentedButtonDefaults.itemShape(i, frames.size)) {
-                Text(label)
-            }
-        }
-    }
+    val frames = listOf(FrameStyle.MATCH_OUTLINE to "Outline colour", FrameStyle.PAPER to "Paper")
+    PaperChoice(frames, theme.polaroidFrame, { style -> updateTheme { it.copy(polaroidFrame = style) } })
     SwitchRow(
         "Mood words",
         s.moodTags,

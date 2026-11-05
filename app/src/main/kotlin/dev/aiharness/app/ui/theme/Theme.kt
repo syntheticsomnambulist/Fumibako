@@ -1,7 +1,9 @@
 package dev.aiharness.app.ui.theme
 
 import androidx.compose.material3.ColorScheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -16,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import dev.aiharness.core.model.FrameStyle
 import dev.aiharness.core.model.TapePattern
@@ -109,8 +112,23 @@ fun HarnessTheme(
     }
     val stationery = remember(choice, settings, youInk, youPattern) { Stationery.of(choice, settings, youInk, youPattern) }
     CompositionLocalProvider(LocalStationery provides stationery) {
-        MaterialTheme(colorScheme = stationery.colors.toColorScheme(), typography = HarnessTypography, content = content)
+        MaterialTheme(colorScheme = stationery.colors.toColorScheme(), typography = HarnessTypography, shapes = PaperShapes, content = content)
     }
+}
+
+/** Near-square corners everywhere Material draws a shape (dialogs, fields, menus): stationery, not pills. */
+val PaperShapes = Shapes(
+    extraSmall = RoundedCornerShape(2.dp),
+    small = RoundedCornerShape(2.dp),
+    medium = RoundedCornerShape(3.dp),
+    large = RoundedCornerShape(3.dp),
+    extraLarge = RoundedCornerShape(4.dp),
+)
+
+/** Text that reads on a block of [ink]: this theme's darkest or lightest role, whichever contrasts. */
+fun MadoromiColors.onInk(ink: Color): Color {
+    val (dark, light) = if (kami.luminance() < sumi.luminance()) kami to sumi else sumi to kami
+    return if (ink.luminance() > 0.36f) dark else light
 }
 
 /** Maps madoromi roles onto Material 3 so stock components (dialogs, fields, menus) fit the paper. */

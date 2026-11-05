@@ -1,5 +1,8 @@
 package dev.aiharness.app.ui.chat
 
+import dev.aiharness.app.ui.theme.onInk
+import dev.aiharness.app.ui.paper.PaperCorner
+import dev.aiharness.app.ui.paper.PaperChoice
 import android.content.ClipData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,7 +22,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -38,9 +40,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -296,7 +295,7 @@ private fun EntryBar(
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        val shape = RoundedCornerShape(20.dp)
+        val shape = PaperCorner
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -321,13 +320,13 @@ private fun EntryBar(
         Box(
             Modifier
                 .size(42.dp)
-                .clip(CircleShape)
+                .clip(PaperCorner)
                 .background(youInk)
                 .alpha(if (busy || canSend) 1f else 0.45f)
                 .clickable(enabled = busy || canSend, onClickLabel = if (busy) "Stop" else "Send") { if (busy) onStop() else onSend() },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(if (busy) Icons.Filled.Stop else Icons.AutoMirrored.Filled.Send, if (busy) "Stop" else "Send", tint = colors.kami, modifier = Modifier.size(20.dp))
+            Icon(if (busy) Icons.Filled.Stop else Icons.AutoMirrored.Filled.Send, if (busy) "Stop" else "Send", tint = colors.onInk(youInk), modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -407,15 +406,7 @@ private fun ImageDialog(personaName: String, onDismiss: () -> Unit, onGenerate: 
                     modifier = Modifier.fillMaxWidth(),
                 )
                 SwitchRow("Include $personaName's appearance", includePersona, { includePersona = it })
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    options.forEachIndexed { index, option ->
-                        SegmentedButton(
-                            selected = orientation == option,
-                            onClick = { orientation = option },
-                            shape = SegmentedButtonDefaults.itemShape(index, options.size),
-                        ) { Text(option.replaceFirstChar { it.uppercase() }) }
-                    }
-                }
+                PaperChoice(options.map { it to it.replaceFirstChar { c -> c.uppercase() } }, orientation, { orientation = it })
             }
         },
         confirmButton = { TextButton(onClick = { onGenerate(prompt, includePersona, orientation) }, enabled = prompt.isNotBlank()) { Text("Generate") } },

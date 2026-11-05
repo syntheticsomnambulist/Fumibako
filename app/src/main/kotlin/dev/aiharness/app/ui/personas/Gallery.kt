@@ -129,12 +129,11 @@ private fun GalleryPolaroid(persona: Persona, latest: Conversation?, memories: I
         Column(Modifier.fillMaxWidth().padding(top = 9.dp, bottom = 13.dp, start = 2.dp, end = 2.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(persona.name, style = PaperType.polaroidName, color = s.frameInk, maxLines = 1, overflow = TextOverflow.Ellipsis)
             MoodWord(latest?.mood, s.frameInks.ink(persona.ink), style = PaperType.mood.copy(fontSize = 12.5.sp))
-            val meta = listOfNotNull(
+            listOfNotNull(
                 memories?.let { if (it == 1) "1 memory" else "$it memories" },
                 latest?.lastUserMessageAt?.let { "talked ${talkedWhen(it)}" },
-            ).joinToString(" · ")
-            if (meta.isNotEmpty()) {
-                Text(meta, style = PaperType.meta.copy(letterSpacing = 0.sp), color = lerp(s.frameInk, s.frame, 0.38f), textAlign = TextAlign.Center)
+            ).forEach { line ->
+                Text(line, style = PaperType.meta.copy(letterSpacing = 0.sp), color = lerp(s.frameInk, s.frame, 0.38f), textAlign = TextAlign.Center, maxLines = 1)
             }
         }
     }

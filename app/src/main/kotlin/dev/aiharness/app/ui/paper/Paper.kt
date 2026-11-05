@@ -1,5 +1,6 @@
 package dev.aiharness.app.ui.paper
 
+import dev.aiharness.app.ui.theme.onInk
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -205,7 +206,7 @@ fun TapeLabel(text: String, ink: Color, modifier: Modifier = Modifier, on: Boole
                             Offset(-3.dp.toPx(), size.height / 2),
                             Offset(size.width + 3.dp.toPx(), size.height / 2),
                             size.height + 2.dp.toPx(),
-                            Tape(ink, TapePattern.PLAIN, alpha = 0.42f, shadow = false),
+                            Tape(ink, TapePattern.PLAIN, shadow = false),
                             tooth = 2.dp.toPx(),
                         )
                     }
@@ -213,6 +214,6 @@ fun TapeLabel(text: String, ink: Color, modifier: Modifier = Modifier, on: Boole
             }
         }.padding(horizontal = 9.dp, vertical = 1.dp),
     ) {
-        Text(text, style = PaperType.navLabel.copy(fontWeight = if (on) androidx.compose.ui.text.font.FontWeight.Bold else null), color = if (on) colors.sumi else colors.kasure2)
+        Text(text, style = PaperType.navLabel.copy(fontWeight = if (on) androidx.compose.ui.text.font.FontWeight.Bold else null), color = if (on) colors.onInk(ink) else colors.kasure2)
     }
 }

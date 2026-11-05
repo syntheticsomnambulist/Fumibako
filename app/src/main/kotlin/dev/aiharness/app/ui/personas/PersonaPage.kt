@@ -1,5 +1,8 @@
 package dev.aiharness.app.ui.personas
 
+import dev.aiharness.app.ui.paper.TickBox
+import dev.aiharness.app.ui.paper.PaperCorner
+import dev.aiharness.app.ui.paper.PaperButton
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,8 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -100,7 +101,7 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
             Row(Modifier.statusBarsPadding().fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = paper.usuzumi0) }
                 Box(Modifier.weight(1f))
-                QuietButton("Edit") { nav.navigate(Routes.persona(p.id)) }
+                PaperButton("Edit") { nav.navigate(Routes.persona(p.id)) }
             }
         }
         item {
@@ -111,7 +112,7 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
                     MoodWord(latest?.mood, ink, style = PaperType.mood.copy(fontSize = 15.sp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Chip {
-                            Box(Modifier.size(12.dp).clip(CircleShape).background(ink))
+                            Box(Modifier.size(12.dp).background(ink, PaperCorner))
                             Text(InkKanji[p.ink].orEmpty(), style = PaperType.seal.copy(fontSize = 13.sp), color = paper.sumi)
                             Text(p.ink, style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp), color = paper.usuzumi1)
                         }
@@ -128,8 +129,8 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PrimaryButton("Write a letter", ink, Modifier.weight(1f)) { openLetters() }
-                QuietButton("Memories", Modifier.weight(1f)) { nav.navigate(Routes.memory(p.id)) }
+                PaperButton("Write a letter", Modifier.weight(1f), ink = ink) { openLetters() }
+                PaperButton("Memories", Modifier.weight(1f)) { nav.navigate(Routes.memory(p.id)) }
             }
         }
         if (p.description.isNotBlank() || p.personality.isNotBlank()) {
@@ -188,10 +189,10 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
                         color = paper.usuzumi1,
                         modifier = Modifier.weight(1f),
                     )
-                    Switch(
+                    TickBox(
                         checked = p.heartbeatEnabled,
                         onCheckedChange = { on -> scope.launch { harness.personas.upsert(p.copy(heartbeatEnabled = on, updatedAt = System.currentTimeMillis())) } },
-                        colors = SwitchDefaults.colors(checkedTrackColor = ink, checkedThumbColor = paper.kami),
+                        ink = ink,
                     )
                 }
             }
@@ -260,7 +261,7 @@ private fun Slip(memory: MemoryEntry, ink: Color, label: String?, taped: Boolean
     val colors = paper
     Column(
         Modifier
-            .then(if (taped) Modifier.cornerTape(Tape(ink, dev.aiharness.core.model.TapePattern.PLAIN, alpha = 0.7f), length = 30.dp, thickness = 11.dp, angleDegrees = -32f, reach = 7.dp, lift = 1.dp) else Modifier)
+            .then(if (taped) Modifier.cornerTape(Tape(ink, dev.aiharness.core.model.TapePattern.PLAIN), length = 30.dp, thickness = 11.dp, angleDegrees = -32f, reach = 7.dp, lift = 1.dp) else Modifier)
             .fillMaxWidth()
             .background(colors.hyoshi, RoundedCornerShape(2.dp))
             .padding(horizontal = 10.dp, vertical = 7.dp),
@@ -282,37 +283,10 @@ private fun Slip(memory: MemoryEntry, ink: Color, label: String?, taped: Boolean
 private fun Chip(content: @Composable () -> Unit) {
     Row(
         Modifier
-            .border(1.dp, paper.nijimi1, RoundedCornerShape(50))
-            .background(paper.kami, RoundedCornerShape(50))
+            .border(1.dp, paper.nijimi1, PaperCorner)
+            .background(paper.kami, PaperCorner)
             .padding(horizontal = 9.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) { content() }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun PrimaryButton(label: String, ink: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Box(
-        modifier
-            .clip(RoundedCornerShape(50))
-            .background(ink)
-            .combinedClickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 11.dp),
-        contentAlignment = Alignment.Center,
-    ) { Text(label, style = PaperType.label.copy(fontSize = 14.sp, letterSpacing = 0.sp, fontWeight = FontWeight.Bold), color = paper.kami) }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun QuietButton(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Box(
-        modifier
-            .clip(RoundedCornerShape(50))
-            .border(1.dp, paper.nijimi1, RoundedCornerShape(50))
-            .background(paper.kami)
-            .combinedClickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center,
-    ) { Text(label, style = PaperType.label.copy(fontSize = 14.sp, letterSpacing = 0.sp, fontWeight = FontWeight.Bold), color = paper.sumi) }
 }

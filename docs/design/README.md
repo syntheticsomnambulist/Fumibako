@@ -32,7 +32,7 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
   text, and a header with a small portrait, the persona's name, mood word and date.
 - **Rule = washi tape strip** (chosen over tabs, corner tape and a plain ink line): a strip of tape in
   the persona's ink down the left edge, half on the paper, running past the top and bottom corners,
-  about 82% opaque, with zigzag torn ends and a slight hand-placed tilt.
+  fully opaque, with zigzag torn ends and a slight hand-placed tilt.
 - **Tape pattern** is part of identity alongside the ink: dots, stripes, gingham or plain.
 - **User messages are notes:** smaller slips with the user's own tape strip on the right.
 - **Per-message portrait** in each letter header. Later it can show a face that matches the mood.
@@ -87,7 +87,19 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
 - **Bottom navigation:** kanji labels 文 Letters, 人 Personas, 設 Settings; the active tab's label is
   written on a strip of plain tape in the user's ink.
 
+### Controls: stationery, not pills
+
+- Square corners everywhere (2-4dp), including dialogs, fields and menus. Portraits stay round.
+- A choice among a few options is a row of boxed cells, like a form; the chosen cell is shaded
+  and underlined in ink.
+- Yes/no is a tick box with an ink tick, not a switch.
+- Buttons are a block of ink (primary) or a slip of paper with a hairline edge (quiet).
+- Ink swatches are square chips.
+
 ### Tape rules
+
+- Tape is fully opaque. Text written on tape uses whichever of the theme's darkest or lightest
+  colours reads on that ink.
 
 - Corner tape always comes in pairs on opposing corners (upper left and lower right).
 - Vertical strips on stacked cards stop well short of each other (about 5px overhang with a 16px gap).

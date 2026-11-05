@@ -1,5 +1,6 @@
 package dev.aiharness.app.ui.settings
 
+import dev.aiharness.app.ui.paper.PaperChoice
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,9 +19,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -82,16 +80,8 @@ fun SettingsScreen(nav: NavController) {
             }, noneLabel = "Same as the conversation")
 
             SectionTitle("Heartbeat")
-            val modes = listOf(HeartbeatMode.PROACTIVE to "Proactive", HeartbeatMode.TIME_AWARENESS to "Time aware", HeartbeatMode.OFF to "Off")
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                modes.forEachIndexed { index, (mode, label) ->
-                    SegmentedButton(
-                        selected = s.heartbeat.mode == mode,
-                        onClick = { update { it.copy(heartbeat = it.heartbeat.copy(mode = mode)) } },
-                        shape = SegmentedButtonDefaults.itemShape(index, modes.size),
-                    ) { Text(label) }
-                }
-            }
+            val modes = listOf(HeartbeatMode.PROACTIVE to "Proactive", HeartbeatMode.TIME_AWARENESS to "Time only", HeartbeatMode.OFF to "Off")
+            PaperChoice(modes, s.heartbeat.mode, { mode -> update { it.copy(heartbeat = it.heartbeat.copy(mode = mode)) } })
             Text(
                 when (s.heartbeat.mode) {
                     HeartbeatMode.PROACTIVE -> "Personas wake up periodically to reflect, tend their memories, and may message you."

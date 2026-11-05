@@ -1,5 +1,7 @@
 package dev.aiharness.app.ui.chats
 
+import dev.aiharness.app.ui.theme.onInk
+import dev.aiharness.app.ui.paper.PaperCorner
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -326,15 +328,15 @@ private fun NewLetterButton(modifier: Modifier = Modifier, onClick: () -> Unit) 
     val s = stationery
     Row(
         modifier
-            .paperCard(color = s.you, shape = RoundedCornerShape(50))
-            .clip(RoundedCornerShape(50))
+            .paperCard(color = s.you, shape = PaperCorner)
+            .clip(PaperCorner)
             .combinedClickable(onClick = onClick, onClickLabel = "New letter")
             .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text("文", style = PaperType.seasonKanji.copy(fontSize = 17.sp, fontFamily = HarnessFonts.Brush), color = s.colors.kami)
-        Text("New letter", style = PaperType.label.copy(fontSize = 14.sp, letterSpacing = 0.sp), color = s.colors.kami)
+        Text("文", style = PaperType.seasonKanji.copy(fontSize = 17.sp, fontFamily = HarnessFonts.Brush), color = s.colors.onInk(s.you))
+        Text("New letter", style = PaperType.label.copy(fontSize = 14.sp, letterSpacing = 0.sp), color = s.colors.onInk(s.you))
         Spacer(Modifier.width(2.dp))
     }
 }

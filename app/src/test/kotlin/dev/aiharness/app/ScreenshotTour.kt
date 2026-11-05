@@ -13,6 +13,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -73,9 +75,14 @@ class ScreenshotTour {
     @Test
     fun dayTour() = tour("day", TimeOfDay.HIRU)
 
-    private fun tour(prefix: String, time: TimeOfDay) {
+    /** Winter night with large system text, like a phone with its font size turned up. */
+    @Test
+    @Config(fontScale = 1.3f)
+    fun largeTextTour() = tour("large", TimeOfDay.YORU, Season.FUYU)
+
+    private fun tour(prefix: String, time: TimeOfDay, season: Season = Season.AKI) {
         assumeTrue(outDir != null)
-        seed(time)
+        seed(time, season)
         waitFor("Kestrel")
         shot("${prefix}_1_chats")
 
@@ -95,12 +102,16 @@ class ScreenshotTour {
         click("Edit")
         waitFor("Appearance tags")
         shot("${prefix}_5_persona_editor")
+        compose.onNodeWithText("Tape").performScrollTo()
+        shot("${prefix}_5b_persona_editor_look")
         back()
         back()
 
         click("Settings")
         waitFor("Day and night")
         shot("${prefix}_6_settings")
+        compose.onNodeWithText("Proactive").performScrollTo()
+        shot("${prefix}_6b_settings_heartbeat")
     }
 
     private fun back() {
@@ -117,7 +128,7 @@ class ScreenshotTour {
         return ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
     }
 
-    private fun seed(time: TimeOfDay) = runBlocking {
+    private fun seed(time: TimeOfDay, season: Season) = runBlocking {
         val container = ApplicationProvider.getApplicationContext<HarnessApp>().container
         val h = container.harness
         // Wait for first-launch seeding (Aria + default user persona).
@@ -133,7 +144,7 @@ class ScreenshotTour {
             it.copy(
                 activeUserPersonaId = sam.id,
                 defaultModelProfileId = profile.id,
-                theme = ThemeSettings(dayNight = DayNightMode.STATIC, staticSeason = Season.AKI, staticTime = time),
+                theme = ThemeSettings(dayNight = DayNightMode.STATIC, staticSeason = season, staticTime = time),
             )
         }
 

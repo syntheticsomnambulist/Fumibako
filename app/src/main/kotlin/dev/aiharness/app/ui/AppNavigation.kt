@@ -22,7 +22,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -127,7 +126,7 @@ private fun TapeNavBar(currentRoute: String?, onSelect: (String) -> Unit) {
             val on = currentRoute == tab.route
             Column(
                 Modifier
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(dev.aiharness.app.ui.paper.PaperCorner)
                     .selectable(selected = on, role = Role.Tab, onClick = { onSelect(tab.route) })
                     .padding(horizontal = 14.dp, vertical = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,

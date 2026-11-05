@@ -1,5 +1,8 @@
 package dev.aiharness.app.ui.paper
 
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -10,8 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,11 +40,11 @@ fun InkPicker(selected: String?, onSelect: (String) -> Unit, modifier: Modifier 
                 Canvas(
                     Modifier
                         .size(34.dp)
-                        .clip(CircleShape)
+                        .clip(PaperCorner)
                         .selectable(selected = on, role = Role.RadioButton, onClick = { onSelect(name) })
-                        .border(if (on) 2.dp else 1.dp, if (on) s.colors.sumi else s.colors.nijimi1, CircleShape)
+                        .border(if (on) 2.dp else 1.dp, if (on) s.colors.sumi else s.colors.nijimi1, PaperCorner)
                         .padding(4.dp),
-                ) { drawCircle(s.ink(name)) }
+                ) { drawRect(s.ink(name)) }
             }
         }
         selected?.let { Text("${InkKanji[it].orEmpty()}  $it", style = PaperType.meta, color = s.ink(it)) }
@@ -54,22 +55,23 @@ fun InkPicker(selected: String?, onSelect: (String) -> Unit, modifier: Modifier 
 @Composable
 fun TapePicker(inkName: String?, selected: TapePattern, onSelect: (TapePattern) -> Unit, modifier: Modifier = Modifier) {
     val ink = stationery.ink(inkName)
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         TapePattern.entries.forEach { pattern ->
             val on = pattern == selected
             Column(
                 Modifier
-                    .clip(RoundedCornerShape(6.dp))
+                    .weight(1f)
+                    .clip(PaperCorner)
                     .selectable(selected = on, role = Role.RadioButton, onClick = { onSelect(pattern) })
-                    .border(if (on) 2.dp else 1.dp, if (on) paper.sumi else paper.nijimi0, RoundedCornerShape(6.dp))
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .border(if (on) 2.dp else 1.dp, if (on) paper.sumi else paper.nijimi0, PaperCorner)
+                    .padding(horizontal = 4.dp, vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Canvas(Modifier.size(width = 48.dp, height = 16.dp)) {
+                Canvas(Modifier.fillMaxWidth().height(16.dp)) {
                     drawTape(Offset(0f, size.height / 2), Offset(size.width, size.height / 2), size.height, Tape(ink, pattern, shadow = false))
                 }
-                Text(pattern.name.lowercase(), style = PaperType.meta, color = if (on) paper.sumi else paper.kasure2)
+                Text(pattern.name.lowercase(), style = PaperType.meta.copy(letterSpacing = 0.sp), color = if (on) paper.sumi else paper.kasure2, maxLines = 1)
             }
         }
     }
