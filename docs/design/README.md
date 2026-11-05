@@ -95,6 +95,5 @@ to fonts later.**
 
 ## Next
 
-- Review the letters list and persona screens.
-- Then an implementation plan: theme tokens in Compose, letter and note components, the sticker data
-  model and tools, NovelAI sticker-sheet generation, and how sticker events reach the persona's context.
+- v0.1 scope and order of work: [`../plan-v0.1.md`](../plan-v0.1.md).
+- Still to design: the memory book, the persona editor, settings, and fonts.

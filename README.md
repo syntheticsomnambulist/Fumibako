@@ -164,7 +164,8 @@ HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests 
 ## Design
 
 The planned visual direction (madoromi ink colours, letter-style messages, washi tape, stickers)
-is written up in [`docs/design/`](docs/design/README.md), with an interactive mockup.
+is written up in [`docs/design/`](docs/design/README.md), with interactive mockups. The plan for
+v0.1 is in [`docs/plan-v0.1.md`](docs/plan-v0.1.md).
 
 ## Known limitations / next steps
 
