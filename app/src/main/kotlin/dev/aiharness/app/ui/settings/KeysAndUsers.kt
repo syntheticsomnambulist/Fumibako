@@ -1,5 +1,9 @@
 package dev.aiharness.app.ui.settings
 
+import dev.aiharness.app.ui.paper.TapePicker
+import dev.aiharness.app.ui.paper.InkPicker
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -191,11 +195,13 @@ fun UserPersonasScreen(nav: NavController) {
     editing?.let { user ->
         var name by remember(user.id) { mutableStateOf(user.name) }
         var description by remember(user.id) { mutableStateOf(user.description) }
+        var ink by remember(user.id) { mutableStateOf(user.ink) }
+        var tape by remember(user.id) { mutableStateOf(user.tapePattern) }
         AlertDialog(
             onDismissRequest = { editing = null },
             title = { Text(if (user.name.isBlank()) "New persona" else "Edit ${user.name}") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(
                         description,
@@ -204,11 +210,15 @@ fun UserPersonasScreen(nav: NavController) {
                         minLines = 3,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    Text("Your ink", style = MaterialTheme.typography.labelMedium)
+                    InkPicker(ink, { ink = it })
+                    Text("Your tape", style = MaterialTheme.typography.labelMedium)
+                    TapePicker(ink, tape, { tape = it })
                 }
             },
             confirmButton = {
                 TextButton(enabled = name.isNotBlank(), onClick = {
-                    scope.launch { harness.userPersonas.upsert(user.copy(name = name.trim(), description = description, updatedAt = System.currentTimeMillis())) }
+                    scope.launch { harness.userPersonas.upsert(user.copy(name = name.trim(), description = description, ink = ink, tapePattern = tape, updatedAt = System.currentTimeMillis())) }
                     editing = null
                 }) { Text("Save") }
             },

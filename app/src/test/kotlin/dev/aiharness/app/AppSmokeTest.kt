@@ -44,10 +44,10 @@ class AppSmokeTest {
         waitForText("Heartbeat")
         compose.onNodeWithText("Proactive").assertExists()
 
-        // Start a chat with Aria; the greeting has {{user}} filled in.
-        compose.onAllNodesWithText("Chats").onFirst().performClick()
-        compose.onNodeWithContentDescription("New chat").performClick()
-        waitForText("Chat with…")
+        // Start a letter to Aria; the greeting has {{user}} filled in.
+        compose.onAllNodesWithText("Letters").onFirst().performClick()
+        compose.onNodeWithText("New letter").performClick()
+        waitForText("Write to…")
         compose.onAllNodesWithText("Aria").onFirst().performClick()
         waitForText("Hi You! I'm Aria", substring = true)
 

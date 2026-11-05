@@ -89,13 +89,23 @@ class ScreenshotTour {
         shot("${prefix}_3_personas")
 
         click("Aria")
+        waitFor("Memory book")
+        shot("${prefix}_4_persona_page")
+
+        click("Edit")
         waitFor("Appearance tags")
-        shot("${prefix}_4_persona_editor")
-        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        shot("${prefix}_5_persona_editor")
+        back()
+        back()
 
         click("Settings")
-        waitFor("Heartbeat")
-        shot("${prefix}_5_settings")
+        waitFor("Day and night")
+        shot("${prefix}_6_settings")
+    }
+
+    private fun back() {
+        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
     }
 
     private fun placeholderImage(): ByteArray {

@@ -1,9 +1,14 @@
 # Design direction
 
-Working notes for the app's visual design. Nothing here is implemented in the app yet; the current
-Compose UI is still stock Material 3. Open `letter-studies.html` (chat) and `screen-studies.html`
+Working notes for the app's visual design. Open `letter-studies.html` (chat) and `screen-studies.html`
 (letters list and persona screens) in a browser to see the mockups these notes describe; both are
 also published as private claude.ai artifacts.
+
+**Built in v0.1:** the madoromi theme (with fixed-hours, sunrise/sunset and static modes), inks and
+tape patterns, letters and notes, mood words, the letters list with the unread seal and "While you
+were away", the polaroid gallery, the persona page and the kanji navigation. **Not yet:** stickers
+(v0.2), per-persona unread marks, the ink signature, and the memory book, editor and settings
+redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui/theme`.
 
 **Goal:** character-focused, nice to look at, not generic. Bullet-journal stationery more than chat app.
 

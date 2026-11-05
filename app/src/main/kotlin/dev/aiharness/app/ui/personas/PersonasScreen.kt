@@ -49,45 +49,11 @@ import dev.aiharness.app.ui.PickerField
 import dev.aiharness.app.ui.Routes
 import dev.aiharness.app.ui.SectionTitle
 import dev.aiharness.app.ui.SwitchRow
+import dev.aiharness.app.ui.paper.InkPicker
+import dev.aiharness.app.ui.paper.TapePicker
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.util.newId
 import kotlinx.coroutines.launch
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PersonasScreen(nav: NavController) {
-    val harness = LocalAppContainer.current.harness
-    val scope = rememberCoroutineScope()
-    val personas by harness.personas.observeAll().collectAsStateWithLifecycle(emptyList())
-
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Personas") }) },
-        floatingActionButton = { FloatingActionButton(onClick = { nav.navigate(Routes.persona(Routes.NEW)) }) { Icon(Icons.Filled.Add, "New persona") } },
-    ) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding)) {
-            items(personas, key = { it.id }) { persona ->
-                ListItem(
-                    leadingContent = { Avatar(persona.name, persona.avatarRef, 48.dp) },
-                    headlineContent = { Text(persona.name) },
-                    supportingContent = { Text(persona.description, maxLines = 2, style = MaterialTheme.typography.bodySmall) },
-                    trailingContent = {
-                        Row {
-                            IconButton(onClick = { nav.navigate(Routes.memory(persona.id)) }) { Icon(Icons.Filled.Psychology, "Memories") }
-                            IconButton(onClick = {
-                                scope.launch {
-                                    val existing = harness.conversations.getAll().filter { it.personaId == persona.id && !it.archived }.maxByOrNull { it.updatedAt }
-                                    val conversation = existing ?: harness.createConversation(persona.id)
-                                    onMain { nav.navigate(Routes.chat(conversation.id)) }
-                                }
-                            }) { Icon(Icons.AutoMirrored.Filled.Chat, "Chat") }
-                        }
-                    },
-                    modifier = Modifier.clickable { nav.navigate(Routes.persona(persona.id)) },
-                )
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -180,6 +146,12 @@ fun PersonaEditScreen(nav: NavController, personaId: String) {
                 minLines = 2,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            SectionTitle("Look")
+            Text("Ink", style = MaterialTheme.typography.labelMedium)
+            InkPicker(persona.ink, { v -> update { it.copy(ink = v) } })
+            Text("Tape", style = MaterialTheme.typography.labelMedium)
+            TapePicker(persona.ink, persona.tapePattern, { v -> update { it.copy(tapePattern = v) } })
 
             SectionTitle("Behaviour")
             PickerField(

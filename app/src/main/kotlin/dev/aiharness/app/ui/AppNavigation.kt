@@ -5,20 +5,31 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.app.ui.theme.paper
+import dev.aiharness.app.ui.theme.PaperType
+import dev.aiharness.app.ui.personas.PersonaPageScreen
+import dev.aiharness.app.ui.paper.TapeLabel
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -56,12 +67,12 @@ object Routes {
     const val NEW = "new"
 }
 
-private data class Tab(val route: String, val label: String, val icon: ImageVector)
+private data class Tab(val route: String, val label: String, val kanji: String)
 
 private val tabs = listOf(
-    Tab(Routes.CHATS, "Chats", Icons.AutoMirrored.Filled.Chat),
-    Tab(Routes.PERSONAS, "Personas", Icons.Filled.Face),
-    Tab(Routes.SETTINGS, "Settings", Icons.Filled.Settings),
+    Tab(Routes.CHATS, "Letters", "文"),
+    Tab(Routes.PERSONAS, "Personas", "人"),
+    Tab(Routes.SETTINGS, "Settings", "設"),
 )
 
 @Composable
@@ -80,18 +91,7 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
     val currentRoute = backStack?.destination?.route
     Scaffold(
         bottomBar = {
-            if (currentRoute in tabs.map { it.route }) {
-                NavigationBar {
-                    tabs.forEach { tab ->
-                        NavigationBarItem(
-                            selected = currentRoute == tab.route,
-                            onClick = { nav.navigateTab(tab.route) },
-                            icon = { Icon(tab.icon, null) },
-                            label = { Text(tab.label) },
-                        )
-                    }
-                }
-            }
+            if (currentRoute in tabs.map { it.route }) TapeNavBar(currentRoute) { nav.navigateTab(it) }
         },
     ) { padding ->
         NavHost(nav, startDestination = Routes.CHATS, modifier = Modifier.padding(bottom = padding.calculateBottomPadding())) {
@@ -99,13 +99,43 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
             composable("chat/{id}") { entry -> ChatScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.PERSONAS) { PersonasScreen(nav) }
             composable("persona/{id}") { entry -> PersonaEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
-            composable("page/{id}") { entry -> PersonaEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
+            composable("page/{id}") { entry -> PersonaPageScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("memory/{id}") { entry -> MemoryScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.SETTINGS) { SettingsScreen(nav) }
             composable(Routes.MODELS) { ModelsScreen(nav) }
             composable("model/{id}") { entry -> ModelEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.KEYS) { KeysScreen(nav) }
             composable(Routes.USER_PERSONAS) { UserPersonasScreen(nav) }
+        }
+    }
+}
+
+/** Kanji tabs; the active tab's label is written on a strip of plain tape in the user's ink. */
+@Composable
+private fun TapeNavBar(currentRoute: String?, onSelect: (String) -> Unit) {
+    val colors = paper
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(colors.kami)
+            .drawBehind { drawLine(colors.nijimi0, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }
+            .navigationBarsPadding()
+            .padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 10.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+    ) {
+        tabs.forEach { tab ->
+            val on = currentRoute == tab.route
+            Column(
+                Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .selectable(selected = on, role = Role.Tab, onClick = { onSelect(tab.route) })
+                    .padding(horizontal = 14.dp, vertical = 2.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(tab.kanji, style = PaperType.navKanji, color = if (on) colors.sumi else colors.usuzumi0)
+                TapeLabel(tab.label, stationery.you, on = on)
+            }
         }
     }
 }

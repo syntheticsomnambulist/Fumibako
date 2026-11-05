@@ -143,15 +143,23 @@ fun Polaroid(
     modifier: Modifier = Modifier,
     tiltDegrees: Float = 0f,
     tapeTiltDegrees: Float = -4f,
-    caption: @Composable (() -> Unit)? = null,
     bottomPadding: Dp = 0.dp,
     framePadding: Dp = 10.dp,
+    cornerTaped: Boolean = false,
+    caption: @Composable (() -> Unit)? = null,
 ) {
     val s = stationery
+    val tape = Tape(s.ink(persona.ink), persona.tapePattern)
     Column(
         modifier
             .rotate(tiltDegrees)
-            .topTape(Tape(s.ink(persona.ink), persona.tapePattern), tiltDegrees = tapeTiltDegrees)
+            .then(
+                if (cornerTaped) {
+                    Modifier.cornerTape(tape, length = 40.dp, angleDegrees = -40f, reach = 10.dp, lift = 3.dp)
+                } else {
+                    Modifier.topTape(tape, tiltDegrees = tapeTiltDegrees)
+                },
+            )
             .shadow(3.dp, RoundedCornerShape(3.dp), ambientColor = s.colors.chitsu, spotColor = Color.Black.copy(alpha = 0.35f))
             .background(s.frame, RoundedCornerShape(3.dp))
             .border(1.dp, s.colors.nijimi1.copy(alpha = 0.45f), RoundedCornerShape(3.dp))

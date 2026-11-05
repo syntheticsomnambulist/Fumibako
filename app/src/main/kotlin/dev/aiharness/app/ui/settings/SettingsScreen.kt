@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -61,7 +62,7 @@ fun SettingsScreen(nav: NavController) {
         scope.launch { harness.settings.update(transform) }
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Settings") }) }) { padding ->
+    Scaffold(topBar = { dev.aiharness.app.ui.chats.ScreenTitle("Settings", Modifier.statusBarsPadding().padding(horizontal = 18.dp)) }) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -69,6 +70,8 @@ fun SettingsScreen(nav: NavController) {
             NavRow("Model profiles", "Swappable models across providers") { nav.navigate(Routes.MODELS) }
             NavRow("API keys", "Stored encrypted with the Android Keystore") { nav.navigate(Routes.KEYS) }
             NavRow("Your personas", "Who you are in conversations") { nav.navigate(Routes.USER_PERSONAS) }
+
+            LookSection(s, ::update)
 
             SectionTitle("Models")
             PickerField("Default model", profiles, profiles.firstOrNull { it.id == s.defaultModelProfileId }, { it.name }, { p ->

@@ -20,6 +20,9 @@ core loop (chat, personas, memory, heartbeat, images) verified against the real 
   through the Anthropic SDK, with time awareness. This answers the auth-header question from step 1.
   CI builds on every push. Engine changes from step 3 are in (identity fields, mood tags, unread
   state, activity log, theme settings with sunrise and sunset), with a tested database migration.
+- **2026-11-05:** steps 4 and 5 done: theme, fonts, tape and paper components, and the restyled
+  letters list, letters, personas gallery, persona page, navigation and Look settings. Screenshot
+  tours in day and night. Next: your test on the phone (step 7) and the live API check (step 1).
 
 ## What v0.1 includes
 

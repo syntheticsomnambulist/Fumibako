@@ -162,7 +162,8 @@ data class Conversation(
 
     companion object {
         /** One line of [text] for a preview. */
-        fun previewOf(text: String): String = text.replace(Regex("\\s+"), " ").trim().take(PREVIEW_LENGTH)
+        fun previewOf(text: String): String =
+            text.replace(Regex("[*`_]{1,2}"), "").replace(Regex("\\s+"), " ").trim().take(PREVIEW_LENGTH)
 
         private const val PREVIEW_LENGTH = 220
     }

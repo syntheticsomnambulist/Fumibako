@@ -116,7 +116,7 @@ fun LetterSheet(
                     block.image.ref,
                     Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 380.dp)
+                        .heightIn(min = 160.dp, max = 380.dp)
                         .clip(RoundedCornerShape(2.dp))
                         .clickable(onClickLabel = "View picture") { onImage(block.image.ref) },
                     contentScale = ContentScale.Crop,
