@@ -95,6 +95,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.navigation.compose)
+    // Cuts the subject out of a photo for a sticker, on the phone (Google Play services).
+    implementation(libs.mlkit.subject.segmentation)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)

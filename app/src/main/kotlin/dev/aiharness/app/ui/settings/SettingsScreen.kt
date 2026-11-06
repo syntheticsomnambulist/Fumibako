@@ -58,10 +58,11 @@ enum class SettingsSection(val key: String, val kanji: String, val title: String
     HEARTBEAT("heartbeat", "二", "Heartbeat"),
     MEMORY("memory", "三", "Memory"),
     PICTURES("pictures", "四", "Pictures"),
-    MODELS("models", "五", "Models and keys"),
-    YOU("you", "六", "You"),
-    PROMPTING("prompting", "七", "Prompting"),
-    ABOUT("about", "八", "About"),
+    STICKERS("stickers", "五", "Stickers"),
+    MODELS("models", "六", "Models and keys"),
+    YOU("you", "七", "You"),
+    PROMPTING("prompting", "八", "Prompting"),
+    ABOUT("about", "九", "About"),
     ;
 
     companion object {
@@ -142,6 +143,7 @@ private fun summary(section: SettingsSection, s: AppSettings, profileCount: Int,
     }
     SettingsSection.MEMORY -> if (!s.memory.enabled) "Off" else "On · editing ${if (s.memory.userCanEdit) "on" else "off"}"
     SettingsSection.PICTURES -> if (!s.imageGen.enabled) "Off" else s.imageGen.profileFor(null)?.takeIf { s.imageGen.ready }?.name ?: "Not set up"
+    SettingsSection.STICKERS -> "${s.stickers.size.label} · ${s.stickers.maxPerLetter} to a letter"
     SettingsSection.MODELS -> if (profileCount == 1) "1 model" else "$profileCount models"
     SettingsSection.YOU -> writingAs?.let { "Writing as $it" } ?: "Your personas"
     SettingsSection.PROMPTING -> if (s.baseInstructions == AppSettings.DEFAULT_BASE_INSTRUCTIONS) "Default" else "Your own"
@@ -171,6 +173,7 @@ fun SettingsSectionScreen(nav: NavController, key: String) {
             SettingsSection.HEARTBEAT -> heartbeatPage(nav, s, update)
             SettingsSection.MEMORY -> memoryPage(s, update)
             SettingsSection.PICTURES -> picturesPage(nav, s, update)
+            SettingsSection.STICKERS -> stickersPage(nav, s, update)
             SettingsSection.MODELS -> modelsPage(nav, s, update)
             SettingsSection.PROMPTING -> promptingPage(s, update)
             SettingsSection.ABOUT -> aboutPage()

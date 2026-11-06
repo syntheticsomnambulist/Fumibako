@@ -239,6 +239,23 @@ class ScreenshotTour {
             back()
         }
 
+        // Stickers: the settings page and the shared library.
+        click("Stickers")
+        waitFor("Most on one letter")
+        shot("${prefix}_15_settings_stickers")
+        scrollTo("Open the library")
+        click("Open the library")
+        compose.waitUntilAtLeastOneExists(hasContentDescription(":gold-star: sticker"), 10_000)
+        shot("${prefix}_16_shared_stickers")
+        back()
+        back()
+
+        // Lamplight on the Look page.
+        click("Look")
+        scrollTo("Lamplight at night")
+        shot("${prefix}_17_settings_look_lamplight")
+        back()
+
         // An image profile.
         click("Pictures")
         waitFor("Image profiles")

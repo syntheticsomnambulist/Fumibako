@@ -67,7 +67,7 @@ import dev.aiharness.core.model.EmbeddingSettings
 import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.HeartbeatRhythm
 
-private typealias Update = ((AppSettings) -> AppSettings) -> Unit
+internal typealias Update = ((AppSettings) -> AppSettings) -> Unit
 
 @Composable
 internal fun Hint(text: String) {

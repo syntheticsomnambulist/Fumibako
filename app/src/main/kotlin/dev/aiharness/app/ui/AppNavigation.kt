@@ -60,6 +60,7 @@ object Routes {
     /** Model profiles are listed in Settings, Models and keys. */
     val MODELS = settings("models")
     const val KEYS = "keys"
+    const val SHARED_STICKERS = "stickers/shared"
     const val USER_PERSONAS = "user_personas"
     fun chat(id: String) = "chat/$id"
     fun personaPage(id: String) = "page/$id"
@@ -115,6 +116,7 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
             composable("settings/{section}") { entry -> SettingsSectionScreen(nav, entry.arguments?.getString("section").orEmpty()) }
             composable("model/{id}") { entry -> ModelEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.KEYS) { KeysScreen(nav) }
+            composable(Routes.SHARED_STICKERS) { dev.aiharness.app.ui.settings.SharedStickersScreen(nav) }
             composable("image/{id}") { entry -> dev.aiharness.app.ui.settings.ImageProfileScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.USER_PERSONAS) { YouGalleryScreen(nav) }
         }

@@ -1,8 +1,5 @@
 package dev.aiharness.app.ui.settings
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import dev.aiharness.app.ui.paper.PaperCorner
 import dev.aiharness.app.ui.paper.PaperChoice
 import android.Manifest
 import android.content.Context
@@ -12,25 +9,17 @@ import android.location.LocationManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -38,11 +27,11 @@ import dev.aiharness.app.ui.paper.StepperRow
 import dev.aiharness.app.ui.SwitchRow
 import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
-import dev.aiharness.app.ui.theme.parseHex
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.DayNightMode
 import dev.aiharness.core.model.FrameStyle
 import dev.aiharness.core.model.Season
+import dev.aiharness.core.model.Lamplight
 import dev.aiharness.core.model.ThemeSettings
 import dev.aiharness.core.model.TimeOfDay
 import dev.aiharness.core.theme.Sun
@@ -51,8 +40,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.roundToInt
-
-private val OutlinePresets = listOf("White" to "#FFFFFF", "Cream" to "#FFF4E0", "Ink" to "#3B2F27")
 
 /** How the theme switches between day and night. */
 @Composable
@@ -86,44 +73,21 @@ fun LookPaper(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) {
     fun updateTheme(transform: (ThemeSettings) -> ThemeSettings) = update { it.copy(theme = transform(it.theme)) }
 
     Text("Paper and frames", style = PaperType.entryTitle, color = paper.sumi)
-    Text("Sticker outline", style = PaperType.label, color = paper.kasure2)
-    Text("Stickers arrive in the next version; the outline color also frames polaroids.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-        OutlinePresets.forEach { (label, hex) ->
-            val on = theme.outlineColor.equals(hex, ignoreCase = true)
-            Column(
-                Modifier
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
-                    .selectable(on, role = Role.RadioButton) { updateTheme { it.copy(outlineColor = hex) } }
-                    .padding(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Box(
-                    Modifier
-                        .size(32.dp)
-                        .border(if (on) 2.dp else 1.dp, if (on) paper.sumi else paper.nijimi1, PaperCorner)
-                        .clip(PaperCorner)
-                        .background(parseHex(hex) ?: paper.kami),
-                )
-                Text(label, style = PaperType.meta, color = paper.usuzumi1)
-            }
-        }
-        var custom by remember(theme.outlineColor) { mutableStateOf(theme.outlineColor) }
-        dev.aiharness.app.ui.paper.IndexCardField(
-            "Hex",
-            custom,
-            { v ->
-                custom = v
-                if (parseHex(v) != null) updateTheme { it.copy(outlineColor = v.trim().uppercase().let { h -> if (h.startsWith("#")) h else "#$h" }) }
-            },
-            Modifier.weight(1f),
-            singleLine = true,
-            style = PaperType.noteBody,
-        )
-    }
     Text("Polaroid frames", style = PaperType.label, color = paper.kasure2)
     val frames = listOf(FrameStyle.MATCH_OUTLINE to "Outline color", FrameStyle.PAPER to "Paper")
     PaperChoice(frames, theme.polaroidFrame, { style -> updateTheme { it.copy(polaroidFrame = style) } })
+    Text("Lamplight at night", style = PaperType.label, color = paper.kasure2)
+    val lamps = listOf(Lamplight.DIM_ALL to "Everything", Lamplight.KEEP_PHOTOS to "Not photos", Lamplight.NONE to "Off")
+    PaperChoice(lamps, theme.lamplight, { l -> updateTheme { it.copy(lamplight = l) } })
+    Text(
+        "At night, stickers (and later photos and other things on the desk) keep their day colors, " + when (theme.lamplight) {
+            Lamplight.DIM_ALL -> "dimmed and warmed as if by a desk lamp."
+            Lamplight.KEEP_PHOTOS -> "dimmed and warmed as if by a desk lamp, except photos."
+            Lamplight.NONE -> "just as they are."
+        },
+        style = PaperType.noteBody.copy(fontSize = 12.sp),
+        color = paper.usuzumi0,
+    )
     SwitchRow(
         "Mood words",
         s.moodTags,
