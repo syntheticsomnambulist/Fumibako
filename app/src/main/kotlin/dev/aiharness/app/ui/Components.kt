@@ -1,5 +1,9 @@
 package dev.aiharness.app.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import dev.aiharness.app.ui.theme.PaperType
+import dev.aiharness.app.ui.theme.paper
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import android.graphics.BitmapFactory
@@ -98,9 +102,9 @@ fun SwitchRow(title: String, checked: Boolean, onChange: (Boolean) -> Unit, subt
         Modifier.fillMaxWidth().clickable { onChange(!checked) }.padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        Column(Modifier.weight(1f).padding(end = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = PaperType.noteBody.copy(fontSize = 15.sp, lineHeight = 20.sp), color = paper.sumi)
+            subtitle?.let { Text(it, style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 17.sp), color = paper.usuzumi0) }
         }
         dev.aiharness.app.ui.paper.TickBox(checked, onCheckedChange = null, ink = ink ?: dev.aiharness.app.ui.theme.stationery.you)
     }

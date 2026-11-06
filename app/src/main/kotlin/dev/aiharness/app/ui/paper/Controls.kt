@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -135,7 +136,9 @@ fun PaperButton(label: String, modifier: Modifier = Modifier, ink: Color? = null
             .then(base)
             .clip(PaperCorner)
             .combinedClickable(enabled = enabled, onClick = onClick)
-            .alpha(if (enabled) 1f else 0.45f)
+            // A layer that is always there: Modifier.alpha(1f) drops its layer, and changing the chain that
+            // way is what left the chat's send button undrawn once enabled.
+            .graphicsLayer { alpha = if (enabled) 1f else 0.45f }
             .padding(horizontal = 14.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {

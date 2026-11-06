@@ -51,7 +51,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -316,16 +315,19 @@ private fun EntryBar(
             },
         )
         val canSend = value.isNotBlank()
+        val active = busy || canSend
+        // Dimmed by colour, not by an alpha layer: adding and removing that layer as you typed left the
+        // button undrawn (though still tappable).
+        val fill = if (active) youInk else androidx.compose.ui.graphics.lerp(youInk, colors.kami, 0.5f)
         Box(
             Modifier
                 .size(42.dp)
                 .clip(PaperCorner)
-                .background(youInk)
-                .alpha(if (busy || canSend) 1f else 0.45f)
-                .clickable(enabled = busy || canSend, onClickLabel = if (busy) "Stop" else "Send") { if (busy) onStop() else onSend() },
+                .background(fill)
+                .clickable(enabled = active, onClickLabel = if (busy) "Stop" else "Send") { if (busy) onStop() else onSend() },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(if (busy) Icons.Filled.Stop else Icons.AutoMirrored.Filled.Send, if (busy) "Stop" else "Send", tint = colors.onInk(youInk), modifier = Modifier.size(20.dp))
+            Icon(if (busy) Icons.Filled.Stop else Icons.AutoMirrored.Filled.Send, if (busy) "Stop" else "Send", tint = colors.onInk(fill).copy(alpha = if (active) 1f else 0.6f), modifier = Modifier.size(20.dp))
         }
     }
 }

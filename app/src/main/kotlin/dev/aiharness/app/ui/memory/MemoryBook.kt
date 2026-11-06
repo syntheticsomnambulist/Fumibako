@@ -368,7 +368,7 @@ private fun BookTabs(selected: BookTab, ink: Color, pattern: TapePattern, onSele
             .drawBehind { drawLine(colors.nijimi1, Offset(0f, size.height - 0.5.dp.toPx()), Offset(size.width, size.height - 0.5.dp.toPx()), 1.dp.toPx()) }
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
         BookTab.entries.forEach { t ->
@@ -379,7 +379,7 @@ private fun BookTabs(selected: BookTab, ink: Color, pattern: TapePattern, onSele
             val shown = if (on) tape else Tape(lerp(tape.ink, colors.kami, 0.5f), TapePattern.PLAIN, shadow = false)
             Text(
                 t.label,
-                style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 16.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal),
+                style = PaperType.noteBody.copy(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal),
                 color = colors.onInk(shown.ink),
                 maxLines = 1,
                 modifier = Modifier
@@ -392,7 +392,7 @@ private fun BookTabs(selected: BookTab, ink: Color, pattern: TapePattern, onSele
                         drawTape(Offset(size.width / 2, size.height + 3.dp.toPx()), Offset(size.width / 2, 0f), size.width, shown, tooth = 2.dp.toPx())
                     }
                     .clickable(role = Role.Tab, onClickLabel = t.label) { onSelect(t) }
-                    .padding(start = 11.dp, end = 11.dp, top = lift, bottom = 6.dp),
+                    .padding(start = 8.dp, end = 8.dp, top = lift, bottom = 6.dp),
             )
         }
     }

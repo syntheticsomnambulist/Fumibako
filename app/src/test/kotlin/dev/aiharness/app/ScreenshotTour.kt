@@ -9,10 +9,14 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
@@ -61,10 +65,11 @@ class ScreenshotTour {
 
     private val outDir: File? = System.getenv("HARNESS_SCREENSHOTS_DIR")?.let { File(it).apply { mkdirs() } }
 
-    private fun shot(name: String) {
+    private fun shot(name: String): Bitmap {
         compose.waitForIdle()
         val bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
         File(outDir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        return bitmap
     }
 
     private fun waitFor(text: String) = compose.waitUntilAtLeastOneExists(hasText(text, substring = true), 10_000)
@@ -91,11 +96,26 @@ class ScreenshotTour {
         click("Aria")
         waitFor("actually sleep")
         shot("${prefix}_02_chat")
+        // Writing a reply: the field grows and the send button stays.
+        compose.onNode(hasSetTextAction()).performTextInput("You'll get to pick for yourself :3\nWe've just updated to a new version.")
+        assertDrawn(compose.onNodeWithContentDescription("Send"), shot("${prefix}_02b_chat_typing"))
+        back()
         back()
 
         click("Personas")
         waitFor("Juno")
         shot("${prefix}_03_personas")
+
+        // A new persona: Done is disabled until it has a name, and must show once it does.
+        scrollTo("New persona")
+        click("New persona")
+        waitFor("EDITING")
+        compose.onAllNodes(hasSetTextAction()).onFirst().performTextInput("Wren")
+        assertDrawn(compose.onNodeWithText("Done"), shot("${prefix}_03b_new_persona"))
+        back()
+        click("Discard")
+        waitFor("Juno")
+        top()
 
         click("Aria")
         waitFor("Write a letter")
@@ -150,6 +170,7 @@ class ScreenshotTour {
         // A model profile, a new one's presets, and the keys.
         click("Models and keys")
         waitFor("Model profiles")
+        waitFor("Claude Opus 5.5")
         click("Claude Opus 5.5")
         waitFor("Provider and key")
         shot("${prefix}_30_model_profile")
@@ -231,6 +252,19 @@ class ScreenshotTour {
         back()
         back()
         back()
+    }
+
+    /**
+     * A button enabled by typing must be drawn in the screenshot [root]: its pixels differ from the
+     * paper just beside it. (The chat's send button once vanished while staying tappable.)
+     */
+    private fun assertDrawn(node: androidx.compose.ui.test.SemanticsNodeInteraction, root: Bitmap) {
+        val bounds = node.fetchSemanticsNode().boundsInRoot
+        // Just inside the left edge: the button's own padding, clear of its label or icon.
+        val inside = root.getPixel((bounds.left + 12).toInt(), bounds.center.y.toInt())
+        val beside = root.getPixel((bounds.left - 4).toInt(), bounds.center.y.toInt())
+        val distance = listOf(16, 8, 0).sumOf { shift -> kotlin.math.abs((inside shr shift and 0xff) - (beside shr shift and 0xff)) }
+        check(distance > 60) { "the button isn't drawn (button ${Integer.toHexString(inside)}, around it ${Integer.toHexString(beside)}; bounds $bounds in ${root.width}x${root.height})" }
     }
 
     private fun top() {

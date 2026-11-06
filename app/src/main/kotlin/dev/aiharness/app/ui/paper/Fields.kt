@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -166,7 +167,7 @@ fun PaperStepper(
     }
     Row(
         modifier
-            .width(width)
+            .widthIn(min = width)
             .height(IntrinsicSize.Min)
             .border(1.dp, colors.nijimi1, PaperCorner)
             .background(colors.kami, PaperCorner)
@@ -177,7 +178,7 @@ fun PaperStepper(
         Box(Modifier.width(1.dp).fillMaxHeight().background(colors.nijimi1))
         Box(
             Modifier
-                .weight(1f)
+                .widthIn(min = width - 74.dp)
                 .heightIn(min = 38.dp)
                 .clickable(onClickLabel = "Type a number", role = Role.Button) { typing = true }
                 .background(if (typing) androidx.compose.ui.graphics.lerp(colors.kami, stationery.you, 0.12f) else colors.kami),
@@ -206,7 +207,7 @@ fun PaperStepper(
                     style = PaperType.label.copy(fontSize = 14.sp, letterSpacing = 0.sp),
                     color = colors.sumi,
                     maxLines = 1,
-                    modifier = Modifier.drawBehind {
+                    modifier = Modifier.padding(horizontal = 8.dp).drawBehind {
                         val y = size.height + 1.dp.toPx()
                         drawLine(underline, Offset(0f, y), Offset(size.width, y), 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 2.dp.toPx())))
                     },
@@ -297,10 +298,28 @@ fun tapeLayouts(seed: String, count: Int): List<TapeLayout> {
     val random = Random(seed.hashCode())
     var previous: TapeLayout? = null
     return List(count) {
-        val options = TapeLayout.entries.filter { it != previous }
+        val options = TapeLayout.entries.filter { it != previous && (previous == null || (previous!!.bottomCorners intersect it.topCorners).isEmpty()) }
         options[random.nextInt(options.size)].also { previous = it }
     }
 }
+
+/** Where a layout's tape reaches the top and bottom edges ("L", "C", "R"), so neighbours don't collide. */
+private val TapeLayout.topCorners: Set<String>
+    get() = when (this) {
+        TapeLayout.LEFT -> setOf("L")
+        TapeLayout.RIGHT -> setOf("R")
+        TapeLayout.CORNERS -> setOf("L")
+        TapeLayout.TOP -> setOf("C")
+        TapeLayout.TOP_PAIR -> setOf("L", "R")
+    }
+
+private val TapeLayout.bottomCorners: Set<String>
+    get() = when (this) {
+        TapeLayout.LEFT -> setOf("L")
+        TapeLayout.RIGHT -> setOf("R")
+        TapeLayout.CORNERS -> setOf("R")
+        TapeLayout.TOP, TapeLayout.TOP_PAIR -> emptySet()
+    }
 
 /** A paper card held down by [tape] in [layout], padded so the tape never covers its content. */
 @Composable
