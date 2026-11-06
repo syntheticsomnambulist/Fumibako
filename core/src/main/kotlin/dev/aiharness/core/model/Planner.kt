@@ -5,10 +5,10 @@ import kotlinx.serialization.Serializable
 /**
  * What a planner entry is (docs/design/calendar.md on the design branch). Yours: a plan, or part
  * of your typical week. A persona's: a note on a day, a plan it suggests, a reminder or promise
- * (which wakes it), or its own rest.
+ * (which wakes it), or its time away (resting, busy, traveling: its own words say which).
  */
 @Serializable
-enum class EntryKind { PLAN, ROUTINE, NOTE, SUGGESTION, REMINDER, REST }
+enum class EntryKind { PLAN, ROUTINE, NOTE, SUGGESTION, REMINDER, AWAY }
 
 /** What part of your typical week a routine is. Work and sleep are busy; sleep also folds the week page and sets quiet hours. */
 @Serializable
@@ -17,7 +17,7 @@ enum class RoutineKind { WORK, SLEEP, OTHER }
 /**
  * Where an entry stands. A plan is [OPEN] until it's [DONE] or [CANCELLED] (a moved plan stays
  * open, with [PlannerEntry.movedFrom]); a suggestion is open until it's [ADDED] or [DECLINED]
- * ("not this time"); a reminder until it's [KEPT] or [MISSED]. Notes and rests stay open.
+ * ("not this time"); a reminder until it's [KEPT] or [MISSED]. Notes and time away stay open.
  */
 @Serializable
 enum class EntryState { OPEN, DONE, CANCELLED, ADDED, DECLINED, KEPT, MISSED }

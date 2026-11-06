@@ -141,8 +141,10 @@ class Planner(private val entries: PlannerRepository, private val clock: Clock) 
                 else -> " (not answered yet)"
             }
         } + "."
-        mine.firstOrNull { it.kind == EntryKind.REST && (it.end ?: 0) > now }?.let { rest ->
-            lines += "You're resting until ${weekday(dayAt(rest.end!!), today)} ${time(rest.end)}."
+        // Away, in its own words for it (resting, busy with something, on a trip).
+        mine.firstOrNull { it.kind == EntryKind.AWAY && (it.end ?: 0) > now }?.let { away ->
+            val until = away.end ?: return@let
+            lines += "You're away until ${weekday(dayAt(until), today)} ${time(until)}" + (away.title.takeIf { it.isNotBlank() }?.let { ": $it." } ?: ".")
         }
 
         // How your plans stand, lately.

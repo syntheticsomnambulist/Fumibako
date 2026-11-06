@@ -116,6 +116,8 @@ class PlannerTest {
         env.plannerEntries.upsert(entry(EntryKind.PLAN, "dentist", start = at(28, 8), state = EntryState.DONE))
         env.plannerEntries.upsert(entry(EntryKind.PLAN, "pottery", day = "2026-05-31", movedFrom = "2026-05-29"))
         env.plannerEntries.upsert(entry(EntryKind.PLAN, "yoga", start = at(28, 18), state = EntryState.CANCELLED))
+        // Away, in its own words for it.
+        env.plannerEntries.upsert(entry(EntryKind.AWAY, "busy with the garden", start = at(28, 9), end = at(31, 9), by = p))
         val context = env.harness.planner.contextFor(env.persona, env.user, env.settingsRepo.current())!!
 
         assertContains(context, "Your notes in Sam's planner: ask how the dentist went (tomorrow).")
@@ -123,5 +125,6 @@ class PlannerTest {
         assertContains(context, "You suggested: the meteor shower, Saturday 22:00 (not answered yet).")
         assertContains(context, "dentist: done. pottery (tomorrow): moved to Sunday. yoga: cancelled.")
         assertTrue("yoga, 18:00" !in context, "a cancelled plan isn't coming up")
+        assertContains(context, "You're away until Sunday 09:00: busy with the garden.")
     }
 }

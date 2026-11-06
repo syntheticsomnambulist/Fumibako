@@ -20,6 +20,8 @@ in its `docs/design/ideas.md`.
   heartbeat's quiet hours; a haiku slip on a new solar term or microseason (a making activity).
 - **Not in v0.4:** a suggestion using an activity slot. Suggested plans stay (they're agreed) and
   are free, like notes and reminders.
+- **"Away", not "resting"** (after step 2): a persona marks itself away, and says in its own
+  words what that is (resting, busy, on a trip). `calendar.md`'s "rest" means this.
 
 ## What v0.4 includes
 
@@ -32,7 +34,7 @@ From the agreed decisions in `calendar.md`:
    now and next, a few notable days ahead, its own notes and suggestions, and the states of
    entries. A heartbeat says why you're quiet instead of "They may be busy".
 4. **Personas write in the planner:** notes, reminders and promises (which wake it), suggested
-   plans you can add or turn down, and its own rest; stickers on days and entries.
+   plans you can add or turn down, and its time away; stickers on days and entries.
 5. **Entries have states:** done, moved (with a ghost on the old day), cancelled; a suggestion
    added or not this time; a reminder kept or missed.
 6. **Marks per persona:** its signature seal, wake mark and done mark, like the unread mark.
@@ -53,8 +55,8 @@ From the agreed decisions in `calendar.md`:
    12-hour clock and the week's first day.
 3. **The month and the seasons:** the month page, the season band, public holidays, "Seasons
    follow" on the Look page.
-4. **The persona's side:** the planner tools (look, note, suggest, remind, rest), slips in its
-   ink with its seal, suggestions to add or turn down, reminders and one-off wakeups, its rest,
+4. **The persona's side:** the planner tools (look, note, suggest, remind, away), slips in its
+   ink with its seal, suggestions to add or turn down, reminders and one-off wakeups, its time away,
    its marks, stickers on days and entries, the look-ahead activity and the season haiku.
 5. **Phone calendars:** setup, detail levels, pencil boxes, done and not going.
 6. **Busy times and Settings, Planner:** held notifications, "Busy for now", sleep as quiet
@@ -67,7 +69,7 @@ From the agreed decisions in `calendar.md`:
   version 5; its migration step has a test, and the last three steps are kept). Every one of
   your personas keeps a planner of its own; an entry knows whose planner it's in, who wrote it
   (you, or a persona), what it is (a plan, part of your typical week, a persona's note,
-  suggestion, reminder or rest), when (a time, a day, or the days and hours of a week), where,
+  suggestion, reminder or time away), when (a time, a day, or the days and hours of a week), where,
   whether it makes you busy, and how it stands (done, moved, cancelled; added or not this time;
   kept or missed). A persona's "Sees your planner" starts on; your default persona shares its
   planner, the others don't until you say. When both are on, each letter's context block says
