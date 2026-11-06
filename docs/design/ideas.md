@@ -35,6 +35,37 @@ when we work through them: [`calendar.md`](calendar.md), [`pen-pals.md`](pen-pal
   - Videos are film strips; the frames shown are the ones a model that can't watch video gets.
   - Under a song, an app-written line says what the persona can and can't take in ("Aria can read
     the label, but can't hear the songs").
+- **Tapping** (agreed 2026-11-06; tappable prototypes on the canvas):
+  - A photo lifts, straightens and opens. A stack fans out; tapping one photo opens it.
+  - A tag swings on its string, and Open and Save to phone slide out beneath it.
+  - A link gives a little lift and opens straight away.
+  - The cassette's reels turn and its tape winds across while it plays. A ticket is punched the
+    first time it plays and stays punched, so you can see which songs you've played. A film strip
+    runs through as if in a projector while the player opens.
+  - Events: the persona's 読 stamp lands with a soft thunk and a light haptic tap; a letter's
+    attachments drop onto the page one after another and settle.
+  - The + tray slides up with its items staggered, + turns into ×, and a picked item pops into
+    "Going with your note".
+  - With Android's "Remove animations" setting on, every effect is instant.
+- **Links open in an in-app browser** (Custom Tabs, coloured to match the paper) by default; a
+  setting opens them in the default browser instead. Long-press for Copy link and Share.
+- **Players.** While something plays, a mini player docks above the composer: title and artist, a
+  thin progress line in the sender's ink, play/pause, next (playlists) and stop. Tapping it opens
+  the full player:
+  - a playlist: the cassette, a scrubber with elapsed and remaining time, shuffle, previous,
+    play/pause, next and repeat, and the track list on the cassette's J-card in the sender's hand;
+  - a single song: the ticket, a scrubber, back and forward 10 seconds, and repeat;
+  - video, full screen: back and forward 10 seconds and play/pause over the picture (tap to hide
+    them), mute, a scrubber, full screen, and previous and next clip when a letter has several.
+
+  Playback registers with Android's media controls (notification, lock screen, headphones, car)
+  and carries on after leaving the thread, which needs a playback service.
+- **Songs from personas.** Music links become playable tickets where possible; otherwise tapping
+  opens the link. To try, in order: direct audio files play in our player; services with an
+  official embeddable player (YouTube, SoundCloud, Bandcamp) play inside the player sheet; others
+  (Spotify, Apple Music) get a ticket with the song's details that opens in their app. Each to be
+  checked against the service's terms. A persona may also send real audio one day, through a
+  music generation tool like the image tool.
 - **What each provider takes.** Claude: pictures, PDFs (up to 600 pages), text, plus server-side
   web fetch (only for links already in the conversation) and web search; no audio or video.
   Gemini: pictures, PDFs, audio and video (to confirm). OpenAI-compatible: depends on the model.
@@ -45,7 +76,7 @@ when we work through them: [`calendar.md`](calendar.md), [`pen-pals.md`](pen-pal
   epoch ends; a photo is about 1,200 tokens at 1280×720 and up to about 4,800 at full size. The
   persona sees the real thing when it arrives, a short description is written then, and later
   epochs carry the description instead. Pictures are scaled to about 1280 px by default.
-- **Opening links.** Claude's web fetch runs on Anthropic's servers. For other providers, our own
+- **The persona opening links.** Claude's web fetch runs on Anthropic's servers. For other providers, our own
   fetcher runs on the phone (sites see your address) and refuses private and local network
   addresses.
 
