@@ -24,12 +24,14 @@ It is also the other half of the memory book: the memory book looks back, the pl
 - **The user chooses what is shown, per calendar, when setting it up:** hidden, busy only ("busy
   until 17:30"), titles, or titles with location. Attendees and event notes are never sent. Setup
   says plainly that whatever is shown goes to the persona's model provider.
-- **Sharing is per persona.** See *Open* for which kind of persona.
+- **Sharing is per persona, both ways:** each persona has a switch for whether it sees the
+  calendar, and each of your personas has a switch for whether it shares one (user personas can
+  be fictional; Sam is a test user). The calendar reaches a letter only when both are on.
 - **The persona chooses whether to write during a busy period.** It is told the user is busy and
   until when, and that a letter written now will probably be read later. It may write anyway or
   stay quiet.
 - **Notifications are held during known busy periods** by default: the letter lands in the chat,
-  and its notification waits until the period ends. Adjustable in settings.
+  and its notification is shown when the period ends. Adjustable in settings.
 - **Personas write in the planner:** notes and reminders on dates, in their own ink and visible to
   the user, and suggested plans ("meteor shower Saturday?") that show up as entries.
 - **Stickers in the planner**, placed by the user and by personas, as on letters.
@@ -63,10 +65,6 @@ the same when the planner arrives.
 
 ## Open
 
-- **Per persona, which way?** A switch on each persona's page for whether it sees the calendar,
-  or a switch on each of your personas for whether it shares one (user personas can be fictional;
-  Sam is a test user)? Possibly both.
-- **Held notifications:** shown when the busy period ends, or dropped?
 - **Mockups** for the planner page.
 
 ## Parked ideas
