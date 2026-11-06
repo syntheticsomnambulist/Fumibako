@@ -46,8 +46,9 @@ waiting cassette before sending opens it again, and tapping above the sheet is t
   rows make room. On Android the handle also offers "Move up" and "Move down" as accessibility
   actions. A long list scrolls.
 - **Add songs** opens the picker again.
-- **Proposed:** a mix that's down to one song goes as a ticket instead, and the preview says so
-  ("One song goes as a ticket."). The last song can't be removed.
+- **Down to one song,** the mix goes as a ticket instead, and the preview says so ("One song goes
+  as a ticket."). Removing the last song leaves a blank cassette, ready to add songs from scratch
+  (decided). Proposed: Done with no songs removes the mix from the note.
 
 ## The frames ("In a letter" and "Every frame" boards)
 
@@ -83,6 +84,8 @@ placement.
   of the width), so frames scale down to fit them (decided): the ticket to about 86%, the film
   strip to 82%.
 - **Long-press** any frame for Save to phone and Share (and Copy link on a cutting).
+- **Stickers go on frames too** (the mixtape first of all), anchored to the attachment so they stay
+  with it. In the memory book, see [`keepsakes.md`](keepsakes.md).
 
 ## Tapping and motion ("Tapping photos and files", "Tapping music and video", "Links, read stamps and arrivals")
 
@@ -207,5 +210,4 @@ Lamplight stays on the Look page, since it's about appearance.
 
 ## Open
 
-- **A mix down to one song:** goes as a ticket (proposed, see the playlist editor)?
 - **Mockups still to do:** the Media settings page.

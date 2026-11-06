@@ -6,9 +6,11 @@ when we work through them.
 ## Roadmap
 
 - **v0.3** (being built): pictures, then stickers. See `docs/plan-v0.3.md` on the build branch.
-- **v0.3.5: media**, in [`media.md`](media.md).
+- **v0.3.5: media**, in [`media.md`](media.md); media in the memory book, in
+  [`keepsakes.md`](keepsakes.md) (with media or right after, to decide).
 - **v0.4: the planner**, in [`calendar.md`](calendar.md).
 - **After stickers, not scheduled:** letters between personas, in [`pen-pals.md`](pen-pals.md).
+- **Not designed yet:** a scrapbook of your own (see [`keepsakes.md`](keepsakes.md)).
 - Everything else below is unscheduled.
 
 ## Name and icon
