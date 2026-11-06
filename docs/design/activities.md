@@ -228,8 +228,10 @@ from. The rest of the app is right as it is; the desk should match it.
   paper colour the way the app already mixes them (`lerp(kami, ink, t)`, at about 12, 25, 40, 55
   and 70%). Wire, ruled lines and seals can be thin lines; nothing gets a dark outline.
 - **Minimal shading:** at most one deeper tint for a spine or an edge. No gradients.
-- **A very gentle, hard-edged shadow:** a 2dp offset with no blur, in the surface colour taken a
-  tenth of the way towards `sumi`, under objects and cards alike. Not the soft blurred shadow.
+- **The app's own soft shadow** (its 2dp elevation), under objects and cards alike. Chosen on
+  6 November after a side-by-side in the v0.5 pass (see [`v0.5.md`](v0.5.md)): it replaces the
+  hard-edged 2dp offset the desk mockups were drawn with, which they'll lose when next redrawn.
+  The heavier blurred shadow of the first desk mockups stays dropped.
 - **Shapes, not boxes:** fewer plain rectangles. Tape with zigzag torn ends; sticky tabs and
   keepsakes poking out of books; a dog-eared page; an arched window in the sketchbook; die-cut
   stickers on their sheet; a scalloped postage stamp and a postmark; a luggage tag; an index tab
@@ -246,8 +248,8 @@ from. The rest of the app is right as it is; the desk should match it.
 - **New stationery pieces that fit:** the "last visit" line on the persona's washi tape, and the
   daily limit as a radio-exercise stamp card.
 - **Tried and dropped:** thick dark outlines (too much like icons), a pixel font (too much like a
-  video game), heavier offset shadows, index-tab labels on cards, screentone, a wooden desk, soft
-  blurred shadows, and translucent tape.
+  video game), heavier offset shadows, hard offset shadows of any weight, index-tab labels on
+  cards, screentone, a wooden desk, heavy blurred shadows, and translucent tape.
 - **Fonts** stay the app's (display, reading, label, brush, handwriting and newsprint faces) until
   the font audit planned for v0.5.
 - Whether anything from this reaches the rest of the app is a question for the v0.5 stationery

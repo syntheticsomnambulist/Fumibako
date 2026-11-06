@@ -109,7 +109,8 @@ Raised 2026-11-06, separately from the planner; the v0.7 outdoor update goes int
 - **Export** writes a V3 PNG that also carries the V2 chunk. A separate full backup holds the
   persona, its memories and pictures; it asks before including memories, leaves out those in
   confidence by default, and never includes keys.
-- **Open:** who can mark a memory unfadeable (the persona, you with editing on, or both).
+- **Designed in [`v0.5.md`](v0.5.md)** (*Import and export*), where the open questions now
+  live, including who can mark a memory unfadeable.
 
 ## From Fieldwork
 
