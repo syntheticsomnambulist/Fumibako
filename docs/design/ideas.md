@@ -47,6 +47,14 @@ when we work through them: [`calendar.md`](calendar.md), [`pen-pals.md`](pen-pal
   - The + tray slides up with its items staggered, + turns into ×, and a picked item pops into
     "Going with your note".
   - With Android's "Remove animations" setting on, every effect is instant.
+- **At night, lamplight** (agreed 2026-11-06). Frames are objects on the desk, so like stickers
+  they keep their day colours, lit as if by a desk lamp: light objects are dimmed to about 85%
+  and warmed (white polaroid frames read as warm off-white), shadows go deeper, and dark objects
+  (the cassette shell, film strips) catch the lamp with a lit edge and a faint sheen. Holes
+  (ticket notches, punch holes, sprocket holes) show the night paper behind. Ink on an object
+  stays day ink; anything written on the letter uses night inks. The players turn to night
+  paper with night-ink controls; the video player stays near-black; the browser sheet takes the
+  night toolbar colour and asks sites for their dark version.
 - **Links open in an in-app browser** (Custom Tabs, coloured to match the paper) by default; a
   setting opens them in the default browser instead. Long-press for Copy link and Share.
 - **Players.** While something plays, a mini player docks above the composer: title and artist, a
