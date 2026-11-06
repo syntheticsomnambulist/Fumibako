@@ -46,6 +46,79 @@ class HeartbeatActivitiesTest {
 
     private suspend fun log(env: TestEnv) = env.activity.forPersona(env.persona.id, 0)
 
+    /** A quiet conversation the persona may write into: the last letter was three hours ago. */
+    private suspend fun quietChat(provider: ScriptedProvider = ScriptedProvider()): Pair<TestEnv, String> {
+        val env = TestEnv(provider).apply { seed() }
+        val conversation = env.harness.createConversation(env.persona.id)
+        provider.then(LlmTurnResult(text = "Good luck tomorrow! [mood: hopeful]"))
+        env.harness.agent.send(conversation.id, "Big exam tomorrow").toList()
+        env.harness.markRead(conversation.id)
+        env.clock.advanceMinutes(180)
+        return env to conversation.id
+    }
+
+    @Test
+    fun theMomentSaysHowManyThingsItCanDoAndALetterUsesOne() = runTest {
+        val (env, _) = quietChat()
+        env.provider.then(LlmTurnResult(text = "Thinking of you before the exam. [mood: hopeful]"))
+
+        val outcome = env.harness.heartbeat.run().single()
+
+        assertIs<HeartbeatOutcome.Sent>(outcome)
+        val note = env.provider.requests.last().note()
+        assertContains(note, "You can do up to 3 things of your own this time, and writing to")
+        assertContains(note, "Reflecting and tending your memories don't count")
+    }
+
+    @Test
+    fun theLimitIsAdjustableAndActionsOutsideTheMomentUseItUp() = runTest {
+        val (env, _) = quietChat()
+        env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(activityLimit = 1))) }
+        // Something that acts in the persona's own voice before the moment (like writing to another persona).
+        var tookSlot = false
+        env.harness.heartbeat.activities += object : HeartbeatActivity {
+            override val name = "pen-pal"
+            override val usesSlot = true
+            override suspend fun prepare(beat: Beat) {
+                tookSlot = beat.takeSlot()
+                assertFalse(beat.takeSlot(), "only one slot to take")
+            }
+        }
+        val requestsBefore = env.provider.requests.size
+
+        val outcome = env.harness.heartbeat.run().single()
+
+        assertTrue(tookSlot)
+        assertEquals("no activities left this time", assertIs<HeartbeatOutcome.Skipped>(outcome).reason)
+        assertEquals(requestsBefore, env.provider.requests.size, "no private moment when nothing is due and no slot is left")
+    }
+
+    @Test
+    fun freeActivitiesStillHappenWhenNoSlotIsLeft() = runTest {
+        val (env, _) = quietChat()
+        env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(activityLimit = 1))) }
+        env.harness.heartbeat.activities += object : HeartbeatActivity {
+            override val name = "pen-pal"
+            override val usesSlot = true
+            override suspend fun prepare(beat: Beat) {
+                beat.takeSlot()
+            }
+        }
+        env.harness.heartbeat.activities += object : HeartbeatActivity {
+            override val name = "tidy"
+            override suspend fun invite(beat: Beat) = "Tidy your memories, if you like."
+        }
+        env.provider.then(LlmTurnResult(text = "[SILENT]"))
+
+        val outcome = env.harness.heartbeat.run().single()
+
+        assertIs<HeartbeatOutcome.Silent>(outcome)
+        val note = env.provider.requests.last().note()
+        assertContains(note, "Tidy your memories, if you like.")
+        assertContains(note, "You won't write to")
+        assertContains(note, "(no activities left this time)")
+    }
+
     @Test
     fun restsWhenNothingIsDueAndItMayNotWrite() = runTest {
         val (env, _) = activeChat()

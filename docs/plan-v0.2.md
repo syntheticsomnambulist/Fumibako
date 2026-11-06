@@ -125,6 +125,14 @@ From the research recommendations, adjusted to your answers:
   4. tidy (merge near-duplicates, keep "matters deeply" within its limit);
   5. decide whether to write to you (exists today).
 
+  **Activity limit:** a heartbeat may take at most 3 meaningful actions in the persona's own
+  voice (`HeartbeatRhythm.activityLimit`, adjustable in the usual settings and a persona's own).
+  Writing to you uses one; reflecting, revisiting, tidying and upkeep (episodes, embeddings,
+  sorting feeling words) are free. There's no fixed order: the persona is told how many it has
+  left and chooses, and the engine counts them (`Beat.takeSlot`). An activity that acts outside
+  the private moment (pen pals, later) takes its slot the same way. In v0.2 only the letter uses
+  one, so the limit starts to matter with the next such activity.
+
   New activities can be added later without touching the rest. This is where the persistent
   "agent home" grows: more things personas do while you're away, each showing up in "While you
   were away" and on their page. The activity log becomes per-activity rather than a fixed list.
@@ -178,3 +186,8 @@ is wiped on update.
    persona's own sticker) comes with stickers in v0.3.
 2. **Level names:** "In passing", "Worth keeping", "Matters deeply".
 3. **The burn:** the canvas prototype is the one to build.
+4. **Heartbeat activity limit** (2026-11-06): at most 3 activities per heartbeat by default,
+   adjustable. Only meaningful actions in the persona's own voice use a slot; in v0.2 that is
+   writing to you. Reflecting, revisiting, tidying and upkeep are free. The persona sees what is
+   due and how many slots it has left, and chooses; the engine enforces the count. The setting
+   lives on the rhythm, so a persona with its own heartbeat can change it too.

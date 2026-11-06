@@ -35,7 +35,10 @@ sealed interface HeartbeatOutcome {
  *  2. if anything is due (a reflection, memories to revisit, ...) or it may write to the user right
  *     now, gets one private `<heartbeat>` moment with its memory tools, built from the activities'
  *     invitations. It may then write to the user or reply `[SILENT]`; quiet moments are discarded, so
- *     they never enter the conversation history, but what it did with its memories stays;
+ *     they never enter the conversation history, but what it did with its memories stays.
+ *     Meaningful actions in its own voice (writing to the user, for now) share a few slots
+ *     ([HeartbeatRhythm.activityLimit]); the persona is told how many it has and chooses, and the
+ *     engine counts them ([Beat.takeSlot]). Reflecting and tending memories are free;
  *  3. logs what happened, which is what "While you were away" and its page show.
  */
 class HeartbeatEngine(private val h: Harness) {
@@ -106,9 +109,13 @@ class HeartbeatEngine(private val h: Harness) {
             activities.forEach { activity -> guarded(activity, "prepare") { activity.prepare(beat) } }
 
             val invitations = activities.mapNotNull { activity ->
-                guarded(activity, "invite") { activity.invite(beat) }?.also { beat.invited += activity.name }
+                guarded(activity, "invite") { activity.invite(beat) }?.let { text ->
+                    beat.invited += activity.name
+                    Invitation(text, activity.usesSlot)
+                }
             }
-            val blocked = blockedReason(rhythm, beat.history)
+            // Slots can already be gone: an activity may act on its own before the moment (in prepare).
+            val blocked = blockedReason(rhythm, beat.history) ?: if (beat.slotsLeft == 0) "no activities left this time" else null
             if (blocked != null && invitations.isEmpty()) {
                 h.logActivity(persona.id, ActivityKind.RESTED, initial.id, note = blocked)
                 return HeartbeatOutcome.Skipped(persona.id, blocked)
@@ -120,7 +127,10 @@ class HeartbeatEngine(private val h: Harness) {
         }
     }
 
-    private suspend fun privateMoment(beat: Beat, invitations: List<String>, letterAllowed: Boolean, blockedReason: String?): HeartbeatOutcome {
+    /** An activity's paragraph for the private moment, and whether doing it uses a slot. */
+    private class Invitation(val text: String, val usesSlot: Boolean)
+
+    private suspend fun privateMoment(beat: Beat, invitations: List<Invitation>, letterAllowed: Boolean, blockedReason: String?): HeartbeatOutcome {
         val setup = beat.setup
         val persona = beat.persona
         val history = beat.history
@@ -136,12 +146,22 @@ class HeartbeatEngine(private val h: Harness) {
             if (lastUserMessage != null) append(" $userName last wrote ${humanizeDuration(now - lastUserMessage.createdAt)} ago.")
             if (unanswered > 0) append(" You have sent $unanswered message(s) since then without a reply.")
             append("\n\n")
-            if (invitations.isEmpty()) {
+            val free = invitations.filter { !it.usesSlot }
+            val choices = invitations.filter { it.usesSlot }
+            if (free.isEmpty()) {
                 append("Take a moment to reflect")
                 if (hasMemoryTools) append("; you may save reflections or tidy your memories with your memory tools")
                 append(".\n\n")
             } else {
-                invitations.forEach { append(it.trim()).append("\n\n") }
+                free.forEach { append(it.text.trim()).append("\n\n") }
+            }
+            // Meaningful actions in your own voice share a few slots; reflecting and tending memories are free.
+            if (letterAllowed || choices.isNotEmpty()) {
+                val left = beat.slotsLeft
+                append("You can do up to $left ${if (left == 1) "thing" else "things"} of your own this time")
+                append(if (letterAllowed) ", and writing to $userName is one of them" else "")
+                append(". Reflecting and tending your memories don't count. Choose what matters to you; you don't have to use them all.\n\n")
+                choices.forEach { append(it.text.trim()).append("\n\n") }
             }
             if (letterAllowed) {
                 append("Then decide whether to write to $userName now. Only reach out for a genuine reason: following up on ")
@@ -187,7 +207,8 @@ class HeartbeatEngine(private val h: Harness) {
             emit = {},
         )
         val text = MoodTags.strip(outcome.finalText).trim()
-        val wrote = letterAllowed && !outcome.refused && text.isNotEmpty() && !outcome.finalText.contains(SILENT)
+        // Writing to the user takes a slot; with none left (other choices used them up) the letter is held back.
+        val wrote = letterAllowed && !outcome.refused && text.isNotEmpty() && !outcome.finalText.contains(SILENT) && beat.takeSlot()
         val moment = Moment(outcome, wrote)
 
         // What the persona did with its memories stays, whether or not it writes.

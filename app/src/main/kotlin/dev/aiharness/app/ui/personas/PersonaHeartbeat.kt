@@ -99,6 +99,8 @@ fun PersonaHeartbeatScreen(nav: NavController, personaId: String) {
                     StepperRow("Wait after the last letter", own.minSilenceMinutes / 60, { h -> rhythm { it.copy(minSilenceMinutes = h * 60) } }, 0..48, describe = { "$it h" })
                     StepperRow("At most, per day", own.maxProactivePerDay, { n -> rhythm { it.copy(maxProactivePerDay = n) } }, 0..12)
                     StepperRow("Stop after unanswered", own.maxUnansweredProactive, { n -> rhythm { it.copy(maxUnansweredProactive = n) } }, 0..6)
+                    StepperRow("Activities per heartbeat", own.activityLimit, { n -> rhythm { it.copy(activityLimit = n) } }, 1..10)
+                    Text("Writing to you uses one. Reflecting and tending memories are free.", style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 18.sp), color = paper.usuzumi0)
                 }
             }
         }

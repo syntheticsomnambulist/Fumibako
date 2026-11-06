@@ -67,6 +67,11 @@ data class HeartbeatRhythm(
     val maxProactivePerDay: Int = 3,
     /** Stop reaching out after this many unanswered proactive messages in a row. */
     val maxUnansweredProactive: Int = 1,
+    /**
+     * Most meaningful actions in the persona's own voice one heartbeat may take: writing to the user
+     * now, writing to another persona later. Reflecting and tending memories are free.
+     */
+    val activityLimit: Int = 3,
 )
 
 @Serializable

@@ -106,6 +106,8 @@ internal fun SettingsCards.heartbeatPage(nav: NavController, s: AppSettings, upd
             Text("WAKE EVERY", style = PaperType.meta, color = paper.kasure2)
             PaperChoice(INTERVALS.map { it to shortInterval(it) }, hb.rhythm.intervalMinutes.takeIf { it in INTERVALS } ?: 60, { v -> rhythm { it.copy(intervalMinutes = v) } })
             QuietHours(hb.rhythm, onChange = { start, end -> rhythm { it.copy(quietHoursStart = start, quietHoursEnd = end) } })
+            StepperRow("Activities per heartbeat", hb.rhythm.activityLimit, { n -> rhythm { it.copy(activityLimit = n) } }, 1..10)
+            Hint("Writing to you uses one. Reflecting and tending memories are free.")
         }
         card {
             CardTitle("Reaching out")

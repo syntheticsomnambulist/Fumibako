@@ -114,7 +114,10 @@ Pick a mode in **Settings → Heartbeat**:
   the persona may write to you right now (not quiet hours, not too soon, under the daily limit, not
   waiting for a reply), it gets one private `<heartbeat>` moment with its memory tools, built from
   those invitations. It may then write you a letter (posted and notified) or reply `[SILENT]`;
-  quiet moments are discarded from the history, but what it did with its memories stays. Every
+  quiet moments are discarded from the history, but what it did with its memories stays.
+  Meaningful actions in the persona's own voice (writing to you, for now) share a few slots per
+  heartbeat, 3 by default (**Activities per heartbeat**); the persona is told how many it has and
+  chooses, and the engine counts them. Reflecting and tending memories are free. Every
   wakeup is logged for "While you were away" and the persona's page. New activities are how the
   persona's "home" will grow.
 - **Time-aware**: no background work; each turn includes the current time and elapsed time.

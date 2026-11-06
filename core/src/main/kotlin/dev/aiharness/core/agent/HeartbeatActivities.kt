@@ -34,6 +34,15 @@ interface HeartbeatActivity {
 
     suspend fun prepare(beat: Beat) {}
 
+    /**
+     * Whether this is a meaningful action in the persona's own voice, which uses one of the
+     * heartbeat's slots ([HeartbeatRhythm.activityLimit]). Reflecting and tending memories, and
+     * upkeep with no voice of its own, are free. A slot-using activity's invitation is listed with
+     * the persona's other choices, and its action must take a slot with [Beat.takeSlot] (refusing
+     * when none is left). Writing to the user is the built-in one.
+     */
+    val usesSlot: Boolean get() = false
+
     /** A paragraph for the private moment's note, or null when nothing is due. */
     suspend fun invite(beat: Beat): String? = null
 
@@ -56,6 +65,21 @@ class Beat internal constructor(
 
     /** Activities that invited something into the private moment. */
     val invited = mutableListOf<String>()
+
+    /** Meaningful actions this heartbeat may take (writing to the user is one). */
+    val slots: Int get() = rhythm.activityLimit.coerceAtLeast(0)
+
+    var slotsUsed: Int = 0
+        private set
+
+    val slotsLeft: Int get() = (slots - slotsUsed).coerceAtLeast(0)
+
+    /** Uses one slot for a meaningful action; false (and nothing used) when none is left. */
+    fun takeSlot(): Boolean {
+        if (slotsLeft == 0) return false
+        slotsUsed++
+        return true
+    }
 
     /** Recent activity log for this persona (last two weeks), oldest first. */
     var recentActivity: List<dev.aiharness.core.model.ActivityEntry> = emptyList()
