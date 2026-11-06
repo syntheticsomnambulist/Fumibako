@@ -37,7 +37,7 @@ letter. Two things use it in the background:
 - **Heartbeats:** about once an hour a persona may wake to tidy its memories, reflect, or write
   to you. It only calls the model when something is due, and stays quiet at night (23:00 to
   08:00). Settings, Heartbeat changes the pace, or turns it off.
-- **Memory upkeep:** longer conversations are summarised now and then.
+- **Memory upkeep:** longer conversations are summarized now and then.
 
 Set a spending limit with your provider if you'd like to be sure.
 
@@ -51,8 +51,15 @@ There are no accounts, ads or analytics.
 
 - Write a few letters, then look at the persona's **memory book** (Personas, a persona, Memories).
 - Leave the app for a few hours; the Letters page shows what personas did while you were away.
-- Change how a persona looks or writes: its page, **Edit**.
-- With a NovelAI key (Settings, Pictures), personas can draw pictures.
+- Change how a persona looks or writes: its page, **Edit**. Give it pronouns there too.
+- **Pictures:** add an image profile in Settings, Pictures (NovelAI, your own Stable Diffusion,
+  OpenAI or Google). Personas can then draw pictures, and you can from the picture icon in a
+  letter. A persona's page has how it looks, what it usually wears and its drawing style.
+- **Stickers:** the **+** beside the text field opens the sticker tray. Tap one to put it on your
+  note, or hold it and drag it onto any letter. Tap a sticker you stuck to move, turn, resize or
+  peel it. Personas stick their own, and can draw stickers of themselves (their page, Stickers).
+  Shared stickers, stamps and decor are in Settings, Stickers; one can come from a photo.
+- Type `:` and a few letters to write a sticker into your note.
 
 ## If something goes wrong
 

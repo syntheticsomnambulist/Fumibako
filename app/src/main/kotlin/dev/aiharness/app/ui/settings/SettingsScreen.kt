@@ -78,6 +78,7 @@ fun SettingsScreen(nav: NavController) {
     val profiles by remember { harness.profiles.observeAll() }.collectAsStateWithLifecycle(emptyList())
     val users by remember { harness.userPersonas.observeAll() }.collectAsStateWithLifecycle(emptyList())
     val context = LocalContext.current
+    val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() }
     val s = settings ?: return
 
     LazyColumn(
@@ -90,7 +91,7 @@ fun SettingsScreen(nav: NavController) {
             TapedCard(dev.aiharness.app.ui.paper.TapeLayout.LEFT, Tape(stationery.you, stationery.youPattern), spacing = 0.dp) {
                 Text("CONTENTS", style = PaperType.label, color = paper.kasure2, modifier = Modifier.padding(bottom = 6.dp))
                 SettingsSection.entries.forEach { section ->
-                    ContentsLine(section, summary(section, s, profiles.size, users.firstOrNull { it.id == s.activeUserPersonaId }?.name)) {
+                    ContentsLine(section, summary(section, s, profiles.size, users.firstOrNull { it.id == s.activeUserPersonaId }?.name, version)) {
                         if (section == SettingsSection.YOU) nav.navigate(Routes.USER_PERSONAS) else nav.navigate(Routes.settings(section.key))
                     }
                 }
@@ -130,7 +131,7 @@ private fun ContentsLine(section: SettingsSection, summary: String, onClick: () 
     }
 }
 
-private fun summary(section: SettingsSection, s: AppSettings, profileCount: Int, writingAs: String?): String = when (section) {
+private fun summary(section: SettingsSection, s: AppSettings, profileCount: Int, writingAs: String?, version: String?): String = when (section) {
     SettingsSection.LOOK -> when (s.theme.dayNight) {
         DayNightMode.FIXED_HOURS -> "Set hours"
         DayNightMode.SUN -> "Sunrise and sunset"
@@ -147,7 +148,7 @@ private fun summary(section: SettingsSection, s: AppSettings, profileCount: Int,
     SettingsSection.MODELS -> if (profileCount == 1) "1 model" else "$profileCount models"
     SettingsSection.YOU -> writingAs?.let { "Writing as $it" } ?: "Your personas"
     SettingsSection.PROMPTING -> if (s.baseInstructions == AppSettings.DEFAULT_BASE_INSTRUCTIONS) "Default" else "Your own"
-    SettingsSection.ABOUT -> "v0.2 · licenses"
+    SettingsSection.ABOUT -> listOfNotNull(version?.let { "v$it" }, "licenses").joinToString(" · ")
 }
 
 /** "15 minutes", "1 hour", "3 hours". */

@@ -1,6 +1,7 @@
 package dev.aiharness.app.ui.chat
 
 import dev.aiharness.app.ui.theme.onInk
+import dev.aiharness.app.ui.paper.StationeryIcons
 import dev.aiharness.app.ui.paper.PaperCorner
 import dev.aiharness.app.ui.paper.PaperChoice
 import android.content.ClipData
@@ -27,9 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -411,7 +410,7 @@ private fun LettersTopBar(
             )
         }
         Box {
-            IconButton(onClick = { menu = "model" }) { Icon(Icons.Filled.SmartToy, "Model", tint = iconTint) }
+            IconButton(onClick = { menu = "model" }) { Icon(StationeryIcons.Nib, "Model", tint = iconTint) }
             DropdownMenu(expanded = menu == "model", onDismissRequest = { menu = null }) {
                 profiles.forEach { profile ->
                     DropdownMenuItem(
@@ -423,7 +422,7 @@ private fun LettersTopBar(
             }
         }
         Box {
-            IconButton(onClick = { menu = "user" }) { Icon(Icons.Filled.Person, "Writing as", tint = iconTint) }
+            IconButton(onClick = { menu = "user" }) { Icon(StationeryIcons.Seal, "Writing as", tint = iconTint) }
             DropdownMenu(expanded = menu == "user", onDismissRequest = { menu = null }) {
                 users.forEach { user ->
                     DropdownMenuItem(
@@ -434,9 +433,9 @@ private fun LettersTopBar(
                 DropdownMenuItem(text = { Text("Manage your personas…") }, onClick = { menu = null; nav.navigate(Routes.USER_PERSONAS) })
             }
         }
-        if (imageReady) IconButton(onClick = onImage) { Icon(Icons.Filled.Image, "Draw a picture", tint = iconTint) }
+        if (imageReady) IconButton(onClick = onImage) { Icon(StationeryIcons.Polaroid, "Draw a picture", tint = iconTint) }
         Box {
-            IconButton(onClick = { menu = "more" }) { Icon(Icons.Filled.MoreVert, "More", tint = iconTint) }
+            IconButton(onClick = { menu = "more" }) { Icon(StationeryIcons.InkDots, "More", tint = iconTint) }
             DropdownMenu(expanded = menu == "more", onDismissRequest = { menu = null }) {
                 DropdownMenuItem(text = { Text("Rewrite the last letter") }, onClick = { menu = null; vm.regenerate() })
                 persona?.let { p ->

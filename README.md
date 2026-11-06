@@ -13,11 +13,12 @@ tested without a device and reused elsewhere.
 | --- | --- |
 | Chat with streaming replies, thought summaries, regenerate, edit/delete | `app/ui/chat`, `core/agent/AgentRunner.kt` |
 | Swappable models: Anthropic (Claude), Google Gemini, any OpenAI-compatible server, NovelAI text | `core/llm/*` |
-| Swappable personas, each with its own memories, greeting, appearance tags and default model | `app/ui/personas` |
+| Swappable personas, each with its own memories, greeting, pronouns, looks, outfit, drawing style and default model | `app/ui/personas` |
 | Swappable user personas (who *you* are), switchable mid-chat | `app/ui/settings/KeysAndUsers.kt` |
 | Long-term memory: agent-written via tools, hybrid keyword + optional embedding recall, core memories, episode recaps | `core/memory`, `core/tools/BuiltinTools.kt` |
 | Heartbeat: **Proactive** (background reflection + optional messages), **Time-aware**, or **Off** | `core/agent/HeartbeatEngine.kt`, `app/heartbeat` |
-| Image generation via NovelAI (persona can call it as a tool, or you can request one) | `core/image` |
+| Pictures from NovelAI, Stable Diffusion (Forge, Automatic1111, ComfyUI), OpenAI or Google, through image profiles (persona can call it as a tool, or you can request one) | `core/image` |
+| Stickers: emoji, each persona's own sheet (drawn from its looks), and a shared library (from photos, cut out on the phone); placed by you or by personas through tools, inline `:name:` in letters | `core/stickers`, `core/tools/StickerTools.kt`, `app/ui/stickers` |
 | API keys encrypted with the Android Keystore | `app/data/PlatformStores.kt` |
 
 ## Getting started
@@ -57,10 +58,11 @@ core/                         Plain Kotlin/JVM library: no Android dependencies
     openai/                   Chat Completions (OpenAI, OpenRouter, Ollama, LM Studio, NovelAI…)
   agent/                      PromptAssembler, TurnContextBuilder, ContextBuilder, AgentRunner, HeartbeatEngine
   memory/                     MemoryService (BM25 + embeddings, dedupe), embedders
-  tools/                      AgentTool interface, registry, memory and image tools
-  image/                      NovelAI image generation
+  tools/                      AgentTool interface, registry, memory, image, outfit and sticker tools
+  image/                      Image profiles and hosts (NovelAI, Stable Diffusion, ComfyUI, OpenAI, Google), picture prompts
+  stickers/                   StickerService (names, placing, peeling, notes to the persona), StickerMaker, emoji names
 app/                          Android shell
-  data/                       Room (JSON-document rows), Keystore secrets, DataStore settings, file blobs
+  data/                       Room (JSON-document rows, migrations kept for three versions), Keystore secrets, DataStore settings, file blobs
   engine/GenerationManager    Runs turns in an app-wide scope so replies survive leaving the screen
   heartbeat/                  WorkManager worker, scheduler, notifications
   ui/                         Compose screens

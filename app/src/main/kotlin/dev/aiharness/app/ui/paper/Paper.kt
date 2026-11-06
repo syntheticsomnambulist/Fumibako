@@ -204,7 +204,7 @@ fun UserPortrait(user: dev.aiharness.core.model.UserPersona?, modifier: Modifier
 
 /**
  * The default unread mark: a 新 seal stamped in the persona's day ink, with a die-cut outline.
- * Per-persona marks (any sticker) arrive with stickers in v0.2.
+ * A persona with a sticker for hello wears that instead (see `StickerService.unreadMark`).
  */
 @Composable
 fun UnreadSeal(inkName: String?, modifier: Modifier = Modifier, size: Dp = 34.dp, kanji: String = "新") {

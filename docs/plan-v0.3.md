@@ -44,6 +44,11 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   type; the persona's hello sticker as its unread mark; its stickers standing in for feeling
   stamps in the memory book; P.S. lines for sticking and drawing. Emoji newer than Unicode 13 are
   left out of the tray, since older phones draw them as boxes.
+- **Step 5: icons, pronouns, polish.** The letter's top bar has stationery icons: a pen nib for
+  the model, a rubber stamp for who you're writing as, a polaroid for drawing a picture, three ink
+  dots for more. Personas have pronouns (she, he, they, it, name only, or their own), told to the
+  persona and used in the app's sentences about it; until chosen, the name is used. Settings shows
+  the real version; the testers' guide covers pictures and stickers. Version 0.3.0.
   **Storage is in:** the database is at version 3 through its first migration, which adds a
   `stickers` table (what's stuck where, by whom; peeled ones stay until the persona has heard) and
   a `sticker_art` table (persona sheets and the shared library). The migration is tested from a
