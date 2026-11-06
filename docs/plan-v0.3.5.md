@@ -80,7 +80,7 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
     app's own sentences alternate between them.
 11. **Keepsakes** (`keepsakes.md`): memories keep attachments from their letter; the persona
     chooses with `keep` on `memory_save` and `memory_update`; the book shows them as scrapbook
-    objects. To be confirmed: in v0.3.5 or right after.
+    objects. Confirmed for v0.3.5, after the rest.
 
 ## Storage
 
@@ -106,5 +106,5 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
 5. **Links and personas' media:** Custom Tabs, the app's fetcher, the read stamp, personas
    sharing links and songs.
 6. **Settings, Media; several pronoun sets.**
-7. **Keepsakes** (if confirmed for v0.3.5).
+7. **Keepsakes** (confirmed: after steps 4 to 6).
 8. **Polish, tests, an APK.**

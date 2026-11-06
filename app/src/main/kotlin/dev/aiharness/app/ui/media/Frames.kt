@@ -39,6 +39,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -324,13 +326,19 @@ fun TicketStub(song: ContentPart.Attachment, ink: Color, behind: Color, scale: F
     }
 }
 
-/** A link as a newspaper cutting with uneven cut edges, held by a paperclip in the sender's [ink]. */
+/**
+ * A link as a newspaper cutting with uneven cut edges, held by a paperclip in the sender's [ink]:
+ * the clip sits mostly above the top edge, its inner loop behind the paper and its outer loop in
+ * front, as if gripping it.
+ */
 @Composable
 fun Cutting(link: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifier: Modifier = Modifier) {
     Box(modifier.width((288 * scale).dp).lamplit()) {
+        val clipAt = Modifier.align(Alignment.TopEnd).padding(end = (24 * scale).dp)
+        Paperclip(ink, scale, front = false, clipAt)
         Column(
             Modifier
-                .padding(top = (10 * scale).dp)
+                .padding(top = (CLIP_EDGE * CLIP_UNIT * scale).dp)
                 .fillMaxWidth()
                 .shadow((1.5f * scale).dp, CutShape)
                 .background(Newsprint, CutShape)
@@ -344,7 +352,8 @@ fun Cutting(link: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifie
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth().rules().padding(vertical = (3 * scale).dp),
+                // Kept narrower than the rules, so a long site name stays clear of the clip.
+                modifier = Modifier.fillMaxWidth().rules().padding(vertical = (3 * scale).dp, horizontal = (34 * scale).dp),
             )
             Text(link.title ?: link.url ?: "", style = news(19f * scale, bold = true, height = 1.22f), color = NewsInk, maxLines = 4, overflow = TextOverflow.Ellipsis)
             link.pictureRef?.let { ref ->
@@ -352,7 +361,7 @@ fun Cutting(link: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifie
             }
             link.snippet?.let { Text(it, style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = (12.5f * scale).sp, lineHeight = (18.75f * scale).sp), color = Color(0xFF3E342B), maxLines = 4, overflow = TextOverflow.Ellipsis) }
         }
-        Paperclip(ink, scale, Modifier.align(Alignment.TopEnd).padding(end = (24 * scale).dp))
+        Paperclip(ink, scale, front = true, clipAt)
     }
 }
 
@@ -379,22 +388,43 @@ private fun Modifier.greyscale() = graphicsLayer(compositingStrategy = Compositi
     drawRect(Color.Gray, blendMode = BlendMode.Saturation)
 }
 
+/**
+ * Half of a three-bend paperclip, in units of [CLIP_UNIT] dp: 16 wide, 46 tall, the paper's top
+ * edge at [CLIP_EDGE]. The [front] half is the outer loop and the bend over the paper's edge,
+ * with a faint shadow where it lies on the paper; the other half is the inner loop, drawn behind
+ * the paper so only its top shows above the edge.
+ */
 @Composable
-private fun Paperclip(ink: Color, scale: Float, modifier: Modifier) {
-    Canvas(modifier.size((18 * scale).dp, (53 * scale).dp).graphicsLayer { rotationZ = -3f }) {
+private fun Paperclip(ink: Color, scale: Float, front: Boolean, modifier: Modifier) {
+    Canvas(modifier.size((16 * CLIP_UNIT * scale).dp, (46 * CLIP_UNIT * scale).dp).graphicsLayer { rotationZ = -3f }) {
         val k = size.width / 16f
-        val clip = Path().apply {
-            moveTo(2 * k, 6 * k); lineTo(2 * k, 38 * k)
-            arcTo(androidx.compose.ui.geometry.Rect(2 * k, 32 * k, 14 * k, 44 * k), 180f, -180f, false)
-            lineTo(14 * k, 6 * k)
-            arcTo(androidx.compose.ui.geometry.Rect(6 * k, 2 * k, 14 * k, 10 * k), 0f, -180f, false)
-            lineTo(6 * k, 34 * k)
-            arcTo(androidx.compose.ui.geometry.Rect(6 * k, 32 * k, 10 * k, 36 * k), 180f, -180f, false)
-            lineTo(10 * k, 14 * k)
+        fun arc(l: Float, t: Float, r: Float, b: Float) = androidx.compose.ui.geometry.Rect(l * k, t * k, r * k, b * k)
+        val wire = Stroke(1.7f * k, cap = StrokeCap.Round)
+        if (front) {
+            val outer = Path().apply {
+                moveTo(2 * k, 6 * k); lineTo(2 * k, 38 * k)
+                arcTo(arc(2f, 32f, 14f, 44f), 180f, -180f, false)
+                lineTo(14 * k, 6 * k)
+                arcTo(arc(6f, 2f, 14f, 10f), 0f, -180f, false)
+            }
+            clipRect(top = CLIP_EDGE * k) {
+                translate(0.7f * k, 1.1f * k) { drawPath(outer, Color.Black.copy(alpha = 0.18f), style = wire) }
+            }
+            drawPath(outer, ink, style = wire)
+        } else {
+            val inner = Path().apply {
+                moveTo(6 * k, 6 * k); lineTo(6 * k, 34 * k)
+                arcTo(arc(6f, 32f, 10f, 36f), 180f, -180f, false)
+                lineTo(10 * k, 14 * k)
+            }
+            drawPath(inner, ink, style = wire)
         }
-        drawPath(clip, ink, style = Stroke(1.7f * k, cap = StrokeCap.Round))
     }
 }
+
+/** The paperclip's unit, in dp, and where the paper's top edge crosses it (mostly above, as clipped). */
+private const val CLIP_UNIT = 1.125f
+private const val CLIP_EDGE = 27f
 
 /** A video as a film strip: sprocket holes, its three frames, the play mark and its length on a label. */
 @Composable
