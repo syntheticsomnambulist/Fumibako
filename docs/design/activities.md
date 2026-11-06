@@ -278,8 +278,8 @@ from. The rest of the app is right as it is; the desk should match it.
   stickers on their sheet; a scalloped postage stamp and a postmark; a luggage tag; an index tab
   rising from the in-tray; a paperclip; a cup pull on the drawer.
 - **Depth:** trays and the drawer are drawn as boxes seen from above, with a darker back wall,
-  side walls, a floor and a front lip. The drawer's front has a card-catalogue label holder
-  (引出) and a cup pull.
+  side walls, a floor and a front lip. The drawer's front has only a cup pull (its label was
+  taken off, 6 November).
 - **Tape is opaque,** as in the app: a solid tint of the owner's ink with its pattern in the
   paper colour.
 - **Everything else is the app's existing stationery:** `kami` cards with a hairline `nijimi0`
