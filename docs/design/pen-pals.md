@@ -73,7 +73,8 @@ small and predictable.
   itself, and recaps are kept off for the same reason, but another memory that happens to repeat
   the same thing would still reach the desk.
 - Storage sketch: a correspondence holds two persona ids; each letter has its sender, whether it
-  is sealed, the seal sticker, and when you opened it. `MemoryEntry` gains `inConfidence`.
+  is sealed, the seal sticker, and when you opened it. `MemoryEntry` gains `inConfidence`. Testers
+  keep their letters now, so a new table is a migration step (see `CLAUDE.md`).
 
 ## Open
 

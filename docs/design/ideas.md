@@ -1,92 +1,33 @@
 # Ideas
 
-Agreed directions that aren't scheduled yet (2026-11-06). Bigger features get a note of their own
-when we work through them: [`calendar.md`](calendar.md), [`pen-pals.md`](pen-pals.md).
+Agreed directions from the design session (2026-11-06). Bigger features get a note of their own
+when we work through them.
+
+## Roadmap
+
+- **v0.3** (being built): pictures, then stickers. See `docs/plan-v0.3.md` on the build branch.
+- **v0.3.5: media**, in [`media.md`](media.md).
+- **v0.4: the planner**, in [`calendar.md`](calendar.md).
+- **After stickers, not scheduled:** letters between personas, in [`pen-pals.md`](pen-pals.md).
+- Everything else below is unscheduled.
 
 ## Name and icon
 
-- **The app will be called Fumibako** (文箱, a lacquered box for keeping letters), "Fumi" for
-  short. 文 is already the Letters tab. A search found no app by that name, only a physical tray.
-  The rename waits until the v0.2 work has landed; changing the application id makes it a fresh
-  install, which is fine before 1.0.
+- **The app is called Fumibako** (文箱, a lacquered box for keeping letters), "Fumi" for short. 文
+  is already the Letters tab. A search found no app by that name, only a physical tray. Renamed in
+  v0.2.2, with the icon below (see `docs/design/icon.md` on the build branch).
 - **Icon (agreed 2026-11-06):** a flat wax seal with an uneven edge, 文 cut out of it in the
   paper colour inside a thin ring (hakubun), in Yuji Syuku, raised slightly so it sits centred in
   the ring. The seal closes an envelope: the flap's V lines run in from the top corners and meet
   behind it, and the flap is a shade darker than the envelope. No tape. Beni wax in the mockups.
   The themed (single-colour) icon is the seal alone. The embossed wax and corner-tape versions
   were dropped: the 文 didn't read, and the tape unbalanced it. Mockups: the "Fumibako icon"
-  design canvas (private claude.ai artifact).
+  design canvas (private claude.ai artifact:
+  https://claude.ai/artifact/7VkaN8Dfk8qQhJYgLgv9Ns).
 
 ## Media
 
-- **A + button to the left of the text field** opens a tray: photo or camera, file, music, video,
-  link, and stickers (v0.3). Personas can share things too: pictures (already possible), links
-  they found, songs.
-- **Attachments look like stationery** (agreed 2026-11-06; mockups on the "Media frames" design
-  canvas). Whose it is shows in the sender's ink: tape, paperclip, labels and tints.
-  - Photos are polaroids taped in the sender's ink (today's letters show plain pictures; the
-    polaroid is the personas gallery's). Several photos are a small stack with a count.
-  - Files are luggage tags tinted with the sender's ink: name, kind and size.
-  - Music: a cassette for a playlist (labelled in the sender's hand), a ticket stub for a single
-    song (tinted with the sender's ink).
-  - Links are newspaper cuttings: the site as a masthead, the title, the page's picture and a
-    snippet, held by a paperclip in the sender's ink. When the persona opens a link you shared,
-    its 読 ("read") stamp lands on the cutting.
-  - Videos are film strips; the frames shown are the ones a model that can't watch video gets.
-  - Under a song, an app-written line says what the persona can and can't take in ("Aria can read
-    the label, but can't hear the songs").
-- **Tapping** (agreed 2026-11-06; tappable prototypes on the canvas):
-  - A photo lifts, straightens and opens. A stack fans out; tapping one photo opens it.
-  - A tag swings on its string, and Open and Save to phone slide out beneath it.
-  - A link gives a little lift and opens straight away.
-  - The cassette's reels turn and its tape winds across while it plays. A ticket is punched the
-    first time it plays and stays punched, so you can see which songs you've played. A film strip
-    runs through as if in a projector while the player opens.
-  - Events: the persona's 読 stamp lands with a soft thunk and a light haptic tap; a letter's
-    attachments drop onto the page one after another and settle.
-  - The + tray slides up with its items staggered, + turns into ×, and a picked item pops into
-    "Going with your note".
-  - With Android's "Remove animations" setting on, every effect is instant.
-- **At night, lamplight** (agreed 2026-11-06). Frames are objects on the desk, so like stickers
-  they keep their day colours, lit as if by a desk lamp: light objects are dimmed to about 85%
-  and warmed (white polaroid frames read as warm off-white), shadows go deeper, and dark objects
-  (the cassette shell, film strips) catch the lamp with a lit edge and a faint sheen. Holes
-  (ticket notches, punch holes, sprocket holes) show the night paper behind. Ink on an object
-  stays day ink; anything written on the letter uses night inks. The players turn to night
-  paper with night-ink controls; the video player stays near-black; the browser sheet takes the
-  night toolbar colour and asks sites for their dark version.
-- **Links open in an in-app browser** (Custom Tabs, coloured to match the paper) by default; a
-  setting opens them in the default browser instead. Long-press for Copy link and Share.
-- **Players.** While something plays, a mini player docks above the composer: title and artist, a
-  thin progress line in the sender's ink, play/pause, next (playlists) and stop. Tapping it opens
-  the full player:
-  - a playlist: the cassette, a scrubber with elapsed and remaining time, shuffle, previous,
-    play/pause, next and repeat, and the track list on the cassette's J-card in the sender's hand;
-  - a single song: the ticket, a scrubber, back and forward 10 seconds, and repeat;
-  - video, full screen: back and forward 10 seconds and play/pause over the picture (tap to hide
-    them), mute, a scrubber, full screen, and previous and next clip when a letter has several.
-
-  Playback registers with Android's media controls (notification, lock screen, headphones, car)
-  and carries on after leaving the thread, which needs a playback service.
-- **Songs from personas.** Music links become playable tickets where possible; otherwise tapping
-  opens the link. To try, in order: direct audio files play in our player; services with an
-  official embeddable player (YouTube, SoundCloud, Bandcamp) play inside the player sheet; others
-  (Spotify, Apple Music) get a ticket with the song's details that opens in their app. Each to be
-  checked against the service's terms. A persona may also send real audio one day, through a
-  music generation tool like the image tool.
-- **What each provider takes.** Claude: pictures, PDFs (up to 600 pages), text, plus server-side
-  web fetch (only for links already in the conversation) and web search; no audio or video.
-  Gemini: pictures, PDFs, audio and video (to confirm). OpenAI-compatible: depends on the model.
-  Where a model can't take something, it gets a stand-in: a song's title, artist and album from
-  its tags (the persona knows what you shared and can say it can't hear it), or a few frames of a
-  video.
-- **Tokens.** History is append-only, so an attachment would be re-sent every turn until the
-  epoch ends; a photo is about 1,200 tokens at 1280×720 and up to about 4,800 at full size. The
-  persona sees the real thing when it arrives, a short description is written then, and later
-  epochs carry the description instead. Pictures are scaled to about 1280 px by default.
-- **The persona opening links.** Claude's web fetch runs on Anthropic's servers. For other providers, our own
-  fetcher runs on the phone (sites see your address) and refuses private and local network
-  addresses.
+Moved to [`media.md`](media.md), planned for v0.3.5.
 
 ## Import and export
 
@@ -95,7 +36,7 @@ when we work through them: [`calendar.md`](calendar.md), [`pen-pals.md`](pen-pal
   `first_mes` to the greeting; `alternate_greetings` to a new list you pick from when starting a
   letter; `mes_example` to example dialogue; the PNG to the portrait; V3 `emotion` assets to mood
   portraits; `creator_notes` are shown on import and never sent. `extensions` are kept untouched
-  (the spec requires it), and ours (ink, tape, appearance tags) go under a namespaced key.
+  (the spec requires it), and ours (ink, tape, picture prompts) go under a namespaced key.
 - **Lorebooks become memories** of a new **lore** kind, which doesn't fade by default. Entries
   marked `constant` become "always in mind".
 - **Any memory can be made unfadeable**, whatever its kind. That is separate from "matters deeply"
