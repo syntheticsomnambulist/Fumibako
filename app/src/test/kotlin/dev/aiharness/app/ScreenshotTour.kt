@@ -130,6 +130,8 @@ class ScreenshotTour {
         back()
         back()
 
+        memoryTour(prefix)
+
         click("Settings")
         waitFor("CONTENTS")
         shot("${prefix}_09_settings")
@@ -146,13 +148,73 @@ class ScreenshotTour {
         }
     }
 
+    private fun memoryTour(prefix: String) {
+        top()
+        click("Aria")
+        waitFor("Write a letter")
+        click("Memories")
+        waitFor("memory book")
+        shot("${prefix}_20_memory_book")
+        scrollTo("Sam drinks too much coffee")
+        shot("${prefix}_20b_memory_book_today")
+        scrollTo("October", exact = true)
+        click("October")
+        scrollTo("Had a cold")
+        shot("${prefix}_20c_memory_book_october")
+        scrollTo("August", exact = true)
+        click("August")
+        scrollTo("cardamom")
+        shot("${prefix}_20d_memory_book_august")
+
+        scrollTo("Sam drinks too much coffee")
+        click("Sam drinks too much coffee when stressed")
+        waitFor("FELT WHEN KEPT")
+        shot("${prefix}_21_memory_card")
+        back()
+
+        // With memory editing allowed: Edit, then forget it and watch it burn.
+        runBlocking {
+            val h = ApplicationProvider.getApplicationContext<HarnessApp>().container.harness
+            h.settings.update { it.copy(memory = it.memory.copy(userCanEdit = true)) }
+        }
+        scrollTo("Sam drinks too much coffee")
+        click("Sam drinks too much coffee when stressed")
+        waitFor("FELT WHEN KEPT")
+        click("Edit")
+        waitFor("EDITING")
+        shot("${prefix}_22_memory_card_edit")
+        scrollTo("Forget this memory")
+        shot("${prefix}_22b_memory_card_edit_more")
+        compose.mainClock.autoAdvance = false
+        click("Forget this memory")
+        // Let the snapshot and the delete finish, then run the burn partway.
+        repeat(20) {
+            Thread.sleep(50)
+            compose.mainClock.advanceTimeByFrame()
+        }
+        top()
+        shot("${prefix}_23_memory_burning_0")
+        listOf(20, 15, 15, 15, 15).forEachIndexed { i, frames ->
+            repeat(frames) { compose.mainClock.advanceTimeByFrame() }
+            shot("${prefix}_23_memory_burning_${i + 1}")
+        }
+        compose.mainClock.autoAdvance = true
+        waitFor("You let this memory go")
+        shot("${prefix}_23b_memory_ash")
+        click("Undo")
+        waitFor("FELT WHEN KEPT")
+        back()
+        back()
+        back()
+    }
+
     private fun top() {
         compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToIndex(0)
         compose.waitForIdle()
     }
 
-    private fun scrollTo(text: String) {
-        compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(hasText(text, substring = true, ignoreCase = true))
+    private fun scrollTo(text: String, exact: Boolean = false) {
+        compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(if (exact) hasText(text) else hasText(text, substring = true, ignoreCase = true))
         compose.waitForIdle()
     }
 
@@ -210,7 +272,7 @@ class ScreenshotTour {
         var t = now - 3 * 3_600_000L
         fun msg(role: MessageRole, vararg parts: ContentPart, origin: MessageOrigin = MessageOrigin.AGENT) =
             ChatMessage(newId(), conversation.id, role, parts.toList(), createdAt = t.also { t += 60_000 }, origin = origin)
-        listOf(
+        val letters = listOf(
             msg(MessageRole.USER, ContentPart.Text("I finally finished the first draft of my thesis!"), origin = MessageOrigin.USER),
             msg(
                 MessageRole.ASSISTANT,
@@ -224,7 +286,8 @@ class ScreenshotTour {
             msg(MessageRole.ASSISTANT, ContentPart.Text("*twirls* Like this!"), ContentPart.ToolCall("t2", "generate_image", "{}")),
             msg(MessageRole.TOOL, ContentPart.ToolResult("t2", "generate_image", "Shown."), ContentPart.Image(image, caption = "celebrating")),
             msg(MessageRole.ASSISTANT, ContentPart.Text("Good morning! Did you actually sleep after all that writing? *tilts head* [mood: fond]"), origin = MessageOrigin.HEARTBEAT),
-        ).forEach { h.conversations.appendMessage(it) }
+        )
+        letters.forEach { h.conversations.appendMessage(it) }
         h.refreshPreview(conversation.id)
         h.updateConversation(conversation.id) {
             it.copy(updatedAt = now + 1, mood = "fond", lastAgentMessageAt = t, lastReadAt = now - 4 * 3_600_000L)
@@ -236,10 +299,34 @@ class ScreenshotTour {
         h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.SAVED_MEMORIES, now - 2 * 3_600_000L - 60_000, conversation.id, count = 2))
         h.activity.add(ActivityEntry(newId(), juno.id, ActivityKind.STAYED_QUIET, now - 5 * 3_600_000L))
 
+        // The memory book: today, last month (fading and replaced), and one worn page from the summer.
+        val day = 86_400_000L
+        suspend fun keep(content: String, daysAgo: Int = 0, usedDaysAgo: Int = daysAgo, edit: (dev.aiharness.core.model.MemoryEntry) -> dev.aiharness.core.model.MemoryEntry = { it }, save: suspend () -> dev.aiharness.core.memory.SaveResult): dev.aiharness.core.model.MemoryEntry {
+            val entry = save().entry
+            val at = now - daysAgo * day - 3_600_000L
+            val used = now - usedDaysAgo * day - 3_600_000L
+            return edit(entry.copy(createdAt = at, updatedAt = at, lastAccessedAt = used, lastUsedAt = used)).also { h.memories.upsert(it) }.also { check(it.content == content) }
+        }
         h.memory.save(aria.id, "Sam is writing a thesis on urban ecology", level = MemoryLevel.MATTERS_DEEPLY, pinned = true, feltMood = "proud")
-        h.memory.save(aria.id, "Sam finished the first draft of the thesis", kind = MemoryKind.EPISODE, feltMood = "delighted")
-        h.memory.save(aria.id, "Sam drinks too much coffee when stressed", level = MemoryLevel.IN_PASSING, feltMood = "fond", aboutUserPersonaId = sam.id)
-        h.memory.save(aria.id, "Sam loves walking in the rain", feltMood = "wistful", aboutUserPersonaId = sam.id)
+        h.memory.save(aria.id, "Sam likes to be asked, not told", pinned = true, feltMood = "fond", aboutUserPersonaId = sam.id)
+        h.memory.save(aria.id, "Sam finished the first draft of the thesis after months of late nights. Tired but happy; we talked about sleeping properly before the defence.", kind = MemoryKind.EPISODE, feltMood = "delighted", sourceConversationId = conversation.id, sourceMessageId = letters[1].id)
+        h.memory.save(aria.id, "The defence is in early December", feltMood = "hopeful", aboutUserPersonaId = sam.id)
+        h.memory.save(aria.id, "Ask about the defence date without adding pressure", kind = MemoryKind.REFLECTION, feltMood = "thoughtful", sourceConversationId = conversation.id, sourceMessageId = letters.last().id)
+        keep("Sam drinks too much coffee when stressed", daysAgo = 0, edit = {
+            it.copy(mood = "amused", moodReason = "It stopped being a worry once Sam started laughing about it too.", moodRevisedAt = now - 3 * day, accessCount = 7)
+        }) { h.memory.save(aria.id, "Sam drinks too much coffee when stressed", level = MemoryLevel.IN_PASSING, feltMood = "fond", aboutUserPersonaId = sam.id) }
+        h.memory.save(aria.id, "Sam loves walking in the rain", feltMood = "longing", aboutUserPersonaId = sam.id)
+        val library = keep("Works at the campus library", daysAgo = 27) { h.memory.save(aria.id, "Works at the campus library", aboutUserPersonaId = sam.id) }
+        h.memory.save(aria.id, "Left the library in October to write full time", aboutUserPersonaId = sam.id, replaces = library.id, feltMood = "proud")
+        h.memory.get(library.id)?.let { h.memories.upsert(it.copy(createdAt = now - 27 * day, updatedAt = now - 27 * day)) }
+        keep("Had a cold the week of the conference", daysAgo = 25) { h.memory.save(aria.id, "Had a cold the week of the conference", level = MemoryLevel.IN_PASSING, feltMood = "worried", aboutUserPersonaId = sam.id) }
+        keep("Prefers walking routes along the river", daysAgo = 26, usedDaysAgo = 2) { h.memory.save(aria.id, "Prefers walking routes along the river", feltMood = "curious", aboutUserPersonaId = sam.id) }
+        keep("Sam's first conference talk went well: nerves before, relief after, and a long walk to come down from it.", daysAgo = 24) {
+            h.memory.save(aria.id, "Sam's first conference talk went well: nerves before, relief after, and a long walk to come down from it.", kind = MemoryKind.EPISODE, feltMood = "amazed")
+        }
+        keep("Mentioned a favourite bakery near the old flat, the one with the cardamom buns", daysAgo = 75) {
+            h.memory.save(aria.id, "Mentioned a favourite bakery near the old flat, the one with the cardamom buns", level = MemoryLevel.IN_PASSING, feltMood = "fond")
+        }
         h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.REFLECTED, now - 6 * 3_600_000L))
         h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.RESTED, now - 8 * 3_600_000L, note = "quiet hours"))
     }

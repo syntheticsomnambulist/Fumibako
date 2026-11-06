@@ -1,0 +1,414 @@
+package dev.aiharness.app.ui.memory
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
+import dev.aiharness.app.ui.BlobImage
+import dev.aiharness.app.ui.paper.PaperCorner
+import dev.aiharness.app.ui.paper.PolaroidFrame
+import dev.aiharness.app.ui.paper.Tape
+import dev.aiharness.app.ui.paper.TapeSide
+import dev.aiharness.app.ui.paper.drawTape
+import dev.aiharness.app.ui.paper.paperCard
+import dev.aiharness.app.ui.paper.washiStrip
+import dev.aiharness.app.ui.theme.PaperType
+import dev.aiharness.app.ui.theme.paper
+import dev.aiharness.core.memory.Feeling
+import dev.aiharness.core.memory.MemoryAge
+import dev.aiharness.core.model.MemoryEntry
+import dev.aiharness.core.model.TapePattern
+import kotlin.math.abs
+import kotlin.random.Random
+
+/** One memory as the book shows it: how it feels, how it has aged, and what replaced it. */
+data class BookPage(
+    val memory: MemoryEntry,
+    val feeling: Feeling?,
+    /** Null when ageing isn't shown. */
+    val age: MemoryAge?,
+    val replacedBy: MemoryEntry? = null,
+    /** This memory is the newer version of one it replaced. */
+    val isUpdate: Boolean = false,
+)
+
+private val StainBrown = Color(0xFF7A4E1C)
+
+/** A tilt between -[max] and [max] degrees, the same for the same seed. */
+fun seededTilt(seed: String, max: Float): Float = ((abs(seed.hashCode()) % 1000) / 1000f * 2 - 1) * max
+
+/** Text colour on a page of this [age]: faded memories go pale, worn ones brown with handling. */
+@Composable
+fun agedInk(age: MemoryAge?): Color = when (age) {
+    MemoryAge.FADING -> lerp(paper.sumi, paper.kami, 0.42f)
+    MemoryAge.WORN -> lerp(paper.sumi, Color(0xFF8A6A3A), 0.52f)
+    else -> paper.sumi
+}
+
+/** How strongly the tape and stamp still show on a page of this [age]. */
+fun agedAlpha(age: MemoryAge?): Float = when (age) {
+    MemoryAge.FADING -> 0.62f
+    MemoryAge.WORN -> 0.8f
+    else -> 1f
+}
+
+/** Coffee rings, spots and darkened edges on a worn page; drawn under its text. */
+fun Modifier.worn(age: MemoryAge?, seed: String): Modifier =
+    if (age != MemoryAge.WORN) this else drawBehind {
+        val random = Random(seed.hashCode())
+        clipRect {
+            val ring = Offset(size.width * (0.7f + random.nextFloat() * 0.18f), size.height * (0.25f + random.nextFloat() * 0.3f))
+            val radius = 18.dp.toPx()
+            drawCircle(StainBrown.copy(alpha = 0.10f), radius + 2.dp.toPx(), ring, style = Stroke(5.dp.toPx()))
+            drawCircle(StainBrown.copy(alpha = 0.26f), radius, ring, style = Stroke(1.6.dp.toPx()))
+            repeat(3) {
+                drawCircle(StainBrown.copy(alpha = 0.14f + random.nextFloat() * 0.1f), (1.2f + random.nextFloat() * 1.6f).dp.toPx(), Offset(size.width * random.nextFloat(), size.height * (0.55f + random.nextFloat() * 0.4f)))
+            }
+            val edge = 10.dp.toPx()
+            val shade = StainBrown.copy(alpha = 0.16f)
+            drawRect(androidx.compose.ui.graphics.Brush.horizontalGradient(0f to shade, 1f to Color.Transparent, endX = edge), size = Size(edge, size.height))
+            drawRect(androidx.compose.ui.graphics.Brush.horizontalGradient(0f to Color.Transparent, 1f to shade, startX = size.width - edge, endX = size.width), topLeft = Offset(size.width - edge, 0f), size = Size(edge, size.height))
+            drawRect(androidx.compose.ui.graphics.Brush.verticalGradient(0f to Color.Transparent, 1f to shade, startY = size.height - edge, endY = size.height), topLeft = Offset(0f, size.height - edge), size = Size(size.width, edge))
+        }
+    }
+
+enum class TapeCorner { TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT }
+
+/** One small piece of tape across a corner. */
+fun Modifier.pieceOfTape(tape: Tape, corner: TapeCorner, length: Dp = 34.dp, thickness: Dp = 11.dp): Modifier = drawWithCache {
+    val l = length.toPx() / 2
+    val (centre, angle) = when (corner) {
+        TapeCorner.TOP_LEFT -> Offset(6.dp.toPx(), 2.dp.toPx()) to -35f
+        TapeCorner.TOP_RIGHT -> Offset(size.width - 6.dp.toPx(), 1.dp.toPx()) to 32f
+        TapeCorner.BOTTOM_RIGHT -> Offset(size.width - 8.dp.toPx(), size.height - 2.dp.toPx()) to -30f
+    }
+    val rad = Math.toRadians(angle.toDouble())
+    val half = Offset((kotlin.math.cos(rad) * l).toFloat(), (kotlin.math.sin(rad) * l).toFloat())
+    onDrawWithContent {
+        drawContent()
+        drawTape(centre - half, centre + half, thickness.toPx(), tape)
+    }
+}
+
+/** Paper torn along the top and bottom: a row of small teeth. */
+class TornEdges(private val tooth: Dp = 7.dp, private val depth: Dp = 3.dp) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val step = with(density) { tooth.toPx() }
+        val d = with(density) { depth.toPx() }
+        val path = Path().apply {
+            moveTo(0f, d)
+            var x = 0f
+            while (x < size.width) {
+                lineTo((x + step / 2).coerceAtMost(size.width), 0f)
+                lineTo((x + step).coerceAtMost(size.width), d)
+                x += step
+            }
+            lineTo(size.width, size.height - d)
+            x = size.width
+            while (x > 0f) {
+                lineTo((x - step / 2).coerceAtLeast(0f), size.height)
+                lineTo((x - step).coerceAtLeast(0f), size.height - d)
+                x -= step
+            }
+            close()
+        }
+        return Outline.Generic(path)
+    }
+}
+
+private val Torn = TornEdges()
+
+/** The page's stamp, for strong feelings only. */
+@Composable
+private fun PageStamp(page: BookPage, ink: Color, modifier: Modifier = Modifier) {
+    val feeling = page.feeling
+    if (feeling.stamped && feeling != null) {
+        FeelingStamp(feeling.family, ink, page.memory.id, modifier, alpha = agedAlpha(page.age), word = page.memory.currentMood)
+    }
+}
+
+/** The page with its stamp pinned over the top right corner. */
+@Composable
+private fun StampCorner(page: BookPage, ink: Color, content: @Composable () -> Unit) {
+    Box {
+        content()
+        PageStamp(page, ink, Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-15).dp))
+    }
+}
+
+/** A fact on a small label slip. */
+@Composable
+fun LabelSlip(page: BookPage, ink: Color, onOpen: () -> Unit) {
+    val m = page.memory
+    val colors = paper
+    val taped = abs(m.id.hashCode()) % 3 == 0
+    // Tape and stamp never share a corner.
+    val tapeCorner = if (page.feeling.stamped) TapeCorner.TOP_LEFT else TapeCorner.TOP_RIGHT
+    StampCorner(page, ink) {
+        Text(
+            m.content,
+            style = PaperType.prose.copy(fontSize = 13.5.sp, lineHeight = 19.sp),
+            color = agedInk(page.age),
+            modifier = Modifier
+                .rotate(seededTilt(m.id, 1.6f))
+                .then(if (taped) Modifier.pieceOfTape(Tape(ink, TapePattern.PLAIN, alpha = agedAlpha(page.age)), tapeCorner) else Modifier)
+                .widthIn(max = 300.dp)
+                .shadow(1.dp, PaperCorner, ambientColor = colors.chitsu)
+                .background(colors.kami, PaperCorner)
+                .border(1.dp, colors.nijimi1, PaperCorner)
+                .worn(page.age, m.id)
+                .clickable(role = Role.Button, onClick = onOpen)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+    }
+}
+
+/** Torn paper: thoughts, and quotes from letters. */
+@Composable
+fun TornNote(text: String, caption: String?, modifier: Modifier = Modifier, color: Color = paper.sumi, italic: Boolean = true, age: MemoryAge? = null, seed: String = text, onClick: () -> Unit) {
+    val colors = paper
+    Column(
+        modifier
+            .rotate(seededTilt(seed, 1.8f))
+            .widthIn(max = 320.dp)
+            .shadow(1.5.dp, Torn, ambientColor = colors.chitsu)
+            .background(colors.kami, Torn)
+            .worn(age, seed)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 13.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Text(text, style = PaperType.prose.copy(fontSize = 13.5.sp, lineHeight = 19.sp, fontStyle = if (italic) FontStyle.Italic else FontStyle.Normal), color = color)
+        caption?.let { Text(it.uppercase(), style = PaperType.meta, color = colors.kasure2) }
+    }
+}
+
+/** The persona's own thought, on a torn note. */
+@Composable
+fun ThoughtNote(page: BookPage, ink: Color, personaName: String, onOpen: () -> Unit) {
+    StampCorner(page, ink) {
+        TornNote(page.memory.content, "$personaName's thought", color = lerp(agedInk(page.age), paper.usuzumi1, 0.3f), age = page.age, seed = page.memory.id, onClick = onOpen)
+    }
+}
+
+/** Something that happened: a full-width page held by a strip of tape. */
+@Composable
+fun HappenedPage(page: BookPage, ink: Color, tape: Tape, onOpen: () -> Unit) {
+    val m = page.memory
+    Box {
+        Column(
+            Modifier
+                .rotate(seededTilt(m.id, 0.6f))
+                .washiStrip(tape.copy(alpha = agedAlpha(page.age)), if (abs(m.id.hashCode()) % 2 == 0) TapeSide.Start else TapeSide.End, tiltDegrees = -0.7f)
+                .paperCard()
+                .worn(page.age, m.id)
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onOpen)
+                .padding(start = 22.dp, end = 22.dp, top = 12.dp, bottom = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(if (page.isUpdate) "WHAT HAPPENED · UPDATED" else "WHAT HAPPENED", style = PaperType.meta, color = paper.kasure2, modifier = Modifier.weight(1f))
+                PageStamp(page, ink, Modifier.offset(y = 2.dp))
+            }
+            Text(m.content, style = PaperType.prose.copy(fontSize = 14.5.sp, lineHeight = 22.sp), color = agedInk(page.age))
+        }
+    }
+}
+
+/** A newer version of something kept before: a page taped at two corners, marked "Updated". */
+@Composable
+fun UpdatedPage(page: BookPage, ink: Color, onOpen: () -> Unit) {
+    val m = page.memory
+    val tape = Tape(ink, TapePattern.PLAIN, alpha = agedAlpha(page.age))
+    StampCorner(page, ink) {
+        Column(
+            Modifier
+                .rotate(seededTilt(m.id, 0.9f))
+                .pieceOfTape(tape, TapeCorner.TOP_LEFT, length = 26.dp, thickness = 9.dp)
+                .pieceOfTape(tape, TapeCorner.BOTTOM_RIGHT, length = 26.dp, thickness = 9.dp)
+                .paperCard()
+                .worn(page.age, m.id)
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onOpen)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Text("UPDATED", style = PaperType.meta, color = paper.kasure2)
+            Text(m.content, style = PaperType.prose.copy(fontSize = 13.5.sp, lineHeight = 20.sp), color = agedInk(page.age))
+        }
+    }
+}
+
+/** Something no longer true, struck through, with what replaced it on a slip. Kept as history. */
+@Composable
+fun ReplacedPage(page: BookPage, ink: Color, onOpen: () -> Unit) {
+    val colors = paper
+    val m = page.memory
+    // The "Now:" slip hangs below the old page, overlapping only its empty bottom margin.
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
+        Column(
+            Modifier
+                .rotate(seededTilt(m.id, 0.7f))
+                .fillMaxWidth()
+                .background(lerp(colors.kami, colors.hyoshi, 0.5f), PaperCorner)
+                .border(1.dp, colors.nijimi0, PaperCorner)
+                .clickable(role = Role.Button, onClick = onOpen)
+                .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 22.dp),
+        ) {
+            Text("NO LONGER SO", style = PaperType.meta, color = colors.kasure1)
+            Text(
+                m.content,
+                style = PaperType.prose.copy(fontSize = 13.5.sp, lineHeight = 20.sp, textDecoration = TextDecoration.LineThrough),
+                color = colors.kasure2,
+            )
+        }
+        page.replacedBy?.let { now ->
+            Text(
+                "Now: ${now.content}",
+                style = PaperType.prose.copy(fontSize = 13.sp, lineHeight = 18.sp),
+                color = colors.sumi,
+                modifier = Modifier
+                    .offset(x = (-10).dp, y = (-14).dp)
+                    .rotate(-2f)
+                    .pieceOfTape(Tape(ink, TapePattern.PLAIN), TapeCorner.TOP_LEFT, length = 24.dp, thickness = 9.dp)
+                    .widthIn(max = 260.dp)
+                    .shadow(1.dp, PaperCorner)
+                    .background(colors.kami, PaperCorner)
+                    .border(1.dp, colors.nijimi1, PaperCorner)
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
+        }
+    }
+}
+
+/** A picture from that day's letters. */
+@Composable
+fun BookPolaroid(ref: String, caption: String?, ink: Color, seed: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    PolaroidFrame(
+        tape = Tape(ink, TapePattern.DOTS),
+        modifier = modifier.width(150.dp).clickable(role = Role.Button, onClickLabel = "Open the letter", onClick = onClick),
+        tiltDegrees = seededTilt(seed, 3.5f),
+        framePadding = 8.dp,
+        bottomPadding = if (caption.isNullOrBlank()) 22.dp else 4.dp,
+        picture = { BlobImage(ref, it, maxSize = 512) },
+        caption = caption?.takeIf { it.isNotBlank() }?.let {
+            {
+                Text(
+                    it,
+                    style = PaperType.mood.copy(fontSize = 12.sp),
+                    color = dev.aiharness.app.ui.theme.stationery.frameInk,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+                )
+            }
+        },
+    )
+}
+
+/** A date stamped in ink: "5 NOV". */
+@Composable
+fun DateStamp(text: String, ink: Color, modifier: Modifier = Modifier, tilt: Float = -3f) {
+    Text(
+        text.uppercase(),
+        style = PaperType.label.copy(fontSize = 11.sp, letterSpacing = 0.14.em, fontWeight = FontWeight.Bold),
+        color = ink,
+        modifier = modifier
+            .rotate(tilt)
+            .border(1.5.dp, ink, PaperCorner)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+    )
+}
+
+/** An earlier month, tucked into an envelope (only its V flap shows). */
+@Composable
+fun MonthEnvelope(month: String, summary: String, open: Boolean, ink: Color, onClick: () -> Unit) {
+    val colors = paper
+    val fold = colors.nijimi2
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(92.dp)
+            .paperCard()
+            .drawBehind {
+                val tip = Offset(size.width / 2, 58.dp.toPx())
+                val w = 1.dp.toPx()
+                drawLine(fold, Offset(0f, 0f), tip, w)
+                drawLine(fold, Offset(size.width, 0f), tip, w)
+            }
+            .clickable(role = Role.Button, onClickLabel = if (open) "Close $month" else "Open $month", onClick = onClick),
+    ) {
+        Row(Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(month, style = PaperType.entryTitle.copy(fontSize = 20.sp), color = colors.sumi)
+            Text(summary.uppercase(), style = PaperType.meta, color = colors.kasure2, modifier = Modifier.padding(bottom = 3.dp))
+        }
+        DateStamp(if (open) "Close" else "Open", ink, Modifier.align(Alignment.BottomEnd).padding(end = 14.dp, bottom = 14.dp))
+    }
+}
+
+/** Text written on ruled lines, the lines sitting just under each line of text. */
+@Composable
+fun RuledText(text: String, style: TextStyle, color: Color, modifier: Modifier = Modifier, rule: Color = paper.nijimi1) {
+    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    Text(
+        text,
+        style = style,
+        color = color,
+        onTextLayout = { layout = it },
+        modifier = modifier
+            .fillMaxWidth()
+            .drawBehind {
+                val l = layout ?: return@drawBehind
+                val gap = 4.dp.toPx()
+                for (i in 0 until l.lineCount) {
+                    val y = l.getLineBaseline(i) + gap
+                    drawLine(rule, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
+                }
+            }
+            .padding(bottom = 6.dp),
+    )
+}

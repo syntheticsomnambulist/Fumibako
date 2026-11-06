@@ -29,6 +29,24 @@ Stickers (including per-persona unread marks and emotion stickers) move to v0.3.
     you, letters written as you, and the default for new letters. Tapping a "Writing as" card
     opens its page; switching happens there or inside a letter.
   - The old one-screen editors are gone. The keys screen keeps its old look until step 7.
+- **Step 6, memory book, memory card, ageing, burn: done.**
+  - The memory book is a scrapbook. Tabs by kind; filters by feeling family and by who a memory
+    is about; search. The always-in-mind memories sit on an index card at the top. Each day gets
+    a date stamp and a small collage: the day's picture, a line quoted from the letter a memory
+    came from, label slips for facts, torn notes for thoughts, taped pages for what happened.
+    Earlier months are tucked into envelopes (only the V flap shows).
+  - Strong feelings get an ink stamp: the family's icon in a double ring, pressed a little
+    unevenly. Mild ones get no mark; the card shows the word either way.
+  - Ageing: fading memories go pale, worn (dormant) ones go brown with a coffee ring, and
+    replaced ones are struck through with what replaced them on a slip.
+  - One memory opens as a card: how it felt when kept and how it feels now (with the persona's
+    reason), how much it matters, who it's about, where it came from, how often it came up.
+    With editing allowed, **Edit** opens the same card for editing, and it can be forgotten:
+    it burns away and **Undo** stays until you leave the page.
+  - The burn runs as an AGSL shader on Android 13 and later and on the CPU below that, both
+    from one definition (`BurnShape`) that the unit tests check.
+  - Not yet: a memory the persona lets go on its own doesn't burn in front of you; the
+    heartbeat log counts it ("let a memory go").
 
 ## What v0.2 includes
 

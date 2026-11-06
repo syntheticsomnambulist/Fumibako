@@ -41,7 +41,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.aiharness.app.ui.chat.ChatScreen
 import dev.aiharness.app.ui.chats.ChatsScreen
-import dev.aiharness.app.ui.personas.MemoryScreen
+import dev.aiharness.app.ui.memory.MemoryBookScreen
+import dev.aiharness.app.ui.memory.MemoryCardScreen
 import dev.aiharness.app.ui.personas.PersonasScreen
 import dev.aiharness.app.ui.settings.KeysScreen
 import dev.aiharness.app.ui.personas.PersonaHeartbeatScreen
@@ -66,6 +67,7 @@ object Routes {
     fun youPage(id: String) = "you/$id"
     fun settings(section: String) = "settings/$section"
     fun memory(personaId: String) = "memory/$personaId"
+    fun memoryCard(personaId: String, memoryId: String) = "memory/$personaId/$memoryId"
     fun model(id: String) = "model/$id"
     const val NEW = "new"
 }
@@ -104,7 +106,8 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
             composable("page/{id}/heartbeat") { entry -> PersonaHeartbeatScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("you/{id}") { entry -> YouPageScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("page/{id}") { entry -> PersonaPageScreen(nav, entry.arguments?.getString("id").orEmpty()) }
-            composable("memory/{id}") { entry -> MemoryScreen(nav, entry.arguments?.getString("id").orEmpty()) }
+            composable("memory/{id}") { entry -> MemoryBookScreen(nav, entry.arguments?.getString("id").orEmpty()) }
+            composable("memory/{id}/{memory}") { entry -> MemoryCardScreen(nav, entry.arguments?.getString("id").orEmpty(), entry.arguments?.getString("memory").orEmpty()) }
             composable(Routes.SETTINGS) { SettingsScreen(nav) }
             composable("settings/{section}") { entry -> SettingsSectionScreen(nav, entry.arguments?.getString("section").orEmpty()) }
             composable(Routes.MODELS) { ModelsScreen(nav) }
