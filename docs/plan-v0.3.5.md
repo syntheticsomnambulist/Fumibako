@@ -43,6 +43,16 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   text-only model hears what's in a photo. Under each frame in your note, a line says what the
   persona can't take in ("Aria can read the label, but can't hear the songs."), and a model's
   settings say what it takes in. Token estimates for compaction count pictures and files.
+- **Step 4, players and tapping: in progress.** Songs and playlists play through Media3 in a
+  playback service with a media session (notification, lock screen, headphones), and keep playing
+  after leaving the thread. Tapping a cassette or ticket plays it; the mini player docks above the
+  composer (a progress line in the sender's ink, a small cassette or ticket, play/pause, next,
+  stop) and opens the full player over the thread: the cassette with its hubs turning and tape
+  winding through the playlist, a scrubber, shuffle, previous, play/pause, next, repeat and the
+  J-card track list; or the ticket with back and forward 10 seconds, repeat and what the persona
+  knows of the song. A ticket is punched the first time it plays: a mark kept in a new `marks`
+  table (database version 4), apart from the letter. Still to come: video, the photo viewer, and
+  the motion.
 
 ## What v0.3.5 includes
 

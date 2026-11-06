@@ -5,6 +5,8 @@ import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
 import androidx.room.Index
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
@@ -62,6 +64,10 @@ data class StickerEntity(
 /** A persona's own sticker (ownerPersonaId set) or one from the shared library (null). */
 @Entity(tableName = "sticker_art", indices = [Index("ownerPersonaId")])
 data class StickerArtEntity(@PrimaryKey val id: String, val ownerPersonaId: String?, val name: String, val json: String)
+
+/** A mark on an attachment (a punched ticket, a read stamp), kept apart from its message. */
+@Entity(tableName = "marks", indices = [Index("attachmentId"), Index("conversationId")])
+data class MarkEntity(@PrimaryKey val id: String, val attachmentId: String, val conversationId: String?, val json: String)
 
 @Dao
 interface HarnessDao {
@@ -162,18 +168,24 @@ interface HarnessDao {
     @Query("SELECT * FROM sticker_art WHERE id = :id") suspend fun stickerArtById(id: String): StickerArtEntity?
     @Upsert suspend fun upsertStickerArt(entity: StickerArtEntity)
     @Query("DELETE FROM sticker_art WHERE id = :id") suspend fun deleteStickerArt(id: String)
+
+    // Marks on attachments
+    @Query("SELECT * FROM marks ORDER BY rowid") fun observeMarks(): Flow<List<MarkEntity>>
+    @Query("SELECT * FROM marks WHERE attachmentId = :attachmentId ORDER BY rowid") suspend fun marksFor(attachmentId: String): List<MarkEntity>
+    @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun addMark(entity: MarkEntity)
+    @Query("DELETE FROM marks WHERE conversationId = :conversationId") suspend fun deleteMarksFor(conversationId: String)
 }
 
 @Database(
     entities = [
         PersonaEntity::class, UserPersonaEntity::class, ModelProfileEntity::class, CredentialEntity::class,
         ConversationEntity::class, MessageEntity::class, MemoryEntity::class, MemoryVectorEntity::class,
-        ActivityEntity::class, StickerEntity::class, StickerArtEntity::class,
+        ActivityEntity::class, StickerEntity::class, StickerArtEntity::class, MarkEntity::class,
     ],
     // A schema change bumps the version and adds a step to MIGRATIONS (keeping the last three);
     // field changes on domain models need neither, since rows are JSON. Schemas are exported to
     // app/schemas for the migration tests.
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class HarnessDatabase : RoomDatabase() {
@@ -186,7 +198,7 @@ abstract class HarnessDatabase : RoomDatabase() {
          * never carries more than three old layouts. When adding a step, drop the oldest one and its
          * test, and its exported schema once no test uses it.
          */
-        val MIGRATIONS: Array<Migration> = arrayOf(Migration2To3)
+        val MIGRATIONS: Array<Migration> = arrayOf(Migration2To3, Migration3To4)
 
         /** [onWiped] runs, while the database opens, when it had to start fresh instead of migrating. */
         fun create(context: Context, onWiped: () -> Unit = {}, name: String = "harness.db"): HarnessDatabase =
@@ -218,5 +230,17 @@ object Migration2To3 : Migration(2, 3) {
                 "`json` TEXT NOT NULL, PRIMARY KEY(`id`))",
         )
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_sticker_art_ownerPersonaId` ON `sticker_art` (`ownerPersonaId`)")
+    }
+}
+
+/** v0.3.5: marks on attachments (punched tickets, read stamps). One new table; nothing else changes. */
+object Migration3To4 : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `marks` (`id` TEXT NOT NULL, `attachmentId` TEXT NOT NULL, `conversationId` TEXT, " +
+                "`json` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_marks_attachmentId` ON `marks` (`attachmentId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_marks_conversationId` ON `marks` (`conversationId`)")
     }
 }

@@ -49,6 +49,10 @@ import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.ProviderType
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.util.newId
+import dev.aiharness.app.media.NowPlaying
+import dev.aiharness.core.model.AttachmentMark
+import dev.aiharness.core.model.MarkKind
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -188,6 +192,28 @@ class ScreenshotTour {
         shot("${prefix}_02l_frames_cutting")
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("from the walk", substring = true))
         shot("${prefix}_02m_frames_photos")
+        // The players (shown without playing: Robolectric has no audio): the mini player docked above
+        // the composer, then the full player for a playlist and for a song.
+        val app = ApplicationProvider.getApplicationContext<HarnessApp>().container
+        val sent = runBlocking { app.harness.conversations.getAll().flatMap { app.harness.conversations.getMessages(it.id) }.flatMap { it.attachments } }
+        val samInk = 0xFF3A86A8.toInt()
+        compose.runOnIdle {
+            app.playback.preview(NowPlaying(sent.first { it.id == "mix1" }, null, samInk, fromYou = true, index = 1, playing = true, positionMs = 62_000, durationMs = 194_000))
+        }
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Now playing", substring = true), 10_000)
+        shot("${prefix}_02n_mini_player")
+        compose.onNodeWithContentDescription("Now playing", substring = true).performClick()
+        waitFor("Track 2 of 2")
+        shot("${prefix}_02o_player_mix")
+        compose.onAllNodesWithContentDescription("Shrink the player").onFirst().performClick()
+        compose.runOnIdle {
+            app.playback.preview(NowPlaying(sent.first { it.id == "song1" }, null, samInk, fromYou = true, positionMs = 80_000, durationMs = 222_000))
+        }
+        compose.onNodeWithContentDescription("Now playing: October Walk", substring = true).performClick()
+        waitFor("knows its title and artist")
+        shot("${prefix}_02p_player_song")
+        compose.onAllNodesWithContentDescription("Shrink the player").onFirst().performClick()
+        compose.runOnIdle { app.playback.preview(null) }
         // A sticker written inline in a letter.
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("writing this one down", substring = true))
         compose.waitUntilAtLeastOneExists(hasContentDescription(":aria-heart:"), 10_000)
@@ -574,6 +600,8 @@ class ScreenshotTour {
             ),
         )
         earlier.forEach { h.conversations.appendMessage(it) }
+        // The song has been played once: its ticket is punched.
+        h.marks.add(AttachmentMark("song1", MarkKind.PUNCHED, conversationId = conversation.id, at = now))
         letters.forEach { h.conversations.appendMessage(it) }
         h.refreshPreview(conversation.id)
 

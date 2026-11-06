@@ -38,6 +38,7 @@ import dev.aiharness.core.storage.ModelProfileRepository
 import dev.aiharness.core.storage.PersonaRepository
 import dev.aiharness.core.storage.SecretStore
 import dev.aiharness.core.storage.SettingsRepository
+import dev.aiharness.core.storage.MarkRepository
 import dev.aiharness.core.storage.StickerRepository
 import dev.aiharness.core.stickers.StickerCutter
 import dev.aiharness.core.stickers.StickerMaker
@@ -86,6 +87,7 @@ class Harness(
     val blobs: BlobStore,
     val activity: ActivityRepository,
     val stickers: StickerRepository,
+    val marks: MarkRepository,
     val clock: Clock = SystemClock,
     val providers: ProviderRegistry = defaultProviders(),
     imageGenerator: ImageGenerator = HostImageGenerator(),

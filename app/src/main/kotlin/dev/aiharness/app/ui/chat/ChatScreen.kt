@@ -47,6 +47,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import dev.aiharness.app.ui.media.MiniPlayer
+import dev.aiharness.app.ui.media.FullPlayer
+import dev.aiharness.core.media.MediaSupport
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -120,6 +124,9 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     val stickerArt by vm.stickerArt.collectAsStateWithLifecycle()
     val stickerName: (Sticker) -> String = { stickerLabel(it, stickerArt) }
     val recentStickers by vm.recentStickers.collectAsStateWithLifecycle()
+    val nowPlaying by container.playback.state.collectAsStateWithLifecycle()
+    val punched by vm.punched.collectAsStateWithLifecycle()
+    var playerOpen by rememberSaveable { mutableStateOf(false) }
 
     // Stickers: the tray, the one selected (and its live position while it moves), dragging one in.
     var trayOpen by rememberSaveable { mutableStateOf(false) }
@@ -243,7 +250,15 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             stickerArt.values.filter { it.ownerPersonaId == null || it.ownerPersonaId == persona?.id }.associateBy { it.name }
         }
         val reader = header.persona?.let { persona -> header.profile?.let { PersonaReader(persona.name, it) } }
-        CompositionLocalProvider(LocalInlineStickers provides inlineStickers, LocalPersonaReader provides reader) {
+        val taps = remember(conversationId) {
+            FrameTaps(play = { attachment, ink, fromYou -> container.playback.play(attachment, conversationId, ink.toArgb(), fromYou) })
+        }
+        CompositionLocalProvider(
+            LocalInlineStickers provides inlineStickers,
+            LocalPersonaReader provides reader,
+            LocalFrameTaps provides taps,
+            LocalPunched provides punched,
+        ) {
             LazyColumn(
                 state = listState,
                 reverseLayout = true,
@@ -315,6 +330,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             )
         }
 
+        nowPlaying?.let { MiniPlayer(it, container.playback, onOpen = { playerOpen = true }) }
         GoingWithYourNote(going, onRemove = { vm.remove(it) }, onOpen = { item ->
             ((item as? Going.Item)?.attachment)?.takeIf { it.kind == dev.aiharness.core.model.AttachmentKind.PLAYLIST }?.let { editingMix = it }
         })
@@ -397,6 +413,17 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 .graphicsLayer { scaleX = 1.1f; scaleY = 1.1f; rotationZ = -6f },
         )
     }
+    // The full player, over the thread; it shrinks back to the mini player.
+    val playing = nowPlaying
+    if (playerOpen && playing != null) {
+        FullPlayer(
+            playing,
+            container.playback,
+            knows = if (playing.fromYou && !playing.isPlaylist) reader(header)?.let { MediaSupport.cantTakeIn(playing.attachment, it.profile, it.name) } else null,
+            onClose = { playerOpen = false },
+        )
+    }
+    LaunchedEffect(playing == null) { if (playing == null) playerOpen = false }
     }
 
     editingMix?.let { mix ->
@@ -729,3 +756,5 @@ private fun StickerSlip(text: String, peel: (() -> Unit)? = null, putBack: (() -
         TextButton(onClick = done) { Text("Done") }
     }
 }
+
+private fun reader(header: ChatHeader): PersonaReader? = header.persona?.let { persona -> header.profile?.let { PersonaReader(persona.name, it) } }

@@ -5,9 +5,12 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.aiharness.app.data.RoomConversationRepository
+import dev.aiharness.app.data.RoomMarkRepository
 import dev.aiharness.app.data.RoomPersonaRepository
 import dev.aiharness.app.data.RoomStickerRepository
 import dev.aiharness.app.data.db.HarnessDatabase
+import dev.aiharness.core.model.AttachmentMark
+import dev.aiharness.core.model.MarkKind
 import dev.aiharness.core.model.Sticker
 import dev.aiharness.core.model.StickerRef
 import dev.aiharness.core.model.StickerTarget
@@ -63,6 +66,36 @@ class MigrationTest {
         assertFalse(wiped, "a version 2 database migrates instead of starting fresh")
     }
 
+    @Test
+    fun versionThreeGainsMarksAndKeepsItsStickers() {
+        context.deleteDatabase(name)
+        createFromSchema(3) { db ->
+            db.execSQL("INSERT INTO messages (id, conversationId, createdAt, json) VALUES ('m1', 'c1', 5, '$LETTER')")
+            db.execSQL(
+                "INSERT INTO stickers (id, conversationId, targetKind, targetId, updatedAt, peeledAt, json) " +
+                    "VALUES ('s1', 'c1', 'MESSAGE', 'm1', 9, NULL, '$TADA')",
+            )
+        }
+
+        var wiped = false
+        val database = HarnessDatabase.create(context, onWiped = { wiped = true }, name = name)
+        try {
+            runBlocking {
+                assertEquals(listOf("s1"), RoomStickerRepository(database.dao()).forConversation("c1").map { it.id })
+                val marks = RoomMarkRepository(database.dao())
+                val punched = AttachmentMark("song1", MarkKind.PUNCHED, conversationId = "c1", at = 12)
+                marks.add(punched)
+                marks.add(punched.copy(at = 99))
+                assertEquals(listOf(punched), marks.forAttachment("song1"), "the first punch stays")
+                RoomConversationRepository(database.dao()).delete("c1")
+                assertEquals(emptyList(), marks.forAttachment("song1"))
+            }
+        } finally {
+            database.close()
+        }
+        assertFalse(wiped, "a version 3 database migrates instead of starting fresh")
+    }
+
     /** Builds the database as Room would have at [version], from its exported schema, then lets [fill] add rows. */
     private fun createFromSchema(version: Int, fill: (SQLiteDatabase) -> Unit) {
         val schema = Json.parseToJsonElement(File("schemas/${HarnessDatabase::class.java.name}/$version.json").readText())
@@ -85,6 +118,7 @@ class MigrationTest {
     private companion object {
         // Rows as v0.2.2 wrote them (JSON, with only the fields that have no defaults).
         const val ARIA = """{"id":"p1","name":"Aria","createdAt":1,"updatedAt":1}"""
+        const val TADA = """{"id":"s1","conversationId":"c1","target":{"kind":"MESSAGE","id":"m1"},"ref":{"type":"emoji","emoji":"🎉","name":"tada"},"x":0.8,"y":0.6,"createdAt":9}"""
         const val LETTER = """{"id":"m1","conversationId":"c1","role":"USER","parts":[{"type":"text","text":"Hello"}],"createdAt":5}"""
     }
 }

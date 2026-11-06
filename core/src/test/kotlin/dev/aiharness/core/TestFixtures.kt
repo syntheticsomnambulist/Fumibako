@@ -18,6 +18,7 @@ import dev.aiharness.core.storage.inmemory.InMemoryMemoryRepository
 import dev.aiharness.core.storage.inmemory.InMemoryModelProfileRepository
 import dev.aiharness.core.storage.inmemory.InMemoryPersonaRepository
 import dev.aiharness.core.storage.inmemory.InMemorySecretStore
+import dev.aiharness.core.storage.inmemory.InMemoryMarkRepository
 import dev.aiharness.core.storage.inmemory.InMemoryStickerRepository
 import dev.aiharness.core.storage.inmemory.InMemorySettingsRepository
 import dev.aiharness.core.storage.inmemory.InMemoryUserPersonaRepository
@@ -70,6 +71,7 @@ class TestEnv(
     val settingsRepo = InMemorySettingsRepository(settings)
     val activity = InMemoryActivityRepository()
     val stickers = InMemoryStickerRepository()
+    val marks = InMemoryMarkRepository()
     val credentials = InMemoryCredentialRepository()
     val secrets = InMemorySecretStore()
     val images = RecordingImageGenerator()
@@ -87,6 +89,7 @@ class TestEnv(
         blobs = InMemoryBlobStore(),
         activity = activity,
         stickers = stickers,
+        marks = marks,
         clock = clock,
         providers = ProviderRegistry(listOf(provider)),
         embedderFactory = null,

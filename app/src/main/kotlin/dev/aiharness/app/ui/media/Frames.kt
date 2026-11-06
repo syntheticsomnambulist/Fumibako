@@ -20,6 +20,13 @@ import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -220,9 +227,13 @@ private val TagShape = GenericShape { size, _ ->
     close()
 }
 
-/** A playlist as a cassette: the label handwritten in the sender's [ink], side A, the length, the reels. */
+/**
+ * A playlist as a cassette: the label handwritten in the sender's [ink], side A, the length, the
+ * reels. While it plays the hubs [turn] (1.4 s a turn) and the tape winds from one reel to the
+ * other as the playlist goes ([wound], 0 to 1).
+ */
 @Composable
-fun Cassette(mix: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifier: Modifier = Modifier) {
+fun Cassette(mix: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifier: Modifier = Modifier, turn: Boolean = false, wound: Float = 0f) {
     val label = Color(0xFFF6ECD9)
     Box(
         modifier
@@ -250,7 +261,7 @@ fun Cassette(mix: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifie
             mix.lengthMs?.takeIf { it > 0 }?.let {
                 Text(clock(it), style = ui(10f * scale), color = SoftBrown, modifier = Modifier.align(Alignment.TopEnd).padding(top = (8 * scale).dp, end = (9 * scale).dp))
             }
-            Reels(scale, Modifier.align(Alignment.BottomCenter).padding(bottom = (8 * scale).dp))
+            Reels(scale, Modifier.align(Alignment.BottomCenter).padding(bottom = (8 * scale).dp), turn, wound)
         }
         // The cassette's lower edge, where the tape shows.
         Canvas(Modifier.align(Alignment.BottomCenter).size((180 * scale).dp, (36 * scale).dp)) {
@@ -266,17 +277,37 @@ fun Cassette(mix: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifie
 }
 
 @Composable
-private fun Reels(scale: Float, modifier: Modifier) {
+private fun Reels(scale: Float, modifier: Modifier, turn: Boolean = false, wound: Float = 0f) {
+    val angle = if (turn && !reducedMotion()) {
+        rememberInfiniteTransition(label = "reels").animateFloat(0f, 360f, infiniteRepeatable(tween(1_400, easing = LinearEasing)), label = "hubs").value
+    } else {
+        0f
+    }
+    val w = wound.coerceIn(0f, 1f)
     Canvas(modifier.size((124 * scale).dp, (34 * scale).dp)) {
         val k = size.width / 124f
         drawRoundRect(Color(0xFF2B2622), Offset.Zero, size, CornerRadius(17 * k))
         drawRoundRect(Color(0xFF5A4A3C), Offset(36 * k, 11 * k), Size(52 * k, 12 * k), CornerRadius(3 * k))
-        listOf(18f to 13f, 106f to 7f).forEach { (x, pack) ->
-            drawCircle(Color(0xFF3D342D), 14 * k, Offset(x * k, 17 * k))
-            drawCircle(Color(0xFF6B5443), pack * k, Offset(x * k, 17 * k))
-            drawCircle(Color(0xFFF3E4CC), 6 * k, Offset(x * k, 17 * k))
-            drawCircle(Color(0xFF2B2622), 6 * k, Offset(x * k, 17 * k), style = Stroke(2f * k, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2 * k, 2 * k))))
+        // The tape winds from the left reel onto the right one.
+        listOf(18f to 13f - 6f * w, 106f to 7f + 6f * w).forEach { (x, pack) ->
+            val hub = Offset(x * k, 17 * k)
+            drawCircle(Color(0xFF3D342D), 14 * k, hub)
+            drawCircle(Color(0xFF6B5443), pack * k, hub)
+            drawCircle(Color(0xFFF3E4CC), 6 * k, hub)
+            rotate(angle, hub) {
+                drawCircle(Color(0xFF2B2622), 6 * k, hub, style = Stroke(2f * k, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2 * k, 2 * k))))
+            }
         }
+    }
+}
+
+/** Whether Android's "Remove animations" is on, so every effect is instant. */
+@Composable
+fun reducedMotion(): Boolean {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    return remember {
+        runCatching { android.provider.Settings.Global.getFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
+            .getOrDefault(false)
     }
 }
 
@@ -506,13 +537,13 @@ fun noteScale(kind: AttachmentKind?): Float = when (kind) {
     else -> 0.86f
 }
 
-private fun hand(size: Float, semibold: Boolean = false) =
+internal fun hand(size: Float, semibold: Boolean = false) =
     TextStyle(fontFamily = HarnessFonts.Hand, fontWeight = if (semibold) FontWeight.SemiBold else FontWeight.Normal, fontSize = size.sp, lineHeight = (size * 1.25f).sp)
 
-private fun news(size: Float, bold: Boolean = false, spacing: Float = 0f, height: Float = 1.2f) =
+internal fun news(size: Float, bold: Boolean = false, spacing: Float = 0f, height: Float = 1.2f) =
     TextStyle(fontFamily = HarnessFonts.News, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal, fontSize = size.sp, lineHeight = (size * height).sp, letterSpacing = spacing.em())
 
-private fun ui(size: Float, bold: Boolean = false, spacing: Float = 0f) =
+internal fun ui(size: Float, bold: Boolean = false, spacing: Float = 0f) =
     TextStyle(fontFamily = HarnessFonts.Ui, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal, fontSize = size.sp, letterSpacing = spacing.em())
 
 private fun Float.em() = androidx.compose.ui.unit.TextUnit(this, androidx.compose.ui.unit.TextUnitType.Em)

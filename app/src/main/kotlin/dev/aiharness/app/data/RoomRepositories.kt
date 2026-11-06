@@ -4,6 +4,7 @@ import dev.aiharness.app.data.db.ActivityEntity
 import dev.aiharness.app.data.db.ConversationEntity
 import dev.aiharness.app.data.db.CredentialEntity
 import dev.aiharness.app.data.db.HarnessDao
+import dev.aiharness.app.data.db.MarkEntity
 import dev.aiharness.app.data.db.MemoryEntity
 import dev.aiharness.app.data.db.MemoryVectorEntity
 import dev.aiharness.app.data.db.MessageEntity
@@ -13,6 +14,7 @@ import dev.aiharness.app.data.db.StickerArtEntity
 import dev.aiharness.app.data.db.StickerEntity
 import dev.aiharness.app.data.db.UserPersonaEntity
 import dev.aiharness.core.model.ActivityEntry
+import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.Credential
@@ -24,6 +26,7 @@ import dev.aiharness.core.model.StickerArt
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.storage.ActivityRepository
 import dev.aiharness.core.storage.ConversationRepository
+import dev.aiharness.core.storage.MarkRepository
 import dev.aiharness.core.storage.CredentialRepository
 import dev.aiharness.core.storage.MemoryRepository
 import dev.aiharness.core.storage.ModelProfileRepository
@@ -88,6 +91,7 @@ class RoomConversationRepository(private val dao: HarnessDao) : ConversationRepo
 
     override suspend fun delete(id: String) {
         dao.deleteStickersFor(id)
+        dao.deleteMarksFor(id)
         dao.deleteMessagesFor(id)
         dao.deleteConversation(id)
     }
@@ -193,4 +197,12 @@ class RoomStickerRepository(private val dao: HarnessDao) : StickerRepository {
     override suspend fun getArt(id: String) = dao.stickerArtById(id)?.let { a.decode(it.json) }
     override suspend fun upsertArt(art: StickerArt) = dao.upsertStickerArt(StickerArtEntity(art.id, art.ownerPersonaId, art.name, a.encode(art)))
     override suspend fun deleteArt(id: String) = dao.deleteStickerArt(id)
+}
+
+class RoomMarkRepository(private val dao: HarnessDao) : MarkRepository {
+    private val s = AttachmentMark.serializer()
+    override fun observeAll(): Flow<List<AttachmentMark>> = dao.observeMarks().map { rows -> rows.map { s.decode(it.json) } }
+    override suspend fun forAttachment(attachmentId: String) = dao.marksFor(attachmentId).map { s.decode(it.json) }
+    override suspend fun add(mark: AttachmentMark) = dao.addMark(MarkEntity(mark.id, mark.attachmentId, mark.conversationId, s.encode(mark)))
+    override suspend fun deleteForConversation(conversationId: String) = dao.deleteMarksFor(conversationId)
 }

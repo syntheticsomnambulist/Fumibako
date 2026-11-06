@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import dev.aiharness.app.ui.media.PhotoStack
 import dev.aiharness.app.ui.media.PolaroidFrame
 import dev.aiharness.app.ui.media.frameTilt
 import dev.aiharness.app.ui.media.noteScale
+import dev.aiharness.app.ui.media.playable
 import dev.aiharness.app.ui.stickers.StuckOn
 import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ContentPart
@@ -73,6 +75,20 @@ fun OnPaper(
         }
     }
 }
+
+/**
+ * What tapping a frame does in a thread: play a song or playlist, watch a video, view photos.
+ * Where it isn't provided (or for other kinds), a frame opens in the phone's own app.
+ */
+class FrameTaps(
+    val play: (attachment: ContentPart.Attachment, ink: Color, fromYou: Boolean) -> Unit,
+    val watch: ((attachment: ContentPart.Attachment, ink: Color, fromYou: Boolean) -> Unit)? = null,
+)
+
+val LocalFrameTaps = staticCompositionLocalOf<FrameTaps?> { null }
+
+/** Attachments that carry a mark (a punched ticket), by kind. */
+val LocalPunched = staticCompositionLocalOf<Set<String>> { emptySet() }
 
 /** The menu a frame offers when held: Save to phone, Share, and Copy link for a cutting. */
 @Composable
@@ -126,13 +142,20 @@ fun FramedAttachment(
 ) {
     val context = LocalContext.current
     val blobs = LocalAppContainer.current.blobStore
+    val taps = LocalFrameTaps.current
     val ref = attachment.ref ?: attachment.tracks.firstOrNull()?.ref
+    val open = { FrameActions.open(context, blobs, attachment) }
     OnPaper(
         attachment.id, handling, inkOf, nameOf,
-        onOpen = { FrameActions.open(context, blobs, attachment) },
+        onOpen = when {
+            taps != null && (attachment.kind == AttachmentKind.SONG || attachment.kind == AttachmentKind.PLAYLIST) && attachment.playable() ->
+                { { taps.play(attachment, ink, inNote) } }
+            taps?.watch != null && attachment.kind == AttachmentKind.VIDEO && attachment.ref != null -> { { taps.watch.invoke(attachment, ink, inNote) } }
+            else -> open
+        },
         menu = frameMenu(ref.takeIf { attachment.kind != AttachmentKind.LINK }, attachment.mimeType, attachment.name, attachment.url),
         alignment = alignment,
     ) {
-        AttachmentFrame(attachment, ink, behind, scale = if (inNote) noteScale(attachment.kind) else 1f)
+        AttachmentFrame(attachment, ink, behind, scale = if (inNote) noteScale(attachment.kind) else 1f, punched = attachment.id in LocalPunched.current)
     }
 }

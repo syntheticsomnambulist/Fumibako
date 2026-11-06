@@ -1,5 +1,6 @@
 package dev.aiharness.core.storage
 
+import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.ChatMessage
@@ -107,6 +108,16 @@ interface ActivityRepository {
 }
 
 /** Stickers stuck on things, and the pictures they can be (persona sheets and the shared library). */
+/** Marks on attachments (a punched ticket, a read stamp), apart from the messages they're in. */
+interface MarkRepository {
+    fun observeAll(): Flow<List<AttachmentMark>>
+    suspend fun forAttachment(attachmentId: String): List<AttachmentMark>
+
+    /** Keeps the first mark of each kind and person: marking again changes nothing. */
+    suspend fun add(mark: AttachmentMark)
+    suspend fun deleteForConversation(conversationId: String)
+}
+
 interface StickerRepository {
     /** A conversation's stickers, peeled ones included (callers show only those still stuck). */
     fun observeForConversation(conversationId: String): Flow<List<Sticker>>

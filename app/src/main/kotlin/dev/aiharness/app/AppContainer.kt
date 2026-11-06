@@ -11,6 +11,7 @@ import dev.aiharness.app.data.RoomCredentialRepository
 import dev.aiharness.app.data.RoomMemoryRepository
 import dev.aiharness.app.data.RoomModelProfileRepository
 import dev.aiharness.app.data.RoomPersonaRepository
+import dev.aiharness.app.data.RoomMarkRepository
 import dev.aiharness.app.data.RoomStickerRepository
 import dev.aiharness.app.data.RoomUserPersonaRepository
 import dev.aiharness.app.data.db.HarnessDatabase
@@ -57,11 +58,15 @@ class AppContainer(private val context: Context) {
         blobs = blobStore,
         activity = RoomActivityRepository(database.dao()),
         stickers = RoomStickerRepository(database.dao()),
+        marks = RoomMarkRepository(database.dao()),
         stickerCutter = PlainBackgroundCutter,
         log = { Log.d("Harness", it) },
     )
 
     val generation = GenerationManager(harness, appScope)
+
+    /** Songs and playlists from letters. A media controller lives on the main thread. */
+    val playback = dev.aiharness.app.media.Playback(context, blobStore, harness.marks, CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate))
 
     private val appState = context.getSharedPreferences("app_state", Context.MODE_PRIVATE)
 

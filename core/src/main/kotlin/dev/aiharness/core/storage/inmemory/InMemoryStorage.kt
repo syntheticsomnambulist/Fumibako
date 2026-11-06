@@ -1,5 +1,7 @@
 package dev.aiharness.core.storage.inmemory
 
+import dev.aiharness.core.storage.MarkRepository
+import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.ChatMessage
@@ -206,4 +208,12 @@ class InMemoryBlobStore : BlobStore {
 
     override suspend fun get(ref: String): ByteArray? = blobs.value[ref]
     override suspend fun delete(ref: String) = blobs.update { it - ref }
+}
+
+class InMemoryMarkRepository : MarkRepository {
+    private val marks = MutableStateFlow<Map<String, AttachmentMark>>(emptyMap())
+    override fun observeAll(): Flow<List<AttachmentMark>> = marks.map { it.values.sortedBy(AttachmentMark::at) }
+    override suspend fun forAttachment(attachmentId: String) = marks.value.values.filter { it.attachmentId == attachmentId }.sortedBy { it.at }
+    override suspend fun add(mark: AttachmentMark) = marks.update { if (mark.id in it) it else it + (mark.id to mark) }
+    override suspend fun deleteForConversation(conversationId: String) = marks.update { all -> all.filterValues { it.conversationId != conversationId } }
 }

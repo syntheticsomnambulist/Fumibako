@@ -39,6 +39,11 @@ data class ChatHeader(
 class ChatViewModel(private val container: AppContainer, val conversationId: String) : ViewModel() {
     private val harness = container.harness
 
+    /** Tickets punched by playing (marks kept apart from the letters). */
+    val punched: StateFlow<Set<String>> = harness.marks.observeAll()
+        .map { marks -> marks.filter { it.kind == dev.aiharness.core.model.MarkKind.PUNCHED }.map { it.attachmentId }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
     val messages: StateFlow<List<ChatMessage>> = harness.conversations.observeMessages(conversationId)
         .map { list -> list.filter { !it.hidden } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
