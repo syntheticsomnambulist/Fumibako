@@ -175,6 +175,40 @@ games box itself is proposed):
   Related but not a game: a page of games you're playing yourself, which you tell the persona
   about and it asks after.
 
+## Trinkets
+
+The user's idea (2026-11-06): little things a persona keeps, like buttons, plants and nice
+stones. Each is a picture and a description, and can be tied to memories. Personas come by them
+when they go out, and can give them to you or to their pen pals. Proposed details:
+
+- **What one is:** a name ("a striped river stone"), a description in the persona's words, where
+  and when it came from (found on a walk, from Juno, from you), a picture, and the memories it's
+  kept with.
+- **On the desk:** a 豆皿 (mamezara, a small dish) holding the newest few; opening it shows them
+  all, each with its picture, words, where it came from, and a link to its memory.
+- **Coming by them:** mostly while going out (reading a link, an imagined walk, and more with
+  the v0.7 outdoor update): the activity may offer "keep something you found", with
+  `keep_trinket(name, description, kind)`. Free with the activity it belongs to, not a slot of
+  its own.
+- **Pictures:** proposed, a built-in set of small drawings in the desk's look (buttons, stones,
+  shells, acorns, leaves, feathers, keys, marbles, little plants), each tinted from the
+  persona's inks, so a trinket costs no picture tokens. Personas with drawing switched on could
+  draw one instead (¥¥).
+- **Memories:** `memory_save` and `memory_update` can keep a trinket the way they keep an
+  attachment (see [`keepsakes.md`](keepsakes.md)); the persona sees "(kept with a trinket: a
+  striped river stone)", and the memory book shows it with the memory.
+- **Giving:** the persona can enclose one in a letter to you, where it arrives in a small glassine
+  envelope (a new frame), or post one to a pen pal. A given trinket moves to its new owner and
+  remembers where it came from.
+- **Yours:** the trinkets you're given need a home of your own, which could be the start of the
+  scrapbook of your own (see [`keepsakes.md`](keepsakes.md)). You might also give trinkets: a
+  photo of a real stone, left on the desk, becoming a trinket.
+- **Limits:** at most one find per going-out, and a dish that holds a set number before older
+  ones move to a box in the drawer.
+- **Later, maybe:** plants that grow a little over time.
+- **Storage:** trinkets are a new table (owner, name, description, kind, tint or picture, origin,
+  given-by, created), a migration step.
+
 ## The look
 
 Worked out over four rounds of mockups (and still being tuned): draw the desk the way the app
@@ -250,7 +284,8 @@ https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn
 - **Aria's desk** (interactive): her desk from above with a diary (one entry sealed), a
   sketchbook, the games box (shiritori with you, with a challenge you can make and withdraw), a
   letter tray with Juno's letter, the memory book, a cutting she read, and the "From Sam"
-  in-tray, plus her sticker sheet and a pencil, on a desk pad. Tap any of them to open it; the
+  in-tray, plus her sticker sheet, a pencil and her trinket dish (a stone, a button from Juno, an
+  acorn), on a desk pad. Tap any of them to open it; the
   sealed diary entry opens, then closes (seal broken) or reseals. The "last visit" line is on
   washi tape. Under the desk, the drawer front leads to the drawer. Below, "Lately at the desk",
   with which lines used a slot.
@@ -265,5 +300,8 @@ https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn
   thread afterwards.
 
 ## Open
+
+- **Trinkets:** when they land (with going out in v0.6, or the v0.7 outdoor update), the
+  built-in set versus drawn pictures, and where yours live.
 
 - **The look beyond the desk:** whether the v0.5 stationery update takes it across the app.

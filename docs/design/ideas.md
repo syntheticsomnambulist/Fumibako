@@ -125,7 +125,8 @@ Ideas only: [Fieldwork](https://github.com/4thkira/fieldworkharness) is GPL-3.0,
   postcard about its day at a time you choose. Both are activities (see
   [`activities.md`](activities.md)).
 - **Collections and belongings:** small things a persona keeps (plants, recipes, a dream log,
-  pictures). Some belong in the scrapbook, others on the writing desk.
+  pictures). Some belong in the scrapbook, others on the writing desk. Trinkets are the first of
+  these (see [`activities.md`](activities.md)).
 - **Promises and reminders with dates:** memories that wait until a date or come due. They show
   in the persona's planner. (Proposed for v0.4, in [`calendar.md`](calendar.md).)
 - **Thinking lines** (v0.5): the persona chooses what shows while it writes ("Aria is chewing her
