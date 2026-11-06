@@ -390,6 +390,7 @@ fun YouPageScreen(nav: NavController, userId: String) {
                     confirmDelete = false
                     scope.launch {
                         harness.userPersonas.delete(u.id)
+                        harness.plannerEntries.deletePlanner(u.id)
                         if (active) {
                             val next = harness.userPersonas.observeAll().first().firstOrNull { it.id != u.id }?.id
                             harness.settings.update { s -> s.copy(activeUserPersonaId = next) }

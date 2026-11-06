@@ -142,6 +142,7 @@ class HeartbeatEngine(private val h: Harness) {
         val lastUserMessage = history.lastOrNull { it.role == MessageRole.USER && it.origin == MessageOrigin.USER }
         val unanswered = unansweredProactive(history)
         val hasMemoryTools = "memory_save" in h.tools.available(setup.settings, persona).map { it.spec.name }
+        val busyLine = h.planner.heartbeatLine(persona, setup.userPersona, setup.settings)
         val note = buildString {
             append("<heartbeat>\n")
             append("This is a private heartbeat moment, not a message from $userName.")
@@ -167,7 +168,8 @@ class HeartbeatEngine(private val h: Harness) {
             }
             if (letterAllowed) {
                 append("Then decide whether to write to $userName now. Only reach out for a genuine reason: following up on ")
-                append("something they mentioned, sharing a thought, or checking in after a long silence. They may be busy.\n")
+                // Why they're quiet, when the planner says; else only that they may be.
+                append("something they mentioned, sharing a thought, or checking in after a long silence. ${busyLine ?: "They may be busy."}\n")
                 append("If you decide to write, reply with only the letter itself, addressed to $userName")
                 if (setup.settings.moodTags) append(", ending with your mood tag")
                 append(". Otherwise reply with exactly $SILENT.\n")

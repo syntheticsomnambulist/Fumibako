@@ -69,6 +69,10 @@ data class StickerArtEntity(@PrimaryKey val id: String, val ownerPersonaId: Stri
 @Entity(tableName = "marks", indices = [Index("attachmentId"), Index("conversationId")])
 data class MarkEntity(@PrimaryKey val id: String, val attachmentId: String, val conversationId: String?, val json: String)
 
+/** An entry in one of your personas' planners (a plan, your typical week, a persona's note). */
+@Entity(tableName = "planner_entries", indices = [Index("plannerId")])
+data class PlannerEntryEntity(@PrimaryKey val id: String, val plannerId: String, val byPersonaId: String?, val json: String)
+
 @Dao
 interface HarnessDao {
     // Personas
@@ -174,6 +178,15 @@ interface HarnessDao {
     @Query("SELECT * FROM marks WHERE attachmentId = :attachmentId ORDER BY rowid") suspend fun marksFor(attachmentId: String): List<MarkEntity>
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun addMark(entity: MarkEntity)
     @Query("DELETE FROM marks WHERE conversationId = :conversationId") suspend fun deleteMarksFor(conversationId: String)
+
+    // The planner
+    @Query("SELECT * FROM planner_entries WHERE plannerId = :plannerId ORDER BY rowid") fun observePlanner(plannerId: String): Flow<List<PlannerEntryEntity>>
+    @Query("SELECT * FROM planner_entries WHERE plannerId = :plannerId ORDER BY rowid") suspend fun plannerEntries(plannerId: String): List<PlannerEntryEntity>
+    @Query("SELECT * FROM planner_entries WHERE id = :id") suspend fun plannerEntry(id: String): PlannerEntryEntity?
+    @Upsert suspend fun upsertPlannerEntry(entity: PlannerEntryEntity)
+    @Query("DELETE FROM planner_entries WHERE id = :id") suspend fun deletePlannerEntry(id: String)
+    @Query("DELETE FROM planner_entries WHERE plannerId = :plannerId") suspend fun deletePlanner(plannerId: String)
+    @Query("DELETE FROM planner_entries WHERE byPersonaId = :personaId") suspend fun deletePlannerEntriesBy(personaId: String)
 }
 
 @Database(
@@ -181,11 +194,12 @@ interface HarnessDao {
         PersonaEntity::class, UserPersonaEntity::class, ModelProfileEntity::class, CredentialEntity::class,
         ConversationEntity::class, MessageEntity::class, MemoryEntity::class, MemoryVectorEntity::class,
         ActivityEntity::class, StickerEntity::class, StickerArtEntity::class, MarkEntity::class,
+        PlannerEntryEntity::class,
     ],
     // A schema change bumps the version and adds a step to MIGRATIONS (keeping the last three);
     // field changes on domain models need neither, since rows are JSON. Schemas are exported to
     // app/schemas for the migration tests.
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class HarnessDatabase : RoomDatabase() {
@@ -198,7 +212,7 @@ abstract class HarnessDatabase : RoomDatabase() {
          * never carries more than three old layouts. When adding a step, drop the oldest one and its
          * test, and its exported schema once no test uses it.
          */
-        val MIGRATIONS: Array<Migration> = arrayOf(Migration2To3, Migration3To4)
+        val MIGRATIONS: Array<Migration> = arrayOf(Migration2To3, Migration3To4, Migration4To5)
 
         /** [onWiped] runs, while the database opens, when it had to start fresh instead of migrating. */
         fun create(context: Context, onWiped: () -> Unit = {}, name: String = "harness.db"): HarnessDatabase =
@@ -242,5 +256,16 @@ object Migration3To4 : Migration(3, 4) {
         )
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_marks_attachmentId` ON `marks` (`attachmentId`)")
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_marks_conversationId` ON `marks` (`conversationId`)")
+    }
+}
+
+/** v0.4: the planner's entries. */
+object Migration4To5 : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `planner_entries` (`id` TEXT NOT NULL, `plannerId` TEXT NOT NULL, `byPersonaId` TEXT, " +
+                "`json` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_planner_entries_plannerId` ON `planner_entries` (`plannerId`)")
     }
 }

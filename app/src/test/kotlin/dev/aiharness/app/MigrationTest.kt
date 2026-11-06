@@ -96,6 +96,35 @@ class MigrationTest {
         assertFalse(wiped, "a version 3 database migrates instead of starting fresh")
     }
 
+    @Test
+    fun versionFourGainsThePlannerAndKeepsItsMarks() {
+        context.deleteDatabase(name)
+        createFromSchema(4) { db ->
+            db.execSQL("INSERT INTO messages (id, conversationId, createdAt, json) VALUES ('m1', 'c1', 5, '$LETTER')")
+            db.execSQL("INSERT INTO marks (id, attachmentId, conversationId, json) VALUES ('song1:PUNCHED:', 'song1', 'c1', '$PUNCHED')")
+        }
+
+        var wiped = false
+        val database = HarnessDatabase.create(context, onWiped = { wiped = true }, name = name)
+        try {
+            runBlocking {
+                assertEquals(listOf("song1"), RoomMarkRepository(database.dao()).forAttachment("song1").map { it.attachmentId })
+                val planner = dev.aiharness.app.data.RoomPlannerRepository(database.dao())
+                val work = dev.aiharness.core.model.PlannerEntry(
+                    "w1", "u1", null, dev.aiharness.core.model.EntryKind.ROUTINE, "Work",
+                    weekly = dev.aiharness.core.model.Weekly(listOf(1, 2, 3, 4, 5), 540, 1050), routine = dev.aiharness.core.model.RoutineKind.WORK,
+                    createdAt = 1, updatedAt = 1,
+                )
+                planner.upsert(work)
+                assertEquals(listOf(work), planner.forPlanner("u1"))
+                assertEquals(emptyList(), planner.forPlanner("u2"), "each of your personas keeps a planner of its own")
+            }
+        } finally {
+            database.close()
+        }
+        assertFalse(wiped, "a version 4 database migrates instead of starting fresh")
+    }
+
     /** Builds the database as Room would have at [version], from its exported schema, then lets [fill] add rows. */
     private fun createFromSchema(version: Int, fill: (SQLiteDatabase) -> Unit) {
         val schema = Json.parseToJsonElement(File("schemas/${HarnessDatabase::class.java.name}/$version.json").readText())
@@ -119,6 +148,7 @@ class MigrationTest {
         // Rows as v0.2.2 wrote them (JSON, with only the fields that have no defaults).
         const val ARIA = """{"id":"p1","name":"Aria","createdAt":1,"updatedAt":1}"""
         const val TADA = """{"id":"s1","conversationId":"c1","target":{"kind":"MESSAGE","id":"m1"},"ref":{"type":"emoji","emoji":"🎉","name":"tada"},"x":0.8,"y":0.6,"createdAt":9}"""
+        const val PUNCHED = """{"attachmentId":"song1","kind":"PUNCHED","conversationId":"c1","at":12}"""
         const val LETTER = """{"id":"m1","conversationId":"c1","role":"USER","parts":[{"type":"text","text":"Hello"}],"createdAt":5}"""
     }
 }

@@ -72,6 +72,7 @@ class TestEnv(
     val activity = InMemoryActivityRepository()
     val stickers = InMemoryStickerRepository()
     val marks = InMemoryMarkRepository()
+    val plannerEntries = dev.aiharness.core.storage.inmemory.InMemoryPlannerRepository()
     val credentials = InMemoryCredentialRepository()
     val secrets = InMemorySecretStore()
     val images = RecordingImageGenerator()
@@ -90,6 +91,7 @@ class TestEnv(
         activity = activity,
         stickers = stickers,
         marks = marks,
+        plannerEntries = plannerEntries,
         clock = clock,
         providers = ProviderRegistry(listOf(provider)),
         embedderFactory = null,

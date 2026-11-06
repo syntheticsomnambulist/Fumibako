@@ -206,3 +206,15 @@ class RoomMarkRepository(private val dao: HarnessDao) : MarkRepository {
     override suspend fun add(mark: AttachmentMark) = dao.addMark(MarkEntity(mark.id, mark.attachmentId, mark.conversationId, s.encode(mark)))
     override suspend fun deleteForConversation(conversationId: String) = dao.deleteMarksFor(conversationId)
 }
+
+class RoomPlannerRepository(private val dao: HarnessDao) : dev.aiharness.core.storage.PlannerRepository {
+    private val s = dev.aiharness.core.model.PlannerEntry.serializer()
+    private fun entity(e: dev.aiharness.core.model.PlannerEntry) = dev.aiharness.app.data.db.PlannerEntryEntity(e.id, e.plannerId, e.byPersonaId, s.encode(e))
+    override fun observe(plannerId: String) = dao.observePlanner(plannerId).map { rows -> rows.map { s.decode(it.json) } }
+    override suspend fun forPlanner(plannerId: String) = dao.plannerEntries(plannerId).map { s.decode(it.json) }
+    override suspend fun get(id: String) = dao.plannerEntry(id)?.let { s.decode(it.json) }
+    override suspend fun upsert(entry: dev.aiharness.core.model.PlannerEntry) = dao.upsertPlannerEntry(entity(entry))
+    override suspend fun delete(id: String) = dao.deletePlannerEntry(id)
+    override suspend fun deletePlanner(plannerId: String) = dao.deletePlanner(plannerId)
+    override suspend fun deleteWrittenBy(personaId: String) = dao.deletePlannerEntriesBy(personaId)
+}

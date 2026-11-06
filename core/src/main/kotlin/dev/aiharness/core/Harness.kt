@@ -93,6 +93,7 @@ class Harness(
     val activity: ActivityRepository,
     val stickers: StickerRepository,
     val marks: MarkRepository,
+    val plannerEntries: dev.aiharness.core.storage.PlannerRepository,
     val clock: Clock = SystemClock,
     val providers: ProviderRegistry = defaultProviders(),
     imageGenerator: ImageGenerator = HostImageGenerator(),
@@ -125,7 +126,8 @@ class Harness(
         ),
     )
     val prompts = PromptAssembler()
-    val turnContext = TurnContextBuilder(memory, clock, stickerService)
+    val planner = dev.aiharness.core.planner.Planner(plannerEntries, clock)
+    val turnContext = TurnContextBuilder(memory, clock, stickerService, planner)
     val contextBuilder = ContextBuilder(prompts, memory, blobs, clock, log)
     val summarizer = LlmSummarizer(this)
     val describer = MediaDescriber(this)

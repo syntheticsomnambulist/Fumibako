@@ -1,0 +1,86 @@
+# v0.4 plan: the planner
+
+Started 2026-11-06, after v0.3.5. The design is the design session's `docs/design/calendar.md`
+(on its branch, `ccr-09dbf6b8-2c3jno`), with two passes of mockups on its "Planner" design canvas
+(private claude.ai artifact: https://claude.ai/artifact/641ZZiMG4rVyRHyP1PDszb). The roadmap is
+in its `docs/design/ideas.md`.
+
+## Your answers on what was still open (2026-11-06)
+
+- **Sharing:** as proposed. Every persona's "Sees your planner" starts on, for what you write in
+  the app (phone calendars show nothing until set up); your default persona shares its planner.
+  Each of your personas has a planner of its own, so a fictional one can have a fictional week; a
+  letter sees the planner of whichever of your personas is writing it. Phone calendars belong to
+  your default persona's planner.
+- **Public holidays:** from Nager.Date by default (only the country and year are sent, once a
+  year), and from a phone holiday calendar instead when you've set one up under Phone calendars.
+- **Seasons:** a Look setting, "Seasons follow: the weather (default) or the solar terms", so the
+  theme can agree with the planner's season band.
+- **In as drafted:** "Busy for now" on a persona's notification; your typical week's sleep as the
+  heartbeat's quiet hours; a haiku slip on a new solar term or microseason (a making activity).
+- **Not in v0.4:** a suggestion using an activity slot. Suggested plans stay (they're agreed) and
+  are free, like notes and reminders.
+
+## What v0.4 includes
+
+From the agreed decisions in `calendar.md`:
+
+1. **The 帳 Planner tab**, between 人 Personas and 設 Settings: a バーチカル (vertical) week of all
+   24 hours with your sleep folded, a month page, a day page, and a plan's card.
+2. **Your typical week** (work, sleep and the rest), printed faintly on every day.
+3. **What the persona sees,** in each turn's context block (never the system prompt): what's on
+   now and next, a few notable days ahead, its own notes and suggestions, and the states of
+   entries. A heartbeat says why you're quiet instead of "They may be busy".
+4. **Personas write in the planner:** notes, reminders and promises (which wake it), suggested
+   plans you can add or turn down, and its own rest; stickers on days and entries.
+5. **Entries have states:** done, moved (with a ghost on the old day), cancelled; a suggestion
+   added or not this time; a reminder kept or missed.
+6. **Marks per persona:** its signature seal, wake mark and done mark, like the unread mark.
+7. **Phone calendars,** optional and read-only (`CalendarContract`, one permission, no sign-in),
+   each shown hidden, busy only, with titles, or with titles and places.
+8. **Busy times:** notifications held until a busy entry ends (adjustable); "Busy for now".
+9. **The season band** (solar terms and microseasons, computed on the phone; flipped for the
+   southern hemisphere), public holidays, a 12-hour clock setting, the week's first day.
+10. **Settings, Planner** (十 Planner after 九 Media; About moves to 十一).
+
+## Order of work
+
+1. **Engine:** planner entries (a new table: a migration step with its test), each of your
+   personas' planner, the typical week, states, the sharing switches, and what the persona sees
+   in a letter and a heartbeat.
+2. **The 帳 tab:** the vertical week (dot grid, stitching, ribbon, index tabs, sleep folded), the
+   day page, a plan's card, your typical week, stamping (done, move, cancel), the メモ area, the
+   12-hour clock and the week's first day.
+3. **The month and the seasons:** the month page, the season band, public holidays, "Seasons
+   follow" on the Look page.
+4. **The persona's side:** the planner tools (look, note, suggest, remind, rest), slips in its
+   ink with its seal, suggestions to add or turn down, reminders and one-off wakeups, its rest,
+   its marks, stickers on days and entries, the look-ahead activity and the season haiku.
+5. **Phone calendars:** setup, detail levels, pencil boxes, done and not going.
+6. **Busy times and Settings, Planner:** held notifications, "Busy for now", sleep as quiet
+   hours, and the Planner page.
+7. **Polish, tests, an APK.**
+
+## Progress
+
+- **Step 1, the engine: done.** Planner entries are a new table (`planner_entries`, database
+  version 5; its migration step has a test, and the last three steps are kept). Every one of
+  your personas keeps a planner of its own; an entry knows whose planner it's in, who wrote it
+  (you, or a persona), what it is (a plan, part of your typical week, a persona's note,
+  suggestion, reminder or rest), when (a time, a day, or the days and hours of a week), where,
+  whether it makes you busy, and how it stands (done, moved, cancelled; added or not this time;
+  kept or missed). A persona's "Sees your planner" starts on; your default persona shares its
+  planner, the others don't until you say. When both are on, each letter's context block says
+  what's on now and next, to the end of tomorrow, then up to three notable days ahead, the
+  persona's own notes, reminders and suggestions, and how your plans stand ("Sam's planner: at
+  work until 17:30. Later today: dinner with Jo, 19:00 to 21:00. Tomorrow: work, 09:00 to 17:30;
+  dentist, 10:00."). A heartbeat says why you're quiet instead of "They may be busy" ("Sam is
+  asleep until 07:00. A letter written now will be read after that."), with busy stretches that
+  run into one another taken as one. Deleting one of your personas takes its planner with it;
+  deleting a persona takes what it wrote. Nothing shows in the app yet: that's step 2.
+
+## Noted for later
+
+- **Explaining the utility model in setup:** what it's for, with examples, so you know you can
+  pair models (a Gemini utility model listens to songs and mixes and describes them for a
+  Claude-powered persona that can't hear).

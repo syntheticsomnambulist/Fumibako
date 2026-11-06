@@ -133,6 +133,8 @@ data class Persona(
     val alsoPronouns: List<Pronouns> = emptyList(),
     /** How the app's own sentences pick between several sets. */
     val pronounsMix: PronounMix = PronounMix.TAKE_TURNS,
+    /** It sees the planner of the persona of yours it writes to (when that one shares it). */
+    val seesPlanner: Boolean = true,
     val createdAt: Long,
     val updatedAt: Long,
 ) {
@@ -166,9 +168,17 @@ data class UserPersona(
     val outfit: String = "",
     val ink: String = "sora",
     val tapePattern: TapePattern = TapePattern.STRIPES,
+    /**
+     * Whether personas see this one's planner: null follows the rule, which shares your default
+     * persona's (the one you write as) and not the others', which may be fictional.
+     */
+    val sharesPlanner: Boolean? = null,
     val createdAt: Long,
     val updatedAt: Long,
-)
+) {
+    /** Whether personas see its planner, by [sharesPlanner] or the rule. */
+    fun sharesPlanner(settings: AppSettings): Boolean = sharesPlanner ?: (id == settings.activeUserPersonaId)
+}
 
 // ---------------------------------------------------------------------------
 // Conversations

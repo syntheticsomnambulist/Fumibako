@@ -27,6 +27,7 @@ class TurnContextBuilder(
     private val memory: MemoryService,
     private val clock: Clock,
     private val stickers: StickerService? = null,
+    private val planner: dev.aiharness.core.planner.Planner? = null,
 ) {
     private val timeFormat = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy, HH:mm")
     private val dateFormat = DateTimeFormatter.ofPattern("d MMM yyyy")
@@ -58,6 +59,9 @@ class TurnContextBuilder(
 
         // Out of its usual clothes: it should know, for how it describes itself and its pictures.
         persona.outfit?.takeIf { it.isNotBlank() }?.let { lines += "You're wearing: $it (not your usual clothes)." }
+
+        // What's on in your planner, when the two of you share it (here, not the system prompt, so the cache holds).
+        planner?.contextFor(persona, userPersona, settings)?.let { lines += it }
 
         if (stickers != null && conversationId != null) {
             val lastTurn = history.lastOrNull { it.role == MessageRole.ASSISTANT }?.createdAt ?: 0L

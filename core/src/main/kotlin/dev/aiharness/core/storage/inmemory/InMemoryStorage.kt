@@ -210,6 +210,17 @@ class InMemoryBlobStore : BlobStore {
     override suspend fun delete(ref: String) = blobs.update { it - ref }
 }
 
+class InMemoryPlannerRepository : dev.aiharness.core.storage.PlannerRepository {
+    private val entries = MutableStateFlow<Map<String, dev.aiharness.core.model.PlannerEntry>>(emptyMap())
+    override fun observe(plannerId: String) = entries.map { all -> all.values.filter { it.plannerId == plannerId }.sortedBy { it.createdAt } }
+    override suspend fun forPlanner(plannerId: String) = entries.value.values.filter { it.plannerId == plannerId }.sortedBy { it.createdAt }
+    override suspend fun get(id: String) = entries.value[id]
+    override suspend fun upsert(entry: dev.aiharness.core.model.PlannerEntry) = entries.update { it + (entry.id to entry) }
+    override suspend fun delete(id: String) = entries.update { it - id }
+    override suspend fun deletePlanner(plannerId: String) = entries.update { all -> all.filterValues { it.plannerId != plannerId } }
+    override suspend fun deleteWrittenBy(personaId: String) = entries.update { all -> all.filterValues { it.byPersonaId != personaId } }
+}
+
 class InMemoryMarkRepository : MarkRepository {
     private val marks = MutableStateFlow<Map<String, AttachmentMark>>(emptyMap())
     override fun observeAll(): Flow<List<AttachmentMark>> = marks.map { it.values.sortedBy(AttachmentMark::at) }

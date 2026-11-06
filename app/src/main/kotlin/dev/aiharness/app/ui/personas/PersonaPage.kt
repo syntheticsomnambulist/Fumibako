@@ -216,6 +216,7 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
                         harness.conversations.getAll().filter { it.personaId == p.id }.forEach { harness.conversations.delete(it.id) }
                         harness.memory.all(p.id).forEach { harness.memory.delete(it.id) }
                         harness.personas.delete(p.id)
+                        harness.plannerEntries.deleteWrittenBy(p.id)
                         onMain { nav.popBackStack() }
                     }
                 }) { Text("Delete") }

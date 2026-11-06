@@ -62,6 +62,7 @@ class AppContainer(private val context: Context) {
         activity = RoomActivityRepository(database.dao()),
         stickers = RoomStickerRepository(database.dao()),
         marks = RoomMarkRepository(database.dao()),
+        plannerEntries = dev.aiharness.app.data.RoomPlannerRepository(database.dao()),
         stickerCutter = PlainBackgroundCutter,
         log = { Log.d("Harness", it) },
     )

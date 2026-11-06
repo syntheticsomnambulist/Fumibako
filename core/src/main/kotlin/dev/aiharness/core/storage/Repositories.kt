@@ -1,5 +1,6 @@
 package dev.aiharness.core.storage
 
+import dev.aiharness.core.model.PlannerEntry
 import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.AppSettings
@@ -116,6 +117,21 @@ interface MarkRepository {
     /** Keeps the first mark of each kind and person: marking again changes nothing. */
     suspend fun add(mark: AttachmentMark)
     suspend fun deleteForConversation(conversationId: String)
+}
+
+/** Planner entries, each in one of your personas' planners. */
+interface PlannerRepository {
+    fun observe(plannerId: String): Flow<List<PlannerEntry>>
+    suspend fun forPlanner(plannerId: String): List<PlannerEntry>
+    suspend fun get(id: String): PlannerEntry?
+    suspend fun upsert(entry: PlannerEntry)
+    suspend fun delete(id: String)
+
+    /** One of your personas is gone: its planner goes with it. */
+    suspend fun deletePlanner(plannerId: String)
+
+    /** A persona is gone: what it wrote in your planners goes too. */
+    suspend fun deleteWrittenBy(personaId: String)
 }
 
 interface StickerRepository {
