@@ -434,6 +434,9 @@ class ScreenshotTour {
         compose.onNode(hasClickActionLabel("Open Planner")).performClick()
         waitFor("THE WEEK STARTS ON")
         shot("${prefix}_18c_settings_planner")
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("Hide them all"))
+        compose.waitForIdle()
+        shot("${prefix}_18c2_settings_phone_calendars")
         compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("Change"))
         compose.waitForIdle()
         shot("${prefix}_18d_settings_planner_holidays")
@@ -480,6 +483,11 @@ class ScreenshotTour {
         compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
         compose.waitForIdle()
         shot("${prefix}_24_planner_week")
+        // The phone's calendars in pencil (work's stand-up with its title, yoga only as busy).
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Stand-up", substring = true), 10_000)
+        compose.onNodeWithContentDescription("Stand-up", substring = true).performScrollTo()
+        compose.waitForIdle()
+        shot("${prefix}_24k_planner_phone")
         // The bookmark: put on the week after, which it then goes back to from this week; and put back.
         compose.onNodeWithContentDescription("The week after").performClick()
         compose.waitForIdle()
@@ -975,6 +983,22 @@ class ScreenshotTour {
         )
         h.personas.getAll().firstOrNull { it.name == "Juno" }?.let { juno ->
             hers(juno.id, dev.aiharness.core.model.EntryKind.AWAY, "resting after the move") { it.copy(start = now - 3_600_000L, end = at(week[6], 9)) }
+        }
+        // The phone's calendars, as a fake (the tour has none): work's stand-up with its title, yoga only as busy.
+        val app = ApplicationProvider.getApplicationContext<HarnessApp>()
+        app.container.phoneCalendars.source = object : dev.aiharness.core.planner.PhoneCalendars {
+            override fun readable() = true
+            override suspend fun calendars() = listOf(
+                dev.aiharness.core.planner.PhoneCalendar("1", "Work", "sam@example.com", 0xFF4A7BB0.toInt()),
+                dev.aiharness.core.planner.PhoneCalendar("2", "Home", "sam@example.com", 0xFF6FA86A.toInt()),
+            )
+            override suspend fun events(from: Long, to: Long, calendarIds: Set<String>) = listOf(
+                dev.aiharness.core.planner.PhoneEvent(101, "1", "Stand-up", "Room 4", at(week[1], 10), at(week[1], 10, 30)),
+                dev.aiharness.core.planner.PhoneEvent(102, "2", "Yoga", null, at(week[3], 7), at(week[3], 8)),
+            ).filter { it.calendarId in calendarIds && it.start < to && it.end > from }
+        }
+        h.settings.update { s ->
+            s.copy(planner = s.planner.copy(phone = dev.aiharness.core.model.PhoneCalendarSettings(mapOf("1" to dev.aiharness.core.model.PhoneDetail.TITLES, "2" to dev.aiharness.core.model.PhoneDetail.BUSY))))
         }
         // Public holidays, as if already fetched (the tour stays offline): a made-up one on this week's Wednesday.
         fun fetched(y: Int) = dev.aiharness.core.model.HolidayYear(

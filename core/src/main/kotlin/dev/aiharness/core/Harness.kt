@@ -100,6 +100,8 @@ class Harness(
     embedderFactory: EmbedderFactory? = null,
     /** Cuts drawn stickers out of their white background; the app supplies one (this default leaves them as drawn). */
     stickerCutter: StickerCutter = StickerCutter { it },
+    /** The phone's calendars, read-only; the app supplies them (none here). */
+    phoneCalendars: dev.aiharness.core.planner.PhoneCalendars? = null,
     val log: (String) -> Unit = {},
 ) {
     val memory = MemoryService(memories, settings, embedderFactory ?: EmbedderFactory.default(::apiKey), clock, log)
@@ -127,7 +129,7 @@ class Harness(
         ),
     )
     val prompts = PromptAssembler()
-    val planner: dev.aiharness.core.planner.Planner = dev.aiharness.core.planner.Planner(plannerEntries, clock).also { planner ->
+    val planner: dev.aiharness.core.planner.Planner = dev.aiharness.core.planner.Planner(plannerEntries, clock, phoneCalendars, settings).also { planner ->
         tools.register(dev.aiharness.core.planner.PlannerLookTool(planner, clock))
         tools.register(dev.aiharness.core.planner.PlannerWriteTool(planner, plannerEntries, personas, clock, stickerService))
     }

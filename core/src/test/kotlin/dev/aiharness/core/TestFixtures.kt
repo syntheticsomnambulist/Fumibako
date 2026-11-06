@@ -61,6 +61,8 @@ class ScriptedProvider(
 class TestEnv(
     val provider: ScriptedProvider = ScriptedProvider(),
     settings: AppSettings = AppSettings(),
+    /** The phone's calendars, for the planner (none by default). */
+    phone: dev.aiharness.core.planner.PhoneCalendars? = null,
 ) {
     val clock = FakeClock()
     val personas = InMemoryPersonaRepository()
@@ -96,6 +98,7 @@ class TestEnv(
         providers = ProviderRegistry(listOf(provider)),
         embedderFactory = null,
         imageGenerator = images,
+        phoneCalendars = phone,
         log = { logs += it },
     )
 

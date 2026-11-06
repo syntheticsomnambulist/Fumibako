@@ -11,6 +11,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
 import androidx.navigation.NavController
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.Routes
@@ -35,6 +37,7 @@ import java.util.Locale
 internal fun SettingsCards.plannerPage(nav: NavController, s: AppSettings, update: Update) {
     val p = s.planner
     fun planner(transform: (dev.aiharness.core.model.PlannerSettings) -> dev.aiharness.core.model.PlannerSettings) = update { it.copy(planner = transform(it.planner)) }
+    card { PhoneCalendarsCard(s, update) }
     card {
         CardTitle("Your typical week")
         Hint("Work, sleep and the rest of your week, printed faintly on every day. Sleep folds the week page.")
@@ -183,3 +186,65 @@ private fun HolidaysCard(s: AppSettings, update: Update) {
 }
 
 private fun countryName(code: String?): String = code?.let { Locale("", it).getDisplayCountry(Locale.US).ifBlank { it } } ?: ""
+
+/**
+ * The phone's calendars (docs/design/calendar.md, "Phone calendars"): an explanation, the one
+ * permission, then each calendar with its detail level. Nothing shows until you choose.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun PhoneCalendarsCard(s: AppSettings, update: Update) {
+    val phone = LocalAppContainer.current.phoneCalendars
+    var readable by remember { mutableStateOf(phone.readable()) }
+    var calendars by remember { mutableStateOf<List<dev.aiharness.core.planner.PhoneCalendar>?>(null) }
+    var problem by remember { mutableStateOf<String?>(null) }
+    val ask = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
+        readable = granted
+        problem = if (granted) null else "Calendar permission declined. Nothing is read without it."
+    }
+    LaunchedEffect(readable) { if (readable) calendars = phone.calendars() }
+    val levels = s.planner.phone
+    fun level(id: String, to: dev.aiharness.core.model.PhoneDetail) = update {
+        it.copy(planner = it.planner.copy(phone = it.planner.phone.copy(levels = it.planner.phone.levels + (id to to))))
+    }
+
+    CardTitle("Phone calendars")
+    Hint(
+        "Read from your phone, never changed or copied. Each calendar shows in your default persona's planner as much as you choose here, " +
+            "and that's what a persona that sees your planner sees (it goes to the persona's model provider). Attendees and event notes never do.",
+    )
+    if (!readable) {
+        PaperButton("Use my phone's calendars") { ask.launch(android.Manifest.permission.READ_CALENDAR) }
+    } else {
+        val list = calendars
+        when {
+            list == null -> Text("Looking for your calendars…", style = PaperType.postscript, color = paper.usuzumi1)
+            list.isEmpty() -> Text("No calendars on this phone.", style = PaperType.postscript, color = paper.usuzumi1)
+            else -> list.forEach { cal ->
+                androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
+                    androidx.compose.foundation.layout.Box(
+                        Modifier.padding(end = 8.dp).size(10.dp)
+                            .background(cal.color?.let { androidx.compose.ui.graphics.Color(it) } ?: paper.kasure2, androidx.compose.foundation.shape.CircleShape),
+                    )
+                    androidx.compose.foundation.layout.Column {
+                        Text(cal.name, style = PaperType.entryTitle, color = paper.sumi)
+                        if (cal.account.isNotBlank()) Text(cal.account, style = PaperType.meta, color = paper.kasure2)
+                    }
+                }
+                PaperChoice(
+                    dev.aiharness.core.model.PhoneDetail.entries.map { it to it.label },
+                    levels.level(cal.id),
+                    { v -> level(cal.id, v) },
+                    columns = 2,
+                    maxLines = 2,
+                )
+                if (cal.holidays) Hint("A holiday calendar: shown, its days are your public holidays, in place of Nager.Date's.")
+            }
+        }
+        if (levels.levels.values.any { it != dev.aiharness.core.model.PhoneDetail.HIDDEN }) {
+            PaperButton("Hide them all") { update { it.copy(planner = it.planner.copy(phone = it.planner.phone.copy(levels = emptyMap()))) } }
+        }
+        Hint("To stop the app reading your calendars at all, turn off its Calendar permission in your phone's settings.")
+    }
+    problem?.let { Text(it, style = PaperType.postscript, color = paper.usuzumi1) }
+}

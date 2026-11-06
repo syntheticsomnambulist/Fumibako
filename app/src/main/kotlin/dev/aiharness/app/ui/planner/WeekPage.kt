@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -107,7 +108,14 @@ fun PlannerScreen(nav: NavController) {
     val context = LocalContext.current
     val clock = remember(settings.theme.clock) { ClockFormat(settings.theme.clock, DateFormat.is24HourFormat(context)) }
     val days = remember(shown, settings.planner.weekStartsSunday) { PlannerDays.weekOf(shown, settings.planner.weekStartsSunday) }
-    val occurrences = remember(entries, days) { vm.occurrences(entries, days.first(), days.last()) }
+    // Your planner, and what the phone's calendars put in it (read live, in pencil).
+    val phone by vm.phone.collectAsStateWithLifecycle()
+    LifecycleResumeEffect(Unit) {
+        vm.refreshPhone()
+        onPauseOrDispose { }
+    }
+    val withPhone = remember(entries, phone) { entries + phone.entries }
+    val occurrences = remember(withPhone, days) { vm.occurrences(withPhone, days.first(), days.last()) }
     var unfolded by rememberSaveable { mutableStateOf(false) }
     val folded = if (settings.planner.foldSleep && !unfolded) HourLayout.asleepEveryDay(occurrences, days, vm.zone) else emptyList()
     val layout = remember(folded) { HourLayout(folded) }
@@ -131,9 +139,11 @@ fun PlannerScreen(nav: NavController) {
     val month = YearMonth.from(shown)
     val thisMonth = month == YearMonth.from(today)
     val monthDays = remember(month, settings.planner.weekStartsSunday) { MonthDays.of(month, settings.planner.weekStartsSunday) }
-    val monthOccurrences = remember(entries, monthDays) { vm.occurrences(entries, monthDays.first(), monthDays.last()) }
+    val monthOccurrences = remember(withPhone, monthDays) { vm.occurrences(withPhone, monthDays.first(), monthDays.last()) }
     val hemisphere = vm.hemisphere(settings)
     val holidays = settings.planner.holidays
+    // A day's public holidays: a shown phone holiday calendar's, else Nager.Date's.
+    val holidaysOf: (LocalDate) -> List<String> = remember(settings, phone) { { day -> vm.holidaysOn(day) } }
     PlannerStickerHost(you?.id, you) { stickers, bottom ->
     Box(Modifier.fillMaxSize().background(colors.kami).dotGrid(colors.sumi.copy(alpha = 0.12f))) {
         Column(Modifier.fillMaxSize().stitched(lerp(colors.nijimi2, colors.kami, 0.2f)).statusBarsPadding().padding(bottom = bottom)) {
@@ -141,7 +151,7 @@ fun PlannerScreen(nav: NavController) {
             MonthHeader(month)
             MonthPage(
                 month = month, today = today, startsSunday = settings.planner.weekStartsSunday, occurrences = monthOccurrences,
-                holidays = holidays, seasonBand = settings.planner.seasonBand, zone = vm.zone, hemisphere = hemisphere,
+                holidays = holidays, holidaysOf = holidaysOf, phoneHolidays = phone.holidaysShown, seasonBand = settings.planner.seasonBand, zone = vm.zone, hemisphere = hemisphere,
                 personas = personas, plannerId = you?.id, stickers = stickers,
                 onDay = { day -> nav.navigate(Routes.plannerDay(day.toString())) },
                 onHolidaysSetup = { nav.navigate(Routes.settings("planner")) },
@@ -152,12 +162,12 @@ fun PlannerScreen(nav: NavController) {
                 val col = ((maxWidth - GUTTER) / 7).coerceAtLeast(36.dp)
                 Column(Modifier.fillMaxSize()) {
                     // The days and the all-day row stay put while the hours scroll.
-                    DayHeads(days, today, col, holidays) { day -> nav.navigate(Routes.plannerDay(day.toString())) }
+                    DayHeads(days, today, col, holidaysOf) { day -> nav.navigate(Routes.plannerDay(day.toString())) }
                     AwayRow(days, occurrences, personas, col)
                     AllDayRow(
-                        days, occurrences, col, ink, holidays,
+                        days, occurrences, col, ink, holidaysOf,
                         termOf = if (settings.planner.seasonBand) remember(days, hemisphere) { Seasons.termsBeginning(days.first(), days.last(), vm.zone, hemisphere).toMap() } else emptyMap(),
-                    ) { o -> card = PlanDraft.of(o.entry, o.day) }
+                    ) { o -> if (o.entry.phone != null) openPhoneEvent(context, o.entry) else card = PlanDraft.of(o.entry, o.day) }
                     Column(Modifier.weight(1f).verticalScroll(scroll).padding(bottom = 24.dp)) {
                         WeekGrid(
                             days = days, occurrences = occurrences, entries = entries, layout = layout, col = col, today = today,
@@ -167,7 +177,7 @@ fun PlannerScreen(nav: NavController) {
                             onClose = { picked = null },
                             onStamp = { e, state -> vm.stamp(e, state); picked = null },
                             onMove = { e, from, to -> vm.move(e, from, to); picked = null },
-                            onOpen = { o -> picked = null; card = PlanDraft.of(o.entry, o.day) },
+                            onOpen = { o -> picked = null; if (o.entry.phone != null) openPhoneEvent(context, o.entry) else card = PlanDraft.of(o.entry, o.day) },
                             onDay = { day -> nav.navigate(Routes.plannerDay(day.toString())) },
                             onFold = { unfolded = !unfolded },
                         )
@@ -429,14 +439,14 @@ private fun AwayRow(days: List<LocalDate>, occurrences: List<Occurrence>, person
 }
 
 @Composable
-private fun DayHeads(days: List<LocalDate>, today: LocalDate, col: Dp, holidays: HolidaySettings, onDay: (LocalDate) -> Unit) {
+private fun DayHeads(days: List<LocalDate>, today: LocalDate, col: Dp, holidaysOf: (LocalDate) -> List<String>, onDay: (LocalDate) -> Unit) {
     val colors = paper
     val night = stationery.isNight
     val ink = stationery.you
     Box(Modifier.height(44.dp).fillMaxWidth()) {
         days.forEachIndexed { i, day ->
             // A public holiday's date is red, like a Sunday's.
-            val holiday = Holidays.on(holidays, day).isNotEmpty()
+            val holiday = holidaysOf(day).isNotEmpty()
             val dayColor = if (holiday) dayInk(java.time.DayOfWeek.SUNDAY, colors.sumi, night) else dayInk(day.dayOfWeek, colors.sumi, night)
             Column(
                 Modifier
@@ -470,7 +480,7 @@ private fun AllDayRow(
     occurrences: List<Occurrence>,
     col: Dp,
     ink: Color,
-    holidays: HolidaySettings,
+    holidaysOf: (LocalDate) -> List<String>,
     termOf: Map<LocalDate, SolarTerm>,
     onOpen: (Occurrence) -> Unit,
 ) {
@@ -485,17 +495,19 @@ private fun AllDayRow(
                 termOf[day]?.let { t ->
                     Text(t.kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = grid(9f), lineHeight = grid(10f)), color = red, maxLines = 1, modifier = Modifier.semantics { contentDescription = "${t.english} (${t.kanji})" })
                 }
-                Holidays.on(holidays, day).forEach { h ->
-                    Text(h.name, style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(7.5f), lineHeight = grid(8.5f)), color = red, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                holidaysOf(day).forEach { name ->
+                    Text(name, style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(7.5f), lineHeight = grid(8.5f)), color = red, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
                 allDay.filter { it.day == day }.forEach { o ->
+                    val pencil = o.entry.phone != null
                     Text(
-                        o.entry.title.ifBlank { "Plan" },
-                        style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = grid(9f), lineHeight = grid(13f)),
-                        color = lerp(ink, colors.sumi, 0.45f),
+                        o.entry.title.ifBlank { if (pencil) "Busy" else "Plan" },
+                        style = TextStyle(fontFamily = if (pencil) HarnessFonts.Hand else HarnessFonts.Read, fontSize = grid(9f), lineHeight = grid(13f)),
+                        color = if (pencil) Pencil else lerp(ink, colors.sumi, 0.45f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth().clip(Highlighter).background(ink.copy(alpha = 0.3f))
+                        modifier = Modifier.fillMaxWidth()
+                            .then(if (pencil) Modifier.border(1.dp, Pencil.copy(alpha = 0.6f)) else Modifier.clip(Highlighter).background(ink.copy(alpha = 0.3f)))
                             .clickable(onClickLabel = "Open ${o.entry.title}") { onOpen(o) }.padding(horizontal = 3.dp),
                     )
                 }
@@ -636,8 +648,15 @@ private fun WeekGrid(
             val bottom = maxOf(y(minute(o.end ?: start, o.day)), top + 16.dp)
             val reach = maxOf(bottom - top, PLAN_TARGET)
             val width = (col - 4.dp) / of
+            // Not over a folded band of sleep next to it (its tap opens the hours).
+            val startMinute = minute(start, o.day)
+            val endMinute = minute(o.end ?: start, o.day)
+            val ceiling = layout.folded.filter { (it.last + 1) * 60 <= startMinute }.maxOfOrNull { y((it.last + 1) * 60) } ?: 0.dp
+            val floor = layout.folded.filter { it.first * 60 >= endMinute }.minOfOrNull { y(it.first * 60) } ?: height
+            val from = maxOf((top + bottom) / 2 - reach / 2, ceiling)
+            val to = minOf((top + bottom) / 2 + reach / 2, floor)
             Box(
-                Modifier.offset(x = GUTTER + col * i + 2.dp + width * lane, y = (top + bottom) / 2 - reach / 2).size(width, reach)
+                Modifier.offset(x = GUTTER + col * i + 2.dp + width * lane, y = from).size(width, maxOf(to - from, bottom - top))
                     .clickable(onClickLabel = "Stamps for ${o.entry.title}") { onPick(Picked(o.entry.id, o.day)) }
                     .clearAndSetSemantics { },
             )
@@ -652,23 +671,26 @@ private fun WeekGrid(
             val e = o.entry
             val stamp = stampOf(e)
             stickers.On(StickerTarget.entry(e.id), Modifier.offset(x = GUTTER + col * i + 2.dp + width * lane, y = top).size(width, bottom - top)) {
+            val pencil = e.phone != null
             Box(
                 Modifier
                     .fillMaxSize()
-                    .clip(Highlighter)
-                    // Paper under the highlighter, so the page's lines don't run through the words.
-                    .background(colors.kami)
-                    .background(ink.copy(alpha = if (e.state == EntryState.CANCELLED) 0.14f else 0.3f))
+                    .then(
+                        // A phone calendar's event in pencil: a graphite box, read-only.
+                        if (pencil) Modifier.background(colors.kami).border(1.dp, Pencil.copy(alpha = if (e.state == EntryState.CANCELLED) 0.35f else 0.7f))
+                        // Paper under the highlighter, so the page's lines don't run through the words.
+                        else Modifier.clip(Highlighter).background(colors.kami).background(ink.copy(alpha = if (e.state == EntryState.CANCELLED) 0.14f else 0.3f)),
+                    )
                     .combinedClickable(onClickLabel = "Stamps for ${e.title}", onLongClick = { onOpen(o) }) { onPick(Picked(e.id, o.day)) }
                     .semantics { contentDescription = planLabel(e, o, clock, zone) },
             ) {
                 Text(
-                    e.title.ifBlank { "Plan" },
+                    e.title.ifBlank { if (pencil) "Busy" else "Plan" },
                     style = TextStyle(
-                        fontFamily = HarnessFonts.Read, fontSize = grid(9.5f), lineHeight = grid(10.5f),
+                        fontFamily = if (pencil) HarnessFonts.Hand else HarnessFonts.Read, fontSize = grid(9.5f), lineHeight = grid(10.5f),
                         textDecoration = if (e.state == EntryState.CANCELLED) TextDecoration.LineThrough else null,
                     ),
-                    color = lerp(ink, colors.sumi, 0.45f).copy(alpha = if (e.state == EntryState.CANCELLED) 0.55f else 1f),
+                    color = (if (pencil) Pencil else lerp(ink, colors.sumi, 0.45f)).copy(alpha = if (e.state == EntryState.CANCELLED) 0.55f else 1f),
                     modifier = Modifier.padding(start = 3.dp, top = 2.dp, end = 2.dp),
                     maxLines = 4,
                     overflow = TextOverflow.Ellipsis,
@@ -742,9 +764,14 @@ private fun WeekGrid(
                         .padding(horizontal = 4.dp, vertical = 3.dp),
                 ) {
                     StampButton("済", if (e.state == EntryState.DONE) "Lift" else "Done", if (e.state == EntryState.DONE) "Lift the done stamp" else "Stamp it done", ink) { onStamp(e, EntryState.DONE) }
-                    StampButton("延", "Move", "Move it to another day", ink) { onPick(p.copy(moving = true)) }
-                    StampButton("止", if (e.state == EntryState.CANCELLED) "Restore" else "Cancel", if (e.state == EntryState.CANCELLED) "Lift the cancelled stamp" else "Stamp it cancelled", ink) { onStamp(e, EntryState.CANCELLED) }
-                    StampButton("›", "Open", "Open the plan's card", ink) { onOpen(o) }
+                    if (e.phone == null) {
+                        StampButton("延", "Move", "Move it to another day", ink) { onPick(p.copy(moving = true)) }
+                        StampButton("止", if (e.state == EntryState.CANCELLED) "Restore" else "Cancel", if (e.state == EntryState.CANCELLED) "Lift the cancelled stamp" else "Stamp it cancelled", ink) { onStamp(e, EntryState.CANCELLED) }
+                        StampButton("›", "Open", "Open the plan's card", ink) { onOpen(o) }
+                    } else {
+                        // From the phone's calendar: it moves and changes there, not here.
+                        StampButton("止", if (e.state == EntryState.CANCELLED) "Going" else "Not going", if (e.state == EntryState.CANCELLED) "Lift the not-going stamp" else "Stamp it not going", ink) { onStamp(e, EntryState.CANCELLED) }
+                    }
                 }
             }
         }
@@ -921,6 +948,20 @@ internal fun StickersMark() {
             color = paper.usuzumi1,
             maxLines = 1,
             softWrap = false,
+        )
+    }
+}
+
+/** Pencil: graphite grey, for what's read from the phone's calendars. */
+val Pencil = Color(0xFF7D766E)
+
+/** A phone calendar's event opens in the phone's calendar app (it's changed there, not here). */
+fun openPhoneEvent(context: android.content.Context, entry: PlannerEntry) {
+    val (eventId, _) = dev.aiharness.core.planner.PhoneEntries.parse(entry.id) ?: return
+    runCatching {
+        context.startActivity(
+            android.content.Intent(android.content.Intent.ACTION_VIEW, android.content.ContentUris.withAppendedId(android.provider.CalendarContract.Events.CONTENT_URI, eventId))
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     }
 }

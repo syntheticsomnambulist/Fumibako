@@ -49,6 +49,9 @@ class AppContainer(private val context: Context) {
     val media = dev.aiharness.app.media.MediaImport(context, blobStore)
     private val database = HarnessDatabase.create(context, onWiped = ::forgetEverythingElse)
 
+    /** The phone's calendars, read-only, for the planner (and its setup in Settings). */
+    val phoneCalendars = dev.aiharness.app.data.PhoneCalendarsSwitch(dev.aiharness.app.data.AndroidPhoneCalendars(context))
+
     val harness = Harness(
         personas = RoomPersonaRepository(database.dao()),
         userPersonas = RoomUserPersonaRepository(database.dao()),
@@ -64,6 +67,7 @@ class AppContainer(private val context: Context) {
         marks = RoomMarkRepository(database.dao()),
         plannerEntries = dev.aiharness.app.data.RoomPlannerRepository(database.dao()),
         stickerCutter = PlainBackgroundCutter,
+        phoneCalendars = phoneCalendars,
         log = { Log.d("Harness", it) },
     )
 

@@ -11,6 +11,10 @@ import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.PlannerEntry
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.planner.Occurrence
+import dev.aiharness.core.planner.Planner
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import dev.aiharness.core.theme.ThemeClock
 import dev.aiharness.core.util.newId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,6 +60,27 @@ class PlannerViewModel(private val container: AppContainer) : ViewModel() {
 
     /** The week page or the month page (the 週 and 月 index tabs). */
     val view = MutableStateFlow(PlannerView.WEEK)
+
+    private val phoneTick = MutableStateFlow(0)
+
+    /** Reads the phone's calendars again (when the planner comes back into view: they may have changed). */
+    fun refreshPhone() {
+        phoneTick.value++
+    }
+
+    /** What the phone's calendars put in the open planner, for the month shown and a week or two either side. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val phone: StateFlow<Planner.PhoneRead> = combine(
+        you,
+        settings.map { it.activeUserPersonaId to it.planner.phone }.distinctUntilChanged(),
+        shownDay.map { java.time.YearMonth.from(it) }.distinctUntilChanged(),
+        phoneTick,
+    ) { u, _, month, _ -> u to month }
+        .mapLatest { (u, month) -> if (u == null) Planner.PhoneRead.NONE else h.planner.phoneRead(u.id, settings.value, month.atDay(1).minusDays(7), month.atEndOfMonth().plusDays(14)) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Planner.PhoneRead.NONE)
+
+    /** The public holidays on [day]: a shown phone holiday calendar's, else Nager.Date's. */
+    fun holidaysOn(day: LocalDate): List<String> = h.planner.holidaysOn(settings.value, phone.value, day)
 
     /** Every persona, for the marks of who wrote where. */
     val personas: StateFlow<List<Persona>> = h.personas.observeAll().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -112,7 +137,21 @@ class PlannerViewModel(private val container: AppContainer) : ViewModel() {
     fun declineSuggestion(suggestion: PlannerEntry) = save(suggestion.copy(state = EntryState.DECLINED))
 
     /** Stamps [entry] [state] (done, cancelled), or lifts the stamp when it already has it. */
-    fun stamp(entry: PlannerEntry, state: EntryState) = save(entry.copy(state = if (entry.state == state) EntryState.OPEN else state))
+    fun stamp(entry: PlannerEntry, state: EntryState) {
+        if (entry.phone != null) stampPhone(entry, state) else save(entry.copy(state = if (entry.state == state) EntryState.OPEN else state))
+    }
+
+    /** A phone event's stamp (done, not going) is kept here, as nothing is written back to the phone; kept three months. */
+    private fun stampPhone(entry: PlannerEntry, state: EntryState) = viewModelScope.launch {
+        val (eventId, start) = dev.aiharness.core.planner.PhoneEntries.parse(entry.id) ?: return@launch
+        val now = now()
+        h.settings.update { s ->
+            val p = s.planner.phone
+            val kept = p.stamps.filter { !(it.eventId == eventId && it.start == start) && it.start > now - 90L * 86_400_000L }
+            val stamps = if (entry.state == state) kept else kept + dev.aiharness.core.model.PhoneStamp(eventId, start, state, now)
+            s.copy(planner = s.planner.copy(phone = p.copy(stamps = stamps)))
+        }
+    }
 
     /**
      * Moves [entry] to [day], keeping its time; it carries its 延 there. It remembers the day it

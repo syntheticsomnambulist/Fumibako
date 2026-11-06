@@ -81,6 +81,9 @@ fun MonthPage(
     startsSunday: Boolean,
     occurrences: List<Occurrence>,
     holidays: HolidaySettings,
+    /** A day's public holidays (a shown phone holiday calendar's, else Nager.Date's). */
+    holidaysOf: (LocalDate) -> List<String>,
+    phoneHolidays: Boolean,
     seasonBand: Boolean,
     zone: ZoneId,
     hemisphere: Hemisphere,
@@ -123,7 +126,7 @@ fun MonthPage(
                         week.forEach { day ->
                             DayCell(
                                 day = day, inMonth = YearMonth.from(day) == month, today = day == today, col = col,
-                                occurrences = byDay[day].orEmpty(), holidays = Holidays.on(holidays, day).map { it.name },
+                                occurrences = byDay[day].orEmpty(), holidays = holidaysOf(day),
                                 term = terms[day]?.kanji, personas = personas, plannerId = plannerId, stickers = stickers,
                                 onClick = { onDay(day) },
                             )
@@ -132,7 +135,7 @@ fun MonthPage(
                 }
             }
         }
-        MonthLegend(occurrences, personas, holidays, onHolidaysSetup)
+        MonthLegend(occurrences, personas, holidays, phoneHolidays, onHolidaysSetup)
     }
 }
 
@@ -209,14 +212,15 @@ private fun DayCell(
                 )
             } else if (first != null && inMonth) {
                 Text(
-                    first.entry.title, style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 8.5.sp, lineHeight = 9.sp),
-                    color = lerp(ink, colors.sumi, 0.35f), maxLines = 1, overflow = TextOverflow.Clip,
+                    first.entry.title.ifBlank { "Busy" }, style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 8.5.sp, lineHeight = 9.sp),
+                    color = if (first.entry.phone != null) Pencil else lerp(ink, colors.sumi, 0.35f), maxLines = 1, overflow = TextOverflow.Clip,
                     modifier = Modifier.padding(start = 3.dp, end = 2.dp, top = 27.dp),
                 )
             }
             // Who has written here: you, and each persona, in their inks.
             Row(Modifier.align(Alignment.BottomStart).padding(start = 5.dp, bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                if (plans.isNotEmpty()) Box(Modifier.size(6.dp).background(ink, CircleShape))
+                if (plans.any { it.entry.phone == null }) Box(Modifier.size(6.dp).background(ink, CircleShape))
+                if (plans.any { it.entry.phone != null }) Box(Modifier.size(6.dp).border(1.2.dp, Pencil, CircleShape))
                 writers.take(3).forEach { p -> Box(Modifier.size(6.dp).background(sheet.ink(p.ink), CircleShape)) }
             }
             if (allDone) Stamp("済", ink, Modifier.align(Alignment.BottomEnd).padding(end = 3.dp, bottom = 3.dp), size = 16.dp)
@@ -235,7 +239,7 @@ private fun DayCell(
 
 /** Under the grid: what the marks mean, and (until they're set up) a way to show public holidays. */
 @Composable
-private fun MonthLegend(occurrences: List<Occurrence>, personas: List<Persona>, holidays: HolidaySettings, onHolidaysSetup: () -> Unit) {
+private fun MonthLegend(occurrences: List<Occurrence>, personas: List<Persona>, holidays: HolidaySettings, phoneHolidays: Boolean, onHolidaysSetup: () -> Unit) {
     val colors = paper
     val sheet = stationery
     val ink = sheet.you
@@ -248,17 +252,20 @@ private fun MonthLegend(occurrences: List<Occurrence>, personas: List<Persona>, 
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(6.dp).background(ink, CircleShape)); Text("  Yours", style = small, color = colors.sumi) }
+        if (occurrences.any { it.entry.phone != null }) {
+            Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(6.dp).border(1.2.dp, Pencil, CircleShape)); Text("  Phone calendar", style = small, color = colors.sumi) }
+        }
         writers.forEach { p -> Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(6.dp).background(sheet.ink(p.ink), CircleShape)); Text("  ${p.name}", style = small, color = colors.sumi) } }
         Row(verticalAlignment = Alignment.CenterVertically) { Text("済", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 10.sp), color = ink); Text("  All stamped done", style = small, color = colors.sumi) }
-        if (holidays.show && holidays.country != null) {
-            val where = java.util.Locale("", holidays.country).getDisplayCountry(Locale.US)
+        if (phoneHolidays || (holidays.show && holidays.country != null)) {
+            val where = if (phoneHolidays) "your phone's calendar" else java.util.Locale("", holidays.country).getDisplayCountry(Locale.US)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("11", style = TextStyle(fontFamily = HarnessFonts.Display, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 12.sp), color = red)
                 Text("  Public holiday ($where)", style = small, color = colors.sumi)
             }
         }
     }
-    if (!holidays.show) {
+    if (!holidays.show && !phoneHolidays) {
         Text(
             "Show public holidays",
             style = TextStyle(fontFamily = HarnessFonts.Read, fontStyle = FontStyle.Italic, fontSize = 13.sp),

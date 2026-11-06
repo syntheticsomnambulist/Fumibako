@@ -24,16 +24,59 @@ data class Occurrence(val entry: PlannerEntry, val start: Long?, val end: Long?,
  * The planner (docs/design/calendar.md on the design branch): your personas' planners, what's in
  * them on each day, whether you're busy, and what a persona is told of them.
  */
-class Planner(private val entries: PlannerRepository, private val clock: Clock) {
+class Planner(
+    private val entries: PlannerRepository,
+    private val clock: Clock,
+    /** The phone's calendars, read live into your default persona's planner (none in tests unless given). */
+    private val phone: PhoneCalendars? = null,
+    private val settings: dev.aiharness.core.storage.SettingsRepository? = null,
+) {
     private val zone: ZoneId get() = clock.zone
+
+    /** What the phone's calendars put in a planner for some days: pencil entries, and holidays from a holiday calendar. */
+    data class PhoneRead(val entries: List<PlannerEntry>, val holidays: Map<LocalDate, List<String>>, val holidaysShown: Boolean) {
+        companion object {
+            val NONE = PhoneRead(emptyList(), emptyMap(), false)
+        }
+    }
+
+    /**
+     * The phone's calendars in [plannerId]'s planner from [from] to [to]: only your default
+     * persona's planner has them, and only the calendars you chose to show, at their detail level.
+     * A holiday calendar's all-day events are holidays instead (they stand in for Nager.Date's).
+     */
+    suspend fun phoneRead(plannerId: String, s: AppSettings, from: LocalDate, to: LocalDate): PhoneRead {
+        val p = phone ?: return PhoneRead.NONE
+        if (plannerId != s.activeUserPersonaId) return PhoneRead.NONE
+        val shown = s.planner.phone.levels.filterValues { it != dev.aiharness.core.model.PhoneDetail.HIDDEN }.keys
+        if (shown.isEmpty() || !p.readable()) return PhoneRead.NONE
+        val calendars = runCatching { p.calendars() }.getOrDefault(emptyList()).associateBy { it.id }
+        val events = runCatching {
+            p.events(from.atStartOfDay(zone).toInstant().toEpochMilli(), to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli(), shown)
+        }.getOrDefault(emptyList())
+        val (holidayEvents, rest) = events.partition { calendars[it.calendarId]?.holidays == true }
+        val holidays = holidayEvents.filter { it.allDay && it.day != null && it.title.isNotBlank() }
+            .groupBy({ LocalDate.parse(it.day) }, { it.title })
+        return PhoneRead(
+            rest.mapNotNull { PhoneEntries.of(it, calendars[it.calendarId], s.planner.phone, plannerId) },
+            holidays,
+            holidaysShown = shown.any { calendars[it]?.holidays == true },
+        )
+    }
+
+    /** The public holidays on [day]: a shown phone holiday calendar's, else Nager.Date's. */
+    fun holidaysOn(s: AppSettings, read: PhoneRead, day: LocalDate): List<String> =
+        if (read.holidaysShown) read.holidays[day].orEmpty() else Holidays.on(s.planner.holidays, day).map { it.name }
 
     /** Whether [persona] sees [you]'s planner: both switches on. */
     fun shared(persona: Persona, you: UserPersona?, settings: AppSettings): Boolean =
         you != null && persona.seesPlanner && you.sharesPlanner(settings)
 
     /** What's on each day from [from] to [to] (both included), in time order; untimed and all-day ones first. */
-    suspend fun days(plannerId: String, from: LocalDate, to: LocalDate): List<Occurrence> =
-        occurrences(entries.forPlanner(plannerId), from, to)
+    suspend fun days(plannerId: String, from: LocalDate, to: LocalDate): List<Occurrence> {
+        val phoneEntries = settings?.current()?.let { phoneRead(plannerId, it, from, to).entries }.orEmpty()
+        return occurrences(entries.forPlanner(plannerId) + phoneEntries, from, to)
+    }
 
     fun occurrences(all: List<PlannerEntry>, from: LocalDate, to: LocalDate): List<Occurrence> {
         val out = mutableListOf<Occurrence>()
@@ -93,10 +136,12 @@ class Planner(private val entries: PlannerRepository, private val clock: Clock) 
      */
     suspend fun contextFor(persona: Persona, you: UserPersona?, settings: AppSettings): String? {
         if (you == null || !shared(persona, you, settings)) return null
-        val all = entries.forPlanner(you.id)
         val now = clock.nowMillis()
         val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone)
-        val holidays = Holidays.between(settings.planner.holidays, today, today.plusDays(6))
+        // Your phone's calendars too, at the detail you chose for each.
+        val read = phoneRead(you.id, settings, today.minusDays(1), today.plusDays(7))
+        val all = entries.forPlanner(you.id) + read.entries
+        val holidays = generateSequence(today) { it.plusDays(1) }.take(7).flatMap { d -> holidaysOn(settings, read, d).map { d to it } }.toList()
         if (all.isEmpty() && holidays.isEmpty()) return null
         val name = you.name.ifBlank { "Your writer" }
         val lines = mutableListOf<String>()
@@ -121,8 +166,8 @@ class Planner(private val entries: PlannerRepository, private val clock: Clock) 
             .take(3)
         if (ahead.isNotEmpty()) lines += "Coming up: " + ahead.joinToString("; ") { "${weekday(it.day, today)}: ${described(it)}" } + "."
         // Public holidays this week (they leave your typical week as it is: few are days off for everyone).
-        if (holidays.isNotEmpty()) lines += holidays.joinToString(" ") { (day, h) ->
-            "${weekday(day, today).replaceFirstChar { it.uppercase() }} is a public holiday: ${h.name}."
+        if (holidays.isNotEmpty()) lines += holidays.joinToString(" ") { (day, name) ->
+            "${weekday(day, today).replaceFirstChar { it.uppercase() }} is a public holiday: $name."
         }
 
         // Its own writing.
@@ -175,14 +220,15 @@ class Planner(private val entries: PlannerRepository, private val clock: Clock) 
      * wrote; other personas' writing isn't shown. Null when there's nothing on those days.
      */
     suspend fun lookFor(persona: Persona, you: UserPersona, settings: AppSettings, from: LocalDate, to: LocalDate): String? {
-        val all = entries.forPlanner(you.id).filter { it.byPersonaId == null || it.byPersonaId == persona.id }
+        val read = phoneRead(you.id, settings, from, to)
+        val all = entries.forPlanner(you.id).filter { it.byPersonaId == null || it.byPersonaId == persona.id } + read.entries
         val today = LocalDate.ofInstant(Instant.ofEpochMilli(clock.nowMillis()), zone)
         val byDay = occurrences(all, from, to).groupBy { it.day }
         val lines = mutableListOf<String>()
         var day = from
         while (!day.isAfter(to)) {
             val parts = mutableListOf<String>()
-            Holidays.on(settings.planner.holidays, day).forEach { parts += "${it.name} (public holiday)" }
+            holidaysOn(settings, read, day).forEach { parts += "$it (public holiday)" }
             byDay[day].orEmpty().filter { it.entry.routine != RoutineKind.SLEEP && it.entry.kind != EntryKind.AWAY }.forEach { o ->
                 val e = o.entry
                 parts += when {

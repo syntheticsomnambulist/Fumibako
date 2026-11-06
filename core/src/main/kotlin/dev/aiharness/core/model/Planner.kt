@@ -83,6 +83,11 @@ data class PlannerEntry(
     val movedFrom: String? = null,
     /** A plan made by adding a persona's suggestion: the suggestion's id (its slip stays beside it). */
     val fromSuggestion: String? = null,
+    /**
+     * For an event read from a phone calendar (never stored; made each time the planner is
+     * read): that calendar's name. It's drawn in pencil and can't be edited here.
+     */
+    val phone: String? = null,
     /** Where a persona wrote it from. */
     val conversationId: String? = null,
     val messageId: String? = null,

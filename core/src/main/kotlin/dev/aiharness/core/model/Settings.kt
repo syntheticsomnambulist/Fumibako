@@ -308,7 +308,35 @@ data class PlannerSettings(
     /** The day the ribbon (栞) marks, ISO; null marks today. A long press moves it to the page shown; a tap goes back to it. */
     val bookmark: String? = null,
     val holidays: HolidaySettings = HolidaySettings(),
+    val phone: PhoneCalendarSettings = PhoneCalendarSettings(),
 )
+
+/**
+ * The phone's calendars in your default persona's planner (docs/design/calendar.md, "Phone
+ * calendars"): read live and never copied, each at the detail level you chose, which is also what
+ * a persona that sees your planner sees. Nothing shows until you choose.
+ */
+@Serializable
+data class PhoneCalendarSettings(
+    /** Each calendar's detail level, by the phone's calendar id; one not listed is hidden. */
+    val levels: Map<String, PhoneDetail> = emptyMap(),
+    /** Your stamps on its events (done, not going), kept here since nothing is written back. */
+    val stamps: List<PhoneStamp> = emptyList(),
+) {
+    fun level(calendarId: String): PhoneDetail = levels[calendarId] ?: PhoneDetail.HIDDEN
+}
+
+@Serializable
+enum class PhoneDetail(val label: String) {
+    HIDDEN("Hidden"),
+    BUSY("Busy only"),
+    TITLES("Titles"),
+    PLACES("Titles and places"),
+}
+
+/** A stamp on one occurrence of a phone event (its event id and start), done or not going ([EntryState.CANCELLED]). */
+@Serializable
+data class PhoneStamp(val eventId: Long, val start: Long, val state: EntryState, val at: Long)
 
 /**
  * Public holidays in the planner: off until you choose whose, then fetched from Nager.Date once a

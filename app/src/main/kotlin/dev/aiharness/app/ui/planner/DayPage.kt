@@ -164,7 +164,10 @@ fun PlannerDayScreen(nav: NavController, date: String) {
     val seenBy by vm.seenBy.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val clock = remember(settings.theme.clock) { ClockFormat(settings.theme.clock, DateFormat.is24HourFormat(context)) }
-    val all = remember(entries, day) { vm.occurrences(entries, day, day) }
+    // This day's phone calendar events too (the reading covers the month around the day shown).
+    LaunchedEffect(day) { vm.shownDay.value = day }
+    val phone by vm.phone.collectAsStateWithLifecycle()
+    val all = remember(entries, phone, day) { vm.occurrences(entries + phone.entries, day, day) }
     val occurrences = all.filter { it.entry.byPersonaId == null }
     val theirs = all.filter { it.entry.byPersonaId != null }.sortedWith(compareBy<Occurrence> { it.entry.kind != EntryKind.AWAY }.thenBy { it.start ?: Long.MIN_VALUE })
     val personas by vm.personas.collectAsStateWithLifecycle()
@@ -194,8 +197,8 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                     Text((if (day == today) "TODAY · " else "") + who, style = PaperType.meta, color = ink)
                     // A public holiday, in red like a Sunday; the solar term and microseason the day is in.
                     val red = dayInk(java.time.DayOfWeek.SUNDAY, colors.sumi, stationery.isNight)
-                    dev.aiharness.core.planner.Holidays.on(settings.planner.holidays, day).forEach { h ->
-                        Text(h.name.uppercase() + " · PUBLIC HOLIDAY", style = PaperType.meta, color = red)
+                    vm.holidaysOn(day).forEach { name ->
+                        Text(name.uppercase() + " · PUBLIC HOLIDAY", style = PaperType.meta, color = red)
                     }
                     if (settings.planner.seasonBand) {
                         val micro = remember(day, settings.theme) { dev.aiharness.core.seasons.Seasons.microOn(day, vm.zone, vm.hemisphere(settings)) }
@@ -227,8 +230,10 @@ fun PlannerDayScreen(nav: NavController, date: String) {
             ) {
                 val timed = occurrences.filter { it.start != null }.sortedBy { it.start }
                 val untimed = occurrences.filter { it.start == null }
-                timed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { card = PlanDraft.of(o.entry, day, vm.zone) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
-                untimed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { card = PlanDraft.of(o.entry, day, vm.zone) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
+                // A phone calendar's event opens in the phone's calendar app; yours, its card.
+                val open = { o: Occurrence -> if (o.entry.phone != null) openPhoneEvent(context, o.entry) else card = PlanDraft.of(o.entry, day, vm.zone) }
+                timed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { open(o) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
+                untimed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { open(o) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
                 if (occurrences.isEmpty()) Text("Nothing planned yet.", style = PaperType.postscript, color = colors.usuzumi1)
                 // What your personas wrote on this day.
                 theirs.forEach { o ->
@@ -292,12 +297,13 @@ private fun DayRow(o: Occurrence, day: LocalDate, clock: ClockFormat, zone: Zone
         Box(Modifier.width(4.dp).heightIn(min = 18.dp).then(if (busy) Modifier.hatched(colors.kasure2) else Modifier))
         Text(start ?: if (e.allDay) "all day" else "any time", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp), color = colors.usuzumi1, modifier = Modifier.width(72.dp), maxLines = 1, softWrap = false)
         Column(Modifier.weight(1f)) {
+            val pencil = e.phone != null
             Text(
-                (if (start != null) "○ " else "• ") + e.title.ifBlank { "A plan" } + (end?.let { ", until $it" } ?: ""),
-                style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = 15.sp, textDecoration = if (e.state == EntryState.CANCELLED) TextDecoration.LineThrough else null),
-                color = ink,
+                (if (start != null) "○ " else "• ") + e.title.ifBlank { if (pencil) "Busy" else "A plan" } + (end?.let { ", until $it" } ?: ""),
+                style = TextStyle(fontFamily = if (pencil) HarnessFonts.Hand else HarnessFonts.Read, fontSize = 15.sp, textDecoration = if (e.state == EntryState.CANCELLED) TextDecoration.LineThrough else null),
+                color = if (pencil) Pencil else ink,
             )
-            val meta = listOfNotNull(e.place?.uppercase(), "BUSY".takeIf { busy }, "MOVED".takeIf { e.movedFrom != null }).joinToString(" · ")
+            val meta = listOfNotNull(e.phone?.let { "PHONE · ${it.uppercase()}" }, e.place?.uppercase(), "BUSY".takeIf { busy }, "MOVED".takeIf { e.movedFrom != null }, "NOT GOING".takeIf { pencil && e.state == EntryState.CANCELLED }).joinToString(" · ")
             if (meta.isNotEmpty()) Text(meta, style = PaperType.meta.copy(fontSize = 10.5.sp), color = colors.kasure2)
         }
         stampOf(e)?.let { Stamp(it, ink, size = 22.dp) }
