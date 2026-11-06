@@ -34,10 +34,10 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
     private val shrinker = Shrinker(context)
 
     /** The smaller copy models are sent, stored beside the original: (ref, size), or null. */
-    private suspend fun smallerCopy(ref: String, video: Boolean): Pair<String, Long>? {
+    private suspend fun smallerCopy(ref: String, video: Boolean, onProgress: (Float) -> Unit = {}): Pair<String, Long>? {
         val source = blobs.fileFor(ref)?.takeIf { it.exists() } ?: return null
         val out = File(context.cacheDir, "shrink-${newId()}.mp4")
-        val made = (if (video) shrinker.video(source, out) else shrinker.song(source, out)) ?: return null
+        val made = (if (video) shrinker.video(source, out, onProgress) else shrinker.song(source, out, onProgress)) ?: return null
         return try {
             val stored = made.inputStream().use { blobs.putStream(it, if (video) "mp4" else "m4a") } ?: return null
             stored to made.length()
@@ -90,7 +90,7 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
      * Songs: one is a ticket stub; several are a playlist on a cassette, titled for [toName] and
      * labeled as from [fromName] until you change it in the playlist editor.
      */
-    suspend fun songs(uris: List<Uri>, toName: String, fromName: String): ContentPart.Attachment? = withContext(Dispatchers.IO) {
+    suspend fun songs(uris: List<Uri>, toName: String, fromName: String, onProgress: (Float) -> Unit = {}): ContentPart.Attachment? = withContext(Dispatchers.IO) {
         val tracks = uris.mapNotNull { track(it) }
         when {
             tracks.isEmpty() -> null
@@ -98,7 +98,7 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
                 val size = t.ref?.let { blobs.fileFor(it)?.length() }
                 val known = dev.aiharness.core.media.MediaSupport.geminiAudioType(t.mimeType) != null
                 // A big or unusual file gets a compact copy for models that hear songs.
-                val small = if (t.ref != null && (!known || (size ?: 0L) > Shrinker.SMALL_SONG)) smallerCopy(t.ref!!, video = false) else null
+                val small = if (t.ref != null && (!known || (size ?: 0L) > Shrinker.SMALL_SONG)) smallerCopy(t.ref!!, video = false, onProgress) else null
                 ContentPart.Attachment(
                     newId(), AttachmentKind.SONG, ref = t.ref, mimeType = t.mimeType, name = t.name, title = t.title, artist = t.artist,
                     album = t.album, year = t.year, lengthMs = t.lengthMs, pictureRef = cover, sizeBytes = size,
@@ -163,7 +163,7 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
      * receives), and what it says of itself: its title, who made it, when it was recorded. Where it
      * was recorded stays out.
      */
-    suspend fun video(uri: Uri): ContentPart.Attachment? = withContext(Dispatchers.IO) {
+    suspend fun video(uri: Uri, onProgress: (Float) -> Unit = {}): ContentPart.Attachment? = withContext(Dispatchers.IO) {
         val (name, size) = nameAndSize(uri)
         val mime = resolver.getType(uri) ?: mimeOf(name) ?: "video/mp4"
         val ref = copy(uri, extensionOf(mime, name)) ?: return@withContext null
@@ -176,7 +176,7 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
                 retriever.getFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)?.let { blobs.put(jpeg(scale(it, 480)), "jpg") }
             }
             // A smaller copy for models that watch video, when it's short enough to be worth it.
-            val small = if (length != null && length <= Shrinker.LONGEST_VIDEO_MS) smallerCopy(ref, video = true) else null
+            val small = if (length != null && length <= Shrinker.LONGEST_VIDEO_MS) smallerCopy(ref, video = true, onProgress) else null
             ContentPart.Attachment(
                 newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size,
                 title = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)) ?: name?.substringBeforeLast('.'),

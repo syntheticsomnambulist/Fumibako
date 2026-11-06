@@ -385,6 +385,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 }
             }
         }
+        val sendContext = androidx.compose.ui.platform.LocalContext.current
         EntryBar(
             value = input,
             onValueChange = { input = it; vm.noticeLinks(it) },
@@ -392,7 +393,17 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             personaInk = stationery.ink(persona?.ink),
             youInk = youInk,
             busy = generation.active,
-            onSend = { if (vm.send(input)) { input = ""; trayOpen = false } },
+            onSend = {
+                if (vm.send(input)) {
+                    input = ""
+                    trayOpen = false
+                } else {
+                    // A photo, file, song or video still being made ready holds the note back; say so.
+                    going.firstOrNull { it is Going.Preparing }?.let { waiting ->
+                        android.widget.Toast.makeText(sendContext, "Still getting ${(waiting as Going.Preparing).label} ready.", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
             hasAttachments = going.isNotEmpty() && going.none { it is Going.Preparing },
             onStop = { vm.stop() },
             trayOpen = trayOpen,

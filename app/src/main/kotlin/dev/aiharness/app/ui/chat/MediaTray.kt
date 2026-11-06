@@ -37,6 +37,14 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,7 +73,8 @@ sealed interface Going {
         override val key get() = attachment.id
     }
 
-    data class Preparing(override val key: String, val label: String) : Going
+    /** Still being made ready: [kind] for its drawing, and [progress] (0 to 1) once the work says how far along it is. */
+    data class Preparing(override val key: String, val label: String, val kind: TrayItem? = null, val progress: Float? = null) : Going
 }
 
 /** The tray's first page: a paper button for each kind of thing, each with a small drawing of it. */
@@ -189,8 +198,10 @@ fun GoingWithYourNote(items: List<Going>, onRemove: (Going) -> Unit, onOpen: (Go
         Text("GOING WITH YOUR NOTE", style = PaperType.meta, color = colors.kasure2)
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             items.forEach { item ->
-                Box(Modifier.padding(top = 6.dp, end = 6.dp)) {
+                // Room for the × that sits on the corner: the strip clips whatever sticks out.
+                Box(Modifier.padding(top = 10.dp, end = 10.dp)) {
                     val switch = switchesTo(item)
+                    // Clipped for its ripple: the thumbs keep a little room at their foot, so a "g" keeps its tail.
                     Box(Modifier.clip(PaperCorner).clickable(role = Role.Button, onClickLabel = switch?.let { "Send it as $it" }) { onOpen(item) }) { GoingThumb(item, switch) }
                     Box(
                         Modifier
@@ -222,7 +233,10 @@ private fun GoingThumb(item: Going, switchesTo: String? = null) {
             }
             return
         }
-        is Going.Preparing -> label = item.label
+        is Going.Preparing -> {
+            Preparing(item)
+            return
+        }
         is Going.Item -> label = when (item.attachment.kind) {
             AttachmentKind.FILE -> item.attachment.name ?: "a file"
             AttachmentKind.SONG -> item.attachment.title ?: "a song"
@@ -237,11 +251,94 @@ private fun GoingThumb(item: Going, switchesTo: String? = null) {
         AttachmentKind.VIDEO -> TrayItem.VIDEO
         AttachmentKind.LINK, null -> null
     }
-    Column(Modifier.width(78.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.width(78.dp).padding(bottom = 3.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         if (drawing != null) TrayDrawing(drawing, Modifier.size(56.dp, 42.dp)) else Box(Modifier.size(56.dp, 42.dp).background(colors.kami).border(1.dp, colors.nijimi1, PaperCorner))
         Text(label, style = PaperType.meta.copy(fontSize = 10.sp, letterSpacing = 0.sp), color = colors.usuzumi1, maxLines = 1, overflow = TextOverflow.Ellipsis)
         // A music link can go as a ticket or a cutting; a tap switches.
         switchesTo?.let { Text("tap: $it", style = PaperType.meta.copy(fontSize = 9.5.sp, letterSpacing = 0.sp), color = colors.kasure2, maxLines = 1) }
+    }
+}
+
+/**
+ * Something still being made ready, under "Going with your note": its kind's drawing, at work
+ * (a video's frames run through as if in a projector), and a thin line beneath that fills as it
+ * goes ("shrinking 42%" for a video getting its smaller copy), or sweeps while it can't say.
+ * Still with "Remove animations" on.
+ */
+@Composable
+private fun Preparing(item: Going.Preparing) {
+    val colors = paper
+    val still = dev.aiharness.app.ui.media.reducedMotion()
+    val time = androidx.compose.animation.core.rememberInfiniteTransition(label = "preparing")
+    val run by if (still) remember { mutableStateOf(0f) } else time.animateFloat(
+        0f, 1f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(2_200, easing = androidx.compose.animation.core.LinearEasing)), label = "run",
+    )
+    val progress = item.progress
+    val label = when {
+        progress != null && item.kind == TrayItem.VIDEO -> "shrinking ${(progress * 100).toInt()}%"
+        progress != null -> "${item.label} · ${(progress * 100).toInt()}%"
+        else -> item.label
+    }
+    Column(
+        Modifier.width(78.dp).padding(bottom = 3.dp).semantics(mergeDescendants = true) {
+            contentDescription = listOfNotNull("Getting ${item.label} ready", progress?.let { "${(it * 100).toInt()}% done" }).joinToString(", ")
+        },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(Modifier.size(56.dp, 42.dp)) {
+            when (item.kind) {
+                TrayItem.VIDEO -> RunningFilm(run, Modifier.matchParentSize())
+                null -> Box(Modifier.matchParentSize().background(colors.kami).border(1.dp, colors.nijimi1, PaperCorner))
+                else -> TrayDrawing(item.kind, Modifier.matchParentSize().graphicsLayer { alpha = 0.55f + 0.45f * kotlin.math.abs(kotlin.math.sin(run * 2 * Math.PI.toFloat())) })
+            }
+        }
+        // How far along: filled when it says, a short sweep while it can't.
+        Canvas(Modifier.padding(top = 3.dp).size(52.dp, 2.dp)) {
+            drawRect(colors.nijimi1)
+            when {
+                progress != null -> drawRect(colors.usuzumi1, size = Size(size.width * progress, size.height))
+                !still -> {
+                    val w = size.width * 0.3f
+                    val x = (run * 2 % 1f) * (size.width + w) - w
+                    drawRect(colors.usuzumi1, Offset(x.coerceAtLeast(0f), 0f), Size((w + x.coerceAtMost(0f)).coerceAtMost(size.width - x.coerceAtLeast(0f)), size.height))
+                }
+            }
+        }
+        // Two lines if it must (large text), so the percentage isn't cut off. Centered across the
+        // whole width: centered in less, Compose counts it as overflowing and clips the "g" of "shrinking".
+        Text(
+            label,
+            style = PaperType.meta.copy(fontSize = 10.sp, letterSpacing = 0.sp),
+            color = colors.usuzumi1,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/** The tray's little film strip with its frames running through, [run] (0 to 1) a full turn of six frames. */
+@Composable
+private fun RunningFilm(run: Float, modifier: Modifier) {
+    Canvas(modifier) {
+        scale(size.width / 64f, size.height / 48f, pivot = Offset.Zero) {
+            drawRect(Color(0xFF2A2420), Offset(8f, 12f), Size(48f, 24f))
+            clipRect(9f, 12f, 55f, 36f) {
+                // Holes every 6 and frames every 15 (three colors, so the pattern repeats every 45):
+                // 90 of travel is a whole number of both, so the loop has no seam.
+                val shift = run * 90f
+                for (i in -1 until 10) {
+                    val x = 10f + i * 6f - shift % 6f
+                    drawRect(Color(0xFFF8F0E9), Offset(x, 13.5f), Size(3f, 2f))
+                    drawRect(Color(0xFFF8F0E9), Offset(x, 32.5f), Size(3f, 2f))
+                }
+                val frames = listOf(Color(0xFF3F84AD), Color(0xFFCFE3E2), Color(0xFFE2B66B))
+                for (k in -1 until 5) {
+                    drawRect(frames[(k + 3) % 3], Offset(11f + k * 15f - shift % 45f, 17f), Size(13f, 14f))
+                }
+            }
+        }
     }
 }
 

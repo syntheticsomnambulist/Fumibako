@@ -164,27 +164,31 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         return true
     }
 
-    private fun prepare(label: String, work: suspend () -> List<Going>) {
+    /** Shows [label] waiting (with its [kind]'s drawing) while [work] makes it ready, and how far along that is when it says. */
+    private fun prepare(label: String, kind: TrayItem?, work: suspend (progress: (Float) -> Unit) -> List<Going>) {
         val key = "preparing-" + System.nanoTime()
-        going.update { it + Going.Preparing(key, label) }
+        going.update { it + Going.Preparing(key, label, kind) }
+        val progress: (Float) -> Unit = { p ->
+            going.update { list -> list.map { if (it.key == key && it is Going.Preparing) it.copy(progress = p.coerceIn(0f, 1f)) else it } }
+        }
         viewModelScope.launch {
-            val ready = runCatching { work() }.getOrDefault(emptyList())
+            val ready = runCatching { work(progress) }.getOrDefault(emptyList())
             going.update { list -> list.flatMap { if (it.key == key) ready else listOf(it) } }
         }
     }
 
-    fun addPhotos(uris: List<android.net.Uri>) = prepare("photos") {
+    fun addPhotos(uris: List<android.net.Uri>) = prepare("photos", TrayItem.PHOTOS) {
         val side = harness.settings.current().media.pictureSide
         uris.mapNotNull { container.media.photo(it, side) }.map { Going.Picture(it) }
     }
-    fun addFile(uri: android.net.Uri) = prepare("a file") { listOfNotNull(container.media.file(uri)?.let { Going.Item(it) }) }
-    fun addVideo(uri: android.net.Uri) = prepare("a video") { listOfNotNull(container.media.video(uri)?.let { Going.Item(it) }) }
+    fun addFile(uri: android.net.Uri) = prepare("a file", TrayItem.FILE) { listOfNotNull(container.media.file(uri)?.let { Going.Item(it) }) }
+    fun addVideo(uri: android.net.Uri) = prepare("a video", TrayItem.VIDEO) { progress -> listOfNotNull(container.media.video(uri, progress)?.let { Going.Item(it) }) }
 
     /** Songs: one is a ticket, several a playlist (returned so the editor can open on it). */
-    fun addSongs(uris: List<android.net.Uri>, onMix: (ContentPart.Attachment) -> Unit) = prepare("music") {
+    fun addSongs(uris: List<android.net.Uri>, onMix: (ContentPart.Attachment) -> Unit) = prepare("music", TrayItem.MUSIC) { progress ->
         val persona = header.value.persona?.name ?: "you"
         val you = header.value.userPersona?.name ?: "me"
-        val made = container.media.songs(uris, persona, you)
+        val made = container.media.songs(uris, persona, you, progress)
         if (made?.kind == AttachmentKind.PLAYLIST) onMix(made)
         listOfNotNull(made?.let { Going.Item(it) })
     }
@@ -209,7 +213,7 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     }
 
     /** A song picked from the search, as a ticket with its preview. */
-    fun addFoundSong(song: dev.aiharness.core.media.FoundSong) = prepare("a song") { listOf(Going.Item(harness.music.ticket(song))) }
+    fun addFoundSong(song: dev.aiharness.core.media.FoundSong) = prepare("a song", TrayItem.MUSIC) { listOf(Going.Item(harness.music.ticket(song))) }
 
     /** More songs for the mix being edited. */
     suspend fun moreTracks(uris: List<android.net.Uri>): List<Track> = container.media.tracks(uris)

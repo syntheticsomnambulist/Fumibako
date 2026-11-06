@@ -151,6 +151,13 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
     Music links go as tickets, with the title, artist, album and year their pages give; an
     audio file's link too (not fetched). A YouTube video stays a cutting; under "Going with your
     note" it says "tap: a song", and a tap switches it (and back).
+- **After 0.3.5.2** (your notes): under "Going with your note", a video being readied shows the
+  tray's little film strip running through as if in a projector, with a thin line beneath that
+  fills as its smaller copy is made ("shrinking 42%"); before the shrinking starts the line
+  sweeps. Photos, files and songs being readied pulse, with the same line. "Remove animations"
+  stills them. The × on each thing is whole now (the strip clipped its top and side), and a
+  "g" keeps its tail. Sending while something is still being readied says so ("Still getting
+  a video ready.") instead of doing nothing.
 
 ## What v0.3.5 includes
 
