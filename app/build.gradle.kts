@@ -63,6 +63,11 @@ android {
         }
     }
 
+    // Exported Room schemas, so migrations can be tested against the old ones (see HarnessDatabase).
+    sourceSets {
+        getByName("test").assets.directories.add("$projectDir/schemas")
+    }
+
     packaging {
         resources {
             // Duplicate metadata pulled in by the Anthropic SDK's Jackson / Kotlin deps.
@@ -80,6 +85,10 @@ android {
     }
 }
 
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
 
 dependencies {
     implementation(project(":core"))
@@ -111,6 +120,7 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.androidx.work.testing)
+    testImplementation(libs.androidx.room.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)

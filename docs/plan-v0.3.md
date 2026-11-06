@@ -66,8 +66,9 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   would mean a new database version, which wipes installed letters, and friends are testing.
 - The persona's `appearanceTags` becomes `selfPrompt`, keeping its stored name, so existing
   appearance tags carry over. The old NovelAI settings don't: add an image profile again.
-- Stickers will need their own table; that step bumps the database version, and the plan for it
-  should say so to testers first.
+- Stickers get their own table, through the first migration (decided 2026-11-06): testers keep
+  their letters. From now on a schema change adds a migration step, and only the last three are
+  kept; older databases start fresh. The schema is exported to `app/schemas` for the tests.
 
 ## Order of work
 

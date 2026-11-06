@@ -8,6 +8,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
+import androidx.room.migration.Migration
 import androidx.room.RoomDatabase
 import androidx.room.Upsert
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -128,20 +129,30 @@ interface HarnessDao {
         ConversationEntity::class, MessageEntity::class, MemoryEntity::class, MemoryVectorEntity::class,
         ActivityEntity::class,
     ],
-    // Before 1.0 there are no migrations: bump the version on any schema change and the database is
-    // recreated empty (see onWiped). Field changes on domain models need neither; rows are JSON.
+    // A schema change bumps the version and adds a step to MIGRATIONS (keeping the last three);
+    // field changes on domain models need neither, since rows are JSON. Schemas are exported to
+    // app/schemas for the migration tests.
     version = 2,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class HarnessDatabase : RoomDatabase() {
     abstract fun dao(): HarnessDao
 
     companion object {
-        /** [onWiped] runs, while the database opens, when a version change has just emptied it. */
+        /**
+         * One step per schema change, oldest first. Only the last three are kept: a phone on an
+         * older database has no path forward and starts fresh (the fallback below), so the app
+         * never carries more than three old layouts. When adding a step, drop the oldest one and its
+         * test, and its exported schema once no test uses it.
+         */
+        val MIGRATIONS: Array<Migration> = arrayOf()
+
+        /** [onWiped] runs, while the database opens, when it had to start fresh instead of migrating. */
         fun create(context: Context, onWiped: () -> Unit = {}, name: String = "harness.db"): HarnessDatabase =
             Room.databaseBuilder(context, HarnessDatabase::class.java, name)
-                // Covers upgrades and downgrades. (Don't add fallbackToDestructiveMigrationOnDowngrade:
-                // it switches upgrades back to requiring a migration.)
+                .addMigrations(*MIGRATIONS)
+                // For databases older than MIGRATIONS covers, and downgrades. (Don't add
+                // fallbackToDestructiveMigrationOnDowngrade: it switches upgrades back to requiring a migration.)
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .addCallback(
                     object : Callback() {
