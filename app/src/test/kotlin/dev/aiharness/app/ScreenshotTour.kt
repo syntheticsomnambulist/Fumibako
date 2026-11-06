@@ -53,6 +53,8 @@ import dev.aiharness.app.media.NowPlaying
 import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.MarkKind
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import dev.aiharness.core.model.Pronouns
+import dev.aiharness.core.model.PronounKind
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -280,6 +282,8 @@ class ScreenshotTour {
         click("Edit")
         waitFor("EDITING")
         shot("${prefix}_05_persona_editor")
+        scrollTo("Another set", exact = false)
+        shot("${prefix}_05a_persona_pronouns")
         scrollTo("Drawing style")
         shot("${prefix}_05b_persona_editor_more")
         back()
@@ -549,6 +553,8 @@ class ScreenshotTour {
         repeat(50) { if (h.personas.getAll().isEmpty()) Thread.sleep(100) }
         val now = System.currentTimeMillis()
         val aria = h.personas.getAll().first { it.name == "Aria" }
+        // Aria goes by she and they: the app's sentences take turns.
+        h.personas.upsert(aria.copy(alsoPronouns = listOf(Pronouns(PronounKind.THEY))))
 
         val sam = UserPersona(newId(), "Sam", "A grad student who writes too late at night.", ink = "sora", tapePattern = TapePattern.STRIPES, createdAt = now, updatedAt = now)
         h.userPersonas.upsert(sam)

@@ -28,6 +28,25 @@ class PronounsTest {
     }
 
     @Test
+    fun severalSetsTakeTurnsOrComeAtRandom() {
+        val aria = Persona(id = "p1", name = "Aria", pronouns = Pronouns(PronounKind.SHE), alsoPronouns = listOf(Pronouns(PronounKind.THEY)), createdAt = 0, updatedAt = 0)
+        assertEquals(listOf("she", "they", "she", "they"), (0..3).map { aria.words(it).they }, "sentence by sentence, in turn")
+        assertEquals("she/they", aria.pronounsLabel)
+        assertEquals("Your pronouns are she/her and they/them/their; others may use any of them.", aria.pronounsForPrompt)
+
+        val random = aria.copy(pronounsMix = PronounMix.AT_RANDOM)
+        val today = java.time.LocalDate.of(2026, 11, 6)
+        val picks = (0..40).map { random.words(it, today).they }
+        assertEquals(setOf("she", "they"), picks.toSet(), "both sets come up")
+        assertEquals(picks, (0..40).map { random.words(it, today).they }, "the same sentence reads the same all day")
+
+        val byName = aria.copy(alsoPronouns = listOf(Pronouns(PronounKind.NAME_ONLY)))
+        assertEquals("Your pronouns are she/her, or just your name; others may use any of them.", byName.pronounsForPrompt)
+        assertEquals("Aria", byName.words(1).they)
+        assertEquals("she/her", byName.pronounsLabel)
+    }
+
+    @Test
     fun thePersonaIsToldItsPronounsOnceChosen() = runTest {
         val env = TestEnv().apply { seed() }
         val conversation = env.harness.createConversation(env.persona.id)

@@ -81,6 +81,9 @@ import dev.aiharness.core.stickers.StickerService
 import dev.aiharness.core.model.PronounKind
 import dev.aiharness.core.model.Pronouns
 import dev.aiharness.core.model.words
+import dev.aiharness.core.model.pronounsLabel
+import dev.aiharness.core.model.pronounSets
+import dev.aiharness.core.model.PronounMix
 import kotlinx.coroutines.launch
 
 /**
@@ -205,7 +208,7 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
             title = { Text("Delete ${p.name}?", style = PaperType.entryTitle) },
-            text = { Text("This also deletes ${p.words.their} letters and memories.") },
+            text = { Text("This also deletes ${p.words(0).their} letters and memories.") },
             confirmButton = {
                 TextButton(onClick = {
                     confirmDelete = false
@@ -291,7 +294,7 @@ private fun Hero(p: Persona, mood: String?, editing: Boolean, model: String?, on
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     InkChip(p.ink, ink)
                     TapeChip(p.tapePattern, ink)
-                    p.pronouns?.takeIf { it.kind != PronounKind.NAME_ONLY }?.let { Chip { Text(it.label, style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp), color = paper.usuzumi1) } }
+                    p.pronounsLabel?.let { Chip { Text(it, style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp), color = paper.usuzumi1) } }
                     model?.let { Chip { Text(it, style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp), color = paper.usuzumi1) } }
                 }
             }
@@ -368,7 +371,7 @@ private fun LazyListScope.viewCards(p: Persona, nav: NavController, mode: Heartb
             mode == HeartbeatMode.OFF -> "Heartbeats are off for everyone (Settings)."
             mode == HeartbeatMode.TIME_AWARENESS -> "Time only: ${p.name} knows the time, but doesn't wake between letters (Settings)."
             !p.heartbeatEnabled -> "${p.name} doesn't wake between letters."
-            own != null -> "Wakes every ${interval(own.intervalMinutes)}, on a rhythm of ${p.words.their} own."
+            own != null -> "Wakes every ${interval(own.intervalMinutes)}, on a rhythm of ${p.words(3).their} own."
             else -> "Wakes now and then to reflect, tend memories, and maybe write to you."
         }
         val ink = stationery.ink(p.ink)
@@ -410,8 +413,8 @@ private fun LazyListScope.editCards(
         val ink = stationery.ink(p.ink)
         PageCard(p, layouts[1], "about") {
             CardTitle(if (named) "Who ${p.name} is" else "Who they are")
-            PronounPicker(p, ink) { pronouns -> onChange(p.copy(pronouns = pronouns)) }
-            val w = p.words
+            PronounPicker(p, ink, onChange)
+            val w = p.words(1)
             IndexCardField(
                 "Description",
                 p.description,
@@ -430,7 +433,7 @@ private fun LazyListScope.editCards(
         PageCard(p, layouts[2], "writes") {
             CardTitle(if (named) "How ${p.name} writes" else "How they write")
             IndexCardField("First letter", p.greeting, { v -> onChange(p.copy(greeting = v)) }, ink = ink, style = PaperType.prose, minLines = 2, placeholder = "Hi {{user}}! … (optional)")
-            IndexCardField("Example letters", p.exampleDialogue, { v -> onChange(p.copy(exampleDialogue = v)) }, ink = ink, style = PaperType.prose, minLines = 2, placeholder = "A few lines in ${if (named && p.pronouns != null) p.words.their else "their"} voice (optional)")
+            IndexCardField("Example letters", p.exampleDialogue, { v -> onChange(p.copy(exampleDialogue = v)) }, ink = ink, style = PaperType.prose, minLines = 2, placeholder = "A few lines in ${if (named && p.pronouns != null) p.words(2).their else "their"} voice (optional)")
         }
     }
     item {
@@ -534,9 +537,45 @@ private fun Slip(memory: MemoryEntry, ink: Color, label: String?, taped: Boolean
  * go as with "they"). Told to the persona, and used when the app writes about it.
  */
 @Composable
-private fun PronounPicker(p: Persona, ink: Color, onChange: (Pronouns?) -> Unit) {
-    val current = p.pronouns
+private fun PronounPicker(p: Persona, ink: Color, onChange: (Persona) -> Unit) {
     Text("PRONOUNS", style = PaperType.meta, color = paper.kasure2)
+    PronounSetChoice(p.pronouns, ink) { set -> onChange(p.copy(pronouns = set, alsoPronouns = if (set == null) emptyList() else p.alsoPronouns)) }
+    // More sets beside the first (she/they): the persona is told all of them.
+    p.alsoPronouns.forEachIndexed { i, set ->
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("ALSO", style = PaperType.meta, color = paper.kasure2, modifier = Modifier.weight(1f))
+            InkLink("Take out", ink) { onChange(p.copy(alsoPronouns = p.alsoPronouns.filterIndexed { n, _ -> n != i })) }
+        }
+        PronounSetChoice(set, ink) { changed ->
+            onChange(p.copy(alsoPronouns = if (changed == null) p.alsoPronouns.filterIndexed { n, _ -> n != i } else p.alsoPronouns.toMutableList().also { it[i] = changed }))
+        }
+    }
+    val first = p.pronouns
+    if (first != null && p.alsoPronouns.size < 3) {
+        val next = if (first.kind == PronounKind.THEY) Pronouns(PronounKind.SHE) else Pronouns(PronounKind.THEY)
+        InkLink(if (p.alsoPronouns.isEmpty()) "+ Another set, like she/they" else "+ Another set", ink) { onChange(p.copy(alsoPronouns = p.alsoPronouns + next)) }
+    }
+    if (p.pronounSets.size > 1) {
+        Text("WHEN THE APP WRITES ABOUT ${p.name.ifBlank { "THEM" }.uppercase()}", style = PaperType.meta, color = paper.kasure2)
+        PaperChoice(PronounMix.entries.map { it to it.label }, p.pronounsMix, { mix -> onChange(p.copy(pronounsMix = mix)) }, ink = ink)
+    }
+    val them = p.words(0).them
+    Text(
+        when {
+            first == null -> "Not chosen yet: the app uses ${p.name.ifBlank { "the name" }}, and nothing is said."
+            p.pronounSets.size > 1 -> "${p.name.ifBlank { "The persona" }} is told all of them, and the app's sentences about $them " +
+                if (p.pronounsMix == PronounMix.TAKE_TURNS) "take turns with them." else "use any of them, changing from day to day."
+            first.kind == PronounKind.NAME_ONLY -> "${p.name.ifBlank { "They" }} is told to go by name, and the app uses the name too."
+            else -> "${p.name.ifBlank { "The persona" }} is told, and the app uses them when it writes about $them."
+        },
+        style = PaperType.noteBody.copy(fontSize = 12.sp),
+        color = paper.usuzumi0,
+    )
+}
+
+/** One set of pronouns: she, he, they, it, the name only, or its own (five forms, and how verbs go). */
+@Composable
+private fun PronounSetChoice(current: Pronouns?, ink: Color, onChange: (Pronouns?) -> Unit) {
     val pick: (PronounKind?) -> Unit = { kind ->
         onChange(kind?.let { k -> if (k == PronounKind.CUSTOM) Pronouns(k, current?.custom.orEmpty(), current?.customPlural ?: false) else Pronouns(k) })
     }
@@ -556,14 +595,5 @@ private fun PronounPicker(p: Persona, ink: Color, onChange: (Pronouns?) -> Unit)
         }
         SwitchRow("Verbs as with \"they\"", current.customPlural, { onChange(current.copy(customPlural = it)) }, subtitle = "\"${forms[0].ifBlank { "xe" }} are\" rather than \"${forms[0].ifBlank { "xe" }} is\".", ink = ink)
     }
-    Text(
-        when (current?.kind) {
-            null -> "Not chosen yet: the app uses ${p.name.ifBlank { "the name" }}, and nothing is said."
-            PronounKind.NAME_ONLY -> "${p.name.ifBlank { "They" }} is told to go by name, and the app uses the name too."
-            else -> "${p.name.ifBlank { "The persona" }} is told, and the app uses them when it writes about ${p.words.them}."
-        },
-        style = PaperType.noteBody.copy(fontSize = 12.sp),
-        color = paper.usuzumi0,
-    )
 }
 

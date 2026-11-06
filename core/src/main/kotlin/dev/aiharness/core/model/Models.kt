@@ -129,6 +129,10 @@ data class Persona(
     val stickers: PersonaStickers = PersonaStickers(),
     /** Its pronouns; null until chosen (the app then uses its name, and the model isn't told). */
     val pronouns: Pronouns? = null,
+    /** More sets of pronouns beside [pronouns] (she/they): the persona is told all of them. */
+    val alsoPronouns: List<Pronouns> = emptyList(),
+    /** How the app's own sentences pick between several sets. */
+    val pronounsMix: PronounMix = PronounMix.TAKE_TURNS,
     val createdAt: Long,
     val updatedAt: Long,
 ) {

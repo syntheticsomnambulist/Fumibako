@@ -17,6 +17,7 @@ import dev.aiharness.core.model.MemoryKind
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.pronounsForPrompt
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.storage.BlobStore
 import dev.aiharness.core.util.Clock
@@ -279,7 +280,7 @@ class ContextBuilder(
         input.persona.scenario,
         input.persona.exampleDialogue,
         input.persona.systemPromptOverride,
-        input.persona.pronouns?.forPrompt,
+        input.persona.pronounsForPrompt,
         input.userPersona?.id,
         input.userPersona?.name,
         input.userPersona?.description,

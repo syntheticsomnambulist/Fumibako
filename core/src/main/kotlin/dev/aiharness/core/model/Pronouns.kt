@@ -1,6 +1,8 @@
 package dev.aiharness.core.model
 
 import kotlinx.serialization.Serializable
+import java.time.LocalDate
+import kotlin.random.Random
 
 @Serializable
 enum class PronounKind(val label: String) {
@@ -88,5 +90,66 @@ class Words(private val name: String, private val pronouns: Pronouns?) {
     val be: String get() = verb("is", "are")
 }
 
-/** How the app's text refers to this persona. */
+/** How the app's sentences choose between a persona's sets of pronouns. */
+@Serializable
+enum class PronounMix(val label: String) {
+    /** Sentence by sentence, in turn: she, then they, then she. */
+    TAKE_TURNS("Take turns"),
+
+    /** Any set for any sentence, changing from day to day. */
+    AT_RANDOM("At random"),
+}
+
+/** All of a persona's sets, the first one first. */
+val Persona.pronounSets: List<Pronouns> get() = listOfNotNull(pronouns) + alsoPronouns
+
+/** How the app's text refers to this persona (with several sets, the first). */
 val Persona.words: Words get() = Words(name, pronouns)
+
+/**
+ * How the app's text refers to this persona in its [turn]-th sentence on a screen: with several
+ * sets, they take turns sentence by sentence, or are picked at random (the same each day, so a
+ * sentence doesn't change as you look at it).
+ */
+fun Persona.words(turn: Int, today: LocalDate = LocalDate.now()): Words {
+    val sets = pronounSets
+    if (sets.size <= 1) return Words(name, sets.firstOrNull())
+    val i = when (pronounsMix) {
+        PronounMix.TAKE_TURNS -> Math.floorMod(turn, sets.size)
+        PronounMix.AT_RANDOM -> Random(id.hashCode() * 31L + turn * 7919L + today.toEpochDay()).nextInt(sets.size)
+    }
+    return Words(name, sets[i])
+}
+
+/** "she/they", "he/him", "xe/xem", or every set's label when they don't share a form. */
+val Persona.pronounsLabel: String?
+    get() {
+        val sets = pronounSets.filter { it.kind != PronounKind.NAME_ONLY }
+        return when {
+            sets.isEmpty() -> null
+            sets.size == 1 -> sets.single().label
+            sets.all { it.subject != null } -> sets.mapNotNull { it.subject }.distinct().joinToString("/")
+            else -> sets.joinToString(" · ") { it.label }
+        }
+    }
+
+/** What the persona is told about its pronouns: every set, and that any of them is right. */
+val Persona.pronounsForPrompt: String?
+    get() {
+        val sets = pronounSets
+        if (sets.size <= 1) return sets.firstOrNull()?.forPrompt
+        val named = sets.filter { it.kind != PronounKind.NAME_ONLY }.map { set ->
+            listOfNotNull(set.subject, set.objectForm, set.possessive).distinct().joinToString("/")
+        }.distinct()
+        val byName = sets.any { it.kind == PronounKind.NAME_ONLY }
+        val listed = when (named.size) {
+            0 -> ""
+            1 -> named.single()
+            else -> named.dropLast(1).joinToString(", ") + " and " + named.last()
+        }
+        return when {
+            named.isEmpty() -> PronounKind.NAME_ONLY.let { Pronouns(it).forPrompt }
+            byName -> "Your pronouns are $listed, or just your name; others may use any of them."
+            else -> "Your pronouns are $listed; others may use any of them."
+        }
+    }

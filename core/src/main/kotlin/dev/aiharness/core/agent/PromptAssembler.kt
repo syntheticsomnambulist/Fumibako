@@ -4,6 +4,7 @@ import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.pronounsForPrompt
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.stickers.StickerShelf
 
@@ -28,11 +29,11 @@ class PromptAssembler {
         val override = persona.systemPromptOverride?.takeIf { it.isNotBlank() }
         if (override != null) {
             sections += override
-            persona.pronouns?.let { sections += it.forPrompt }
+            persona.pronounsForPrompt?.let { sections += it }
         } else {
             sections += buildString {
                 append("You are ${persona.name}, talking with $userName.")
-                persona.pronouns?.let { append(' ').append(it.forPrompt) }
+                persona.pronounsForPrompt?.let { append(' ').append(it) }
                 persona.description.ifNotBlank { append("\n\n").append(it) }
                 persona.personality.ifNotBlank { append("\n\n## Personality\n").append(it) }
                 persona.scenario.ifNotBlank { append("\n\n## Scenario\n").append(it) }

@@ -85,6 +85,12 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   after leaving the letters; starting videos muted; and switches for the frames' motion and the
   haptic ticks, apart from Android's "Remove animations". The app also keeps itself through
   rotation now, so the video player's full screen doesn't close it.
+- **Step 6, several pronoun sets: done.** A persona can have more sets beside its first (up to
+  four, any of them its own), added with "+ Another set" on its page; its chip reads "she/they".
+  It's told all of them ("Your pronouns are she/her and they/them/their; others may use any of
+  them."), and the app's sentences about it take turns, sentence by sentence, or pick at random
+  (the same all day, so nothing changes as you read). The first set stays where it was (a second
+  field holds the rest), so nothing needed migrating.
 
 ## What v0.3.5 includes
 

@@ -114,10 +114,10 @@ fun PersonaStickersScreen(nav: NavController, personaId: String) {
                     "${p.name} can draw new stickers",
                     p.stickers.draws,
                     { switches(p.stickers.copy(draws = it)) },
-                    subtitle = "Now and then in a heartbeat. However many ${p.words.they} ${p.words.verb("draws", "draw")}, that's one of the heartbeat's activities.",
+                    subtitle = "Now and then in a heartbeat. However many ${p.words(4).they} ${p.words(4).verb("draws", "draw")}, that's one of the heartbeat's activities.",
                     ink = ink,
                 )
-                SwitchRow("${p.name} can stick stickers", p.stickers.sticks, { switches(p.stickers.copy(sticks = it)) }, subtitle = "On your notes and ${p.words.their} own letters.", ink = ink)
+                SwitchRow("${p.name} can stick stickers", p.stickers.sticks, { switches(p.stickers.copy(sticks = it)) }, subtitle = "On your notes and ${p.words(5).their} own letters.", ink = ink)
                 SwitchRow("I can peel off ${p.name}'s stickers", p.stickers.youCanPeel, { switches(p.stickers.copy(youCanPeel = it)) }, ink = ink)
                 SwitchRow("${p.name} can peel off mine", p.stickers.canPeelYours, { switches(p.stickers.copy(canPeelYours = it)) }, ink = ink)
             }
@@ -189,7 +189,7 @@ private fun DrawSticker(p: Persona, ready: Boolean, full: Boolean, ink: Color) {
                     IndexCardField("Stands for", feeling, { feeling = it }, Modifier.weight(1f), placeholder = "sleepy", singleLine = true, ink = ink)
                 }
                 Text(
-                    "Drawn with how ${p.name} looks, what ${p.words.they} ${p.words.be} wearing and ${p.words.their} drawing style, on a plain background, then cut out.",
+                    "Drawn with how ${p.name} looks, what ${p.words(6).they} ${p.words(6).be} wearing and ${p.words(6).their} drawing style, on a plain background, then cut out.",
                     style = PaperType.postscript.copy(fontSize = 13.sp),
                     color = paper.kasure2,
                 )
