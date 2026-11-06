@@ -38,6 +38,7 @@ import dev.aiharness.core.storage.SecretStore
 import dev.aiharness.core.storage.SettingsRepository
 import dev.aiharness.core.storage.UserPersonaRepository
 import dev.aiharness.core.tools.AgentTool
+import dev.aiharness.core.tools.ChangeOutfitTool
 import dev.aiharness.core.tools.GenerateImageTool
 import dev.aiharness.core.tools.MemoryForgetTool
 import dev.aiharness.core.tools.MemorySaveTool
@@ -89,7 +90,8 @@ class Harness(
             MemorySearchTool(memory),
             MemoryUpdateTool(memory),
             MemoryForgetTool(memory),
-            GenerateImageTool(images),
+            GenerateImageTool(images, personas),
+            ChangeOutfitTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
         ),
     )
     val prompts = PromptAssembler()

@@ -35,6 +35,9 @@ enum class ActivityKind {
 
     /** Let memories go for good. */
     LET_GO,
+
+    /** Changed what it's wearing ([ActivityEntry.note]: the outfit, empty for its usual clothes). */
+    CHANGED_OUTFIT,
     ;
 
     /** Kinds that mark a heartbeat having happened. */

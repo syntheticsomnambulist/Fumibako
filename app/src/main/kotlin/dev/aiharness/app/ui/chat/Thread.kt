@@ -131,6 +131,11 @@ private fun postscriptsOf(messages: List<ChatMessage>): List<Postscript> {
             "memory_save" -> Postscript("Kept in memory:", content)
             "memory_update" -> Postscript("Updated a memory:", content)
             "memory_forget" -> Postscript("Let a memory go.", null)
+            "change_outfit" -> {
+                val outfit = args?.get("outfit")?.let { runCatching { it.jsonPrimitive.content }.getOrNull() }?.trim()
+                if (outfit.isNullOrEmpty() || outfit.equals("default", ignoreCase = true)) Postscript("Changed back into the usual clothes.", null)
+                else Postscript("Changed into:", outfit)
+            }
             "memory_search", "generate_image" -> null
             else -> Postscript("Used ${result.name}.", null)
         }
@@ -141,5 +146,6 @@ private fun toolVerb(name: String) = when (name) {
     "memory_save" -> "keep that in memory"
     "memory_update" -> "update a memory"
     "memory_forget" -> "let a memory go"
+    "change_outfit" -> "change clothes"
     else -> "use $name"
 }

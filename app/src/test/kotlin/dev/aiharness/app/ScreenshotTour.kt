@@ -145,7 +145,7 @@ class ScreenshotTour {
         click("Edit")
         waitFor("EDITING")
         shot("${prefix}_05_persona_editor")
-        scrollTo("Appearance tags")
+        scrollTo("Drawing style")
         shot("${prefix}_05b_persona_editor_more")
         back()
         top()

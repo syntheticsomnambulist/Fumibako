@@ -18,12 +18,12 @@ class ImageService(
         negativePrompt: String? = null,
         orientation: String? = null,
         persona: Persona? = null,
+        parts: PicturePrompt.Parts = PicturePrompt.Parts(),
     ): ContentPart.Image {
         val key = apiKeyFor(settings.credentialId)?.takeIf { it.isNotBlank() }
             ?: throw LlmException("No NovelAI API key configured for image generation")
         val (width, height) = sizeFor(settings, orientation)
-        val fullPrompt = listOfNotNull(persona?.appearanceTags?.takeIf { it.isNotBlank() }, prompt.trim())
-            .joinToString(", ")
+        val fullPrompt = PicturePrompt.build(prompt, persona, settings.defaultStyle, parts, PicturePrompt.Form.TAGS)
         val images = generator.generate(
             ImageRequest(
                 prompt = fullPrompt,

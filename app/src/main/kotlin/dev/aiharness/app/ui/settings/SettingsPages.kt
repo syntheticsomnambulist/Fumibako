@@ -299,6 +299,11 @@ internal fun SettingsCards.picturesPage(s: AppSettings, update: Update) {
     }
     if (!img.enabled) return
     card {
+        CardTitle("Style")
+        IndexCardField("Drawing style", img.defaultStyle, { v -> image { it.copy(defaultStyle = v) } }, style = PaperType.noteBody, minLines = 2, placeholder = "watercolor, soft lighting, by (an artist)")
+        Hint("Artist and style tags every persona draws in, unless its page gives it its own.")
+    }
+    card {
         CardTitle("Drawing")
         PaperSelect("Model", NovelAiImageGenerator.MODELS, img.model, { it }, { v -> v?.let { m -> image { it.copy(model = m) } } })
         val sizes = listOf(832 to 1216, 1216 to 832, 1024 to 1024, 512 to 768)

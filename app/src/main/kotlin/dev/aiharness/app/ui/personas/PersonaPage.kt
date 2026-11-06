@@ -124,7 +124,14 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
         val d = draft ?: return
         if (d.name.isBlank()) return
         scope.launch {
-            harness.personas.upsert(d.copy(name = d.name.trim(), updatedAt = System.currentTimeMillis()))
+            harness.personas.upsert(
+                d.copy(
+                    name = d.name.trim(),
+                    outfit = d.outfit?.trim()?.takeIf { it.isNotEmpty() },
+                    stylePrompt = d.stylePrompt?.trim()?.takeIf { it.isNotEmpty() },
+                    updatedAt = System.currentTimeMillis(),
+                ),
+            )
             onMain {
                 editing = false
                 draft = null
@@ -232,7 +239,7 @@ private fun Hero(p: Persona, mood: String?, editing: Boolean, model: String?, on
                     null
                 },
             )
-            val canDraw = settings?.imageGen?.credentialId != null && p.appearanceTags.isNotBlank()
+            val canDraw = settings?.imageGen?.credentialId != null && p.selfPrompt.isNotBlank()
             PictureMenu(
                 open = menu,
                 onDismiss = { menu = false },
@@ -282,11 +289,14 @@ private fun Hero(p: Persona, mood: String?, editing: Boolean, model: String?, on
 
 private fun LazyListScope.viewCards(p: Persona, nav: NavController, mode: HeartbeatMode?) {
     val layouts = tapeLayouts("page-${p.id}", 4)
-    if (p.description.isNotBlank() || p.personality.isNotBlank()) {
+    if (p.description.isNotBlank() || p.personality.isNotBlank() || p.currentOutfit.isNotBlank()) {
         item {
             PageCard(p, layouts[0], "about") {
                 CardTitle("About")
                 listOf(p.description, p.personality).filter { it.isNotBlank() }.forEach { Text(it.trim(), style = PaperType.prose, color = paper.sumi) }
+                p.currentOutfit.takeIf { it.isNotBlank() }?.let { outfit ->
+                    Text("Wearing: $outfit", style = PaperType.prose.copy(fontStyle = FontStyle.Italic, fontSize = 13.5.sp), color = paper.usuzumi1)
+                }
             }
         }
     }
@@ -383,8 +393,20 @@ private fun LazyListScope.editCards(
         val ink = stationery.ink(p.ink)
         PageCard(p, layouts[3], "pictures") {
             CardTitle("In pictures")
-            IndexCardField("Appearance tags", p.appearanceTags, { v -> onChange(p.copy(appearanceTags = v)) }, ink = ink, style = PaperType.noteBody, minLines = 2, placeholder = "1girl, short black hair, glasses, hoodie")
-            Text("Added whenever they appear in a picture, and used to draw a portrait.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
+            val named = p.name.ifBlank { "this persona" }
+            IndexCardField("How $named looks", p.selfPrompt, { v -> onChange(p.copy(selfPrompt = v)) }, ink = ink, style = PaperType.noteBody, minLines = 2, placeholder = "1girl, short black hair, glasses")
+            Text("The body and the traits that never change.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
+            IndexCardField("Usually wears", p.defaultOutfit, { v -> onChange(p.copy(defaultOutfit = v)) }, ink = ink, style = PaperType.noteBody, placeholder = "hoodie, jeans")
+            val wearing = p.outfit
+            if (wearing != null) {
+                IndexCardField("Wearing now", wearing, { v -> onChange(p.copy(outfit = v)) }, ink = ink, style = PaperType.noteBody, placeholder = "yellow raincoat, rain boots")
+                InkLink("Back to the usual clothes", ink) { onChange(p.copy(outfit = null)) }
+            } else {
+                InkLink("Change clothes for now", ink) { onChange(p.copy(outfit = "")) }
+            }
+            Text("$named can change clothes too; the change lasts until the next one.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
+            IndexCardField("Drawing style", p.stylePrompt.orEmpty(), { v -> onChange(p.copy(stylePrompt = v)) }, ink = ink, style = PaperType.noteBody, placeholder = "Blank: the style in Settings, Pictures")
+            Text("Artist and style tags for $named's pictures.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
         }
     }
     item {

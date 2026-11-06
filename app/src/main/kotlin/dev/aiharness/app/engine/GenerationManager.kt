@@ -62,7 +62,9 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
                     settings = settings.imageGen,
                     prompt = prompt,
                     orientation = orientation,
-                    persona = if (includePersona) persona else null,
+                    // The persona's drawing style applies either way; its looks only when it's in the picture.
+                    persona = persona,
+                    parts = if (includePersona) dev.aiharness.core.image.PicturePrompt.Parts() else dev.aiharness.core.image.PicturePrompt.Parts.STYLE_ONLY,
                 )
                 harness.conversations.appendMessage(
                     ChatMessage(

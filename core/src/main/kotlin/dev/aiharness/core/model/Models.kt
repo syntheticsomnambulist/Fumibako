@@ -100,8 +100,15 @@ data class Persona(
     val exampleDialogue: String = "",
     /** Replaces the generated role section of the system prompt. Supports {{char}} / {{user}}. */
     val systemPromptOverride: String? = null,
-    /** Image-model tags describing how this persona looks (used by image generation). */
-    val appearanceTags: String = "",
+    /** The body and traits that never change (hair, eyes, build, glasses), as image tags. */
+    @SerialName("appearanceTags")
+    val selfPrompt: String = "",
+    /** What the persona usually wears, as image tags. */
+    val defaultOutfit: String = "",
+    /** What it's wearing now, when that isn't [defaultOutfit]; you or the persona can change it. */
+    val outfit: String? = null,
+    /** Artist and style tags for its pictures; null uses the default in Settings, Pictures. */
+    val stylePrompt: String? = null,
     val avatarRef: String? = null,
     val defaultModelProfileId: String? = null,
     val heartbeatEnabled: Boolean = true,
@@ -116,7 +123,10 @@ data class Persona(
     val unreadMark: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
-)
+) {
+    /** What the persona is wearing: the outfit it changed into, or its usual one. */
+    val currentOutfit: String get() = outfit ?: defaultOutfit
+}
 
 /** Who the user is presenting as. Swappable per conversation. */
 @Serializable

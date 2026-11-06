@@ -123,6 +123,8 @@ data class ImageGenSettings(
     /** UC preset name: heavy, light, human, none. */
     val ucPreset: String = "heavy",
     val negativePrompt: String = "",
+    /** Artist and style tags every persona draws in, unless it has its own. */
+    val defaultStyle: String = "",
 )
 
 @Serializable

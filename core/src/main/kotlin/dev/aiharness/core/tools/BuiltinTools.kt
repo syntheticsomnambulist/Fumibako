@@ -1,6 +1,7 @@
 package dev.aiharness.core.tools
 
 import dev.aiharness.core.image.ImageService
+import dev.aiharness.core.image.PicturePrompt
 import dev.aiharness.core.llm.ToolSpec
 import dev.aiharness.core.memory.FeelingChange
 import dev.aiharness.core.memory.MemoryService
@@ -200,7 +201,7 @@ fun feelingNote(e: MemoryEntry): String? {
 private suspend fun resolve(memory: MemoryService, personaId: String, idOrPrefix: String) =
     memory.all(personaId).firstOrNull { it.id == idOrPrefix } ?: memory.all(personaId).singleOrNull { it.id.startsWith(idOrPrefix) }
 
-class GenerateImageTool(private val images: ImageService) : AgentTool {
+class GenerateImageTool(private val images: ImageService, private val personas: dev.aiharness.core.storage.PersonaRepository) : AgentTool {
     override val spec = ToolSpec(
         name = "generate_image",
         description = "Create an image and show it to the user, e.g. a selfie, a scene you are describing, or something they asked to see. " +
@@ -209,7 +210,7 @@ class GenerateImageTool(private val images: ImageService) : AgentTool {
             string("prompt", "Comma-separated tags describing the image.", required = true)
             string("negative_prompt", "Things to avoid in the image (optional).")
             string("orientation", "Image shape.", enum = listOf("portrait", "landscape", "square"))
-            boolean("include_self", "True if you appear in the image; your appearance tags are added automatically.")
+            boolean("include_self", "True if you appear in the image; how you look and what you're wearing are added automatically.")
         },
     )
 
@@ -219,12 +220,16 @@ class GenerateImageTool(private val images: ImageService) : AgentTool {
     override suspend fun execute(args: JsonObject, context: ToolContext): ToolOutcome {
         val prompt = args.requireString("prompt")
         val includeSelf = args.bool("include_self") == true
+        // Read fresh: the persona may have changed clothes earlier in this turn.
+        val persona = personas.get(context.persona.id) ?: context.persona
         val image = images.generate(
             settings = context.settings.imageGen,
             prompt = prompt,
             negativePrompt = args.string("negative_prompt"),
             orientation = args.string("orientation"),
-            persona = if (includeSelf) context.persona else null,
+            // Its drawing style applies whether or not it's in the picture.
+            persona = persona,
+            parts = if (includeSelf) PicturePrompt.Parts() else PicturePrompt.Parts.STYLE_ONLY,
         )
         return ToolOutcome(
             content = "The image was generated and shown to ${context.userPersona?.name ?: "the user"}.",

@@ -50,6 +50,9 @@ class TurnContextBuilder(
             }
         }
 
+        // Out of its usual clothes: it should know, for how it describes itself and its pictures.
+        persona.outfit?.takeIf { it.isNotBlank() }?.let { lines += "You're wearing: $it (not your usual clothes)." }
+
         if (settings.memory.enabled) {
             val core = memory.core(persona.id, userPersona?.id)
             // Core memories created after this epoch's system prompt was frozen aren't in it yet.

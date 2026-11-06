@@ -238,5 +238,6 @@ fun activityPhrase(kind: dev.aiharness.core.model.ActivityKind, count: Int = 1, 
         dev.aiharness.core.model.ActivityKind.REVISITED_FEELINGS -> n("felt differently about a memory", "felt differently about # memories")
         dev.aiharness.core.model.ActivityKind.SETTLED_MEMORIES -> n("let a memory settle", "let # memories settle")
         dev.aiharness.core.model.ActivityKind.LET_GO -> n("let a memory go", "let # memories go")
+        dev.aiharness.core.model.ActivityKind.CHANGED_OUTFIT -> note?.takeIf { it.isNotBlank() }?.let { "changed into $it" } ?: "changed back into the usual clothes"
     }
 }
