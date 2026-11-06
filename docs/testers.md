@@ -1,0 +1,61 @@
+# Trying Fumibako
+
+Thanks for trying Fumibako (文箱, "a box for keeping letters"): an Android app for writing letters
+with AI personas who remember you, have feelings about what they remember, and sometimes write
+to you on their own. This is an early test build.
+
+## Installing
+
+1. Open the `.apk` you were sent on your Android phone (Android 8 or newer).
+2. Your phone will ask to allow installing apps from that source (your browser, Files or chat
+   app). Allow it for this install.
+3. Open **Fumibako**. It asks to send notifications: allow it if you'd like to hear when a
+   persona writes to you.
+
+Updates are installed the same way, over the top; your letters stay.
+
+## Setting up (about two minutes)
+
+The **Getting started** card on the Letters page walks through it:
+
+1. **Your name**, so personas know what to call you.
+2. **An API key** for a model provider. Any one of these works:
+   - Anthropic (Claude): console.anthropic.com, API keys. Claude Haiku is cheap and good.
+   - Google (Gemini): aistudio.google.com, "Get API key". Has a free tier.
+   - OpenAI, or OpenRouter (many models behind one key).
+   - A model running on your own computer (Ollama or LM Studio), on the same Wi-Fi.
+3. **A model**: pick a preset; the key you added is filled in. "Send a test message" checks it.
+
+Then tap **New letter** and write to Aria, the persona who comes with the app, or make your own
+on the Personas page.
+
+## What it costs
+
+The app is free; the model provider charges for what it uses, usually fractions of a cent per
+letter. Two things use it in the background:
+
+- **Heartbeats:** about once an hour a persona may wake to tidy its memories, reflect, or write
+  to you. It only calls the model when something is due, and stays quiet at night (23:00 to
+  08:00). Settings, Heartbeat changes the pace, or turns it off.
+- **Memory upkeep:** longer conversations are summarised now and then.
+
+Set a spending limit with your provider if you'd like to be sure.
+
+## What stays on your phone
+
+Everything: letters, personas, memories and pictures are stored only on your phone, and your key
+is encrypted there. Your letters are sent to the model provider you chose, and to nowhere else.
+There are no accounts, ads or analytics.
+
+## Things to try
+
+- Write a few letters, then look at the persona's **memory book** (Personas, a persona, Memories).
+- Leave the app for a few hours; the Letters page shows what personas did while you were away.
+- Change how a persona looks or writes: its page, **Edit**.
+- With a NovelAI key (Settings, Pictures), personas can draw pictures.
+
+## If something goes wrong
+
+- Take a screenshot and say what you were doing.
+- If the app closed unexpectedly, Settings, About shows a crash report: **Copy the report** and
+  send it along. Nothing is sent on its own.

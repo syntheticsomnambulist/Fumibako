@@ -1,5 +1,10 @@
 package dev.aiharness.app.ui.chats
 
+import androidx.compose.foundation.border
+import dev.aiharness.app.ui.paper.IndexCardField
+import dev.aiharness.app.ui.paper.PaperButton
+import dev.aiharness.app.ui.paper.InkLink
+import dev.aiharness.app.ui.paper.TickBox
 import dev.aiharness.app.ui.theme.onInk
 import dev.aiharness.app.ui.paper.PaperCorner
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -94,7 +99,7 @@ fun ChatsScreen(nav: NavController) {
         ) {
             item { ScreenTitle("Letters", Modifier.statusBarsPadding()) }
             if (profiles?.isEmpty() == true) {
-                item { SetupCard { nav.navigate(Routes.MODELS) } }
+                item { GettingStarted(nav) }
             }
             if (activity.any { it.kind != ActivityKind.RESTED }) {
                 item { AwayCard(activity, personas, onDismiss = container::dismissAway) }
@@ -190,24 +195,73 @@ fun ScreenTitle(title: String, modifier: Modifier = Modifier, trailing: @Composa
     }
 }
 
+/**
+ * First steps on a new install, shown until there is a model: your name (so letters don't open
+ * "Hi You!"), a key, and a model. Each is ticked off as it's done.
+ */
 @Composable
-private fun SetupCard(onClick: () -> Unit) {
+private fun GettingStarted(nav: NavController) {
+    val harness = LocalAppContainer.current.harness
+    val scope = rememberCoroutineScope()
+    val settings by remember { harness.settings.settings }.collectAsStateWithLifecycle(null)
+    val users by remember { harness.userPersonas.observeAll() }.collectAsStateWithLifecycle(emptyList())
+    val credentials by remember { harness.credentials.observeAll() }.collectAsStateWithLifecycle(emptyList())
+    val me = users.firstOrNull { it.id == settings?.activeUserPersonaId } ?: users.firstOrNull()
+    val named = me != null && me.name != PLACEHOLDER_NAME
+    var name by remember(me?.id) { mutableStateOf(me?.name?.takeIf { it != PLACEHOLDER_NAME }.orEmpty()) }
     val you = stationery.you
     Column(
         Modifier
             .cornerTape(Tape(you, stationery.youPattern))
             .paperCard()
-            .combinedClickable(onClick = onClick)
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Set up a model", style = PaperType.entryTitle, color = paper.sumi)
-        Text(
-            "Add an API key and a model profile (Claude, Gemini, OpenAI-compatible or NovelAI) so your personas can write back. Tap here.",
-            style = PaperType.prose,
-            color = paper.usuzumi1,
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("Getting started", style = PaperType.entryTitle, color = paper.sumi)
+            Text("Three small things, and your personas can write back.", style = PaperType.noteBody.copy(fontSize = 13.sp, lineHeight = 18.sp), color = paper.usuzumi0)
+        }
+        Step(1, "What should personas call you?", done = named) {
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IndexCardField("Your name", name, { name = it }, Modifier.weight(1f), ink = you, style = PaperType.prose, singleLine = true)
+                PaperButton("Keep", ink = you, enabled = me != null && name.isNotBlank() && name.trim() != me.name) {
+                    val user = me ?: return@PaperButton
+                    scope.launch { harness.userPersonas.upsert(user.copy(name = name.trim(), updatedAt = System.currentTimeMillis())) }
+                }
+            }
+        }
+        Step(2, "Add an API key", done = credentials.isNotEmpty(), detail = "From Anthropic, Google, OpenAI, OpenRouter or your own server. It stays encrypted on this phone.") {
+            InkLink("Add a key", you) { nav.navigate(Routes.KEYS) }
+        }
+        Step(3, "Choose a model", done = false, detail = "Start from a preset; the key you added is filled in.") {
+            InkLink("Choose a model", you) { nav.navigate(Routes.model(Routes.NEW)) }
+        }
+    }
+}
+
+/** The name a new install's own persona starts with. */
+private const val PLACEHOLDER_NAME = "You"
+
+@Composable
+private fun Step(number: Int, title: String, done: Boolean, detail: String? = null, action: @Composable () -> Unit) {
+    val colors = paper
+    val you = stationery.you
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
+        if (done) {
+            TickBox(true, null, ink = you)
+        } else {
+            Box(Modifier.size(22.dp).border(1.5.dp, you, PaperCorner), contentAlignment = Alignment.Center) {
+                Text(number.toString(), style = PaperType.label.copy(fontSize = 12.sp), color = you)
+            }
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = PaperType.noteBody.copy(fontSize = 15.sp, lineHeight = 20.sp), color = if (done) colors.kasure2 else colors.sumi)
+            if (!done) {
+                detail?.let { Text(it, style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 17.sp), color = colors.usuzumi0) }
+                action()
+            }
+        }
     }
 }
 

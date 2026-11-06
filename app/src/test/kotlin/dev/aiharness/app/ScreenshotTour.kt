@@ -87,6 +87,24 @@ class ScreenshotTour {
     @Config(fontScale = 1.3f)
     fun largeTextTour() = tour("large", TimeOfDay.YORU, Season.FUYU)
 
+    /** A fresh install: the getting-started card, and About with the seal. */
+    @Test
+    fun firstRunTour() {
+        assumeTrue(outDir != null)
+        runBlocking {
+            val h = ApplicationProvider.getApplicationContext<HarnessApp>().container.harness
+            repeat(50) { if (h.personas.getAll().isEmpty()) Thread.sleep(100) }
+            h.settings.update { it.copy(theme = ThemeSettings(dayNight = DayNightMode.STATIC, staticSeason = Season.AKI, staticTime = TimeOfDay.HIRU)) }
+        }
+        waitFor("Getting started")
+        shot("first_01_letters")
+        click("Settings")
+        waitFor("CONTENTS")
+        click("About")
+        waitFor("Fumibako")
+        shot("first_02_about")
+    }
+
     private fun tour(prefix: String, time: TimeOfDay, season: Season = Season.AKI) {
         assumeTrue(outDir != null)
         seed(time, season)

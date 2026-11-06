@@ -40,8 +40,11 @@ class AppSmokeTest {
 
     @Test
     fun walksThroughTheMainScreens() {
-        // Home: no model configured yet, so the setup hint shows.
-        waitForText("Set up a model")
+        // Home: no model configured yet, so the getting-started card shows; naming yourself ticks step 1.
+        waitForText("Getting started")
+        compose.onAllNodes(hasSetTextAction()).onFirst().performTextInput("Robin")
+        compose.onNodeWithText("Keep").performClick()
+        waitForText("Choose a model")
 
         // Personas tab lists the seeded persona; its page opens, edits in place, and back leaves editing.
         compose.onAllNodesWithText("Personas").onFirst().performClick()
@@ -61,11 +64,11 @@ class AppSmokeTest {
         waitForText("New you")
         compose.onNodeWithText("New you").performClick()
         waitForText("EDITING")
-        compose.onAllNodes(hasSetTextAction()).onFirst().performTextInput("Robin")
+        compose.onAllNodes(hasSetTextAction()).onFirst().performTextInput("Wren")
         compose.onNodeWithText("Done").performClick()
-        waitForText("New letter as Robin")
+        waitForText("New letter as Wren")
         back()
-        waitForText("Robin")
+        waitForText("Wren")
         back()
 
         // Settings is a contents page; each section opens its own page.
@@ -83,7 +86,7 @@ class AppSmokeTest {
         compose.onAllNodesWithText("Aria").onFirst().performClick()
         // The new letter also shows in the list behind, so wait for the letter's own composer.
         compose.waitUntilAtLeastOneExists(hasSetTextAction(), timeoutMillis = 10_000)
-        waitForText("Hi You! I'm Aria", substring = true)
+        waitForText("Hi Robin! I'm Aria", substring = true)
 
         // Sending without a model surfaces a clear error instead of crashing.
         compose.onNode(hasSetTextAction()).performTextInput("Hello!")

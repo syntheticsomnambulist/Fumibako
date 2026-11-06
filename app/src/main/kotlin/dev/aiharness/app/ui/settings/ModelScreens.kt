@@ -158,7 +158,10 @@ fun ModelEditScreen(nav: NavController, profileId: String) {
                                 .fillMaxWidth()
                                 .background(paper.hyoshi, PaperCorner)
                                 .clickable(role = Role.Button) {
-                                    val made = preset.build()
+                                    val built = preset.build()
+                                    // The first key you've added for this provider, so a new profile works straight away.
+                                    val key = credentials.firstOrNull { it.kind == ModelPresets.credentialKindFor(built.provider) }
+                                    val made = if (built.credentialId == null && key != null) built.copy(credentialId = key.id) else built
                                     draft = made
                                     extraBodyText = made.extraBody?.toString().orEmpty()
                                 }

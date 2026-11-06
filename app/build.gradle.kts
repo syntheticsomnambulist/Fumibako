@@ -12,11 +12,12 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "dev.aiharness.app"
+        // Fumibako. The code keeps its dev.aiharness packages; only the installed app's id changed.
+        applicationId = "dev.fumibako.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.2.1"
+        versionCode = 4
+        versionName = "0.2.2"
     }
 
     signingConfigs {

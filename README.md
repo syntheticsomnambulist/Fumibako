@@ -1,6 +1,6 @@
-# AI Harness (Android)
+# Fumibako (Android)
 
-An Android app for living with AI personas: chat with them, swap models and personas freely, and
+Fumibako (文箱, a lacquered box for keeping letters) is an Android app for living with AI personas: chat with them, swap models and personas freely, and
 let each persona keep its own long-term memory and a "heartbeat" that lets it reflect, tend its
 memories, and reach out to you on its own. Image generation uses NovelAI.
 

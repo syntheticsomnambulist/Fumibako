@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -425,13 +427,53 @@ internal fun SettingsCards.promptingPage(s: AppSettings, update: Update) {
 
 // --- 八 About -----------------------------------------------------------------------------------
 
+/** The last crash, if there was one: copy it to send to whoever gave you the app. */
+@Composable
+private fun LastCrash() {
+    val context = LocalContext.current
+    val app = context.applicationContext as android.app.Application
+    var report by remember { mutableStateOf(dev.aiharness.app.CrashReport.file(app).takeIf { it.exists() }?.readText()) }
+    var copied by remember { mutableStateOf(false) }
+    CardTitle("If something goes wrong")
+    val text = report
+    if (text == null) {
+        Hint("If the app ever closes unexpectedly, a report appears here for you to copy and send. Nothing is sent on its own.")
+        return
+    }
+    Hint("The app closed unexpectedly: ${text.lineSequence().drop(1).firstOrNull()?.substringBefore(", thread").orEmpty()}. Copy the report and send it along with what you were doing.")
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        PaperButton(if (copied) "Copied" else "Copy the report", ink = stationery.you) {
+            val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Fumibako crash report", text))
+            copied = true
+        }
+        InkLink("Clear it") {
+            dev.aiharness.app.CrashReport.file(app).delete()
+            report = null
+        }
+    }
+}
+
 internal fun SettingsCards.aboutPage() {
     card {
         val context = LocalContext.current
         val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "?" }
-        CardTitle("AI Harness", note = "version $version")
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            // The icon's seal, as on the launcher.
+            androidx.compose.foundation.Image(
+                androidx.compose.ui.res.painterResource(dev.aiharness.app.R.drawable.ic_launcher_foreground),
+                contentDescription = null,
+                // The drawable is the whole 108-unit icon layer; show the seal at a readable size.
+                modifier = Modifier.size(64.dp).wrapContentSize(unbounded = true).requiredSize(132.dp),
+            )
+            Column(Modifier.weight(1f)) {
+                CardTitle("Fumibako", note = "version $version")
+                Text("文箱 · a box for keeping letters", style = PaperType.noteBody.copy(fontSize = 13.sp), color = paper.kasure2)
+            }
+        }
         Text("Letters with personas who remember, feel, and write to you on their own.", style = PaperType.prose, color = paper.usuzumi1)
     }
+    card { LastCrash() }
     card {
         CardTitle("Thanks and licenses")
         Text(
