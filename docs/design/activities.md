@@ -139,7 +139,7 @@ Agreed as the first game. Proposed rules and shape:
 - **The game:** each word starts with the last letter of the one before ("teapot", then
   "tangerine", then a word starting with "e"). No word comes twice. A round ends when one of you
   passes, and a new one starts with any word.
-- **Challenges** (agreed): either player can challenge a doubtful word. Proposed: the challenged
+- **Challenges** (agreed): either player can challenge a doubtful word. The challenged
   player explains it on their next turn (a line on what it means), or takes it back and plays
   another; the challenger then accepts it or doesn't, and a word that isn't accepted is struck
   out and the turn goes back. Nothing is scored, so it stays friendly. The persona sees the
@@ -158,17 +158,18 @@ Agreed as the first game. Proposed rules and shape:
 
 ## Games
 
-Agreed: games are separate from other activities, with controls of their own. Proposed:
+Agreed: games are separate from other activities, with controls of their own, as follows (the
+games box itself is proposed):
 
 - **A games box on the desk** (遊), with the slips of games in progress peeking out from under its
   lid. Opening it lists the games going, opens the one whose turn it is, and offers to start
   another.
 - **In the drawer, a Games section:** each game on or off, with its own Slot | Free choice; "She
   can start a game with you" (on by default; off, she only answers games you start); and "Games
-  going at once" (2 by default).
+  going at once", adjustable, 2 by default.
 - **One slot for all her moves in a visit:** playing several games in one visit uses a single
   slot, so a busy games box doesn't crowd out writing to you.
-- **Pen pals can play each other** once pen pals arrive (v0.6), behind a switch of its own.
+- **Pen pals can play each other** (v0.6, with pen pals), behind a switch of its own.
 - **Candidates for v0.6.5:** renga (linked verse, alternating 5-7-5 and 7-7 lines), twenty
   questions, word ladders, dots and boxes, battleship, and exquisite corpse (¥¥, since it draws).
   Related but not a game: a page of games you're playing yourself, which you tell the persona
@@ -254,6 +255,3 @@ https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn
 ## Open
 
 - **The look beyond the desk:** whether the v0.5 stationery update takes it across the app.
-- **Challenges in detail:** the proposed explain-or-take-back flow.
-- **Games controls:** the proposed defaults (she can start games; two at once; one slot for all
-  her moves in a visit).

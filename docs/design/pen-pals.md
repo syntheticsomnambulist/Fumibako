@@ -58,6 +58,8 @@ small and predictable.
 - **What you see:** "While you were away" lines ("Aria wrote to Juno") and a correspondence page
   for each pair, reached from the letter tray on each persona's desk. Sealed letters show their seal until opened, and
   the letter view has two ways out: **Close** and **Reseal**.
+- **Games:** pen pals can play games by post with each other (shiritori first), behind a switch
+  of its own; see "Games" in [`activities.md`](activities.md).
 - **Starting limits** (to tune): at most 2 letters to other personas per persona per day; a
   correspondence rests after 3 exchanges in a row and reopens after a few days; letters capped at
   about 300 words.
