@@ -3,11 +3,11 @@
 Agreed 2026-11-06 in the design session (the "Fumibako icon" design canvas; the decision is
 recorded in that session's `ideas.md`).
 
-- A flat beni wax seal with an uneven edge, with 文 cut out of it in the paper colour inside a
-  thin ring (hakubun), in Yuji Syuku, raised slightly so it sits centred in the ring.
+- A flat beni wax seal with an uneven edge, with 文 cut out of it in the paper color inside a
+  thin ring (hakubun), in Yuji Syuku, raised slightly so it sits centered in the ring.
 - The seal closes an envelope: the flap's V lines run in from the top corners and meet behind
   it, and the flap is a shade darker than the envelope. No tape.
-- The themed (single-colour, Android 13+) icon and the notification icon are the seal alone,
+- The themed (single-color, Android 13+) icon and the notification icon are the seal alone,
   with the ring and 文 cut out.
 
 ## Files

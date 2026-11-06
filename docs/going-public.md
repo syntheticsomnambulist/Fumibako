@@ -36,10 +36,10 @@ stop trusting it:
 
 How the build picks a key is documented in `app/build.gradle.kts` (the `signingConfigs` block).
 
-## 2. Choose a licence
+## 2. Choose a license
 
 There is no `LICENSE` file yet, so the code is "all rights reserved" by default. Two parts already
-carry their own licences, and whatever you pick must sit alongside them:
+carry their own licenses, and whatever you pick must sit alongside them:
 
 - **The madoromi palette** (MPL-2.0): `docs/design/madoromi-palette.json` and
   `app/src/main/kotlin/dev/aiharness/app/ui/theme/MadoromiPalette.kt`.
