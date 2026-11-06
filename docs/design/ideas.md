@@ -59,13 +59,14 @@ Ideas only: [Fieldwork](https://github.com/4thkira/fieldworkharness) is GPL-3.0,
   (recalled memories, the time note, later the calendar line). Mockups before committing.
 - **"Your model changed":** a one-line note to the persona after its model is switched.
 - **The persona's own rest:** it can set its own quiet hours or take a break, shown with a
-  resting sign and in its planner. The mirror of the user's busy calendar.
+  resting sign and in its planner. The mirror of the user's busy calendar. (Proposed for v0.4, in
+  [`calendar.md`](calendar.md).)
 - **Free time and a daily postcard:** a visit with no task (staying quiet leaves no trace), and a
   postcard about its day at a time you choose. Both are activities.
 - **Collections and belongings:** small things a persona keeps (plants, recipes, a dream log,
   pictures). Some belong in the scrapbook, others at the writing desk.
 - **Promises and reminders with dates:** memories that wait until a date or come due. They show
-  in the persona's planner.
+  in the persona's planner. (Proposed for v0.4, in [`calendar.md`](calendar.md).)
 - **Thinking lines:** the persona chooses what shows while it writes ("Aria is chewing her pen").
 - **Searching past letters:** exact wording across conversations, not only memories.
 - **Notes to the builder** (the persona reports something broken, confusing or missing): useful

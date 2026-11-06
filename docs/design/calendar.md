@@ -178,7 +178,20 @@ notes stay the same: "[Sam stuck :star: on Saturday's meteor shower]".
 
 ## Mockups
 
-The "Planner" design canvas (link added below when published).
+The "Planner" design canvas (private claude.ai artifact:
+https://claude.ai/artifact/641ZZiMG4rVyRHyP1PDszb), drawn 2026-11-06:
+
+- **The week** (interactive): 2 to 8 November with today marked; typical-week bands; phone events
+  in pencil with busy marks; your plans; Aria's note, reminder and a suggestion you can accept or
+  turn down; Juno's rest; a sticker; the whose-writing filter; the 帳 tab.
+- **A day** (interactive): Friday's entries in time order, and "Add a plan" opening a plan's card
+  (what, when, where, busy, every week) that adds the plan when saved.
+- **The month:** November with ink marks for who wrote on each day, Juno's rest, a sticker, a
+  legend and what's coming up. Today opens the day.
+- **Planner settings** (interactive): phone calendars with the four detail levels, your typical
+  week, during busy times, who sees your planner, sleep as quiet hours, seasons, week start.
+- **Notifications:** the held notification when a busy entry ends, and "Busy for now" with its
+  lengths.
 
 ## Open
 
