@@ -25,6 +25,8 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.aiharness.core.model.Track
+import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.ActivityKind
 import dev.aiharness.core.model.ChatMessage
@@ -178,6 +180,14 @@ class ScreenshotTour {
         compose.onNode(hasSetTextAction()).performTextInput(" :ari")
         waitFor(":aria-hello:")
         shot("${prefix}_02g_sticker_names")
+        // Frames: a cassette and a luggage tag in a note, a cutting in a letter, photos, a ticket and a film strip.
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("something for when it rains", substring = true))
+        waitFor("rainy day mix")
+        shot("${prefix}_02k_frames_mix")
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("second steeping made me", substring = true))
+        shot("${prefix}_02l_frames_cutting")
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("from the walk", substring = true))
+        shot("${prefix}_02m_frames_photos")
         // A sticker written inline in a letter.
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("writing this one down", substring = true))
         compose.waitUntilAtLeastOneExists(hasContentDescription(":aria-heart:"), 10_000)
@@ -527,6 +537,40 @@ class ScreenshotTour {
             msg(MessageRole.TOOL, ContentPart.ToolResult("t2", "generate_image", "Shown."), ContentPart.Image(image, caption = "celebrating")),
             msg(MessageRole.ASSISTANT, ContentPart.Text("Good morning! Did you actually sleep after all that writing? *tilts head* [mood: fond]"), origin = MessageOrigin.HEARTBEAT),
         )
+        // Earlier that evening: things sent as stationery (frames).
+        var e = now - 6 * 3_600_000L
+        fun early(role: MessageRole, vararg parts: ContentPart, origin: MessageOrigin = MessageOrigin.AGENT) =
+            ChatMessage(newId(), conversation.id, role, parts.toList(), createdAt = e.also { e += 60_000 }, origin = origin)
+        val picture2 = h.blobs.put(placeholderImage(), "png")
+        val earlier = listOf(
+            early(
+                MessageRole.USER,
+                ContentPart.Text("I made you something for when it rains."),
+                ContentPart.Attachment(
+                    "mix1", AttachmentKind.PLAYLIST, title = "rainy day mix", subtitle = "for Aria, from Sam", lengthMs = 2_530_000,
+                    tracks = listOf(Track(title = "October Walk", artist = "Hana Sato", lengthMs = 222_000), Track(title = "Kettle Song", artist = "The Lanterns", lengthMs = 194_000)),
+                ),
+                ContentPart.Attachment("pdf1", AttachmentKind.FILE, mimeType = "application/pdf", name = "market-map.pdf", sizeBytes = 2_400_000, pages = 3),
+                origin = MessageOrigin.USER,
+            ),
+            early(
+                MessageRole.ASSISTANT,
+                ContentPart.Text("I went looking for that tea you mentioned and found this. The part about the second steeping made me think of you."),
+                ContentPart.Attachment(
+                    "link1", AttachmentKind.LINK, url = "https://kettleandleaf.example/second-steeping", site = "Kettle & Leaf",
+                    title = "Why the second steeping is the good one", snippet = "The first pour wakes the leaves. The second is where the flavor opens up.", pictureRef = picture2,
+                ),
+            ),
+            early(
+                MessageRole.USER,
+                ContentPart.Text("And these, from the walk."),
+                ContentPart.Image(picture2), ContentPart.Image(image),
+                ContentPart.Attachment("song1", AttachmentKind.SONG, title = "October Walk", artist = "Hana Sato", lengthMs = 222_000),
+                ContentPart.Attachment("film1", AttachmentKind.VIDEO, title = "the river", lengthMs = 42_000, frameRefs = listOf(image, picture2, image)),
+                origin = MessageOrigin.USER,
+            ),
+        )
+        earlier.forEach { h.conversations.appendMessage(it) }
         letters.forEach { h.conversations.appendMessage(it) }
         h.refreshPreview(conversation.id)
 

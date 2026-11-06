@@ -16,11 +16,17 @@ data class StickerTarget(val kind: StickerTargetKind, val id: String) {
 
         /** The note being written in a conversation, before it's sent. */
         fun draft(conversationId: String) = StickerTarget(StickerTargetKind.DRAFT, conversationId)
+
+        /**
+         * An attachment (by its id, or a picture by its ref). Stickers stay stuck: one on a cassette
+         * shows wherever that cassette does, in the letter or kept in the memory book.
+         */
+        fun attachment(id: String) = StickerTarget(StickerTargetKind.ATTACHMENT, id)
     }
 }
 
 @Serializable
-enum class StickerTargetKind { MESSAGE, DRAFT }
+enum class StickerTargetKind { MESSAGE, DRAFT, ATTACHMENT }
 
 /** What's stuck: an emoji, or a picture from a sticker sheet or the shared library. */
 @Serializable

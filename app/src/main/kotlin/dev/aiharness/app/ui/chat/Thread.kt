@@ -36,12 +36,13 @@ sealed interface ThreadRow {
         val reasoning: String? get() = messages.mapNotNull { it.reasoning }.joinToString("\n\n").ifBlank { null }
         val images: List<ContentPart.Image> get() = messages.flatMap { it.images }
 
-        /** Text and pictures in the order they were written. */
+        /** Text, pictures and attachments in the order they were written. */
         val blocks: List<LetterBlock>
             get() = messages.flatMap { m ->
                 buildList {
                     if (m.role == MessageRole.ASSISTANT && m.displayText.isNotBlank()) add(LetterBlock.Words(m.displayText))
                     m.images.forEach { add(LetterBlock.Picture(it)) }
+                    m.attachments.forEach { add(LetterBlock.Attached(it)) }
                 }
             }
         val errors: List<String> get() = messages.mapNotNull { it.errorMessage }
@@ -55,6 +56,7 @@ sealed interface ThreadRow {
 sealed interface LetterBlock {
     data class Words(val text: String) : LetterBlock
     data class Picture(val image: ContentPart.Image) : LetterBlock
+    data class Attached(val attachment: ContentPart.Attachment) : LetterBlock
 }
 
 data class Postscript(val label: String, val text: String?, val isError: Boolean = false)

@@ -181,10 +181,16 @@ class StickerService(
     ): List<String> {
         val byId = history.associateBy { it.id }
         return stickers.changedSince(conversationId, since).mapNotNull { s ->
-            if (s.target.kind != StickerTargetKind.MESSAGE) return@mapNotNull null
+            val where = when (s.target.kind) {
+                StickerTargetKind.MESSAGE -> place(s.target.id, byId, currentMessageId, userName)
+                StickerTargetKind.ATTACHMENT -> history.lastOrNull { m -> m.attachments.any { it.id == s.target.id } || m.images.any { it.ref == s.target.id } }?.let { m ->
+                    val thing = m.attachments.firstOrNull { it.id == s.target.id }?.let { frameName(it.kind) } ?: "photo"
+                    place(m.id, byId, currentMessageId, userName)?.let { "the $thing in $it" }
+                }
+                StickerTargetKind.DRAFT -> null
+            } ?: return@mapNotNull null
             val stuckNow = s.byPersonaId == null && s.createdAt > since
             val peeledNow = s.isPeeled && s.peeledByPersonaId == null && (s.peeledAt ?: 0L) > since
-            val where = place(s.target.id, byId, currentMessageId, userName) ?: return@mapNotNull null
             val name = nameOf(s.ref)
             when {
                 stuckNow && peeledNow -> null
@@ -206,6 +212,14 @@ class StickerService(
             MessageRole.USER -> "$userName's $time note"
             MessageRole.TOOL -> null
         }
+    }
+
+    private fun frameName(kind: dev.aiharness.core.model.AttachmentKind) = when (kind) {
+        dev.aiharness.core.model.AttachmentKind.FILE -> "luggage tag"
+        dev.aiharness.core.model.AttachmentKind.SONG -> "ticket"
+        dev.aiharness.core.model.AttachmentKind.PLAYLIST -> "cassette"
+        dev.aiharness.core.model.AttachmentKind.VIDEO -> "film strip"
+        dev.aiharness.core.model.AttachmentKind.LINK -> "cutting"
     }
 
     /** "Fri 00:14" within the week, "3 Nov" before that. */

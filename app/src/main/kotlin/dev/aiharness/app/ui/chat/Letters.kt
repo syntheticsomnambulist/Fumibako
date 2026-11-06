@@ -58,6 +58,7 @@ import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.Sticker
 import dev.aiharness.core.model.StickerArt
 import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.model.StickerTarget
 import dev.aiharness.core.model.TapePattern
 import dev.aiharness.core.model.UserPersona
 import java.time.Instant
@@ -110,7 +111,7 @@ fun LetterSheet(
     StuckOn(
         stickers,
         inkOf = { stickerInk(it, s, persona, user) },
-        Modifier.fillMaxWidth().then(letter?.let { handling?.paper(it.messages.first().id) } ?: Modifier),
+        Modifier.fillMaxWidth().then(letter?.let { handling?.paper(StickerTarget.message(it.messages.first().id)) } ?: Modifier),
         stickerName,
         selectedId = handling?.selectedId,
         onTap = handling?.onTap,
@@ -138,15 +139,14 @@ fun LetterSheet(
             letter?.blocks?.forEach { block ->
                 when (block) {
                     is LetterBlock.Words -> StickerText(block.text, ink, PaperType.letterBody, paper.sumi)
-                    is LetterBlock.Picture -> BlobImage(
-                        block.image.ref,
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 160.dp, max = 380.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .clickable(onClickLabel = "View picture") { onImage(block.image.ref) },
-                        contentScale = ContentScale.Crop,
-                        maxSize = 1000,
+                    // Photos in letters are polaroids taped in the persona's ink; attachments get their frames.
+                    is LetterBlock.Picture -> FramedPictures(
+                        listOf(block.image), s.dayColors.ink(persona?.ink), persona?.tapePattern ?: TapePattern.DOTS, 1f,
+                        handling, { stickerInk(it, s, persona, user) }, stickerName, onImage,
+                    )
+                    is LetterBlock.Attached -> FramedAttachment(
+                        block.attachment, s.dayColors.ink(persona?.ink), paper.kami, inNote = false,
+                        handling = handling, inkOf = { stickerInk(it, s, persona, user) }, nameOf = stickerName,
                     )
                 }
             }
@@ -185,7 +185,11 @@ class StickerHandling(
     val selectedId: String?,
     val onTap: (Sticker) -> Unit,
     val onChange: (Sticker) -> Unit,
-    val paper: (targetId: String) -> Modifier,
+    val paper: (StickerTarget) -> Modifier,
+    /** The stickers on a frame (by attachment id, or a picture's ref). */
+    val on: (String) -> List<Sticker> = { emptyList() },
+    /** A frame or sheet that left the screen can't be dropped on. */
+    val forget: (StickerTarget) -> Unit = {},
 )
 
 /** The ink of whoever stuck [sticker] (day ink: stickers keep their day colours). */
@@ -226,7 +230,7 @@ fun NoteSlip(
         StuckOn(
             stickers,
             inkOf = { stickerInk(it, s, persona, user) },
-            Modifier.widthIn(max = maxWidth * 0.78f).then(handling?.paper(message.id) ?: Modifier),
+            Modifier.widthIn(max = maxWidth * 0.78f).then(handling?.paper(StickerTarget.message(message.id)) ?: Modifier),
             stickerName,
             selectedId = handling?.selectedId,
             onTap = handling?.onTap,
@@ -248,8 +252,13 @@ fun NoteSlip(
                 if (message.displayText.isNotBlank()) {
                     StickerText(message.displayText, you, PaperType.noteBody, paper.usuzumi1)
                 }
-                message.images.forEach { image ->
-                    BlobImage(image.ref, Modifier.widthIn(max = 220.dp).heightIn(max = 260.dp).clip(RoundedCornerShape(2.dp)).clickable { onImage(image.ref) })
+                val noteInk = s.dayColors.ink(user?.ink ?: "sora")
+                val notePaper = lerp(s.colors.kami, you, 0.06f)
+                FramedPictures(
+                    message.images, noteInk, pattern, 0.86f, handling, { stickerInk(it, s, persona, user) }, stickerName, onImage, Alignment.CenterStart,
+                )
+                message.attachments.forEach { attachment ->
+                    FramedAttachment(attachment, noteInk, notePaper, inNote = true, handling = handling, inkOf = { stickerInk(it, s, persona, user) }, nameOf = stickerName, alignment = Alignment.CenterStart)
                 }
             }
         }

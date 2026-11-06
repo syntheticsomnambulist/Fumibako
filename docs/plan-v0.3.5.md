@@ -18,6 +18,16 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   taken out, more added; down to one, it goes as a ticket). A link written in a note becomes a
   cutting from the page's Open Graph data (public addresses only, redirects checked); on a line
   of its own it leaves the text when sent. A note can be attachments alone.
+- **Step 2, frames: done.** In letters and notes: photos as polaroids taped in the sender's ink
+  (several as a stack with a count), files as luggage tags on a string, playlists as cassettes
+  with the label handwritten in the sender's ink, songs as ticket stubs with notches and a play
+  mark, links as newspaper cuttings with a masthead, a greyscale picture and a paperclip, videos
+  as film strips with their three frames. Handwriting (Klee One) and newsprint (Old Standard TT)
+  faces are bundled, cut down to Latin. Notes draw frames smaller; each frame has a slight tilt of
+  its own; at night they're lit by the lamp (photos left alone with "Not photos"). Holding a
+  frame offers Save to phone, Share and Copy link; tapping opens it in the phone's own app until
+  the players and browser come. Stickers go on frames too, as their own target, and the persona
+  hears where (`[Sam stuck :heart: on the cassette in Sam's Fri 00:26 note]`).
 
 ## What v0.3.5 includes
 

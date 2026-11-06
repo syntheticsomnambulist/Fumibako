@@ -85,10 +85,10 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         if (harness.stickerService.stick(conversationId, target, ref, null, x, y, rotationDeg = r, scale = 0.7f) is StickResult.Stuck) container.usedSticker(ref)
     }
 
-    /** Sticks [ref] on a letter or note, where it was dropped. */
-    fun stickOn(messageId: String, ref: StickerRef, x: Float, y: Float) = viewModelScope.launch {
+    /** Sticks [ref] on a letter, a note or a frame, where it was dropped. */
+    fun stickOn(target: StickerTarget, ref: StickerRef, x: Float, y: Float) = viewModelScope.launch {
         val tilt = (Math.random() * 16 - 8).toFloat()
-        if (harness.stickerService.stick(conversationId, StickerTarget.message(messageId), ref, null, x, y, rotationDeg = tilt) is StickResult.Stuck) container.usedSticker(ref)
+        if (harness.stickerService.stick(conversationId, target, ref, null, x, y, rotationDeg = tilt) is StickResult.Stuck) container.usedSticker(ref)
     }
 
     fun moveSticker(sticker: Sticker) = viewModelScope.launch {

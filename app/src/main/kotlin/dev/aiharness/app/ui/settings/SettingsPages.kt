@@ -487,7 +487,7 @@ internal fun SettingsCards.aboutPage() {
     card {
         CardTitle("Thanks and licenses")
         Text(
-            "Colors: madoromi by samhain (madoromi.moonwit.ch), MPL-2.0.\nFonts: Cormorant Garamond, Literata, LINE Seed JP and Yuji Syuku, SIL Open Font License 1.1.",
+            "Colors: madoromi by samhain (madoromi.moonwit.ch), MPL-2.0.\nFonts: Cormorant Garamond, Literata, LINE Seed JP, Yuji Syuku, Klee One and Old Standard TT, SIL Open Font License 1.1.",
             style = PaperType.prose,
             color = paper.usuzumi1,
         )

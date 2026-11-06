@@ -1,0 +1,488 @@
+package dev.aiharness.app.ui.media
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import dev.aiharness.app.ui.BlobImage
+import dev.aiharness.app.ui.paper.Tape
+import dev.aiharness.app.ui.paper.drawTape
+import dev.aiharness.app.ui.theme.HarnessFonts
+import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.core.model.AttachmentKind
+import dev.aiharness.core.model.ContentPart
+import dev.aiharness.core.model.Lamplight
+import dev.aiharness.core.model.TapePattern
+import dev.aiharness.core.model.clock
+import dev.aiharness.core.model.humanSize
+import kotlin.math.abs
+
+/*
+ * Media frames: each attachment as a stationery object, in its sender's ink (tape, paperclip, labels
+ * and tints), after the design session's "Media frames" canvas. Frames are objects on the desk, so
+ * they keep their day colours; at night they're lit as if by a desk lamp (see [lamplit]).
+ * Sizes are in dp at [scale] 1 (letters); notes draw them smaller.
+ */
+
+private val FramePaper = Color(0xFFFFFDF9)
+private val FrameEdge = Color(0xFFCEBEAF)
+private val Brown = Color(0xFF3E3226)
+private val SoftBrown = Color(0xFF4A3B2E)
+private val Newsprint = Color(0xFFF2EDE2)
+private val NewsInk = Color(0xFF2E2620)
+
+/** A slight tilt for a frame, the same every time for the same thing (about ±2°). */
+fun frameTilt(seed: String): Float = ((abs(seed.hashCode()) % 400) / 100f) - 2f
+
+/**
+ * Lamplight for objects on the desk: at night they're dimmed a little and warmed, unless the
+ * setting leaves them be ([photo]: photos are left alone by "Leave photos as they are").
+ */
+@Composable
+fun Modifier.lamplit(photo: Boolean = false): Modifier {
+    val s = stationery
+    val on = s.isNight && when (s.lamplight) {
+        Lamplight.DIM_ALL -> true
+        Lamplight.KEEP_PHOTOS -> !photo
+        Lamplight.NONE -> false
+    }
+    if (!on) return this
+    return graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen).drawWithContent {
+        drawContent()
+        // Tint only what's drawn: toward a warm brown, which dims and warms at once.
+        drawRect(Color(0xFF3A2410).copy(alpha = 0.2f), blendMode = BlendMode.SrcAtop)
+    }
+}
+
+/** What a picture's caption on a polaroid should be: short ones only (a drawing's prompt isn't a caption). */
+fun polaroidCaption(caption: String?): String? = caption?.trim()?.takeIf { it.isNotEmpty() && it.length <= 28 && ',' !in it }
+
+/** One photo as a polaroid with a piece of tape in [ink] at the top. */
+@Composable
+fun PolaroidFrame(image: ContentPart.Image, ink: Color, pattern: TapePattern, scale: Float = 1f, modifier: Modifier = Modifier) {
+    val caption = polaroidCaption(image.caption)
+    Box(modifier.lamplit(photo = true)) {
+        Column(
+            Modifier
+                .padding(top = (9 * scale).dp)
+                .width((236 * scale).dp)
+                .shadow((2 * scale).dp, RoundedCornerShape(3.dp))
+                .background(FramePaper, RoundedCornerShape(3.dp))
+                .border(1.dp, FrameEdge.copy(alpha = 0.5f), RoundedCornerShape(3.dp))
+                .padding(start = (12 * scale).dp, end = (12 * scale).dp, top = (12 * scale).dp),
+        ) {
+            BlobImage(image.ref, Modifier.size((210 * scale).dp), contentScale = ContentScale.Crop, maxSize = 720)
+            Box(Modifier.fillMaxWidth().height(((if (caption != null) 46 else 30) * scale).dp), contentAlignment = Alignment.Center) {
+                caption?.let { Text(it, style = hand(15f * scale), color = SoftBrown, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            }
+        }
+        TapePiece(ink, pattern, Modifier.align(Alignment.TopCenter).offset(y = 0.dp).size((68 * scale).dp, (18 * scale).dp), tilt = -4f)
+    }
+}
+
+/** Several photos: a small stack of up to three polaroids, the first on top, with a count. */
+@Composable
+fun PhotoStack(images: List<ContentPart.Image>, ink: Color, pattern: TapePattern, scale: Float = 1f, modifier: Modifier = Modifier) {
+    val behind = images.drop(1).take(2)
+    Box(modifier.size((272 * scale).dp, (300 * scale).dp).lamplit(photo = true)) {
+        behind.forEachIndexed { i, image ->
+            Box(
+                Modifier
+                    .offset(x = ((if (i == 0) 66 else 4) * scale).dp, y = ((if (i == 0) 8 else 22) * scale).dp)
+                    .graphicsLayer { rotationZ = if (i == 0) 6f else -7f }
+                    .width((200 * scale).dp)
+                    .shadow((1.5f * scale).dp, RoundedCornerShape(3.dp))
+                    .background(FramePaper, RoundedCornerShape(3.dp))
+                    .padding(start = (10 * scale).dp, end = (10 * scale).dp, top = (10 * scale).dp, bottom = (34 * scale).dp),
+            ) {
+                BlobImage(image.ref, Modifier.size((178 * scale).dp), contentScale = ContentScale.Crop, maxSize = 480)
+            }
+        }
+        Box(Modifier.offset(x = (30 * scale).dp, y = (21 * scale).dp)) {
+            Column(
+                Modifier
+                    .padding(top = (9 * scale).dp)
+                    .width((212 * scale).dp)
+                    .shadow((2.5f * scale).dp, RoundedCornerShape(3.dp))
+                    .background(FramePaper, RoundedCornerShape(3.dp))
+                    .padding(start = (12 * scale).dp, end = (12 * scale).dp, top = (12 * scale).dp),
+            ) {
+                BlobImage(images.first().ref, Modifier.size((186 * scale).dp), contentScale = ContentScale.Crop, maxSize = 720)
+                Spacer(Modifier.height((40 * scale).dp))
+            }
+            TapePiece(ink, pattern, Modifier.align(Alignment.TopCenter).size((64 * scale).dp, (18 * scale).dp), tilt = 3f)
+        }
+        Text(
+            "${images.size} photos",
+            style = hand(13f * scale),
+            color = Brown,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = (-2 * scale).dp, y = (-4 * scale).dp)
+                .graphicsLayer { rotationZ = 4f }
+                .background(Color(0xFFFBF6F1))
+                .border(1.dp, Color(0xFFDFCEBF))
+                .padding(horizontal = (9 * scale).dp, vertical = (2 * scale).dp),
+        )
+    }
+}
+
+/** A file as a luggage tag tinted with the sender's [ink]: its name, kind and size, on a string. */
+@Composable
+fun LuggageTag(file: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifier: Modifier = Modifier) {
+    val tag = lerp(Color(0xFFF4EFE6), ink, 0.22f)
+    val meta = listOfNotNull(
+        (file.mimeType?.substringAfter('/')?.takeIf { it.length <= 12 } ?: file.name?.substringAfterLast('.', "")?.takeIf { it.isNotEmpty() })?.uppercase(),
+        file.pages?.let { if (it == 1) "1 PAGE" else "$it PAGES" },
+        file.sizeBytes?.let { humanSize(it).uppercase() },
+    ).joinToString(" · ")
+    Box(modifier.size((268 * scale).dp, (104 * scale).dp).lamplit()) {
+        Box(
+            Modifier
+                .offset(x = (14 * scale).dp, y = (4 * scale).dp)
+                .size((252 * scale).dp, (96 * scale).dp)
+                .shadow((1.5f * scale).dp, TagShape)
+                .background(tag, TagShape)
+                .padding(start = (62 * scale).dp, end = (16 * scale).dp, top = (12 * scale).dp, bottom = (10 * scale).dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy((6 * scale).dp)) {
+                Text(file.name ?: "a file", style = hand(17f * scale), color = Brown, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (meta.isNotEmpty()) Text(meta, style = ui(10.5f * scale, spacing = 0.08f), color = SoftBrown)
+            }
+        }
+        // The eyelet, and the string through it.
+        Canvas(Modifier.fillMaxSize()) {
+            val k = size.width / 268f
+            drawPath(
+                Path().apply { moveTo(48 * k, 52 * k); cubicTo(32 * k, 56 * k, 20 * k, 76 * k, 8 * k, 68 * k); cubicTo(-2 * k, 61 * k, 4 * k, 44 * k, -10 * k, 36 * k) },
+                lerp(Color(0xFF8D7D6F), ink, 0.35f),
+                style = Stroke(1.6f * k, cap = StrokeCap.Round),
+            )
+            drawCircle(Color(0xFFFBF3E8), 8 * k, Offset(48 * k, 52 * k))
+            drawCircle(lerp(ink, Color.White, 0.25f), 7 * k, Offset(48 * k, 52 * k), style = Stroke(2 * k))
+            drawCircle(Color(0xFF8D7D6F), 3 * k, Offset(48 * k, 52 * k))
+        }
+    }
+}
+
+private val TagShape = GenericShape { size, _ ->
+    moveTo(size.width * 0.16f, 0f)
+    lineTo(size.width, 0f)
+    lineTo(size.width, size.height)
+    lineTo(size.width * 0.16f, size.height)
+    lineTo(0f, size.height * 0.7f)
+    lineTo(0f, size.height * 0.3f)
+    close()
+}
+
+/** A playlist as a cassette: the label handwritten in the sender's [ink], side A, the length, the reels. */
+@Composable
+fun Cassette(mix: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifier: Modifier = Modifier) {
+    val label = Color(0xFFF6ECD9)
+    Box(
+        modifier
+            .size((240 * scale).dp, (150 * scale).dp)
+            .lamplit()
+            .shadow((2 * scale).dp, RoundedCornerShape((9 * scale).dp))
+            .background(Color(0xFF3B3530), RoundedCornerShape((9 * scale).dp))
+            .padding(start = (12 * scale).dp, end = (12 * scale).dp, top = (10 * scale).dp),
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height((92 * scale).dp)
+                .background(label, RoundedCornerShape((4 * scale).dp))
+                .ruled(scale),
+        ) {
+            Box(
+                Modifier.offset(x = (7 * scale).dp, y = (7 * scale).dp).size((17 * scale).dp).background(ink, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) { Text("A", style = ui(10f * scale, bold = true), color = FramePaper) }
+            Column(Modifier.padding(start = (30 * scale).dp, end = (44 * scale).dp, top = (6 * scale).dp)) {
+                Text(mix.title ?: "a mix", style = hand(16f * scale, semibold = true), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                mix.subtitle?.let { Text(it, style = hand(12f * scale), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            }
+            mix.lengthMs?.takeIf { it > 0 }?.let {
+                Text(clock(it), style = ui(10f * scale), color = SoftBrown, modifier = Modifier.align(Alignment.TopEnd).padding(top = (8 * scale).dp, end = (9 * scale).dp))
+            }
+            Reels(scale, Modifier.align(Alignment.BottomCenter).padding(bottom = (8 * scale).dp))
+        }
+        // The cassette's lower edge, where the tape shows.
+        Canvas(Modifier.align(Alignment.BottomCenter).size((180 * scale).dp, (36 * scale).dp)) {
+            val k = size.width / 180f
+            drawPath(
+                Path().apply { moveTo(20 * k, 8 * k); lineTo(160 * k, 8 * k); lineTo(172 * k, 36 * k); lineTo(8 * k, 36 * k); close() },
+                Color(0xFF4A433D),
+            )
+            drawCircle(Color(0xFF2B2622), 3.5f * k, Offset(46 * k, 24 * k))
+            drawCircle(Color(0xFF2B2622), 3.5f * k, Offset(134 * k, 24 * k))
+        }
+    }
+}
+
+@Composable
+private fun Reels(scale: Float, modifier: Modifier) {
+    Canvas(modifier.size((124 * scale).dp, (34 * scale).dp)) {
+        val k = size.width / 124f
+        drawRoundRect(Color(0xFF2B2622), Offset.Zero, size, CornerRadius(17 * k))
+        drawRoundRect(Color(0xFF5A4A3C), Offset(36 * k, 11 * k), Size(52 * k, 12 * k), CornerRadius(3 * k))
+        listOf(18f to 13f, 106f to 7f).forEach { (x, pack) ->
+            drawCircle(Color(0xFF3D342D), 14 * k, Offset(x * k, 17 * k))
+            drawCircle(Color(0xFF6B5443), pack * k, Offset(x * k, 17 * k))
+            drawCircle(Color(0xFFF3E4CC), 6 * k, Offset(x * k, 17 * k))
+            drawCircle(Color(0xFF2B2622), 6 * k, Offset(x * k, 17 * k), style = Stroke(2f * k, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2 * k, 2 * k))))
+        }
+    }
+}
+
+private fun Modifier.ruled(scale: Float) = drawWithContent {
+    val step = 16.dp.toPx() * scale
+    var y = step
+    while (y < size.height) {
+        drawLine(Color(0xFF5D4C3C).copy(alpha = 0.16f), Offset(0f, y), Offset(size.width, y), 1f)
+        y += step
+    }
+    drawContent()
+}
+
+/** A single song as a ticket stub tinted with the sender's [ink], punched once it's been played. */
+@Composable
+fun TicketStub(song: ContentPart.Attachment, ink: Color, behind: Color, scale: Float = 1f, punched: Boolean = false, modifier: Modifier = Modifier) {
+    val ticket = lerp(Color(0xFFF7F0E4), ink, 0.18f)
+    Box(modifier.size((280 * scale).dp, (108 * scale).dp).lamplit()) {
+        Row(Modifier.fillMaxSize().shadow((1.5f * scale).dp, RoundedCornerShape((4 * scale).dp)).background(ticket, RoundedCornerShape((4 * scale).dp))) {
+            Column(
+                Modifier.weight(1f).fillMaxSize().padding(horizontal = (14 * scale).dp, vertical = (11 * scale).dp),
+                verticalArrangement = Arrangement.spacedBy((2 * scale).dp),
+            ) {
+                Text("SIDE A · TRACK 1", style = ui(9.5f * scale, bold = true, spacing = 0.16f), color = ink)
+                Text(song.title ?: "a song", style = news(20f * scale, bold = true), color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                song.artist?.let { Text(it, style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = (13 * scale).sp), color = SoftBrown, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                song.lengthMs?.let { Text(clock(it), style = ui(10f * scale, spacing = 0.08f), color = SoftBrown) }
+            }
+            Column(Modifier.width((68 * scale).dp).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                Canvas(Modifier.size((28 * scale).dp)) {
+                    val k = size.width / 28f
+                    drawCircle(ink, 12 * k, center, style = Stroke(1.6f * k))
+                    drawPath(Path().apply { moveTo(11 * k, 9 * k); lineTo(19 * k, 14 * k); lineTo(11 * k, 19 * k); close() }, ink)
+                }
+                Text("PLAY", style = ui(9f * scale, bold = true, spacing = 0.16f), color = ink, modifier = Modifier.padding(top = (5 * scale).dp))
+            }
+        }
+        // The perforation, its notches showing the paper behind, and the punch once played.
+        Canvas(Modifier.fillMaxSize()) {
+            val k = size.width / 280f
+            val x = 212 * k
+            drawLine(lerp(ticket, ink, 0.55f), Offset(x, 4 * k), Offset(x, size.height - 4 * k), 2 * k, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5 * k, 4 * k)))
+            drawCircle(behind, 7 * k, Offset(x, 0f))
+            drawCircle(behind, 7 * k, Offset(x, size.height))
+            if (punched) drawCircle(behind, 6 * k, Offset(246 * k, 18 * k))
+        }
+    }
+}
+
+/** A link as a newspaper cutting with uneven cut edges, held by a paperclip in the sender's [ink]. */
+@Composable
+fun Cutting(link: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifier: Modifier = Modifier) {
+    Box(modifier.width((288 * scale).dp).lamplit()) {
+        Column(
+            Modifier
+                .padding(top = (10 * scale).dp)
+                .fillMaxWidth()
+                .shadow((1.5f * scale).dp, CutShape)
+                .background(Newsprint, CutShape)
+                .padding(start = (16 * scale).dp, end = (16 * scale).dp, top = (16 * scale).dp, bottom = (18 * scale).dp),
+            verticalArrangement = Arrangement.spacedBy((8 * scale).dp),
+        ) {
+            Text(
+                (link.site ?: link.url?.substringAfter("://")?.substringBefore('/') ?: "").uppercase(),
+                style = news(10.5f * scale, spacing = 0.22f),
+                color = Color(0xFF3E342B),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth().rules().padding(vertical = (3 * scale).dp),
+            )
+            Text(link.title ?: link.url ?: "", style = news(19f * scale, bold = true, height = 1.22f), color = NewsInk, maxLines = 4, overflow = TextOverflow.Ellipsis)
+            link.pictureRef?.let { ref ->
+                BlobImage(ref, Modifier.fillMaxWidth().height((100 * scale).dp).graphicsLayer {}.greyscale(), contentScale = ContentScale.Crop, maxSize = 640)
+            }
+            link.snippet?.let { Text(it, style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = (12.5f * scale).sp, lineHeight = (18.75f * scale).sp), color = Color(0xFF3E342B), maxLines = 4, overflow = TextOverflow.Ellipsis) }
+        }
+        Paperclip(ink, scale, Modifier.align(Alignment.TopEnd).padding(end = (24 * scale).dp))
+    }
+}
+
+private val CutShape = GenericShape { size, _ ->
+    val w = size.width
+    val h = size.height
+    moveTo(0.006f * w, 0.014f * h)
+    lineTo(0.28f * w, 0f); lineTo(0.61f * w, 0.01f * h); lineTo(w, 0.002f * h); lineTo(0.993f * w, 0.38f * h); lineTo(w, 0.72f * h)
+    lineTo(0.994f * w, h); lineTo(0.57f * w, 0.99f * h); lineTo(0.22f * w, h); lineTo(0f, 0.993f * h); lineTo(0.009f * w, 0.61f * h); lineTo(0f, 0.24f * h)
+    close()
+}
+
+private fun Modifier.rules() = drawWithContent {
+    drawLine(Color(0xFF3E342B), Offset(0f, 0f), Offset(size.width, 0f), 1f)
+    drawLine(Color(0xFF3E342B), Offset(0f, size.height), Offset(size.width, size.height), 1f)
+    drawContent()
+}
+
+private val Greyscale = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+
+/** Pictures on cuttings are printed in greyscale. */
+private fun Modifier.greyscale() = graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen).drawWithContent {
+    drawContent()
+    drawRect(Color.Gray, blendMode = BlendMode.Saturation)
+}
+
+@Composable
+private fun Paperclip(ink: Color, scale: Float, modifier: Modifier) {
+    Canvas(modifier.size((18 * scale).dp, (53 * scale).dp).graphicsLayer { rotationZ = -3f }) {
+        val k = size.width / 16f
+        val clip = Path().apply {
+            moveTo(2 * k, 6 * k); lineTo(2 * k, 38 * k)
+            arcTo(androidx.compose.ui.geometry.Rect(2 * k, 32 * k, 14 * k, 44 * k), 180f, -180f, false)
+            lineTo(14 * k, 6 * k)
+            arcTo(androidx.compose.ui.geometry.Rect(6 * k, 2 * k, 14 * k, 10 * k), 0f, -180f, false)
+            lineTo(6 * k, 34 * k)
+            arcTo(androidx.compose.ui.geometry.Rect(6 * k, 32 * k, 10 * k, 36 * k), 180f, -180f, false)
+            lineTo(10 * k, 14 * k)
+        }
+        drawPath(clip, ink, style = Stroke(1.7f * k, cap = StrokeCap.Round))
+    }
+}
+
+/** A video as a film strip: sprocket holes, its three frames, the play mark and its length on a label. */
+@Composable
+fun FilmStrip(video: ContentPart.Attachment, scale: Float = 1f, modifier: Modifier = Modifier) {
+    Box(modifier.size((300 * scale).dp, (132 * scale).dp)) {
+        Box(Modifier.fillMaxSize().shadow((2 * scale).dp, RoundedCornerShape(2.dp)).background(Color(0xFF2A2420), RoundedCornerShape(2.dp)).lamplit()) {
+            Canvas(Modifier.fillMaxSize()) {
+                val k = size.width / 300f
+                var x = 10 * k
+                while (x < size.width) {
+                    drawRoundRect(Color(0xFFF0E6DD), Offset(x, 5 * k), Size(10 * k, 7 * k), CornerRadius(1.5f * k))
+                    drawRoundRect(Color(0xFFF0E6DD), Offset(x, size.height - 12 * k), Size(10 * k, 7 * k), CornerRadius(1.5f * k))
+                    x += 20 * k
+                }
+            }
+            Row(Modifier.padding(start = (10 * scale).dp, top = (19 * scale).dp), horizontalArrangement = Arrangement.spacedBy((5.33f * scale).dp)) {
+                val frames = video.frameRefs.ifEmpty { listOfNotNull(video.thumbRef) }
+                repeat(3) { i ->
+                    val ref = frames.getOrNull(i)
+                    if (ref != null) {
+                        BlobImage(ref, Modifier.size((88 * scale).dp, (94 * scale).dp), contentScale = ContentScale.Crop, maxSize = 320)
+                    } else {
+                        Box(Modifier.size((88 * scale).dp, (94 * scale).dp).background(Color(0xFF4A3F38)))
+                    }
+                }
+            }
+            Box(
+                Modifier.align(Alignment.Center).size((40 * scale).dp).background(FramePaper.copy(alpha = 0.9f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Canvas(Modifier.size((16 * scale).dp)) {
+                    val k = size.width / 16f
+                    drawPath(Path().apply { moveTo(5 * k, 3 * k); lineTo(13 * k, 8 * k); lineTo(5 * k, 13 * k); close() }, Brown)
+                }
+            }
+        }
+        video.lengthMs?.let {
+            Text(
+                clock(it),
+                style = hand(12f * scale),
+                color = Brown,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (8 * scale).dp, y = (12 * scale).dp)
+                    .graphicsLayer { rotationZ = 3f }
+                    .background(Color(0xFFFBF6F1))
+                    .border(1.dp, Color(0xFFDFCEBF))
+                    .padding(horizontal = (8 * scale).dp, vertical = (2 * scale).dp),
+            )
+        }
+    }
+}
+
+/** A short piece of washi tape in [ink] and [pattern], torn at the ends. */
+@Composable
+fun TapePiece(ink: Color, pattern: TapePattern, modifier: Modifier, tilt: Float = 0f) {
+    Canvas(modifier.graphicsLayer { rotationZ = tilt }) {
+        drawTape(Offset(0f, size.height / 2), Offset(size.width, size.height / 2), size.height, Tape(ink, pattern), tooth = 2.dp.toPx())
+    }
+}
+
+/** An attachment's frame by its kind. */
+@Composable
+fun AttachmentFrame(attachment: ContentPart.Attachment, ink: Color, behind: Color, scale: Float = 1f, punched: Boolean = false, modifier: Modifier = Modifier) {
+    when (attachment.kind) {
+        AttachmentKind.FILE -> LuggageTag(attachment, ink, scale, modifier)
+        AttachmentKind.PLAYLIST -> Cassette(attachment, ink, scale, modifier)
+        AttachmentKind.SONG -> TicketStub(attachment, ink, behind, scale, punched, modifier)
+        AttachmentKind.LINK -> Cutting(attachment, ink, scale, modifier)
+        AttachmentKind.VIDEO -> FilmStrip(attachment, scale, modifier)
+    }
+}
+
+/** Frames are drawn smaller on notes, which are narrower than letters. */
+fun noteScale(kind: AttachmentKind?): Float = when (kind) {
+    AttachmentKind.SONG -> 0.86f
+    AttachmentKind.VIDEO -> 0.82f
+    AttachmentKind.LINK -> 0.84f
+    else -> 0.86f
+}
+
+private fun hand(size: Float, semibold: Boolean = false) =
+    TextStyle(fontFamily = HarnessFonts.Hand, fontWeight = if (semibold) FontWeight.SemiBold else FontWeight.Normal, fontSize = size.sp, lineHeight = (size * 1.25f).sp)
+
+private fun news(size: Float, bold: Boolean = false, spacing: Float = 0f, height: Float = 1.2f) =
+    TextStyle(fontFamily = HarnessFonts.News, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal, fontSize = size.sp, lineHeight = (size * height).sp, letterSpacing = spacing.em())
+
+private fun ui(size: Float, bold: Boolean = false, spacing: Float = 0f) =
+    TextStyle(fontFamily = HarnessFonts.Ui, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal, fontSize = size.sp, letterSpacing = spacing.em())
+
+private fun Float.em() = androidx.compose.ui.unit.TextUnit(this, androidx.compose.ui.unit.TextUnitType.Em)

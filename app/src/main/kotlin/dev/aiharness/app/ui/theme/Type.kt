@@ -41,6 +41,18 @@ object HarnessFonts {
 
     /** Kanji labels and seals. */
     val Brush = FontFamily(Font(R.font.brush_regular, FontWeight.Normal))
+
+    /** Handwriting on media frames: polaroid captions, cassette labels, luggage tags. */
+    val Hand = FontFamily(
+        Font(R.font.hand_regular, FontWeight.Normal),
+        Font(R.font.hand_semibold, FontWeight.SemiBold),
+    )
+
+    /** Newsprint, for cuttings and ticket stubs. */
+    val News = FontFamily(
+        Font(R.font.news_regular, FontWeight.Normal),
+        Font(R.font.news_bold, FontWeight.Bold),
+    )
 }
 
 private val ui = TextStyle(fontFamily = HarnessFonts.Ui)

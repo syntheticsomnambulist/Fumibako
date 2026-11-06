@@ -75,6 +75,7 @@ import dev.aiharness.app.ui.paper.paperCard
 import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.core.model.StickerTarget
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Sticker
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -166,7 +167,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     var peeled by remember { mutableStateOf<Sticker?>(null) }
     var dragging by remember { mutableStateOf<Pair<StickerRef, Offset>?>(null) }
     var screenOrigin by remember { mutableStateOf(Offset.Zero) }
-    val papers = remember { mutableStateMapOf<String, Rect>() }
+    val papers = remember { mutableStateMapOf<StickerTarget, Rect>() }
     val keyboard = LocalSoftwareKeyboardController.current
     val focus = LocalFocusManager.current
     LaunchedEffect(moving) {
@@ -194,9 +195,11 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             }
         },
         onChange = { moving = it },
-        paper = { id ->
-            Modifier.onGloballyPositioned { papers[id] = it.boundsInRoot() }
+        paper = { target ->
+            Modifier.onGloballyPositioned { papers[target] = it.boundsInRoot() }
         },
+        on = { id -> shownStickers[id].orEmpty() },
+        forget = { target -> papers.remove(target) },
     )
     val selectedSticker = selectedStickerId?.let { id -> shownStickers.values.flatten().firstOrNull { it.id == id } }
 
@@ -282,7 +285,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                             is ThreadRow.Letter -> row.messages.first().id
                             else -> ""
                         }
-                        DisposableEffect(id) { onDispose { papers.remove(id) } }
+                        DisposableEffect(id) { onDispose { papers.remove(StickerTarget.message(id)) } }
                     }
                 }
             }
@@ -371,8 +374,9 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 onDrag = { delta -> dragging = dragging?.let { (ref, at) -> ref to (at + delta) } },
                 onDragEnd = {
                     dragging?.let { (ref, at) ->
-                        papers.entries.firstOrNull { it.value.contains(at) }?.let { (id, rect) ->
-                            vm.stickOn(id, ref, (at.x - rect.left) / rect.width, (at.y - rect.top) / rect.height)
+                        // The innermost paper under the finger: a frame before the letter it's in.
+                        papers.entries.filter { it.value.contains(at) }.minByOrNull { it.value.width * it.value.height }?.let { (target, rect) ->
+                            vm.stickOn(target, ref, (at.x - rect.left) / rect.width, (at.y - rect.top) / rect.height)
                         }
                     }
                     dragging = null
