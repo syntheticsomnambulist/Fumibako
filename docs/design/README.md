@@ -156,7 +156,8 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
 
 The mockup uses Cormorant Garamond (display), Literata (letter text), LINE Seed JP (UI) and
 Yuji Syuku (kanji). **These are placeholders: the current choice isn't loved, and we'll circle back
-to fonts later.**
+to fonts later.** The font audit is under way in v0.5: see *The font audit* in
+[`v0.5.md`](v0.5.md).
 
 ## Next
 
