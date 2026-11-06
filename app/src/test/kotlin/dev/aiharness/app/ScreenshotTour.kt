@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -55,6 +56,7 @@ import dev.aiharness.core.model.MarkKind
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import dev.aiharness.core.model.Pronouns
 import dev.aiharness.core.model.PronounKind
+import dev.aiharness.core.model.Keepsake
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -394,6 +396,15 @@ class ScreenshotTour {
         shot("${prefix}_20_memory_book")
         scrollTo("Sam drinks too much coffee")
         shot("${prefix}_20b_memory_book_today")
+        // Keepsakes on today's page (two, and "+N"), then only memories with something kept.
+        compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(hasText("+", substring = true))
+        compose.waitForIdle()
+        shot("${prefix}_20b2_memory_book_keepsakes")
+        top()
+        compose.onNodeWithText("Keepsakes").performScrollTo().performClick()
+        waitFor("rainy day mix")
+        shot("${prefix}_20e_keepsakes_filter")
+        compose.onNodeWithText("All").performScrollTo().performClick()
         scrollTo("October", exact = true)
         // The envelope opening, and its notes spilling out.
         compose.mainClock.autoAdvance = false
@@ -415,6 +426,17 @@ class ScreenshotTour {
         waitFor("FELT WHEN KEPT")
         shot("${prefix}_21_memory_card")
         back()
+        // A memory card with its keepsake.
+        top()
+        compose.onNodeWithText("Keepsakes").performScrollTo().performClick()
+        waitFor("rainy day mix")
+        scrollTo("Sam made me a rainy day mix")
+        click("Sam made me a rainy day mix, for when it rains")
+        waitFor("FELT WHEN KEPT")
+        shot("${prefix}_21b_memory_card_keepsake")
+        back()
+        top()
+        compose.onNodeWithText("All").performScrollTo().performClick()
 
         // With memory editing allowed: Edit, then forget it and watch it burn.
         runBlocking {
@@ -710,11 +732,19 @@ class ScreenshotTour {
             it.copy(mood = "amused", moodReason = "It stopped being a worry once Sam started laughing about it too.", moodRevisedAt = now - 3 * day, accessCount = 7)
         }) { h.memory.save(aria.id, "Sam drinks too much coffee when stressed", level = MemoryLevel.IN_PASSING, feltMood = "fond", aboutUserPersonaId = sam.id) }
         h.memory.save(aria.id, "Sam loves walking in the rain", feltMood = "longing", aboutUserPersonaId = sam.id)
+        // Keepsakes: the mix, the walk's photo and its song kept with today's memories; a song tucked into October.
+        val sentParts = earlier.flatMap { it.parts }
+        fun kept(id: String) = Keepsake(earlier.first { m -> m.parts.any { (it as? ContentPart.Attachment)?.id == id || (it as? ContentPart.Image)?.ref == id } }.id,
+            sentParts.first { (it as? ContentPart.Attachment)?.id == id || (it as? ContentPart.Image)?.ref == id }, keptAt = now)
+        h.memory.save(aria.id, "Sam made me a rainy day mix, for when it rains", feltMood = "touched", keepsakes = listOf(kept("mix1")))
+        h.memory.save(aria.id, "The walk along the river, in photos and a song", kind = MemoryKind.EPISODE, feltMood = "fond", keepsakes = listOf(kept(picture2), kept("song1"), kept("link2")))
         val library = keep("Works at the campus library", daysAgo = 27) { h.memory.save(aria.id, "Works at the campus library", aboutUserPersonaId = sam.id) }
         h.memory.save(aria.id, "Left the library in October to write full time", aboutUserPersonaId = sam.id, replaces = library.id, feltMood = "proud")
         h.memory.get(library.id)?.let { h.memories.upsert(it.copy(createdAt = now - 27 * day, updatedAt = now - 27 * day)) }
         keep("Had a cold the week of the conference", daysAgo = 25) { h.memory.save(aria.id, "Had a cold the week of the conference", level = MemoryLevel.IN_PASSING, feltMood = "worried", aboutUserPersonaId = sam.id) }
-        keep("Prefers walking routes along the river", daysAgo = 26, usedDaysAgo = 2) { h.memory.save(aria.id, "Prefers walking routes along the river", feltMood = "curious", aboutUserPersonaId = sam.id) }
+        keep("Prefers walking routes along the river", daysAgo = 26, usedDaysAgo = 2) {
+            h.memory.save(aria.id, "Prefers walking routes along the river", feltMood = "curious", aboutUserPersonaId = sam.id, keepsakes = listOf(kept("song1")))
+        }
         keep("Sam's first conference talk went well: nerves before, relief after, and a long walk to come down from it.", daysAgo = 24) {
             h.memory.save(aria.id, "Sam's first conference talk went well: nerves before, relief after, and a long walk to come down from it.", kind = MemoryKind.EPISODE, feltMood = "amazed")
         }

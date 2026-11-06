@@ -406,21 +406,23 @@ fun DateStamp(text: String, ink: Color, modifier: Modifier = Modifier, tilt: Flo
  * flap up and back, and a few notes peek out of the top.
  */
 @Composable
-fun MonthEnvelope(month: String, summary: String, open: Boolean, ink: Color, onClick: () -> Unit) {
+fun MonthEnvelope(month: String, summary: String, open: Boolean, ink: Color, peek: dev.aiharness.core.model.AttachmentKind? = null, onClick: () -> Unit) {
     val colors = paper
     val progress by animateFloatAsState(if (open) 1f else 0f, tween(520), label = "envelope")
     // The open flap stands above the envelope, so room is made for it as it rises.
     val raised = ((progress - 0.5f) * 2).coerceIn(0f, 1f)
     val flapDepth = 58.dp
     val body = 92.dp
+    // A kept ticket stub or a J-card's corner peeks out of a closed month.
+    val peekRoom = if (peek != null) 14.dp * (1f - raised) else 0.dp
     Box(
         Modifier
             .fillMaxWidth()
-            .height(body + flapDepth * raised)
+            .height(body + flapDepth * raised + peekRoom)
             .clickable(role = Role.Button, onClickLabel = if (open) "Close $month" else "Open $month", onClick = onClick),
     ) {
         androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
-            val top = flapDepth.toPx() * raised
+            val top = flapDepth.toPx() * raised + peekRoom.toPx()
             val w = size.width
             val depth = flapDepth.toPx()
             val corner = androidx.compose.ui.geometry.CornerRadius(3.dp.toPx())
@@ -451,6 +453,28 @@ fun MonthEnvelope(month: String, summary: String, open: Boolean, ink: Color, onC
                             drawLine(colors.nijimi1, Offset(left + 7.dp.toPx(), y), Offset(left + w * width * (0.8f - r * 0.25f), y), line)
                         }
                     }
+                }
+            }
+            // 2b. A keepsake tucked in among the notes, its top showing above a closed envelope.
+            if (peek != null && progress < 0.5f) {
+                val pw = 78.dp.toPx()
+                val ph = 34.dp.toPx()
+                val left = w * 0.66f
+                val pieceTop = top - 13.dp.toPx()
+                rotate(-6f, pivot = Offset(left + pw / 2, top)) {
+                    if (peek == dev.aiharness.core.model.AttachmentKind.PLAYLIST) {
+                        val card = Color(0xFFF6ECD9)
+                        drawRect(card, Offset(left, pieceTop), Size(pw, ph))
+                        drawRect(lerp(card, ink, 0.25f), Offset(left, pieceTop), Size(10.dp.toPx(), ph))
+                        drawLine(ink.copy(alpha = 0.6f), Offset(left + 16.dp.toPx(), pieceTop + 7.dp.toPx()), Offset(left + pw * 0.8f, pieceTop + 7.dp.toPx()), line * 1.6f)
+                    } else {
+                        val ticket = lerp(Color(0xFFF7F0E4), ink, 0.18f)
+                        drawRect(ticket, Offset(left, pieceTop), Size(pw, ph))
+                        drawLine(lerp(ticket, ink, 0.55f), Offset(left + pw * 0.74f, pieceTop), Offset(left + pw * 0.74f, pieceTop + ph), line * 1.4f,
+                            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx())))
+                        drawLine(ink.copy(alpha = 0.7f), Offset(left + 6.dp.toPx(), pieceTop + 7.dp.toPx()), Offset(left + pw * 0.5f, pieceTop + 7.dp.toPx()), line * 1.6f)
+                    }
+                    drawRect(colors.nijimi1, Offset(left, pieceTop), Size(pw, ph), style = Stroke(line))
                 }
             }
             // 3. The envelope itself.

@@ -18,6 +18,7 @@ import dev.aiharness.core.llm.gemini.GeminiProvider
 import dev.aiharness.core.llm.openai.OpenAiCompatibleProvider
 import dev.aiharness.core.media.LinkPreviews
 import dev.aiharness.core.media.MediaDescriber
+import dev.aiharness.core.memory.KeepsakeFinder
 import dev.aiharness.core.tools.LinkReading
 import dev.aiharness.core.tools.OpenLinkTool
 import dev.aiharness.core.tools.ShareLinkTool
@@ -105,11 +106,12 @@ class Harness(
     val stickerMaker = StickerMaker(images, blobs, stickers, stickerCutter, clock)
     val links = LinkPreviews(blobs)
     val linkReading = LinkReading(conversations, marks, clock)
+    val keepsakeFinder = KeepsakeFinder(conversations, clock)
     val tools = ToolRegistry(
         listOf(
-            MemorySaveTool(memory),
+            MemorySaveTool(memory, keepsakeFinder),
             MemorySearchTool(memory),
-            MemoryUpdateTool(memory),
+            MemoryUpdateTool(memory, keepsakeFinder),
             MemoryForgetTool(memory),
             GenerateImageTool(images, personas),
             ChangeOutfitTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),

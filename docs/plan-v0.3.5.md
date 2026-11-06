@@ -91,6 +91,22 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   them."), and the app's sentences about it take turns, sentence by sentence, or pick at random
   (the same all day, so nothing changes as you read). The first set stays where it was (a second
   field holds the rest), so nothing needed migrating.
+- **Step 7, keepsakes: done** (`keepsakes.md`). A memory keeps copies of things from its letter
+  or note (so they outlast the letter, and keep their stickers by the attachment's id). The
+  persona chooses with `keep` on `memory_save` and `memory_update`, naming them by the handles it
+  sees ("[cassette: rainy day mix]", "the photo"); naming nothing keeps the first thing in the
+  note being answered, and "nothing" keeps nothing. When a memory comes up, the persona reads
+  what was kept, not the file ("(kept with [ticket: October Walk by Hana Sato, 3:42])"). In the
+  book, a day's keepsakes take the place of its picture: at most two, then "+2"; each is a
+  scrapbook object about two-thirds size (a polaroid, a tag tied through a punched hole, the
+  stub, punched if played, a cassette's J-card with its songs in the sender's hand, a smaller
+  cutting with its read stamp, two frames snipped from a film strip), still while you scroll,
+  aged with its memory (fading yellows them, newsprint fastest; worn ones crease and lose a
+  corner), and tapped to play or open in place, with the mini player docked at the bottom of
+  the book. A "Keepsakes" tab shows only memories with something kept; a closed month shows a
+  kept ticket stub or J-card peeking out of its envelope. The memory card shows them under the
+  card, so letting it go burns them with it; with "Let me edit memories" on, you can keep more
+  from its letter or take them out.
 
 ## What v0.3.5 includes
 
@@ -154,5 +170,5 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
 5. **Links and personas' media:** Custom Tabs, the app's fetcher, the read stamp, personas
    sharing links and songs.
 6. **Settings, Media; several pronoun sets.**
-7. **Keepsakes** (confirmed: after steps 4 to 6).
+7. **Keepsakes.**
 8. **Polish, tests, an APK.**

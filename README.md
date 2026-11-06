@@ -15,7 +15,7 @@ tested without a device and reused elsewhere.
 | Swappable models: Anthropic (Claude), Google Gemini, any OpenAI-compatible server, NovelAI text | `core/llm/*` |
 | Swappable personas, each with its own memories, greeting, pronouns, looks, outfit, drawing style and default model | `app/ui/personas` |
 | Swappable user personas (who *you* are), switchable mid-chat | `app/ui/settings/KeysAndUsers.kt` |
-| Long-term memory: agent-written via tools, hybrid keyword + optional embedding recall, core memories, episode recaps | `core/memory`, `core/tools/BuiltinTools.kt` |
+| Long-term memory: agent-written via tools, hybrid keyword + optional embedding recall, core memories, episode recaps, keepsakes (things kept from letters) in the memory book | `core/memory`, `core/tools/BuiltinTools.kt`, `app/ui/memory` |
 | Heartbeat: **Proactive** (background reflection + optional messages), **Time-aware**, or **Off** | `core/agent/HeartbeatEngine.kt`, `app/heartbeat` |
 | Pictures from NovelAI, Stable Diffusion (Forge, Automatic1111, ComfyUI), OpenAI or Google, through image profiles (persona can call it as a tool, or you can request one) | `core/image` |
 | Photos, files, songs, playlists, videos and links in letters, framed as stationery, with players and an in-app browser; each model receives what it can take in; personas open links you share (Claude's web fetch, or the app's fetcher) and share links and songs back | `core/media`, `core/tools/LinkTools.kt`, `app/media`, `app/ui/media` |

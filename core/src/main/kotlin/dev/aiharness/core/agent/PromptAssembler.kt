@@ -1,5 +1,6 @@
 package dev.aiharness.core.agent
 
+import dev.aiharness.core.memory.keptNote
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.MemoryEntry
@@ -60,7 +61,7 @@ class PromptAssembler {
                 append(" Memories come with how you felt about them; let that colour how you speak of them.")
                 if (coreMemories.isNotEmpty()) {
                     append("\n\nThings you always keep in mind:\n")
-                    coreMemories.forEach { append("- ").append(it.content).append('\n') }
+                    coreMemories.forEach { append("- ").append(it.content).append(it.keptNote).append('\n') }
                 }
             }.trimEnd()
         }

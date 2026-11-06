@@ -1,5 +1,6 @@
 package dev.aiharness.core.agent
 
+import dev.aiharness.core.memory.keptNote
 import dev.aiharness.core.memory.MemoryAge
 import dev.aiharness.core.memory.MemoryService
 import dev.aiharness.core.memory.MemoryWeights
@@ -77,7 +78,7 @@ class TurnContextBuilder(
             val freshCore = core.filter { it.updatedAt > maxOf(sinceEpoch, previousUserTurn) }
             if (freshCore.isNotEmpty()) {
                 lines += "Recently updated core memories:"
-                freshCore.forEach { lines += "- ${it.content}" }
+                freshCore.forEach { lines += "- ${it.content}${it.keptNote}" }
             }
 
             val lastAssistant = history.lastOrNull { it.role == MessageRole.ASSISTANT && !it.hidden }?.text.orEmpty()
@@ -98,7 +99,7 @@ class TurnContextBuilder(
                         feelingNote(entry)?.let { add(it) }
                         if (MemoryWeights.age(entry, now, memory.feelingOf(entry)) == MemoryAge.FADING) add("a little hazy")
                     }
-                    lines += "- (${notes.joinToString(", ")}) ${entry.content}"
+                    lines += "- (${notes.joinToString(", ")}) ${entry.content}${entry.keptNote}"
                 }
             }
         }

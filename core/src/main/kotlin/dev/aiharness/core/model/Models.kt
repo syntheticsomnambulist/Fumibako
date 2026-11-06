@@ -344,6 +344,33 @@ sealed interface ContentPart {
 @Serializable
 enum class AttachmentKind { FILE, SONG, PLAYLIST, VIDEO, LINK }
 
+/**
+ * Something kept with a memory (docs/design/keepsakes.md): a copy of a picture or attachment from
+ * the letter or note it came from, so the book can show it whatever happens to the letter. Its
+ * stickers stay stuck: they belong to the attachment's id, which the copy keeps.
+ */
+@Serializable
+data class Keepsake(
+    /** The letter or note it came from. */
+    val messageId: String? = null,
+    /** A [ContentPart.Image] or [ContentPart.Attachment]. */
+    val part: ContentPart,
+    val keptAt: Long,
+    /** It came in your note (it's in your ink), rather than the persona's letter. */
+    val fromYou: Boolean = true,
+) {
+    /** The attachment's id, or a picture's ref: what stickers on it belong to. */
+    val key: String get() = (part as? ContentPart.Attachment)?.id ?: (part as? ContentPart.Image)?.ref.orEmpty()
+
+    /** What the persona reads of it when the memory comes up: its stand-in, not the file. */
+    val label: String
+        get() = when (val p = part) {
+            is ContentPart.Attachment -> p.standIn
+            is ContentPart.Image -> "[photo" + (p.description ?: p.caption)?.let { ": ${it.take(80)}" }.orEmpty() + "]"
+            else -> "[something]"
+        }
+}
+
 /** One song on a playlist. */
 @Serializable
 data class Track(
@@ -518,6 +545,8 @@ data class MemoryEntry(
     /** Last real use (searched for, cited in a reflection, kept again, edited): this keeps it strong. */
     val lastUsedAt: Long = createdAt,
     val useCount: Int = 0,
+    /** Things kept with the memory from its letter or note: a cassette, a photo, a cutting. */
+    val keepsakes: List<Keepsake> = emptyList(),
 ) {
     val isCore: Boolean get() = pinned || kind == MemoryKind.CORE
     val isReplaced: Boolean get() = replacedById != null

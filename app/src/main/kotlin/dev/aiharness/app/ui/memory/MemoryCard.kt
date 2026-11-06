@@ -30,6 +30,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import dev.aiharness.core.model.Keepsake
+import dev.aiharness.core.model.MessageRole
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
@@ -175,6 +177,22 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
         value = if (conversation != null && message != null) harness.conversations.getMessages(conversation).firstOrNull { it.id == message } else null
     }
     val origin = originOf(m, sourceMessage, source != null)
+    // What could be kept with it: the pictures and attachments in its letter and the note that letter answered.
+    val keepable by produceState(emptyList<Keepsake>(), m.sourceConversationId, m.sourceMessageId) {
+        val conversation = m.sourceConversationId
+        val message = m.sourceMessageId
+        value = if (conversation == null || message == null) emptyList() else {
+            val history = harness.conversations.getMessages(conversation)
+            val at = history.indexOfFirst { it.id == message }
+            if (at < 0) emptyList() else {
+                val noteAt = (0 until at).lastOrNull { history[it].role == MessageRole.USER } ?: at
+                val end = ((at + 1) until history.size).firstOrNull { history[it].role == MessageRole.USER } ?: history.size
+                history.subList(noteAt, end).flatMap { msg ->
+                    (msg.images + msg.attachments).map { Keepsake(msg.id, it, keptAt = System.currentTimeMillis(), fromYou = msg.role == MessageRole.USER) }
+                }
+            }
+        }
+    }
 
     fun save() {
         val d = draft ?: return
@@ -198,7 +216,12 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
                 }
                 return@launch
             }
-            harness.memory.update(d.id, content = d.content, level = d.level, pinned = d.pinned, byUser = true)
+            val before = original?.keepsakes.orEmpty()
+            harness.memory.update(
+                d.id, content = d.content, level = d.level, pinned = d.pinned, byUser = true,
+                keep = d.keepsakes.filter { k -> before.none { it.key == k.key } },
+                unkeep = before.map { it.key }.toSet() - d.keepsakes.map { it.key }.toSet(),
+            )
             harness.memory.get(d.id)?.let { current ->
                 if (current.kind != d.kind || current.aboutUserPersonaId != d.aboutUserPersonaId) {
                     harness.memories.upsert(current.copy(kind = d.kind, aboutUserPersonaId = d.aboutUserPersonaId))
@@ -246,9 +269,10 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
         }
     }
 
+    KeepsakeHost(personaId, persona, name) { below ->
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp),
+        contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp + below),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item("bar") {
@@ -295,7 +319,15 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
                         }
                         .padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 16.dp),
                 ) {
-                    ContentCard(m, about, ink, tape, age, editing) { v -> draft = draft?.copy(content = v) }
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        ContentCard(m, about, ink, tape, age, editing) { v -> draft = draft?.copy(content = v) }
+                        if (m.keepsakes.isNotEmpty()) {
+                            val inkOf = LocalKeepsakeMarks.current.inkOfKeepsake
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(start = 6.dp, bottom = 18.dp)) {
+                                m.keepsakes.forEach { KeepsakeObject(it, inkOf(it), age, scale = 0.8f) }
+                            }
+                        }
+                    }
                     val word = shownMood(m, pendingMood, resetMood)
                     if (!editing && word != null) {
                         FeelingWordBox(word, FeelingWords.lookup(word, s.learnedFeelings), ink, paper.kami, Modifier.align(Alignment.BottomEnd).offset(x = (-14).dp, y = 12.dp))
@@ -319,6 +351,28 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
                             feelingHistory(m, name, pendingMood, resetMood).forEach { Text(it, style = PaperType.noteBody.copy(fontSize = 12.sp, lineHeight = 16.sp), color = paper.usuzumi0) }
                         }
                         InkLink("Change", ink) { choosingFeeling = true }
+                    }
+                }
+            }
+            if (!isNew && (m.keepsakes.isNotEmpty() || keepable.isNotEmpty())) {
+                item("kept") {
+                    Section("Kept with it") {
+                        m.keepsakes.forEach { k ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(k.label, style = PaperType.noteBody, color = paper.sumi, maxLines = 2, modifier = Modifier.weight(1f))
+                                InkLink("Take out", ink) { draft = draft?.copy(keepsakes = m.keepsakes.filter { it.key != k.key }) }
+                            }
+                        }
+                        val more = keepable.filter { c -> m.keepsakes.none { it.key == c.key } }
+                        if (more.isNotEmpty()) {
+                            Text("FROM ITS LETTER", style = PaperType.meta, color = paper.kasure2, modifier = Modifier.padding(top = 4.dp))
+                            more.forEach { c ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(c.label, style = PaperType.noteBody, color = paper.usuzumi1, maxLines = 2, modifier = Modifier.weight(1f))
+                                    InkLink("Keep", ink) { draft = draft?.copy(keepsakes = m.keepsakes + c) }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -418,6 +472,7 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
                 }
             }
         }
+    }
     }
 
     if (choosingFeeling) {

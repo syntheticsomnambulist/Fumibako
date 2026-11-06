@@ -10,13 +10,30 @@ import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.MemoryKind
 import dev.aiharness.core.model.MemoryLevel
+import dev.aiharness.core.memory.KeepsakeFinder
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.JsonObject
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 private val DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-class MemorySaveTool(private val memory: MemoryService) : AgentTool {
+/** `keep` as a list, one handle or several (a handle can hold commas, so a lone string isn't split). */
+private fun JsonObject.keepList(): List<String>? = when (val value = this["keep"]) {
+    null, JsonNull -> null
+    is JsonArray -> value.mapNotNull { (it as? JsonPrimitive)?.contentOrNull?.trim() }.filter { it.isNotEmpty() }
+    is JsonPrimitive -> value.contentOrNull?.trim()?.let(::listOf)
+    else -> null
+}
+
+private const val KEEP_HELP =
+    "What to keep with it from the note you're answering or your own letter, by its handle as you see it " +
+        "(like \"[cassette: rainy day mix]\" or \"the photo\"), or \"nothing\". By default the first thing in the note is kept."
+
+class MemorySaveTool(private val memory: MemoryService, private val keepsakes: KeepsakeFinder? = null) : AgentTool {
     override val spec = ToolSpec(
         name = "memory_save",
         description = "Keep something in your long-term memory so you can recall it in future conversations: facts about the user, " +
@@ -42,12 +59,14 @@ class MemorySaveTool(private val memory: MemoryService) : AgentTool {
             string("replaces", "The id of an older memory this one replaces, when a fact has changed (e.g. they moved house). The old one is kept as history.")
             stringArray("tags", "A few short topic tags.")
             boolean("about_user_persona", "True if this is specifically about the user's current persona.")
+            stringArray("keep", KEEP_HELP)
         },
     )
 
     override fun isAvailable(settings: AppSettings) = settings.memory.enabled && settings.memory.memoryToolsEnabled
 
     override suspend fun execute(args: JsonObject, context: ToolContext): ToolOutcome {
+        val kept = keepsakes?.find(context.conversation.id, args.keepList(), byDefault = !context.background).orEmpty()
         val kind = when (args.string("kind")?.lowercase()) {
             "reflection" -> MemoryKind.REFLECTION
             "episode" -> MemoryKind.EPISODE
@@ -68,10 +87,12 @@ class MemorySaveTool(private val memory: MemoryService) : AgentTool {
             feltMood = mood,
             feltMoodChosen = mood != null,
             replaces = replaces,
+            keepsakes = kept,
         )
         val id = result.entry.id.take(8)
         val text = buildString {
             append(if (result.mergedWithExisting) "You already remembered this; updated it (id $id)." else "Kept (id $id).")
+            if (kept.isNotEmpty()) append(" With it: ").append(kept.joinToString(" and ") { it.label }).append('.')
             result.replaced?.let { append(" Marked ${it.id.take(8)} as replaced; it stays as history.") }
         }
         return ToolOutcome(text)
@@ -119,7 +140,7 @@ class MemorySearchTool(private val memory: MemoryService) : AgentTool {
     }
 }
 
-class MemoryUpdateTool(private val memory: MemoryService) : AgentTool {
+class MemoryUpdateTool(private val memory: MemoryService, private val keepsakes: KeepsakeFinder? = null) : AgentTool {
     override val spec = ToolSpec(
         name = "memory_update",
         description = "Change an existing memory found with memory_search or recalled just now: correct it, change how much it " +
@@ -132,6 +153,7 @@ class MemoryUpdateTool(private val memory: MemoryService) : AgentTool {
             string("mood", "How you feel about it now, in a word or two.")
             string("reason", "Why the feeling changed, in one short sentence. Required with mood.")
             boolean("core", "Whether the memory should always be in mind.")
+            stringArray("keep", "Something from the note you're answering or your letter to keep with it too, by its handle as you see it.")
         },
     )
 
@@ -145,9 +167,14 @@ class MemoryUpdateTool(private val memory: MemoryService) : AgentTool {
         val content = args.string("content")
         val level = MemoryLevel.parse(args.string("weight") ?: args.string("importance"))
         val core = args.bool("core")
-        if (content != null || level != null || core != null) {
-            memory.update(entry.id, content = content, level = level, pinned = core)
-            notes += "Memory updated."
+        val keep = args.keepList()
+        val kept = if (keep != null) keepsakes?.find(context.conversation.id, keep, byDefault = false).orEmpty() else emptyList()
+        if (content != null || level != null || core != null || kept.isNotEmpty()) {
+            memory.update(entry.id, content = content, level = level, pinned = core, keep = kept)
+            notes += if (content != null || level != null || core != null) "Memory updated." else "Kept with it: " + kept.joinToString(" and ") { it.label } + "."
+        } else if (keep != null) {
+            notes += "Nothing in the latest letters goes by that name, so nothing was kept with it."
+            failed = true
         }
         args.string("mood")?.let { mood ->
             when (val change = memory.reviseFeeling(entry.id, mood, args.string("reason"))) {

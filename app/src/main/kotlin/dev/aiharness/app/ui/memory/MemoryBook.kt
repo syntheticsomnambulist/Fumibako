@@ -41,12 +41,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -99,10 +99,13 @@ enum class BookTab(val label: String) {
     ABOUT_YOU("About you"),
     HAPPENED("Happened"),
     THOUGHTS("Thoughts"),
+
+    /** Only memories with something kept. */
+    KEEPSAKES("Keepsakes"),
     ;
 
     fun includes(kind: MemoryKind, isCore: Boolean): Boolean = when (this) {
-        ALL -> true
+        ALL, KEEPSAKES -> true
         ALWAYS -> isCore
         ABOUT_YOU -> kind == MemoryKind.FACT || kind == MemoryKind.CORE
         HAPPENED -> kind == MemoryKind.EPISODE
@@ -223,6 +226,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
     fun matches(p: BookPage): Boolean {
         val m = p.memory
         if (!tab.includes(m.kind, m.isCore)) return false
+        if (tab == BookTab.KEEPSAKES && m.keepsakes.isEmpty()) return false
         if (felt != null && p.feeling?.family != felt) return false
         if (about != null && m.aboutUserPersonaId != about) return false
         if (terms.isNotEmpty()) {
@@ -244,10 +248,12 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
     val scopedUsers = users.filter { u -> all.any { it.aboutUserPersonaId == u.id } }
 
     val sheet by remember(personaId) { harness.stickers.observeArt() }.collectAsStateWithLifecycle(emptyList())
+
+    KeepsakeHost(personaId, persona, name) { below ->
     CompositionLocalProvider(LocalFeelingStickers provides sheet.filter { it.ownerPersonaId == personaId }) {
         LazyColumn(
             Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp + below),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item("bar") {
@@ -301,11 +307,16 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
                     item("env-$month") {
                         val count = monthDays.sumOf { days[it]?.size ?: 0 }
                         val letterCount = letters.lettersPerMonth[month] ?: 0
+                        // A kept song or mix shows at the top of a closed month.
+                        val peek = monthDays.flatMap { days[it].orEmpty() }.flatMap { it.memory.keepsakes }
+                            .mapNotNull { (it.part as? dev.aiharness.core.model.ContentPart.Attachment)?.kind }
+                            .firstOrNull { it == dev.aiharness.core.model.AttachmentKind.SONG || it == dev.aiharness.core.model.AttachmentKind.PLAYLIST }
                         MonthEnvelope(
                             monthName(month),
                             listOfNotNull(if (count == 1) "1 memory" else "$count memories", letterCount.takeIf { it > 0 }?.let { if (it == 1) "1 letter" else "$it letters" }).joinToString(" · "),
                             open = open,
                             ink = ink,
+                            peek = peek,
                         ) {
                             if (month in openMonths) {
                                 openMonths.remove(month)
@@ -336,6 +347,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
             }
         }
     }
+    }
 }
 
 @Composable
@@ -365,6 +377,7 @@ private fun BookTabs(selected: BookTab, ink: Color, pattern: TapePattern, onSele
         BookTab.ABOUT_YOU to Tape(s.you, s.youPattern),
         BookTab.HAPPENED to Tape(s.ink("wakaba"), TapePattern.STRIPES),
         BookTab.THOUGHTS to Tape(s.ink("fuji"), TapePattern.DOTS),
+        BookTab.KEEPSAKES to Tape(s.ink("beni"), TapePattern.GINGHAM),
     )
     Row(
         Modifier
@@ -473,7 +486,9 @@ private fun BookDay(
 ) {
     val sources = pages.mapNotNull { p -> p.memory.sourceMessageId?.let { letters.messages[it] } }
     val away = sources.isNotEmpty() && sources.size == pages.size && sources.all { it.origin == MessageOrigin.HEARTBEAT }
-    val picture = letters.pictures[day]?.firstOrNull()
+    // What the day's memories kept; the day's picture shows only on days without any.
+    val kept = pages.flatMap { p -> p.memory.keepsakes.map { it to p } }.distinctBy { it.first.key }
+    val picture = if (kept.isEmpty()) letters.pictures[day]?.firstOrNull() else null
     val quoted = sources.firstNotNullOfOrNull { m -> quoteFrom(m.displayText)?.let { it to m } }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = modifier.padding(top = 10.dp)) {
@@ -505,6 +520,7 @@ private fun BookDay(
         } else {
             quote?.invoke()
         }
+        DayKeepsakes(kept, onMore = onOpen)
         pages.filter { it.memory.isReplaced }.forEach { ReplacedPage(it, ink) { onOpen(it.memory.id) } }
         pages.filter { !it.memory.isReplaced && it.memory.kind == MemoryKind.EPISODE }.forEach { HappenedPage(it, ink, tape) { onOpen(it.memory.id) } }
         pages.filter { !it.memory.isReplaced && it.isUpdate && it.memory.kind != MemoryKind.EPISODE }.forEach { UpdatedPage(it, ink) { onOpen(it.memory.id) } }

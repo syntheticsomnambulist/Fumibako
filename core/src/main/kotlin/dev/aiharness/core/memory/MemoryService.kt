@@ -1,6 +1,7 @@
 package dev.aiharness.core.memory
 
 import dev.aiharness.core.model.ChatMessage
+import dev.aiharness.core.model.Keepsake
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.MemoryKind
 import dev.aiharness.core.model.MemoryLevel
@@ -102,6 +103,7 @@ class MemoryService(
         feltMoodChosen: Boolean = false,
         replaces: String? = null,
         userTouched: Boolean = false,
+        keepsakes: List<Keepsake> = emptyList(),
     ): SaveResult {
         val now = clock.nowMillis()
         val clean = content.trim()
@@ -120,6 +122,7 @@ class MemoryService(
                 updatedAt = now,
                 lastUsedAt = now,
                 useCount = existing.useCount + 1,
+                keepsakes = (existing.keepsakes + keepsakes).distinctBy { it.key },
             )
         } else {
             MemoryEntry(
@@ -140,6 +143,7 @@ class MemoryService(
                 updatedAt = now,
                 lastAccessedAt = now,
                 lastUsedAt = now,
+                keepsakes = keepsakes.distinctBy { it.key },
             )
         }
         repo.upsert(entry)
@@ -163,6 +167,10 @@ class MemoryService(
         pinned: Boolean? = null,
         tags: List<String>? = null,
         byUser: Boolean = false,
+        /** Keepsakes to add (ones already kept stay). */
+        keep: List<Keepsake> = emptyList(),
+        /** Keepsakes to take out, by key. */
+        unkeep: Set<String> = emptySet(),
     ): MemoryEntry? {
         val current = repo.get(id) ?: return null
         val now = clock.nowMillis()
@@ -171,6 +179,7 @@ class MemoryService(
             level = level ?: current.level,
             pinned = pinned ?: current.pinned,
             tags = tags ?: current.tags,
+            keepsakes = (current.keepsakes + keep).distinctBy { it.key }.filter { it.key !in unkeep },
             userTouched = current.userTouched || byUser,
             updatedAt = now,
             lastUsedAt = if (byUser) now else current.lastUsedAt,

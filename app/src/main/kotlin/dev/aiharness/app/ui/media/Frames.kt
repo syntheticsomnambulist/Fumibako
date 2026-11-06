@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -646,6 +647,63 @@ fun FilmStrip(video: ContentPart.Attachment, scale: Float = 1f, modifier: Modifi
                     .border(1.dp, Color(0xFFDFCEBF))
                     .padding(horizontal = (8 * scale).dp, vertical = (2 * scale).dp),
             )
+        }
+    }
+}
+
+/**
+ * A cassette's J-card, the paper insert, as it's glued into the memory book: the title and the line
+ * beneath in the sender's [ink], and the songs in the sender's hand.
+ */
+@Composable
+fun JCardInsert(mix: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifier: Modifier = Modifier) {
+    val card = Color(0xFFF6ECD9)
+    Row(
+        modifier
+            .width((230 * scale).dp)
+            .lamplit()
+            .shadow((1.5f * scale).dp, RoundedCornerShape(2.dp))
+            .background(card, RoundedCornerShape(2.dp)),
+    ) {
+        // The spine, where the insert folds.
+        Box(Modifier.width((16 * scale).dp).fillMaxHeight().background(lerp(card, ink, 0.22f)))
+        Column(Modifier.padding(horizontal = (10 * scale).dp, vertical = (8 * scale).dp).ruled(scale), verticalArrangement = Arrangement.spacedBy((1 * scale).dp)) {
+            Text((mix.title ?: "a mix").uppercase(), style = ui(9.5f * scale, bold = true, spacing = 0.14f), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            mix.subtitle?.let { Text(it, style = hand(12f * scale), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            mix.tracks.take(6).forEachIndexed { i, t ->
+                Text(
+                    "${i + 1}. " + listOfNotNull(t.title ?: t.name?.substringBeforeLast('.') ?: "a song", t.artist).joinToString(" · "),
+                    style = hand(12.5f * scale),
+                    color = Brown,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (mix.tracks.size > 6) Text("and ${mix.tracks.size - 6} more", style = hand(11f * scale), color = SoftBrown)
+        }
+    }
+}
+
+/** Two frames snipped from a film strip, as they're kept in the memory book. */
+@Composable
+fun FilmSnip(video: ContentPart.Attachment, scale: Float = 1f, modifier: Modifier = Modifier) {
+    val frames = video.frameRefs.ifEmpty { listOfNotNull(video.thumbRef) }.take(2)
+    Box(modifier.size((196 * scale).dp, (122 * scale).dp).shadow((1.5f * scale).dp).background(Color(0xFF2A2420)).lamplit()) {
+        Canvas(Modifier.fillMaxSize()) {
+            val k = size.width / 196f
+            var x = 6 * k
+            while (x < size.width) {
+                drawRoundRect(Color(0xFFF0E6DD), Offset(x, 5 * k), Size(9 * k, 7 * k), CornerRadius(1.5f * k))
+                drawRoundRect(Color(0xFFF0E6DD), Offset(x, size.height - 12 * k), Size(9 * k, 7 * k), CornerRadius(1.5f * k))
+                x += 18 * k
+            }
+        }
+        Row(Modifier.padding(start = (8 * scale).dp, top = (18 * scale).dp), horizontalArrangement = Arrangement.spacedBy((6 * scale).dp)) {
+            repeat(2) { i ->
+                val ref = frames.getOrNull(i)
+                if (ref != null) BlobImage(ref, Modifier.size((87 * scale).dp, (86 * scale).dp), contentScale = ContentScale.Crop, maxSize = 320)
+                else Box(Modifier.size((87 * scale).dp, (86 * scale).dp).background(Color(0xFF4A3F38)))
+            }
         }
     }
 }
