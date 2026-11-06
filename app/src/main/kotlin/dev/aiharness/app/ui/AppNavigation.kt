@@ -1,5 +1,6 @@
 package dev.aiharness.app.ui
 
+import androidx.compose.runtime.getValue
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -9,7 +10,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import dev.aiharness.app.ui.theme.stationery
 import dev.aiharness.app.ui.theme.paper
@@ -42,13 +42,15 @@ import androidx.navigation.compose.rememberNavController
 import dev.aiharness.app.ui.chat.ChatScreen
 import dev.aiharness.app.ui.chats.ChatsScreen
 import dev.aiharness.app.ui.personas.MemoryScreen
-import dev.aiharness.app.ui.personas.PersonaEditScreen
 import dev.aiharness.app.ui.personas.PersonasScreen
 import dev.aiharness.app.ui.settings.KeysScreen
+import dev.aiharness.app.ui.personas.PersonaHeartbeatScreen
+import dev.aiharness.app.ui.personas.YouGalleryScreen
+import dev.aiharness.app.ui.personas.YouPageScreen
+import dev.aiharness.app.ui.settings.SettingsSectionScreen
 import dev.aiharness.app.ui.settings.ModelEditScreen
 import dev.aiharness.app.ui.settings.ModelsScreen
 import dev.aiharness.app.ui.settings.SettingsScreen
-import dev.aiharness.app.ui.settings.UserPersonasScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 
 object Routes {
@@ -59,8 +61,10 @@ object Routes {
     const val KEYS = "keys"
     const val USER_PERSONAS = "user_personas"
     fun chat(id: String) = "chat/$id"
-    fun persona(id: String) = "persona/$id"
     fun personaPage(id: String) = "page/$id"
+    fun personaHeartbeat(id: String) = "page/$id/heartbeat"
+    fun youPage(id: String) = "you/$id"
+    fun settings(section: String) = "settings/$section"
     fun memory(personaId: String) = "memory/$personaId"
     fun model(id: String) = "model/$id"
     const val NEW = "new"
@@ -97,14 +101,16 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
             composable(Routes.CHATS) { ChatsScreen(nav) }
             composable("chat/{id}") { entry -> ChatScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.PERSONAS) { PersonasScreen(nav) }
-            composable("persona/{id}") { entry -> PersonaEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
+            composable("page/{id}/heartbeat") { entry -> PersonaHeartbeatScreen(nav, entry.arguments?.getString("id").orEmpty()) }
+            composable("you/{id}") { entry -> YouPageScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("page/{id}") { entry -> PersonaPageScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("memory/{id}") { entry -> MemoryScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.SETTINGS) { SettingsScreen(nav) }
+            composable("settings/{section}") { entry -> SettingsSectionScreen(nav, entry.arguments?.getString("section").orEmpty()) }
             composable(Routes.MODELS) { ModelsScreen(nav) }
             composable("model/{id}") { entry -> ModelEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.KEYS) { KeysScreen(nav) }
-            composable(Routes.USER_PERSONAS) { UserPersonasScreen(nav) }
+            composable(Routes.USER_PERSONAS) { YouGalleryScreen(nav) }
         }
     }
 }

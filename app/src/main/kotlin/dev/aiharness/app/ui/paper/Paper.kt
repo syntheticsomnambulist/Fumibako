@@ -148,9 +148,32 @@ fun Polaroid(
     framePadding: Dp = 10.dp,
     cornerTaped: Boolean = false,
     caption: @Composable (() -> Unit)? = null,
+) = PolaroidFrame(
+    tape = Tape(stationery.ink(persona.ink), persona.tapePattern),
+    modifier = modifier,
+    tiltDegrees = tiltDegrees,
+    tapeTiltDegrees = tapeTiltDegrees,
+    bottomPadding = bottomPadding,
+    framePadding = framePadding,
+    cornerTaped = cornerTaped,
+    picture = { PersonaPortrait(persona, it) },
+    caption = caption,
+)
+
+/** A polaroid of anything: [picture] fills the square. */
+@Composable
+fun PolaroidFrame(
+    tape: Tape,
+    modifier: Modifier = Modifier,
+    tiltDegrees: Float = 0f,
+    tapeTiltDegrees: Float = -4f,
+    bottomPadding: Dp = 0.dp,
+    framePadding: Dp = 10.dp,
+    cornerTaped: Boolean = false,
+    picture: @Composable (Modifier) -> Unit,
+    caption: @Composable (() -> Unit)? = null,
 ) {
     val s = stationery
-    val tape = Tape(s.ink(persona.ink), persona.tapePattern)
     Column(
         modifier
             .rotate(tiltDegrees)
@@ -167,9 +190,16 @@ fun Polaroid(
             .padding(start = framePadding, end = framePadding, top = framePadding, bottom = bottomPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        PersonaPortrait(persona, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(1.dp)))
+        picture(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(1.dp)))
         caption?.invoke()
     }
+}
+
+/** A user persona's picture: their photo if they chose one, otherwise an ink wash in their ink. */
+@Composable
+fun UserPortrait(user: dev.aiharness.core.model.UserPersona?, modifier: Modifier = Modifier) {
+    val ref = user?.avatarRef
+    if (ref != null) BlobImage(ref, modifier, maxSize = 512) else InkPortrait(user?.id ?: "you", stationery.ink(user?.ink ?: "sora"), modifier, figure = false)
 }
 
 /**

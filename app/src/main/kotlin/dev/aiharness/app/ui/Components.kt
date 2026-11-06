@@ -1,5 +1,7 @@
 package dev.aiharness.app.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,20 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -99,7 +93,7 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SwitchRow(title: String, checked: Boolean, onChange: (Boolean) -> Unit, subtitle: String? = null) {
+fun SwitchRow(title: String, checked: Boolean, onChange: (Boolean) -> Unit, subtitle: String? = null, ink: androidx.compose.ui.graphics.Color? = null) {
     Row(
         Modifier.fillMaxWidth().clickable { onChange(!checked) }.padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -108,7 +102,7 @@ fun SwitchRow(title: String, checked: Boolean, onChange: (Boolean) -> Unit, subt
             Text(title, style = MaterialTheme.typography.bodyLarge)
             subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
-        dev.aiharness.app.ui.paper.TickBox(checked, onCheckedChange = null)
+        dev.aiharness.app.ui.paper.TickBox(checked, onCheckedChange = null, ink = ink ?: dev.aiharness.app.ui.theme.stationery.you)
     }
 }
 
@@ -122,43 +116,23 @@ fun <T> PickerField(
     onSelect: (T?) -> Unit,
     modifier: Modifier = Modifier,
     noneLabel: String? = null,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = selected?.let(optionLabel) ?: noneLabel.orEmpty(),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, null) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Box(Modifier.matchParentSize().clickable { expanded = true })
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            if (noneLabel != null) {
-                DropdownMenuItem(text = { Text(noneLabel) }, onClick = { expanded = false; onSelect(null) })
-            }
-            options.forEach { option ->
-                DropdownMenuItem(text = { Text(optionLabel(option)) }, onClick = { expanded = false; onSelect(option) })
-            }
-        }
-    }
-}
+) = dev.aiharness.app.ui.paper.PaperSelect(label, options, selected, optionLabel, onSelect, modifier, noneLabel)
 
-/** Numeric text field that only reports valid values. */
+/** A number typed onto an index card (for values without a natural range; otherwise use a stepper). */
 @Composable
 fun NumberField(label: String, value: Number?, onChange: (String) -> Unit, modifier: Modifier = Modifier, decimal: Boolean = false) {
     var text by remember(value) { mutableStateOf(value?.toString().orEmpty()) }
-    OutlinedTextField(
+    dev.aiharness.app.ui.paper.IndexCardField(
+        label = label,
         value = text,
         onValueChange = {
             text = it
             onChange(it)
         },
-        label = { Text(label) },
+        modifier = modifier,
         singleLine = true,
+        style = dev.aiharness.app.ui.theme.PaperType.noteBody,
         keyboardOptions = KeyboardOptions(keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number),
-        modifier = modifier.fillMaxWidth(),
     )
 }
 
@@ -225,6 +199,18 @@ fun letterTime(millis: Long, now: Long = System.currentTimeMillis(), zone: java.
         date == today.minusDays(1) -> "Yesterday"
         date.isAfter(today.minusDays(7)) -> time.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault())
         else -> "${date.dayOfMonth} ${date.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault())}"
+    }
+}
+
+/** [letterTime] for the middle of a sentence: "at 09:30", "yesterday", "on Mon", "on 3 Nov". */
+fun letterTimeInSentence(millis: Long, now: Long = System.currentTimeMillis(), zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): String {
+    val date = java.time.Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
+    val today = java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+    val label = letterTime(millis, now, zone)
+    return when {
+        date == today -> "at $label"
+        date == today.minusDays(1) -> "yesterday"
+        else -> "on $label"
     }
 }
 

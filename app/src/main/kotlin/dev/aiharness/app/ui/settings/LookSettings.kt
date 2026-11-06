@@ -1,5 +1,7 @@
 package dev.aiharness.app.ui.settings
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import dev.aiharness.app.ui.paper.PaperCorner
 import dev.aiharness.app.ui.paper.PaperChoice
 import android.Manifest
@@ -16,19 +18,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,8 +35,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import dev.aiharness.app.ui.NumberField
-import dev.aiharness.app.ui.SectionTitle
+import dev.aiharness.app.ui.paper.StepperRow
 import dev.aiharness.app.ui.SwitchRow
 import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
@@ -58,25 +55,19 @@ import kotlin.math.roundToInt
 
 private val OutlinePresets = listOf("White" to "#FFFFFF", "Cream" to "#FFF4E0", "Ink" to "#3B2F27")
 
-/** Theme, polaroid frames, sticker outline and mood words. */
-@OptIn(ExperimentalMaterial3Api::class)
+/** How the theme switches between day and night. */
 @Composable
-fun LookSection(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) {
+fun LookDayNight(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) {
     val theme = s.theme
     fun updateTheme(transform: (ThemeSettings) -> ThemeSettings) = update { it.copy(theme = transform(it.theme)) }
 
-    SectionTitle("Look")
-    Text("Day and night", style = PaperType.label, color = paper.kasure2)
+    Text("Day and night", style = PaperType.entryTitle, color = paper.sumi)
     val modes = listOf(DayNightMode.FIXED_HOURS to "Set hours", DayNightMode.SUN to "Sun", DayNightMode.STATIC to "Fixed")
     PaperChoice(modes, theme.dayNight, { mode -> updateTheme { it.copy(dayNight = mode) } })
     when (theme.dayNight) {
-        DayNightMode.FIXED_HOURS -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            NumberField("Day starts (hour)", theme.dayStartMinute / 60, { v ->
-                v.toIntOrNull()?.takeIf { it in 0..23 }?.let { h -> updateTheme { it.copy(dayStartMinute = h * 60) } }
-            }, Modifier.weight(1f))
-            NumberField("Night starts (hour)", theme.dayEndMinute / 60, { v ->
-                v.toIntOrNull()?.takeIf { it in 0..23 }?.let { h -> updateTheme { it.copy(dayEndMinute = h * 60) } }
-            }, Modifier.weight(1f))
+        DayNightMode.FIXED_HOURS -> {
+            StepperRow("Day starts", theme.dayStartMinute / 60, { h -> updateTheme { it.copy(dayStartMinute = h * 60) } }, 0..23, describe = { "%02d:00".format(it) })
+            StepperRow("Night starts", theme.dayEndMinute / 60, { h -> updateTheme { it.copy(dayEndMinute = h * 60) } }, 0..23, describe = { "%02d:00".format(it) })
         }
         DayNightMode.SUN -> SunLocation(theme, ::updateTheme)
         DayNightMode.STATIC -> {
@@ -87,6 +78,15 @@ fun LookSection(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) 
         }
     }
 
+}
+
+/** Sticker outline, polaroid frames and mood words. */
+@Composable
+fun LookPaper(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) {
+    val theme = s.theme
+    fun updateTheme(transform: (ThemeSettings) -> ThemeSettings) = update { it.copy(theme = transform(it.theme)) }
+
+    Text("Paper and frames", style = PaperType.entryTitle, color = paper.sumi)
     Text("Sticker outline", style = PaperType.label, color = paper.kasure2)
     Text("Stickers arrive in the next version; the outline colour also frames polaroids.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {

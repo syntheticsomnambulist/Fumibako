@@ -19,6 +19,16 @@ Stickers (including per-persona unread marks and emotion stickers) move to v0.3.
   write; per-persona rhythm and heartbeat model; scheduling at the shortest interval; every wakeup
   logged (including why it rested). The heartbeat settings now live under a "rhythm", so the
   installed app's heartbeat timings reset to the defaults once.
+- **Steps 3 to 5, controls, settings, your personas, persona pages: done.**
+  - Controls: index-card fields with ruled lines under the text, steppers you can type into,
+    square selects, and tape placements that never repeat on neighbouring cards.
+  - Settings is a contents page (一 to 八) with a page per section.
+  - Personas edit in place: **Edit** on the page, **Done** to keep. Back while editing leaves
+    edit mode, asking first if anything changed. Each persona has a heartbeat page of its own.
+  - Your personas have a gallery and a page each: about you, what each persona remembers about
+    you, letters written as you, and the default for new letters. Tapping a "Writing as" card
+    opens its page; switching happens there or inside a letter.
+  - The old one-screen editors are gone. The keys screen keeps its old look until step 7.
 
 ## What v0.2 includes
 

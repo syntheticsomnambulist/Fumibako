@@ -196,6 +196,18 @@ fun Modifier.topTape(
     }
 }
 
+/** Two pieces of tape at the top corners, angled in towards each other. */
+fun Modifier.topPairTape(tape: Tape, length: Dp = 44.dp, thickness: Dp = 14.dp, inset: Dp = 16.dp): Modifier = drawWithCache {
+    val l = length.toPx()
+    val left = Offset(inset.toPx() + l / 2, -1.dp.toPx())
+    val right = Offset(size.width - inset.toPx() - l / 2, -1.dp.toPx())
+    onDrawWithContent {
+        drawContent()
+        rotate(-8f, pivot = left) { drawTape(Offset(left.x - l / 2, left.y), Offset(left.x + l / 2, left.y), thickness.toPx(), tape) }
+        rotate(7f, pivot = right) { drawTape(Offset(right.x - l / 2, right.y), Offset(right.x + l / 2, right.y), thickness.toPx(), tape) }
+    }
+}
+
 /** The persona-or-user tape in the current theme's version of [inkName]. */
 @Composable
 fun tapeOf(inkName: String?, pattern: TapePattern): Tape = Tape(stationery.ink(inkName), pattern)

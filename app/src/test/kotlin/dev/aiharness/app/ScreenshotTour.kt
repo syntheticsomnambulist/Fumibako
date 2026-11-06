@@ -8,13 +8,14 @@ import android.graphics.Shader
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -85,34 +86,74 @@ class ScreenshotTour {
         assumeTrue(outDir != null)
         seed(time, season)
         waitFor("Kestrel")
-        shot("${prefix}_1_chats")
+        shot("${prefix}_01_chats")
 
         click("Aria")
         waitFor("actually sleep")
-        shot("${prefix}_2_chat")
-        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        shot("${prefix}_02_chat")
+        back()
 
         click("Personas")
         waitFor("Juno")
-        shot("${prefix}_3_personas")
+        shot("${prefix}_03_personas")
 
         click("Aria")
-        waitFor("Memory book")
-        shot("${prefix}_4_persona_page")
+        waitFor("Write a letter")
+        shot("${prefix}_04_persona_page")
+        scrollTo("Wakes now and then")
+        shot("${prefix}_04b_persona_page_more")
 
+        top()
         click("Edit")
-        waitFor("Appearance tags")
-        shot("${prefix}_5_persona_editor")
-        compose.onNodeWithText("Tape").performScrollTo()
-        shot("${prefix}_5b_persona_editor_look")
+        waitFor("EDITING")
+        shot("${prefix}_05_persona_editor")
+        scrollTo("Appearance tags")
+        shot("${prefix}_05b_persona_editor_more")
+        back()
+        top()
+        waitFor("Edit")
+
+        scrollTo("Wakes now and then")
+        click("Settings")
+        waitFor("Wakes up")
+        shot("${prefix}_06_persona_heartbeat")
+        back()
+        back()
+
+        scrollTo("All your personas")
+        click("All your personas")
+        waitFor("Your personas")
+        shot("${prefix}_07_your_personas")
+        click("Sam")
+        waitFor("What they remember")
+        shot("${prefix}_08_you_page")
         back()
         back()
 
         click("Settings")
-        waitFor("Day and night")
-        shot("${prefix}_6_settings")
-        compose.onNodeWithText("Proactive").performScrollTo()
-        shot("${prefix}_6b_settings_heartbeat")
+        waitFor("CONTENTS")
+        shot("${prefix}_09_settings")
+        listOf(
+            "Look" to "Day and night",
+            "Heartbeat" to "Time only",
+            "Memory" to "Long-term memory",
+            "Models and keys" to "Model profiles",
+        ).forEachIndexed { i, (section, marker) ->
+            click(section)
+            waitFor(marker)
+            shot("${prefix}_1${i}_settings_${section.substringBefore(' ').lowercase()}")
+            back()
+        }
+    }
+
+    private fun top() {
+        compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToIndex(0)
+        compose.waitForIdle()
+    }
+
+    private fun scrollTo(text: String) {
+        compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(hasText(text, substring = true, ignoreCase = true))
+        compose.waitForIdle()
     }
 
     private fun back() {
@@ -197,6 +238,9 @@ class ScreenshotTour {
 
         h.memory.save(aria.id, "Sam is writing a thesis on urban ecology", level = MemoryLevel.MATTERS_DEEPLY, pinned = true, feltMood = "proud")
         h.memory.save(aria.id, "Sam finished the first draft of the thesis", kind = MemoryKind.EPISODE, feltMood = "delighted")
-        h.memory.save(aria.id, "Sam drinks too much coffee when stressed", level = MemoryLevel.IN_PASSING, feltMood = "fond")
+        h.memory.save(aria.id, "Sam drinks too much coffee when stressed", level = MemoryLevel.IN_PASSING, feltMood = "fond", aboutUserPersonaId = sam.id)
+        h.memory.save(aria.id, "Sam loves walking in the rain", feltMood = "wistful", aboutUserPersonaId = sam.id)
+        h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.REFLECTED, now - 6 * 3_600_000L))
+        h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.RESTED, now - 8 * 3_600_000L, note = "quiet hours"))
     }
 }

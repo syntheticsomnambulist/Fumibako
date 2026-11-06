@@ -158,7 +158,7 @@ fun ChatsScreen(nav: NavController) {
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { picking = false; nav.navigate(Routes.persona(Routes.NEW)) }) { Text("New persona") } },
+            confirmButton = { TextButton(onClick = { picking = false; nav.navigate(Routes.personaPage(Routes.NEW)) }) { Text("New persona") } },
             dismissButton = { TextButton(onClick = { picking = false }) { Text("Cancel") } },
         )
     }

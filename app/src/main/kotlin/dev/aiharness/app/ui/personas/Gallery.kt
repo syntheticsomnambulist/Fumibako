@@ -1,5 +1,6 @@
 package dev.aiharness.app.ui.personas
 
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,15 +21,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -55,14 +53,12 @@ import dev.aiharness.app.ui.theme.stationery
 import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
-import kotlinx.coroutines.launch
 
 /** Personas as polaroids taped into the page, then the user's own personas ("Writing as"). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PersonasScreen(nav: NavController) {
     val harness = LocalAppContainer.current.harness
-    val scope = rememberCoroutineScope()
     val personas by remember { harness.personas.observeAll() }.collectAsStateWithLifecycle(emptyList())
     val conversations by remember { harness.conversations.observeAll() }.collectAsStateWithLifecycle(emptyList())
     val users by remember { harness.userPersonas.observeAll() }.collectAsStateWithLifecycle(emptyList())
@@ -83,7 +79,7 @@ fun PersonasScreen(nav: NavController) {
                 pair.forEachIndexed { index, persona ->
                     Box(Modifier.weight(1f)) {
                         if (persona == null) {
-                            NewPolaroid { nav.navigate(Routes.persona(Routes.NEW)) }
+                            NewPolaroid { nav.navigate(Routes.personaPage(Routes.NEW)) }
                         } else {
                             val latest = conversations.filter { it.personaId == persona.id }.maxByOrNull { it.updatedAt }
                             GalleryPolaroid(persona, latest, memoryCounts[persona.id], index) { nav.navigate(Routes.personaPage(persona.id)) }
@@ -98,13 +94,11 @@ fun PersonasScreen(nav: NavController) {
         }
         items(users, key = { it.id }) { user ->
             val active = user.id == settings?.activeUserPersonaId
-            WritingAsCard(user, active) {
-                scope.launch { harness.settings.update { it.copy(activeUserPersonaId = user.id) } }
-            }
+            WritingAsCard(user, active) { nav.navigate(Routes.youPage(user.id)) }
         }
         item {
             Text(
-                "Manage your personas",
+                "All your personas",
                 style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp),
                 color = stationery.you,
                 modifier = Modifier.clip(RoundedCornerShape(4.dp)).combinedClickable(onClick = { nav.navigate(Routes.USER_PERSONAS) }).padding(6.dp),
@@ -141,7 +135,7 @@ private fun GalleryPolaroid(persona: Persona, latest: Conversation?, memories: I
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun NewPolaroid(onClick: () -> Unit) {
+internal fun NewPolaroid(label: String = "New persona", onClick: () -> Unit) {
     val s = stationery
     val dash = lerp(s.frame, s.colors.nijimi2, 0.55f)
     Column(
@@ -156,12 +150,12 @@ private fun NewPolaroid(onClick: () -> Unit) {
                 )
             }
             .clip(RoundedCornerShape(3.dp))
-            .combinedClickable(onClick = onClick, onClickLabel = "New persona"),
+            .combinedClickable(onClick = onClick, onClickLabel = label),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text("+", style = PaperType.heroName.copy(fontSize = 34.sp, lineHeight = 36.sp), color = paper.usuzumi0)
-        Text("New persona", style = PaperType.noteBody.copy(fontSize = 13.sp), color = paper.kasure2)
+        Text(label, style = PaperType.noteBody.copy(fontSize = 13.sp), color = paper.kasure2)
     }
 }
 
@@ -192,7 +186,7 @@ private fun WritingAsCard(user: UserPersona, active: Boolean, onClick: () -> Uni
     }
 }
 
-private fun talkedWhen(millis: Long, now: Long = System.currentTimeMillis()): String {
+internal fun talkedWhen(millis: Long, now: Long = System.currentTimeMillis()): String {
     val days = ((now - millis) / 86_400_000L).toInt()
     return when {
         days <= 0 -> "today"
