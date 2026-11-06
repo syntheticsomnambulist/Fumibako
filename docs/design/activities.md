@@ -117,15 +117,24 @@ persona's heartbeat page.
 - **The in-tray:** "From Sam", holding what you've left until the persona takes it up.
 - **Lately at the desk:** the log, each line leading to what was made.
 - **The drawer opens on the desk** (agreed, 6 November): tapping the drawer front slides it out
-  under the desk, showing what's put away (the objects of activities switched off); tapping one
-  takes it out and puts it back on the desk. Tapping the pull again slides it shut.
-- **What she does lives in her settings** (agreed), not in the drawer: each activity with a tick
-  (switched off, its object goes into the drawer) and a **Slot | Free** choice, with ¥¥ beside the
+  under the desk; tapping the pull again slides it shut.
+- **Putting away and taking out** (agreed): while the drawer is open, tapping something on her desk
+  puts it away (what can go is outlined), and tapping something in the drawer takes it out and
+  puts it back on her desk.
+- **The drawer means "allowed, but not what she's focusing on"** (agreed), and it keeps old things
+  too. Put away, she may still do it, just not as often. Proposed: when she sits down, the drawer
+  gets one line ("In your drawer: your haiku notebook"), and she can take something out herself,
+  which puts it back on the desk. **Kept in the drawer** (proposed), as tags you can open: letters
+  from past months, bundled; last month's diary; finished games; the trinkets the dish has no
+  room for.
+- **What she does lives in her settings** (agreed), and means "may she do this at all": each
+  activity with a switch (off: never, gone from her desk and from her drawer) that also says where
+  it is ("on her desk", "in her drawer"), and a **Slot | Free** choice, with ¥¥ beside the
   expensive ones; the games, in a section of their own; slots per visit; the stamp card for the
-  daily limit; sealed things; when it wakes, and the model for heartbeats. Everything on today's
-  heartbeat page moves there. Free activities still count towards the daily limit. Persona
-  settings and the app's Settings get a top-down redesign later (v0.95); until then, "What she
-  does" is a page in her settings.
+  daily limit; sealed things; when it wakes, and the model for heartbeats. It sits alongside her
+  other restrictions. Everything on today's heartbeat page moves there. Free activities still count
+  towards the daily limit. Persona settings and the app's Settings get a top-down redesign later
+  (v0.95); until then, "What she does" is a page in her settings.
 - **Night:** lamplight, like the other objects on the desk.
 
 ## Leaving something on the desk (proposed)
@@ -211,7 +220,7 @@ out, and open to more in the v0.7 outdoor update. The details below were agreed 
 - **Yours:** the trinkets you're given live on a desk of your own (below). You might also give
   trinkets: a photo of a real stone, left on a persona's desk, becoming a trinket.
 - **Limits:** at most one find per going-out, and a dish that holds a set number before older
-  ones move to a box in the drawer.
+  ones are kept in the drawer.
 - **Later, maybe:** plants that grow a little over time.
 - **Storage:** trinkets are a new table (owner, name, description, kind, tint or picture, origin,
   given-by, created), a migration step.
@@ -349,12 +358,14 @@ https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn
   acorn), on a desk pad. Tap any of them to open it; the
   sealed diary entry opens, then closes (seal broken) or reseals. The "last visit" line is on
   washi tape. Under the desk, tapping the drawer front slides the drawer out in place, showing
-  what's put away (her haiku notebook); take it out, or tap the pull to close. Below, "Lately at
+  what's put away (her haiku notebook) and what's kept (Juno's letters from September and October,
+  September's diary, a finished game of shiritori). While it's open, tap something on her desk to
+  put it away, or a slip in the drawer to take it out; tap the pull to close. Below, "Lately at
   the desk", with which lines used a slot.
 - **What she does** (interactive; her settings, first drawn as "The drawer"): each activity with a
-  tick and Slot | Free, ¥¥ on the expensive ones (switching one off puts its object in the drawer
-  on her desk); the Games section; slots per visit; the daily limit as a stamp card; sealed
-  things; and when she comes by.
+  switch for whether she may do it at all (saying whether it's on her desk or in her drawer) and
+  Slot | Free, ¥¥ on the expensive ones; the Games section; slots per visit; the daily limit as a
+  stamp card; sealed things; and when she comes by.
 - **Leaving something on the desk** (interactive): a link, a photo, a riddle, a first word for
   shiritori, or something to draw, with a note; leaving it drops it into her in-tray.
 - **What Aria sees at her desk:** one heartbeat's three calls (sitting down, her sketchbook,
