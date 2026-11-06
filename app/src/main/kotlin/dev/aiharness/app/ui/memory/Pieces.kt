@@ -443,19 +443,22 @@ fun MonthEnvelope(month: String, summary: String, open: Boolean, ink: Color, onC
 /** Text written on ruled lines, the lines sitting just under each line of text. */
 @Composable
 fun RuledText(text: String, style: TextStyle, color: Color, modifier: Modifier = Modifier, rule: Color = paper.nijimi1) {
-    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    // Only the baselines, and only when they move (see IndexCardField).
+    var baselines by remember { mutableStateOf<List<Float>>(emptyList()) }
     Text(
         text,
         style = style,
         color = color,
-        onTextLayout = { layout = it },
+        onTextLayout = { l ->
+            val lines = List(l.lineCount) { l.getLineBaseline(it) }
+            if (lines != baselines) baselines = lines
+        },
         modifier = modifier
             .fillMaxWidth()
             .drawBehind {
-                val l = layout ?: return@drawBehind
                 val gap = 4.dp.toPx()
-                for (i in 0 until l.lineCount) {
-                    val y = l.getLineBaseline(i) + gap
+                baselines.forEach { baseline ->
+                    val y = baseline + gap
                     drawLine(rule, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
                 }
             }

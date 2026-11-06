@@ -105,6 +105,24 @@ class ScreenshotTour {
         shot("first_02_about")
     }
 
+    /**
+     * The picture dialog in a letter. On its own, on Robolectric's small default screen: on a
+     * phone-sized one, any dialog holding a text field (even a stock OutlinedTextField in a stock
+     * AlertDialog) never goes idle under Robolectric, so the main tour leaves dialogs alone.
+     */
+    @Test
+    @Config(qualifiers = "xxhdpi")
+    fun pictureDialogShot() {
+        assumeTrue(outDir != null)
+        seed(TimeOfDay.YORU, Season.AKI)
+        waitFor("Aria")
+        click("Aria")
+        waitFor("actually sleep")
+        compose.onNodeWithContentDescription("Draw a picture").performClick()
+        waitFor("What Aria is wearing")
+        shot("picture_dialog")
+    }
+
     private fun tour(prefix: String, time: TimeOfDay, season: Season = Season.AKI) {
         assumeTrue(outDir != null)
         seed(time, season)

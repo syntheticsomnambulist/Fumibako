@@ -49,7 +49,8 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
     fun dismissError(conversationId: String) = flow(conversationId).update { it.copy(error = null) }
 
     /** User-requested image, posted into the chat as the user's own message. */
-    fun generateImage(conversationId: String, prompt: String, includePersona: Boolean, orientation: String) {
+    /** Draws a picture you asked for in a letter: [parts] of the persona, with [profileId] (null: its usual one). */
+    fun generateImage(conversationId: String, prompt: String, parts: dev.aiharness.core.image.PicturePrompt.Parts, orientation: String, profileId: String?) {
         val state = flow(conversationId)
         if (jobs[conversationId]?.isActive == true) return
         state.value = GenerationState(active = true, activeTool = "generate_image")
@@ -62,9 +63,9 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
                     settings = settings.imageGen,
                     prompt = prompt,
                     orientation = orientation,
-                    // The persona's drawing style applies either way; its looks only when it's in the picture.
                     persona = persona,
-                    parts = if (includePersona) dev.aiharness.core.image.PicturePrompt.Parts() else dev.aiharness.core.image.PicturePrompt.Parts.STYLE_ONLY,
+                    parts = parts,
+                    profile = settings.imageGen.profiles.firstOrNull { it.id == profileId },
                 )
                 harness.conversations.appendMessage(
                     ChatMessage(

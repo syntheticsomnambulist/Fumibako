@@ -173,9 +173,9 @@ fun ChatScreen(nav: NavController, conversationId: String) {
         }
     }
     if (imageDialog) {
-        ImageDialog(personaName, onDismiss = { imageDialog = false }) { prompt, includePersona, orientation ->
+        ImageDialog(personaName, persona?.imageProfileId, onDismiss = { imageDialog = false }) { prompt, parts, orientation, profileId ->
             imageDialog = false
-            vm.generateImage(prompt, includePersona, orientation)
+            vm.generateImage(prompt, parts, orientation, profileId)
         }
     }
     if (confirmDelete) {
@@ -387,24 +387,49 @@ private fun MessageActions(group: List<ChatMessage>, vm: ChatViewModel, onDismis
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Drawing a picture in a letter: what to draw, which parts of the persona go in (its looks, its
+ * clothes, its drawing style), the shape, and, with more than one, the image profile.
+ */
 @Composable
-private fun ImageDialog(personaName: String, onDismiss: () -> Unit, onGenerate: (String, Boolean, String) -> Unit) {
+private fun ImageDialog(
+    personaName: String,
+    personaProfileId: String?,
+    onDismiss: () -> Unit,
+    onGenerate: (String, dev.aiharness.core.image.PicturePrompt.Parts, String, String?) -> Unit,
+) {
+    val harness = LocalAppContainer.current.harness
+    val settings by remember { harness.settings.settings }.collectAsStateWithLifecycle(null)
+    val profiles = settings?.imageGen?.profiles.orEmpty().filter { it.isUsable }
+    var profile by remember { mutableStateOf<dev.aiharness.core.model.ImageProfile?>(null) }
+    val chosen = profile ?: settings?.imageGen?.profileFor(personaProfileId)
     var prompt by remember { mutableStateOf("") }
-    var includePersona by remember { mutableStateOf(true) }
+    var looks by remember { mutableStateOf(true) }
+    var clothes by remember { mutableStateOf(true) }
+    var style by remember { mutableStateOf(true) }
     var orientation by remember { mutableStateOf("portrait") }
     val options = listOf("portrait", "landscape", "square")
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Draw a picture", style = PaperType.entryTitle) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 dev.aiharness.app.ui.paper.IndexCardField("Tags or a description", prompt, { prompt = it }, style = PaperType.noteBody, minLines = 2, placeholder = "smiling, sitting in a cafe, rainy window")
-                SwitchRow("Include $personaName's appearance", includePersona, { includePersona = it })
+                SwitchRow("How $personaName looks", looks, { looks = it })
+                SwitchRow("What $personaName is wearing", clothes, { clothes = it })
+                SwitchRow("$personaName's drawing style", style, { style = it })
                 PaperChoice(options.map { it to it.replaceFirstChar { c -> c.uppercase() } }, orientation, { orientation = it })
+                if (profiles.size > 1) {
+                    dev.aiharness.app.ui.paper.PaperSelect("Draw with", profiles, chosen, { it.name }, { profile = it })
+                }
             }
         },
-        confirmButton = { TextButton(onClick = { onGenerate(prompt, includePersona, orientation) }, enabled = prompt.isNotBlank()) { Text("Generate") } },
+        confirmButton = {
+            TextButton(
+                onClick = { onGenerate(prompt, dev.aiharness.core.image.PicturePrompt.Parts(self = looks, outfit = clothes, style = style), orientation, chosen?.id) },
+                enabled = prompt.isNotBlank(),
+            ) { Text("Draw") }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }

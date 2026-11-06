@@ -17,6 +17,11 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   `predict`), each with request tests against a mock server. The model ids offered for OpenAI
   and Google are a starting list; any id can be typed. Old NovelAI settings don't carry over:
   add an image profile.
+- **Step 3, picture dialog: done.** In a letter: how the persona looks, what it's wearing and its
+  drawing style can each be left out, and with more than one profile, which one draws.
+  The ruled fields now keep only their baselines. (Under Robolectric, any dialog with a text
+  field on a phone-sized screen never goes idle, a stock one included, so the screenshot tour
+  shoots the picture dialog on the small default screen.)
 
 ## What v0.3 includes
 

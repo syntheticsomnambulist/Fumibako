@@ -87,7 +87,8 @@ fun IndexCardField(
 ) {
     val colors = paper
     var focused by remember { mutableStateOf(false) }
-    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    // Only the baselines, and only when they move: storing every new layout kept a dialog redrawing.
+    var baselines by remember { mutableStateOf<List<Float>>(emptyList()) }
     val rule = colors.nijimi1
     Column(
         modifier
@@ -114,20 +115,23 @@ fun IndexCardField(
             minLines = if (singleLine) 1 else minLines,
             keyboardOptions = keyboardOptions,
             visualTransformation = visualTransformation,
-            onTextLayout = { layout = it },
+            onTextLayout = { l ->
+                val lines = List(l.lineCount) { l.getLineBaseline(it) }
+                if (lines != baselines) baselines = lines
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { focused = it.isFocused }
                 .semantics { contentDescription = label }
                 .padding(top = 4.dp, bottom = 6.dp)
                 .drawBehind {
-                    val l = layout ?: return@drawBehind
-                    if (l.lineCount == 0) return@drawBehind
-                    val lineHeight = if (l.lineCount > 1) l.getLineBaseline(1) - l.getLineBaseline(0) else style.lineHeight.toPx().takeIf { it > 0 } ?: (style.fontSize.toPx() * 1.5f)
-                    val lines = max(l.lineCount, if (singleLine) 1 else minLines)
+                    val known = baselines
+                    if (known.isEmpty()) return@drawBehind
+                    val lineHeight = if (known.size > 1) known[1] - known[0] else style.lineHeight.toPx().takeIf { it > 0 } ?: (style.fontSize.toPx() * 1.5f)
+                    val lines = max(known.size, if (singleLine) 1 else minLines)
                     val gap = 4.dp.toPx()
                     for (i in 0 until lines) {
-                        val baseline = if (i < l.lineCount) l.getLineBaseline(i) else l.getLineBaseline(l.lineCount - 1) + (i - l.lineCount + 1) * lineHeight
+                        val baseline = if (i < known.size) known[i] else known.last() + (i - known.size + 1) * lineHeight
                         val y = baseline + gap
                         drawLine(rule, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
                     }

@@ -69,8 +69,8 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     fun regenerate() = container.generation.regenerate(conversationId)
     fun dismissError() = container.generation.dismissError(conversationId)
 
-    fun generateImage(prompt: String, includePersona: Boolean, orientation: String) =
-        container.generation.generateImage(conversationId, prompt, includePersona, orientation)
+    fun generateImage(prompt: String, parts: dev.aiharness.core.image.PicturePrompt.Parts, orientation: String, profileId: String?) =
+        container.generation.generateImage(conversationId, prompt, parts, orientation, profileId)
 
     fun switchModel(profile: ModelProfile) = updateConversation { it.copy(modelProfileId = profile.id) }
 
