@@ -27,6 +27,17 @@ its boards are named below. Quoted app text follows the app's American spelling.
 - Picked items wait above the text field under "GOING WITH YOUR NOTE", as small versions of their
   frames, each with a remove button (a 44dp target around a small × chip). A new item pops in, and
   the drawer closes after a pick.
+- **A link pasted into a note becomes a cutting** (decided 2026-11-06), waiting with the other
+  items.
+- **Several songs picked at once become one playlist** (decided): a cassette. A playlist file is
+  always a playlist. There's no length limit.
+
+## The playlist editor
+
+Picking several songs opens a small pop-up editor; tapping the waiting cassette before sending
+opens it again. In it: the label's title and the line beneath it (the "for Aria, from Sam" note),
+both written on the cassette in the sender's hand; the songs, which you can reorder and remove;
+and the total length. A long list scrolls, on the J-card too. (Not mocked up yet.)
 
 ## The frames ("In a letter" and "Every frame" boards)
 
@@ -59,7 +70,8 @@ placement.
   placeholders, like the app's other fonts.
 - **Sizes** in the mockups, in dp: polaroid 236 wide (picture 210), stack 272×300, tag 252×96,
   cassette 240×150, ticket 280×108, cutting 288 wide, film strip 300×132. Notes are narrower (78%
-  of the width), so frames scale down to fit them (the ticket to about 86%, the film strip to 82%).
+  of the width), so frames scale down to fit them (decided): the ticket to about 86%, the film
+  strip to 82%.
 - **Long-press** any frame for Save to phone and Share (and Copy link on a cutting).
 
 ## Tapping and motion ("Tapping photos and files", "Tapping music and video", "Links, read stamps and arrivals")
@@ -105,7 +117,7 @@ Timings are the prototypes'; tune them on a phone.
 ## Links
 
 - **Tap opens the page** in an in-app browser (Custom Tabs, toolbar in the paper colour). A setting
-  opens links in the default browser instead.
+  on the Letters page opens links in the default browser instead.
 - **Cuttings** are built from the page's Open Graph data (site name, title, picture, description),
   fetched once when the link is attached and stored with the message. A page without a picture
   gets a text-only cutting.
@@ -159,6 +171,21 @@ chat input doesn't offer them.
 - **Setting, "Lamplight at night"** (proposed for Settings, Look): "Dim and warm everything"
   (default), "Leave photos as they are", "Leave everything as it is".
 
+## Settings: a Letters page
+
+A new settings page, 九 Letters (decided 2026-11-06; its contents proposed), for how letters
+handle what's in them:
+
+- **Open links in:** "In the app" (default) or "Your browser".
+- **Link previews:** whether the app fetches a page's title and picture to make the cutting, which
+  contacts the site. On by default; off makes a plain cutting with just the address.
+- **Pictures you send:** "Smaller (1280 px, fewer tokens)" (default) or "Full size".
+- **Playback:** keep music playing after leaving the thread; start videos muted.
+- **Paper motion and haptics:** switches for the frames' animations and the haptic ticks, apart
+  from Android's "Remove animations".
+
+Lamplight stays on the Look page, since it's about appearance.
+
 ## Storage sketch
 
 - An **attachment** on a message: kind, blob ref and MIME type, display data (title, artist,
@@ -171,8 +198,8 @@ chat input doesn't offer them.
 
 ## Open
 
-- **The Link button:** a field to paste a link into, or should a link pasted into the note become
-  a cutting by itself?
-- **Where "Open links in" lives:** Look, or a new page for letters.
-- **Playlists:** several songs picked at once, or a playlist file? Is there a length limit?
-- **Notes:** scale frames down to fit, or draw smaller variants?
+- **The link's text:** proposed, a link on a line of its own leaves the note's text when it
+  becomes a cutting, and a link in the middle of a sentence stays in the text as well.
+- **The tray's Link button:** now that pasting makes a cutting, keep it as a shortcut that pastes
+  from the clipboard, or drop it?
+- **Mockups still to do:** the playlist editor and the Letters settings page.
