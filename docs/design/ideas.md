@@ -37,16 +37,21 @@ Moved to [`media.md`](media.md), planned for v0.3.5.
 From the planner's second pass ([`calendar.md`](calendar.md)); these would reach beyond the
 planner:
 
-- **Traditional tape patterns:** 市松 ichimatsu (checks), 七宝 shippō (linked rings), 青海波
-  seigaiha (waves), 麻の葉 asanoha (hemp leaf) and 矢絣 yagasuri (arrow feathers), as new
-  `TapePattern` choices beside Plain, Dots, Stripes and Gingham, in the owner's ink like the
-  others. Drawn on the "Pieces of the planner" board.
+- **More tape patterns** (agreed, including hearts, with more to come): 市松 ichimatsu (checks),
+  七宝 shippō (linked rings), 青海波 seigaiha (waves), 麻の葉 asanoha (hemp leaf), 矢絣 yagasuri
+  (arrow feathers), hearts, 鱗 uroko (scales), 亀甲 kikkō (tortoiseshell) and 籠目 kagome (basket
+  weave), as new `TapePattern` choices beside Plain, Dots, Stripes and Gingham, in the owner's
+  ink like the others. Drawn on the "Pieces of the planner" board.
+- **A 12-hour clock** (agreed): "Phone's setting", "12-hour" or "24-hour" on the Look page,
+  applying to letters, notifications and the planner alike.
 - **Seasons that follow the solar terms:** a Look setting, "Seasons change with: the months"
   (today's meteorological seasons) or "the solar terms" (spring from 立春 in early February, summer
   from 立夏 in early May, autumn from 立秋 in early August, winter from 立冬 in early November),
-  so the theme and the planner's season band agree.
-- **Persona seals:** the planner's one-character seal could also sign letters or sit by the
-  persona's name.
+  so the theme and the planner's season band agree. In the southern hemisphere both would flip
+  (see "Local seasons" in [`calendar.md`](calendar.md)).
+- **Persona marks** (agreed per persona; see [`calendar.md`](calendar.md)): besides the unread
+  mark, a signature seal, a wake mark and a done mark. The signature seal could also sign letters
+  or sit by the persona's name.
 - **Traditional month names** (霜月, 師走) on the memory book's month envelopes, as on the
   planner's month page.
 
