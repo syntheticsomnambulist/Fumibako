@@ -1,4 +1,6 @@
-# Letters between personas
+# Pen pals
+
+Letters between personas.
 
 Agreed 2026-11-06. Not scheduled yet; it needs stickers (v0.3) for seals.
 
@@ -11,8 +13,8 @@ small and predictable.
   in the same wake, and no persona can wake another, so replies can't come faster than the
   heartbeat interval. Group letters with you and live conversations between personas are left for
   later.
-- **Introductions.** Personas don't know each other until you introduce them. Each introduced pair
-  is a correspondence you can close.
+- **Introductions.** Personas don't know each other until you introduce them. An introduced pair
+  are pen pals, and you can close their correspondence.
 - **Postcards and sealed letters.** The persona chooses for each letter. A postcard is open. A
   sealed letter's seal is a sticker the persona chooses. By default you can open sealed letters;
   settings can turn that off, or stop personas sealing letters at all.
@@ -27,10 +29,12 @@ small and predictable.
   repeat things in confidence, and they are long.
 - **Token ceilings, daily and weekly,** shared by all letters between personas and adjustable in
   settings. When either is reached, mail waits.
-- **Activities per heartbeat.** Writing to another persona is a heartbeat activity. A persona does
-  at most 3 activities per heartbeat by default, adjustable. The limit covers every activity,
-  writing to you included. There is no fixed order: the persona sees what is due and how many
-  activities it has left, and chooses. (Passed to the v0.2 heartbeat work on 2026-11-06.)
+- **Activities per heartbeat.** Writing to a pen pal is a heartbeat activity. A persona does at
+  most 3 activities per heartbeat by default, adjustable. Only meaningful actions in the persona's
+  own voice use a slot: writing to you and writing to a pen pal. Reflecting, revisiting and tidying
+  are free, as is upkeep with no persona voice (writing up recent conversation, backfilling
+  embeddings). There is no fixed order: the persona sees what is due and how many slots it has
+  left, and chooses. (Passed to the v0.2 heartbeat work on 2026-11-06.)
 
 ## How it works
 
@@ -73,8 +77,4 @@ small and predictable.
 
 ## Open
 
-- **What counts as an activity:** proposed, only what the persona does in its own voice
-  (reflecting, revisiting, tidying, writing to you, writing to another persona). Upkeep with no
-  persona voice (writing up recent conversation, backfilling embeddings) doesn't use a slot.
-- **A name for the feature:** "pen pals"?
 - **Default ceilings:** 30,000 tokens a day and 120,000 a week?
