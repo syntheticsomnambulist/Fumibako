@@ -149,10 +149,25 @@ activity in its own turn is the new part (pen pals already needed it).
 v0.6 adds pen pals (the letter tray) and at least one game. The planner's look-ahead (v0.4) runs
 in the private moment until then, and moves to the desk in v0.6.
 
-## Open
+## Mockups
 
-- **Mockups:** the desk page, the drawer, leaving something, a sealed diary entry, and what the
-  persona sees when it sits down.
+The "Writing desk" design canvas (private claude.ai artifact:
+https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06:
+
+- **Aria's desk** (interactive): her desk from above with a diary (one entry sealed), a
+  sketchbook, chess by post with you, a letter tray with Juno's letter, the memory book, a cutting
+  she read, and the "From Sam" in-tray. Tap any of them to open it; the sealed diary entry opens,
+  then closes (seal broken) or reseals. Below, "Lately at the desk", with which lines used a slot.
+- **The drawer** (interactive): what she does (switching one off drops it into the drawer, and
+  tapping it there puts it back), things of her own per visit, the desk's daily limit with
+  today's use, sealed things, and when she comes to her desk.
+- **Leaving something on the desk** (interactive): a link, a photo, a riddle, a game or something
+  to draw, with a note; leaving it drops it into her in-tray.
+- **What Aria sees at her desk:** one heartbeat's three calls (sitting down, her sketchbook,
+  writing to you), what each is given, roughly what each costs, and the line that reaches your
+  thread afterwards.
+
+## Open
 - **The desk limit:** whether writing to you still happens once the desk is closed for the day,
   and the defaults.
 - **Which game** comes first.
