@@ -9,6 +9,8 @@ import dev.aiharness.app.data.db.MemoryVectorEntity
 import dev.aiharness.app.data.db.MessageEntity
 import dev.aiharness.app.data.db.ModelProfileEntity
 import dev.aiharness.app.data.db.PersonaEntity
+import dev.aiharness.app.data.db.StickerArtEntity
+import dev.aiharness.app.data.db.StickerEntity
 import dev.aiharness.app.data.db.UserPersonaEntity
 import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.ChatMessage
@@ -17,6 +19,8 @@ import dev.aiharness.core.model.Credential
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.Sticker
+import dev.aiharness.core.model.StickerArt
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.storage.ActivityRepository
 import dev.aiharness.core.storage.ConversationRepository
@@ -24,6 +28,7 @@ import dev.aiharness.core.storage.CredentialRepository
 import dev.aiharness.core.storage.MemoryRepository
 import dev.aiharness.core.storage.ModelProfileRepository
 import dev.aiharness.core.storage.PersonaRepository
+import dev.aiharness.core.storage.StickerRepository
 import dev.aiharness.core.storage.UserPersonaRepository
 import dev.aiharness.core.util.HarnessJson
 import kotlinx.coroutines.flow.Flow
@@ -82,6 +87,7 @@ class RoomConversationRepository(private val dao: HarnessDao) : ConversationRepo
         dao.upsertConversation(ConversationEntity(conversation.id, conversation.personaId, conversation.updatedAt, c.encode(conversation)))
 
     override suspend fun delete(id: String) {
+        dao.deleteStickersFor(id)
         dao.deleteMessagesFor(id)
         dao.deleteConversation(id)
     }
@@ -93,7 +99,9 @@ class RoomConversationRepository(private val dao: HarnessDao) : ConversationRepo
     override suspend fun appendMessage(message: ChatMessage) = dao.upsertMessage(message.toEntity())
     override suspend fun updateMessage(message: ChatMessage) = dao.upsertMessage(message.toEntity())
     override suspend fun deleteMessages(ids: Collection<String>) {
-        if (ids.isNotEmpty()) dao.deleteMessages(ids.toList())
+        if (ids.isEmpty()) return
+        dao.deleteStickersOn(ids.toList())
+        dao.deleteMessages(ids.toList())
     }
 
     private fun ChatMessage.toEntity() = MessageEntity(id, conversationId, createdAt, m.encode(this))
@@ -159,4 +167,30 @@ class RoomActivityRepository(private val dao: HarnessDao) : ActivityRepository {
 
     override suspend fun add(entry: ActivityEntry) = dao.upsertActivity(ActivityEntity(entry.id, entry.createdAt, s.encode(entry)))
     override suspend fun deleteBefore(time: Long) = dao.deleteActivityBefore(time)
+}
+
+class RoomStickerRepository(private val dao: HarnessDao) : StickerRepository {
+    private val s = Sticker.serializer()
+    private val a = StickerArt.serializer()
+
+    override fun observeForConversation(conversationId: String): Flow<List<Sticker>> =
+        dao.observeStickers(conversationId).map { rows -> rows.map { s.decode(it.json) } }
+
+    override suspend fun forConversation(conversationId: String) = dao.stickers(conversationId).map { s.decode(it.json) }
+    override suspend fun get(id: String) = dao.sticker(id)?.let { s.decode(it.json) }
+    override suspend fun changedSince(conversationId: String, since: Long) =
+        dao.stickersChangedSince(conversationId, since).map { s.decode(it.json) }
+
+    override suspend fun upsert(sticker: Sticker) = dao.upsertSticker(
+        StickerEntity(sticker.id, sticker.conversationId, sticker.target.kind.name, sticker.target.id, sticker.updatedAt, sticker.peeledAt, s.encode(sticker)),
+    )
+
+    override suspend fun delete(id: String) = dao.deleteSticker(id)
+    override suspend fun deletePeeledBefore(time: Long) = dao.deletePeeledStickersBefore(time)
+
+    override fun observeArt(): Flow<List<StickerArt>> = dao.observeStickerArt().map { rows -> rows.map { a.decode(it.json) } }
+    override suspend fun art(ownerPersonaId: String?) = dao.stickerArt(ownerPersonaId).map { a.decode(it.json) }
+    override suspend fun getArt(id: String) = dao.stickerArtById(id)?.let { a.decode(it.json) }
+    override suspend fun upsertArt(art: StickerArt) = dao.upsertStickerArt(StickerArtEntity(art.id, art.ownerPersonaId, art.name, a.encode(art)))
+    override suspend fun deleteArt(id: String) = dao.deleteStickerArt(id)
 }

@@ -47,6 +47,22 @@ data class MemoryVectorEntity(val memoryId: String, val model: String, val perso
 @Entity(tableName = "activity", indices = [Index("createdAt")])
 data class ActivityEntity(@PrimaryKey val id: String, val createdAt: Long, val json: String)
 
+/** A sticker on a letter, a draft or (later) a planner day. Peeled ones stay until the persona has heard. */
+@Entity(tableName = "stickers", indices = [Index("conversationId"), Index("targetKind", "targetId")])
+data class StickerEntity(
+    @PrimaryKey val id: String,
+    val conversationId: String?,
+    val targetKind: String,
+    val targetId: String,
+    val updatedAt: Long,
+    val peeledAt: Long?,
+    val json: String,
+)
+
+/** A persona's own sticker (ownerPersonaId set) or one from the shared library (null). */
+@Entity(tableName = "sticker_art", indices = [Index("ownerPersonaId")])
+data class StickerArtEntity(@PrimaryKey val id: String, val ownerPersonaId: String?, val name: String, val json: String)
+
 @Dao
 interface HarnessDao {
     // Personas
@@ -121,18 +137,43 @@ interface HarnessDao {
 
     @Upsert suspend fun upsertVector(entity: MemoryVectorEntity)
     @Query("DELETE FROM memory_vectors WHERE memoryId = :memoryId") suspend fun deleteVectors(memoryId: String)
+
+    // Stickers (rowid order is the order they were stuck: an upsert keeps the row)
+    @Query("SELECT * FROM stickers WHERE conversationId = :conversationId ORDER BY rowid")
+    fun observeStickers(conversationId: String): Flow<List<StickerEntity>>
+
+    @Query("SELECT * FROM stickers WHERE conversationId = :conversationId ORDER BY rowid")
+    suspend fun stickers(conversationId: String): List<StickerEntity>
+
+    @Query("SELECT * FROM stickers WHERE id = :id") suspend fun sticker(id: String): StickerEntity?
+
+    @Query("SELECT * FROM stickers WHERE conversationId = :conversationId AND updatedAt > :since ORDER BY updatedAt, rowid")
+    suspend fun stickersChangedSince(conversationId: String, since: Long): List<StickerEntity>
+
+    @Upsert suspend fun upsertSticker(entity: StickerEntity)
+    @Query("DELETE FROM stickers WHERE id = :id") suspend fun deleteSticker(id: String)
+    @Query("DELETE FROM stickers WHERE peeledAt IS NOT NULL AND updatedAt < :time") suspend fun deletePeeledStickersBefore(time: Long)
+    @Query("DELETE FROM stickers WHERE conversationId = :conversationId") suspend fun deleteStickersFor(conversationId: String)
+    @Query("DELETE FROM stickers WHERE targetKind = 'MESSAGE' AND targetId IN (:messageIds)") suspend fun deleteStickersOn(messageIds: List<String>)
+
+    // Sticker sheets and the shared library
+    @Query("SELECT * FROM sticker_art ORDER BY rowid") fun observeStickerArt(): Flow<List<StickerArtEntity>>
+    @Query("SELECT * FROM sticker_art WHERE ownerPersonaId IS :ownerPersonaId ORDER BY rowid") suspend fun stickerArt(ownerPersonaId: String?): List<StickerArtEntity>
+    @Query("SELECT * FROM sticker_art WHERE id = :id") suspend fun stickerArtById(id: String): StickerArtEntity?
+    @Upsert suspend fun upsertStickerArt(entity: StickerArtEntity)
+    @Query("DELETE FROM sticker_art WHERE id = :id") suspend fun deleteStickerArt(id: String)
 }
 
 @Database(
     entities = [
         PersonaEntity::class, UserPersonaEntity::class, ModelProfileEntity::class, CredentialEntity::class,
         ConversationEntity::class, MessageEntity::class, MemoryEntity::class, MemoryVectorEntity::class,
-        ActivityEntity::class,
+        ActivityEntity::class, StickerEntity::class, StickerArtEntity::class,
     ],
     // A schema change bumps the version and adds a step to MIGRATIONS (keeping the last three);
     // field changes on domain models need neither, since rows are JSON. Schemas are exported to
     // app/schemas for the migration tests.
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class HarnessDatabase : RoomDatabase() {
@@ -145,7 +186,7 @@ abstract class HarnessDatabase : RoomDatabase() {
          * never carries more than three old layouts. When adding a step, drop the oldest one and its
          * test, and its exported schema once no test uses it.
          */
-        val MIGRATIONS: Array<Migration> = arrayOf()
+        val MIGRATIONS: Array<Migration> = arrayOf(Migration2To3)
 
         /** [onWiped] runs, while the database opens, when it had to start fresh instead of migrating. */
         fun create(context: Context, onWiped: () -> Unit = {}, name: String = "harness.db"): HarnessDatabase =
@@ -160,5 +201,22 @@ abstract class HarnessDatabase : RoomDatabase() {
                     },
                 )
                 .build()
+    }
+}
+
+/** v0.3: stickers, and the pictures they can be. Two new tables; nothing else changes. */
+object Migration2To3 : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `stickers` (`id` TEXT NOT NULL, `conversationId` TEXT, `targetKind` TEXT NOT NULL, " +
+                "`targetId` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `peeledAt` INTEGER, `json` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_stickers_conversationId` ON `stickers` (`conversationId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_stickers_targetKind_targetId` ON `stickers` (`targetKind`, `targetId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `sticker_art` (`id` TEXT NOT NULL, `ownerPersonaId` TEXT, `name` TEXT NOT NULL, " +
+                "`json` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_sticker_art_ownerPersonaId` ON `sticker_art` (`ownerPersonaId`)")
     }
 }

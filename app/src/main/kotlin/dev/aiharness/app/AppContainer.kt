@@ -86,9 +86,9 @@ class AppContainer(private val context: Context) {
     }
 
     /**
-     * Before 1.0 a schema change empties the database (see [HarnessDatabase]). Everything that pointed
-     * into it goes too, so the app starts over as if freshly installed: keys, images, app state, and
-     * (when [seedDefaultsOnce] runs next) settings.
+     * A database older than the kept migration steps starts empty (see [HarnessDatabase]). Everything
+     * that pointed into it goes too, so the app starts over as if freshly installed: keys, images, app
+     * state, and (when [seedDefaultsOnce] runs next) settings.
      */
     private fun forgetEverythingElse() {
         appState.edit().clear().commit()

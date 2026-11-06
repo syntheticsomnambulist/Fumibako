@@ -8,6 +8,8 @@ import dev.aiharness.core.model.Credential
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.Sticker
+import dev.aiharness.core.model.StickerArt
 import dev.aiharness.core.model.UserPersona
 import kotlinx.coroutines.flow.Flow
 
@@ -63,6 +65,8 @@ interface ConversationRepository {
     suspend fun get(id: String): Conversation?
     suspend fun getAll(): List<Conversation>
     suspend fun upsert(conversation: Conversation)
+
+    /** Deletes the conversation with its messages, and the stickers on them where they're kept together. */
     suspend fun delete(id: String)
 
     fun observeMessages(conversationId: String): Flow<List<ChatMessage>>
@@ -70,6 +74,8 @@ interface ConversationRepository {
     suspend fun getMessages(conversationId: String): List<ChatMessage>
     suspend fun appendMessage(message: ChatMessage)
     suspend fun updateMessage(message: ChatMessage)
+
+    /** Deletes the messages, and the stickers on them where they're kept together. */
     suspend fun deleteMessages(ids: Collection<String>)
 }
 
@@ -98,6 +104,30 @@ interface ActivityRepository {
     suspend fun forPersona(personaId: String, since: Long): List<ActivityEntry>
     suspend fun add(entry: ActivityEntry)
     suspend fun deleteBefore(time: Long)
+}
+
+/** Stickers stuck on things, and the pictures they can be (persona sheets and the shared library). */
+interface StickerRepository {
+    /** A conversation's stickers, peeled ones included (callers show only those still stuck). */
+    fun observeForConversation(conversationId: String): Flow<List<Sticker>>
+    suspend fun forConversation(conversationId: String): List<Sticker>
+    suspend fun get(id: String): Sticker?
+
+    /** Stuck, moved or peeled after [since], oldest first: what a persona hears about on its next turn. */
+    suspend fun changedSince(conversationId: String, since: Long): List<Sticker>
+    suspend fun upsert(sticker: Sticker)
+    suspend fun delete(id: String)
+
+    /** Peeled stickers last changed before [time], once there's no one left to tell. */
+    suspend fun deletePeeledBefore(time: Long)
+
+    fun observeArt(): Flow<List<StickerArt>>
+
+    /** A persona's sheet, or the shared library for null. */
+    suspend fun art(ownerPersonaId: String?): List<StickerArt>
+    suspend fun getArt(id: String): StickerArt?
+    suspend fun upsertArt(art: StickerArt)
+    suspend fun deleteArt(id: String)
 }
 
 interface SettingsRepository {

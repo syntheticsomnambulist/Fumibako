@@ -8,6 +8,8 @@ import dev.aiharness.core.model.Credential
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.Sticker
+import dev.aiharness.core.model.StickerArt
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.storage.ActivityRepository
 import dev.aiharness.core.storage.BlobStore
@@ -18,6 +20,7 @@ import dev.aiharness.core.storage.ModelProfileRepository
 import dev.aiharness.core.storage.PersonaRepository
 import dev.aiharness.core.storage.SecretStore
 import dev.aiharness.core.storage.SettingsRepository
+import dev.aiharness.core.storage.StickerRepository
 import dev.aiharness.core.storage.UserPersonaRepository
 import dev.aiharness.core.util.newId
 import kotlinx.coroutines.flow.Flow
@@ -154,6 +157,36 @@ class InMemoryActivityRepository : ActivityRepository {
 
     override suspend fun add(entry: ActivityEntry) = entries.update { it + entry }
     override suspend fun deleteBefore(time: Long) = entries.update { list -> list.filter { it.createdAt >= time } }
+}
+
+class InMemoryStickerRepository : StickerRepository {
+    private val stickers = Table<Sticker> { it.id }
+    private val arts = Table<StickerArt> { it.id }
+
+    override fun observeForConversation(conversationId: String): Flow<List<Sticker>> =
+        stickers.state.map { m -> m.values.filter { it.conversationId == conversationId }.sortedBy { it.createdAt } }
+
+    override suspend fun forConversation(conversationId: String): List<Sticker> =
+        stickers.all().filter { it.conversationId == conversationId }.sortedBy { it.createdAt }
+
+    override suspend fun get(id: String): Sticker? = stickers.get(id)
+
+    override suspend fun changedSince(conversationId: String, since: Long): List<Sticker> =
+        stickers.all().filter { it.conversationId == conversationId && it.updatedAt > since }.sortedBy { it.updatedAt }
+
+    override suspend fun upsert(sticker: Sticker) = stickers.upsert(sticker)
+    override suspend fun delete(id: String) = stickers.delete(id)
+
+    override suspend fun deletePeeledBefore(time: Long) =
+        stickers.all().filter { it.isPeeled && it.updatedAt < time }.forEach { stickers.delete(it.id) }
+
+    override fun observeArt(): Flow<List<StickerArt>> = arts.state.map { m -> m.values.sortedBy { it.createdAt } }
+    override suspend fun art(ownerPersonaId: String?): List<StickerArt> =
+        arts.all().filter { it.ownerPersonaId == ownerPersonaId }.sortedBy { it.createdAt }
+
+    override suspend fun getArt(id: String): StickerArt? = arts.get(id)
+    override suspend fun upsertArt(art: StickerArt) = arts.upsert(art)
+    override suspend fun deleteArt(id: String) = arts.delete(id)
 }
 
 class InMemorySettingsRepository(initial: AppSettings = AppSettings()) : SettingsRepository {

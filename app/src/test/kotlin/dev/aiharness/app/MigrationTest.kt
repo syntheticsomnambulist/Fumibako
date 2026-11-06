@@ -1,0 +1,90 @@
+package dev.aiharness.app
+
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.aiharness.app.data.RoomConversationRepository
+import dev.aiharness.app.data.RoomPersonaRepository
+import dev.aiharness.app.data.RoomStickerRepository
+import dev.aiharness.app.data.db.HarnessDatabase
+import dev.aiharness.core.model.Sticker
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.model.StickerTarget
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import java.io.File
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+
+/**
+ * Each kept migration step, from a database built with the schema it starts from (exported to
+ * app/schemas) to the current one, opened the way the app opens it. Room checks the migrated
+ * schema against the current one as it opens, so a step that leaves out a column or an index fails
+ * here. When a step is dropped from [HarnessDatabase.MIGRATIONS], its test goes too.
+ *
+ * (Room's MigrationTestHelper reads schemas from assets, which Robolectric doesn't see for unit
+ * tests, so the old database is built from the exported JSON directly.)
+ */
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [35])
+class MigrationTest {
+    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val name = "migration-test.db"
+
+    @Test
+    fun versionTwoGainsStickersAndKeepsItsLetters() {
+        context.deleteDatabase(name)
+        createFromSchema(2) { db ->
+            db.execSQL("INSERT INTO personas (id, name, json) VALUES ('p1', 'Aria', '$ARIA')")
+            db.execSQL("INSERT INTO messages (id, conversationId, createdAt, json) VALUES ('m1', 'c1', 5, '$LETTER')")
+        }
+
+        var wiped = false
+        val database = HarnessDatabase.create(context, onWiped = { wiped = true }, name = name)
+        try {
+            runBlocking {
+                assertEquals(listOf("Aria"), RoomPersonaRepository(database.dao()).getAll().map { it.name })
+                assertEquals(listOf("m1"), RoomConversationRepository(database.dao()).getMessages("c1").map { it.id })
+                val stickers = RoomStickerRepository(database.dao())
+                val tada = Sticker("s1", "c1", StickerTarget.message("m1"), StickerRef.Emoji("🎉", "tada"), x = 0.8f, y = 0.6f, createdAt = 9)
+                stickers.upsert(tada)
+                assertEquals(listOf(tada), stickers.forConversation("c1"))
+            }
+        } finally {
+            database.close()
+        }
+        assertFalse(wiped, "a version 2 database migrates instead of starting fresh")
+    }
+
+    /** Builds the database as Room would have at [version], from its exported schema, then lets [fill] add rows. */
+    private fun createFromSchema(version: Int, fill: (SQLiteDatabase) -> Unit) {
+        val schema = Json.parseToJsonElement(File("schemas/${HarnessDatabase::class.java.name}/$version.json").readText())
+            .jsonObject.getValue("database").jsonObject
+        val path = context.getDatabasePath(name).apply { parentFile?.mkdirs() }
+        SQLiteDatabase.openOrCreateDatabase(path, null).use { db ->
+            for (entity in schema.getValue("entities").jsonArray.map { it.jsonObject }) {
+                val table = entity.getValue("tableName").jsonPrimitive.content
+                db.execSQL(entity.getValue("createSql").jsonPrimitive.content.replace("\${TABLE_NAME}", table))
+                entity["indices"]?.jsonArray?.forEach { index ->
+                    db.execSQL(index.jsonObject.getValue("createSql").jsonPrimitive.content.replace("\${TABLE_NAME}", table))
+                }
+            }
+            schema.getValue("setupQueries").jsonArray.forEach { db.execSQL(it.jsonPrimitive.content) }
+            db.version = version
+            fill(db)
+        }
+    }
+
+    private companion object {
+        // Rows as v0.2.2 wrote them (JSON, with only the fields that have no defaults).
+        const val ARIA = """{"id":"p1","name":"Aria","createdAt":1,"updatedAt":1}"""
+        const val LETTER = """{"id":"m1","conversationId":"c1","role":"USER","parts":[{"type":"text","text":"Hello"}],"createdAt":5}"""
+    }
+}

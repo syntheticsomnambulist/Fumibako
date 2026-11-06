@@ -30,6 +30,10 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   plain backgrounds only), whether stamps and tape go without the white outline, whether drawing a
   sticker in a heartbeat takes an activity slot, the defaults (medium size, six on a letter), and
   which sticker is the unread mark.
+  **Storage is in:** the database is at version 3 through its first migration, which adds a
+  `stickers` table (what's stuck where, by whom; peeled ones stay until the persona has heard) and
+  a `sticker_art` table (persona sheets and the shared library). The migration is tested from a
+  database built with the exported version 2 schema, opened the way the app opens it.
 
 ## What v0.3 includes
 

@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.aiharness.app.data.RoomActivityRepository
 import dev.aiharness.app.data.RoomConversationRepository
 import dev.aiharness.app.data.RoomMemoryRepository
+import dev.aiharness.app.data.RoomStickerRepository
 import dev.aiharness.app.data.db.HarnessDatabase
 import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.ActivityKind
@@ -17,6 +18,11 @@ import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.ProviderType
+import dev.aiharness.core.model.Sticker
+import dev.aiharness.core.model.StickerArt
+import dev.aiharness.core.model.StickerArtKind
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.model.StickerTarget
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -95,5 +101,62 @@ class RoomRepositoriesTest {
 
         repo.deleteBefore(250)
         assertEquals(listOf("a2"), repo.observeSince(0).first().map { it.id })
+    }
+
+    @Test
+    fun stickersRoundTripAndReportChanges() = runTest {
+        val repo = RoomStickerRepository(db.dao())
+        val tada = Sticker("s1", "c1", StickerTarget.message("m1"), StickerRef.Emoji("🎉", "tada"), x = 0.8f, y = 0.6f, rotationDeg = 12f, createdAt = 10)
+        val heart = Sticker("s2", "c1", StickerTarget.message("m2"), StickerRef.Art("a1"), byPersonaId = "p1", x = 0.1f, y = 0.2f, scale = 1.3f, createdAt = 20)
+        val elsewhere = Sticker("s3", "c2", StickerTarget.draft("c2"), StickerRef.Emoji("🍵", "tea"), x = 0.9f, y = 0f, createdAt = 30)
+        listOf(tada, heart, elsewhere).forEach { repo.upsert(it) }
+
+        assertEquals(listOf(tada, heart), repo.forConversation("c1"))
+        assertEquals(listOf(tada, heart), repo.observeForConversation("c1").first())
+
+        // Moving one keeps its place in the stacking order; peeling keeps the row for the persona to hear about.
+        repo.upsert(tada.copy(x = 0.5f, updatedAt = 40))
+        repo.upsert(heart.copy(peeledAt = 50, updatedAt = 50))
+        assertEquals(listOf("s1", "s2"), repo.forConversation("c1").map { it.id })
+        assertEquals(listOf("s1", "s2"), repo.changedSince("c1", 35).map { it.id })
+        assertEquals(listOf("s2"), repo.changedSince("c1", 45).map { it.id })
+
+        repo.deletePeeledBefore(60)
+        assertEquals(listOf("s1"), repo.forConversation("c1").map { it.id })
+    }
+
+    @Test
+    fun deletingLettersTakesTheirStickers() = runTest {
+        val conversations = RoomConversationRepository(db.dao())
+        val stickers = RoomStickerRepository(db.dao())
+        conversations.appendMessage(ChatMessage("m1", "c1", MessageRole.USER, listOf(ContentPart.Text("a")), createdAt = 1))
+        conversations.appendMessage(ChatMessage("m2", "c1", MessageRole.USER, listOf(ContentPart.Text("b")), createdAt = 2))
+        stickers.upsert(Sticker("s1", "c1", StickerTarget.message("m1"), StickerRef.Emoji("🎉", "tada"), x = 0.5f, y = 0.5f, createdAt = 3))
+        stickers.upsert(Sticker("s2", "c1", StickerTarget.message("m2"), StickerRef.Emoji("🍵", "tea"), x = 0.5f, y = 0.5f, createdAt = 4))
+        stickers.upsert(Sticker("s3", "c2", StickerTarget.draft("c2"), StickerRef.Emoji("🌙", "crescent_moon"), x = 0.5f, y = 0.5f, createdAt = 5))
+
+        conversations.deleteMessages(listOf("m1"))
+        assertEquals(listOf("s2"), stickers.forConversation("c1").map { it.id })
+
+        conversations.delete("c1")
+        assertEquals(emptyList(), stickers.forConversation("c1"))
+        assertEquals(listOf("s3"), stickers.forConversation("c2").map { it.id })
+    }
+
+    @Test
+    fun stickerArtIsKeptPerSheet() = runTest {
+        val repo = RoomStickerRepository(db.dao())
+        val wave = StickerArt("a1", "aria-wave", ownerPersonaId = "p1", imageRef = "file:wave.png", feeling = "hello", createdAt = 1)
+        val mochi = StickerArt("a2", "mochi", imageRef = "file:mochi.png", createdAt = 2)
+        val seal = StickerArt("a3", "hanamaru", kind = StickerArtKind.STAMP, imageRef = "file:hanamaru.png", createdAt = 3)
+        listOf(wave, mochi, seal).forEach { repo.upsertArt(it) }
+
+        assertEquals(listOf(wave), repo.art("p1"))
+        assertEquals(listOf(mochi, seal), repo.art(null))
+        assertEquals(seal, repo.getArt("a3"))
+        assertEquals(listOf(wave, mochi, seal), repo.observeArt().first())
+
+        repo.deleteArt("a2")
+        assertEquals(listOf(seal), repo.art(null))
     }
 }
