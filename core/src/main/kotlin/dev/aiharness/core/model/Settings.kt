@@ -248,9 +248,26 @@ enum class OutlineWidth(val label: String, val dp: Float) { THIN("Thin", 1.5f), 
 data class MediaSettings(
     /** Open links in the app's own browser (Custom Tabs); off, in the phone's default browser. */
     val linksInApp: Boolean = true,
+    /** Fetch a page's title and picture for its cutting (which contacts the site); off, just the address. */
+    val linkPreviews: Boolean = true,
     /** Personas can open links you share (Claude's web fetch, or the app's fetcher on the phone). */
     val personasOpenLinks: Boolean = true,
-)
+    /** Send pictures at full size rather than about 1280 px (more tokens each time a model sees them). */
+    val fullSizePictures: Boolean = false,
+    /** Write a short description of what arrives, which later context epochs carry instead of the file. */
+    val describe: Boolean = true,
+    /** Keep music playing after leaving the thread. */
+    val keepPlaying: Boolean = true,
+    /** Start videos with the sound off. */
+    val videosMuted: Boolean = false,
+    /** The frames' animations (apart from Android's "Remove animations", which turns them all off). */
+    val paperMotion: Boolean = true,
+    /** The light haptic ticks (a read stamp landing). */
+    val haptics: Boolean = true,
+) {
+    /** The longest side pictures you send are scaled to. */
+    val pictureSide: Int get() = if (fullSizePictures) 4096 else 1280
+}
 
 @Serializable
 data class StickerSettings(

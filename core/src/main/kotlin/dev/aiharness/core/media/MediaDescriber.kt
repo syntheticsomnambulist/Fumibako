@@ -34,6 +34,7 @@ class MediaDescriber(private val h: Harness) {
 
     /** Describes [message]'s pictures and files that [personaProfile] can't take in, and stores them. */
     suspend fun onArrival(message: ChatMessage, personaProfile: ModelProfile, settings: AppSettings): ChatMessage {
+        if (!settings.media.describe) return message
         val describer = utility(settings)?.takeIf { it.id != personaProfile.id } ?: return message
         val written = describeAll(message, stamp = message.createdAt) { part ->
             describer.takeIf { level(part, it) > level(part, personaProfile) }
@@ -44,6 +45,7 @@ class MediaDescriber(private val h: Harness) {
     /** Describes what's still undescribed in the conversation's recent notes. */
     suspend fun catchUp(conversationId: String) {
         val setup = runCatching { h.resolveTurn(conversationId) }.getOrNull() ?: return
+        if (!setup.settings.media.describe) return
         val candidates = listOfNotNull(utility(setup.settings), setup.profile).distinctBy { it.id }
         val recent = h.conversations.getMessages(conversationId)
             .filter { it.role == MessageRole.USER && !it.excludedFromContext }

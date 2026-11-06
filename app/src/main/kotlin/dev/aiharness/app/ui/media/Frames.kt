@@ -357,10 +357,12 @@ val LocalLift = compositionLocalOf { 0f }
 @Composable
 fun reducedMotion(): Boolean {
     val context = androidx.compose.ui.platform.LocalContext.current
-    return remember {
+    val system = remember {
         runCatching { android.provider.Settings.Global.getFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
             .getOrDefault(false)
     }
+    // Or the Media page's "Paper motion" switch.
+    return system || !LocalMediaSettings.current.paperMotion
 }
 
 private fun Modifier.ruled(scale: Float) = drawWithContent {
@@ -501,7 +503,8 @@ fun ReadStamp(ink: Color, scale: Float, modifier: Modifier = Modifier) {
         }
         Text("読", style = TextStyle(fontSize = (size.value * 0.46f).sp, fontWeight = FontWeight.Bold), color = ink)
     }
-    LandStamp(landing, instant) { haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.SegmentTick) }
+    val tick = LocalMediaSettings.current.haptics
+    LandStamp(landing, instant) { if (tick) haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.SegmentTick) }
 }
 
 /** Runs a stamp's landing once, when it first appears in a letter already on screen. */

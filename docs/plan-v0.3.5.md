@@ -79,6 +79,12 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   YouTube, SoundCloud and Bandcamp play in their official embedded players in a sheet over the
   thread, only while it's open; Spotify and Apple Music open in their apps; the ticket says
   which. The line under a cutting goes once the persona can open it.
+- **Step 6, Settings: Media: done.** 九 Media (About moves to 十): where links open; link
+  previews (off, a cutting is just the address); whether personas open links you share; pictures
+  you send, smaller (about 1280 px) or full size; describing what arrives; keeping music playing
+  after leaving the letters; starting videos muted; and switches for the frames' motion and the
+  haptic ticks, apart from Android's "Remove animations". The app also keeps itself through
+  rotation now, so the video player's full screen doesn't close it.
 
 ## What v0.3.5 includes
 

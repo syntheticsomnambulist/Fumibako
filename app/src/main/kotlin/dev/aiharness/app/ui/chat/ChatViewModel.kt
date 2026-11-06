@@ -146,7 +146,10 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         }
     }
 
-    fun addPhotos(uris: List<android.net.Uri>) = prepare("photos") { uris.mapNotNull { container.media.photo(it) }.map { Going.Picture(it) } }
+    fun addPhotos(uris: List<android.net.Uri>) = prepare("photos") {
+        val side = harness.settings.current().media.pictureSide
+        uris.mapNotNull { container.media.photo(it, side) }.map { Going.Picture(it) }
+    }
     fun addFile(uri: android.net.Uri) = prepare("a file") { listOfNotNull(container.media.file(uri)?.let { Going.Item(it) }) }
     fun addVideo(uri: android.net.Uri) = prepare("a video") { listOfNotNull(container.media.video(uri)?.let { Going.Item(it) }) }
 
@@ -169,7 +172,7 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
             val key = "link:$url"
             going.update { it + Going.Preparing(key, url.substringAfter("://").substringBefore('/')) }
             viewModelScope.launch {
-                val cutting = harness.links.cutting(url)
+                val cutting = harness.links.cutting(url, fetch = harness.settings.current().media.linkPreviews)
                 going.update { list -> list.map { if (it.key == key) Going.Item(cutting) else it } }
             }
         }

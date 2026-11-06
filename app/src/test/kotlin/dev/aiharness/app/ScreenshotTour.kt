@@ -338,6 +338,16 @@ class ScreenshotTour {
         shot("${prefix}_17_settings_look_lamplight")
         back()
 
+        // 九 Media: links, pictures, playback, paper motion.
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("Media"))
+        click("Media")
+        waitFor("OPEN LINKS IN")
+        shot("${prefix}_18_settings_media")
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("Haptic ticks"))
+        compose.waitForIdle()
+        shot("${prefix}_18b_settings_media_more")
+        back()
+
         // An image profile.
         click("Pictures")
         waitFor("Image profiles")

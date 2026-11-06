@@ -133,6 +133,9 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     var readBaseline by remember { mutableStateOf<Set<String>?>(null) }
     LaunchedEffect(reads != null) { if (readBaseline == null) reads?.let { readBaseline = it.keys } }
     var embedding by remember { mutableStateOf<Embedding?>(null) }
+    // Music carries on after leaving the thread, unless the Media page says otherwise.
+    val keepPlaying = dev.aiharness.app.ui.media.LocalMediaSettings.current.keepPlaying
+    DisposableEffect(keepPlaying) { onDispose { if (!keepPlaying) container.playback.stop() } }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
 
     // Stickers: the tray, the one selected (and its live position while it moves), dragging one in.

@@ -62,7 +62,8 @@ enum class SettingsSection(val key: String, val kanji: String, val title: String
     MODELS("models", "六", "Models and keys"),
     YOU("you", "七", "You"),
     PROMPTING("prompting", "八", "Prompting"),
-    ABOUT("about", "九", "About"),
+    MEDIA("media", "九", "Media"),
+    ABOUT("about", "十", "About"),
     ;
 
     companion object {
@@ -148,6 +149,7 @@ private fun summary(section: SettingsSection, s: AppSettings, profileCount: Int,
     SettingsSection.MODELS -> if (profileCount == 1) "1 model" else "$profileCount models"
     SettingsSection.YOU -> writingAs?.let { "Writing as $it" } ?: "Your personas"
     SettingsSection.PROMPTING -> if (s.baseInstructions == AppSettings.DEFAULT_BASE_INSTRUCTIONS) "Default" else "Your own"
+    SettingsSection.MEDIA -> "Links ${if (s.media.linksInApp) "in the app" else "in your browser"} · pictures ${if (s.media.fullSizePictures) "full size" else "smaller"}"
     SettingsSection.ABOUT -> listOfNotNull(version?.let { "v$it" }, "licenses").joinToString(" · ")
 }
 
@@ -177,6 +179,7 @@ fun SettingsSectionScreen(nav: NavController, key: String) {
             SettingsSection.STICKERS -> stickersPage(nav, s, update)
             SettingsSection.MODELS -> modelsPage(nav, s, update)
             SettingsSection.PROMPTING -> promptingPage(s, update)
+            SettingsSection.MEDIA -> mediaPage(s, update)
             SettingsSection.ABOUT -> aboutPage()
             SettingsSection.YOU -> Unit
         }

@@ -179,7 +179,8 @@ fun VideoPlayer(
     var playing by remember { mutableStateOf(false) }
     var position by remember { mutableLongStateOf(0L) }
     var length by remember { mutableLongStateOf(video.lengthMs ?: 0L) }
-    var muted by remember { mutableStateOf(false) }
+    val startMuted = LocalMediaSettings.current.videosMuted
+    var muted by remember { mutableStateOf(startMuted) }
     var controls by remember { mutableStateOf(true) }
     var full by remember { mutableStateOf(false) }
     val activity = remember(context) { context.findActivity() }
@@ -189,6 +190,7 @@ fun VideoPlayer(
         length = video.lengthMs ?: 0L
         position = 0
         if (file != null) {
+            player.volume = if (muted) 0f else 1f
             player.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
             player.prepare()
             player.play()
