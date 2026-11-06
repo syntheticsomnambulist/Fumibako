@@ -51,6 +51,8 @@ import dev.aiharness.app.ui.paper.washiStrip
 import dev.aiharness.app.ui.stickers.StuckOn
 import dev.aiharness.app.ui.theme.Stationery
 import dev.aiharness.app.ui.theme.PaperType
+import dev.aiharness.core.media.MediaSupport
+import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
 import dev.aiharness.core.model.ChatMessage
@@ -254,15 +256,29 @@ fun NoteSlip(
                 }
                 val noteInk = s.dayColors.ink(user?.ink ?: "sora")
                 val notePaper = lerp(s.colors.kami, you, 0.06f)
+                val reader = LocalPersonaReader.current
                 FramedPictures(
                     message.images, noteInk, pattern, 0.86f, handling, { stickerInk(it, s, persona, user) }, stickerName, onImage, Alignment.CenterStart,
                 )
+                if (message.images.isNotEmpty()) reader?.let { MediaSupport.cantSee(it.profile, it.name, message.images.size > 1) }?.let { CantTakeIn(it) }
                 message.attachments.forEach { attachment ->
                     FramedAttachment(attachment, noteInk, notePaper, inNote = true, handling = handling, inkOf = { stickerInk(it, s, persona, user) }, nameOf = stickerName, alignment = Alignment.CenterStart)
+                    reader?.let { MediaSupport.cantTakeIn(attachment, it.profile, it.name) }?.let { CantTakeIn(it) }
                 }
             }
         }
     }
+}
+
+/** Who reads your notes here, and with which model: what decides the line under a frame. */
+data class PersonaReader(val name: String, val profile: ModelProfile)
+
+val LocalPersonaReader = staticCompositionLocalOf<PersonaReader?> { null }
+
+/** The app's line under a frame on what the persona can't take in, in the postscript style. */
+@Composable
+private fun CantTakeIn(text: String) {
+    Text(text, style = PaperType.postscript, color = paper.kasure2, modifier = Modifier.padding(start = 2.dp, bottom = 2.dp))
 }
 
 /** Stickers that can be written inline as `:name:` here (the persona's own and the shared ones), by name. */

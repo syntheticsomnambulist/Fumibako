@@ -17,6 +17,7 @@ import dev.aiharness.core.llm.anthropic.AnthropicProvider
 import dev.aiharness.core.llm.gemini.GeminiProvider
 import dev.aiharness.core.llm.openai.OpenAiCompatibleProvider
 import dev.aiharness.core.media.LinkPreviews
+import dev.aiharness.core.media.MediaDescriber
 import dev.aiharness.core.memory.EmbedderFactory
 import dev.aiharness.core.memory.MemoryService
 import dev.aiharness.core.model.ActivityEntry
@@ -115,6 +116,7 @@ class Harness(
     val turnContext = TurnContextBuilder(memory, clock, stickerService)
     val contextBuilder = ContextBuilder(prompts, memory, blobs, clock, log)
     val summarizer = LlmSummarizer(this)
+    val describer = MediaDescriber(this)
     val locks = ConversationLocks()
     val agent = AgentRunner(this)
     val heartbeat = HeartbeatEngine(this)

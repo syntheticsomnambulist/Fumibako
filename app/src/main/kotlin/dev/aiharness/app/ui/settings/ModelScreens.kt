@@ -58,6 +58,8 @@ import dev.aiharness.core.llm.LlmPart
 import dev.aiharness.core.llm.LlmRequest
 import dev.aiharness.core.llm.complete
 import dev.aiharness.core.model.ModelProfile
+import dev.aiharness.core.media.MediaSupport
+import dev.aiharness.core.media.Senses
 import dev.aiharness.core.model.ProviderType
 import dev.aiharness.core.model.ToolMode
 import dev.aiharness.core.util.HarnessJson
@@ -268,7 +270,11 @@ fun ModelEditScreen(nav: NavController, profileId: String) {
                         ToolMode.NONE -> "No tools"
                     }
                 }, { v -> v?.let { m -> update { it.copy(toolMode = m) } } })
-                SwitchRow("Sees pictures", profile.supportsVision, { v -> update { it.copy(supportsVision = v) } })
+                // Claude and Gemini models always take pictures in; servers behind the OpenAI form vary.
+                if (profile.provider == ProviderType.OPENAI_COMPATIBLE) {
+                    SwitchRow("Sees pictures", profile.supportsVision, { v -> update { it.copy(supportsVision = v) } })
+                }
+                Text(takesIn(MediaSupport.of(profile)), style = PaperType.postscript, color = paper.usuzumi1)
                 if (profile.provider != ProviderType.ANTHROPIC) {
                     IndexCardField("Extra request fields (JSON)", extraBodyText, { extraBodyText = it }, ink = you, style = PaperType.noteBody, placeholder = "{\"min_p\": 0.05}")
                 }
@@ -331,5 +337,28 @@ fun ModelEditScreen(nav: NavController, profileId: String) {
             },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
         )
+    }
+}
+
+/** What a model takes in besides text, as a line under its settings. */
+internal fun takesIn(senses: Senses): String {
+    fun list(items: List<String>) = if (items.size == 1) items[0] else items.dropLast(1).joinToString(", ") + " and " + items.last()
+    val takes = listOfNotNull(
+        "pictures".takeIf { senses.pictures },
+        "PDFs".takeIf { senses.pdfs },
+        "songs".takeIf { senses.audio },
+        "videos".takeIf { senses.video },
+    ) + "text files"
+    val sees = if (senses.pictures) listOfNotNull("a PDF's first page".takeIf { !senses.pdfs }, "three frames of a video".takeIf { !senses.video }) else emptyList()
+    val labels = listOfNotNull(
+        "pictures".takeIf { !senses.pictures },
+        "PDFs".takeIf { !senses.pdfs && !senses.pictures },
+        "songs".takeIf { !senses.audio },
+        "videos".takeIf { !senses.video && !senses.pictures },
+    )
+    return buildString {
+        append("Takes in ${list(takes)}.")
+        if (sees.isNotEmpty()) append(" Sees ${list(sees)}.")
+        if (labels.isNotEmpty()) append(" ${list(labels).replaceFirstChar { it.uppercase() }} go by their labels.")
     }
 }

@@ -120,6 +120,23 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
             } finally {
                 state.update { it.copy(active = false, streamingText = "", reasoning = "", activeTool = null) }
             }
+            // Descriptions for later epochs, written while nothing waits on them.
+            launchDescriptions(conversationId)
+        }
+    }
+
+    private val describing = ConcurrentHashMap<String, Job>()
+
+    private fun launchDescriptions(conversationId: String) {
+        if (describing[conversationId]?.isActive == true) return
+        describing[conversationId] = scope.launch {
+            try {
+                harness.describer.catchUp(conversationId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                harness.log("Describing failed: ${e.message}")
+            }
         }
     }
 

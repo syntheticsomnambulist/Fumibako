@@ -239,7 +239,16 @@ sealed interface ContentPart {
 
     @Serializable
     @SerialName("image")
-    data class Image(val ref: String, val mimeType: String = "image/png", val caption: String? = null) : ContentPart
+    data class Image(
+        val ref: String,
+        val mimeType: String = "image/png",
+        /** For a picture a persona drew, what it asked for. */
+        val caption: String? = null,
+        /** A short description written when it arrived, which later context epochs carry instead of the picture. */
+        val description: String? = null,
+        /** When [description] was written: epochs that began after it send the description. */
+        val describedAt: Long? = null,
+    ) : ContentPart
 
     @Serializable
     @SerialName("tool_call")
@@ -298,7 +307,10 @@ sealed interface ContentPart {
         val frameRefs: List<String> = emptyList(),
         /** A small picture of it for lists and the memory book. */
         val thumbRef: String? = null,
+        /** A short description written when it arrived, which later context epochs carry instead of the file. */
         val description: String? = null,
+        /** When [description] was written: epochs that began after it send the description. */
+        val describedAt: Long? = null,
     ) : ContentPart {
         /** What a model that can't take it in reads, and the handle it knows it by: `[ticket: October Walk by Hana Sato, 3:42]`. */
         val standIn: String

@@ -35,6 +35,12 @@ sealed interface LlmMessage {
 sealed interface LlmPart {
     data class Text(val text: String) : LlmPart
     data class Image(val bytes: ByteArray, val mimeType: String) : LlmPart
+
+    /**
+     * A PDF, a song or a video, sent whole to a model that takes it in (see `MediaSupport`). The
+     * context builder only makes these for providers that can send them; others drop them.
+     */
+    data class Media(val bytes: ByteArray, val mimeType: String, val name: String? = null) : LlmPart
 }
 
 data class LlmToolCall(val id: String, val name: String, val argumentsJson: String)

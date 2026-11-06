@@ -11,6 +11,7 @@ import com.anthropic.models.beta.messages.BetaBase64ImageSource
 import com.anthropic.models.beta.messages.BetaCacheControlEphemeral
 import com.anthropic.models.beta.messages.BetaContentBlockParam
 import com.anthropic.models.beta.messages.BetaImageBlockParam
+import com.anthropic.models.beta.messages.BetaRequestDocumentBlock
 import com.anthropic.models.beta.messages.BetaMessage
 import com.anthropic.models.beta.messages.BetaMessageParam
 import com.anthropic.models.beta.messages.BetaOutputConfig
@@ -231,6 +232,7 @@ class AnthropicProvider : LlmProvider {
                 when (part) {
                     is LlmPart.Text -> BetaContentBlockParam.ofText(BetaTextBlockParam.builder().text(part.text).build())
                     is LlmPart.Image -> imageBlock(part)
+                    is LlmPart.Media -> documentBlock(part)
                 }
             }.ifEmpty { listOf(BetaContentBlockParam.ofText(BetaTextBlockParam.builder().text("...").build())) },
         )
@@ -286,6 +288,17 @@ class AnthropicProvider : LlmProvider {
                         .mediaType(mediaType)
                         .build(),
                 )
+                .build(),
+        )
+    }
+
+    /** A PDF, as a document Claude reads page by page (text and pictures). Other media aren't sent. */
+    private fun documentBlock(part: LlmPart.Media): BetaContentBlockParam? {
+        if (part.mimeType.lowercase() != "application/pdf") return null
+        return BetaContentBlockParam.ofDocument(
+            BetaRequestDocumentBlock.builder()
+                .base64Source(Base64.getEncoder().encodeToString(part.bytes))
+                .apply { part.name?.takeIf { it.isNotBlank() }?.let { title(it) } }
                 .build(),
         )
     }

@@ -202,6 +202,16 @@ class GeminiProvider(
         }
     }
 
+    private fun inlineData(mimeType: String, bytes: ByteArray) = buildJsonObject {
+        put(
+            "inlineData",
+            buildJsonObject {
+                put("mimeType", mimeType)
+                put("data", Base64.getEncoder().encodeToString(bytes))
+            },
+        )
+    }
+
     private fun buildContents(request: LlmRequest): JsonArray {
         val contents = mutableListOf<Pair<String, MutableList<JsonElement>>>()
         fun add(role: String, parts: List<JsonElement>) {
@@ -216,19 +226,9 @@ class GeminiProvider(
                     message.parts.mapNotNull { part ->
                         when (part) {
                             is LlmPart.Text -> buildJsonObject { put("text", part.text) }
-                            is LlmPart.Image -> if (request.profile.supportsVision) {
-                                buildJsonObject {
-                                    put(
-                                        "inlineData",
-                                        buildJsonObject {
-                                            put("mimeType", part.mimeType)
-                                            put("data", Base64.getEncoder().encodeToString(part.bytes))
-                                        },
-                                    )
-                                }
-                            } else {
-                                null
-                            }
+                            // Every Gemini model sees pictures; the context builder decides what else goes (MediaSupport).
+                            is LlmPart.Image -> inlineData(part.mimeType, part.bytes)
+                            is LlmPart.Media -> inlineData(part.mimeType, part.bytes)
                         }
                     },
                 )

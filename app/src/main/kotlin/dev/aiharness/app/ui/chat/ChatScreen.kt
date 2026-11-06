@@ -242,7 +242,8 @@ fun ChatScreen(nav: NavController, conversationId: String) {
         val inlineStickers = remember(stickerArt, persona?.id) {
             stickerArt.values.filter { it.ownerPersonaId == null || it.ownerPersonaId == persona?.id }.associateBy { it.name }
         }
-        CompositionLocalProvider(LocalInlineStickers provides inlineStickers) {
+        val reader = header.persona?.let { persona -> header.profile?.let { PersonaReader(persona.name, it) } }
+        CompositionLocalProvider(LocalInlineStickers provides inlineStickers, LocalPersonaReader provides reader) {
             LazyColumn(
                 state = listState,
                 reverseLayout = true,

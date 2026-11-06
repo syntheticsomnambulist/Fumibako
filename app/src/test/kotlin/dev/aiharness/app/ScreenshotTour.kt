@@ -303,6 +303,9 @@ class ScreenshotTour {
         click("Claude Opus 5.5")
         waitFor("Provider and key")
         shot("${prefix}_30_model_profile")
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("Takes in", substring = true))
+        compose.waitForIdle()
+        shot("${prefix}_30b_model_takes_in")
         back()
         click("+ New model profile")
         waitFor("Start from")
@@ -550,7 +553,7 @@ class ScreenshotTour {
                     "mix1", AttachmentKind.PLAYLIST, title = "rainy day mix", subtitle = "for Aria, from Sam", lengthMs = 2_530_000,
                     tracks = listOf(Track(title = "October Walk", artist = "Hana Sato", lengthMs = 222_000), Track(title = "Kettle Song", artist = "The Lanterns", lengthMs = 194_000)),
                 ),
-                ContentPart.Attachment("pdf1", AttachmentKind.FILE, mimeType = "application/pdf", name = "market-map.pdf", sizeBytes = 2_400_000, pages = 3),
+                ContentPart.Attachment("pdf1", AttachmentKind.FILE, ref = h.blobs.put(byteArrayOf(37, 80, 68, 70), "pdf"), mimeType = "application/pdf", name = "market-map.pdf", sizeBytes = 2_400_000, pages = 3),
                 origin = MessageOrigin.USER,
             ),
             early(

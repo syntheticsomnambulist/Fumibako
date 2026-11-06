@@ -247,6 +247,8 @@ open class OpenAiCompatibleProvider(
             message.parts.forEach { part ->
                 when (part) {
                     is LlmPart.Text -> add(buildJsonObject { put("type", "text"); put("text", part.text) })
+                    // Servers differ too much in what else they take; the stand-in beside it says what it is.
+                    is LlmPart.Media -> Unit
                     is LlmPart.Image -> add(
                         buildJsonObject {
                             put("type", "image_url")

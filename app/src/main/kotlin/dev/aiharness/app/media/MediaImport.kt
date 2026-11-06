@@ -44,21 +44,27 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
         val ref = copy(uri, extensionOf(mime, name)) ?: return@withContext null
         var pages: Int? = null
         var thumb: String? = null
+        var firstPage: String? = null
         if (mime == "application/pdf") {
             runCatching {
                 PdfRenderer(ParcelFileDescriptor.open(blobs.fileFor(ref), ParcelFileDescriptor.MODE_READ_ONLY)).use { pdf ->
                     pages = pdf.pageCount
                     pdf.openPage(0).use { page ->
-                        val w = 240
-                        val h = (w * page.height / page.width.toFloat()).roundToInt().coerceAtLeast(1)
+                        // Big enough to read: it's what a model that can't take PDFs sees.
+                        val w = 1280
+                        val h = (w * page.height / page.width.toFloat()).roundToInt().coerceIn(1, 2400)
                         val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).apply { eraseColor(android.graphics.Color.WHITE) }
                         page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        thumb = blobs.put(jpeg(bitmap), "jpg")
+                        firstPage = blobs.put(jpeg(bitmap), "jpg")
+                        thumb = blobs.put(jpeg(scale(bitmap, 320)), "jpg")
                     }
                 }
             }
         }
-        ContentPart.Attachment(newId(), AttachmentKind.FILE, ref = ref, mimeType = mime, name = name, sizeBytes = size, pages = pages, thumbRef = thumb)
+        ContentPart.Attachment(
+            newId(), AttachmentKind.FILE, ref = ref, mimeType = mime, name = name, sizeBytes = size, pages = pages,
+            pictureRef = firstPage, thumbRef = thumb,
+        )
     }
 
     /**

@@ -124,6 +124,25 @@ class AnthropicProviderTest {
     }
 
     @Test
+    fun aPdfGoesAsADocumentAndOtherMediaStayBehind() = runTest {
+        server.enqueue(sse(textTurnStream))
+        val parts = listOf(
+            LlmPart.Text("[tag: map.pdf, PDF, 1 page, 3 KB]"),
+            LlmPart.Media(byteArrayOf(37, 80, 68, 70), "application/pdf", "map.pdf"),
+            LlmPart.Media(byteArrayOf(1, 2, 3), "audio/mp3", "song.mp3"),
+        )
+        AnthropicProvider().complete(LlmRequest(profile(), "k", "sys", listOf(LlmMessage.User(parts))))
+        val body = HarnessJson.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        val blocks = body["messages"]!!.jsonArray.single().jsonObject["content"]!!.jsonArray.map { it.jsonObject }
+        assertEquals(listOf("text", "document"), blocks.map { it["type"]!!.jsonPrimitive.content })
+        val source = blocks[1]["source"]!!.jsonObject
+        assertEquals("base64", source["type"]!!.jsonPrimitive.content)
+        assertEquals("application/pdf", source["media_type"]!!.jsonPrimitive.content)
+        assertEquals("JVBERg==", source["data"]!!.jsonPrimitive.content)
+        assertEquals("map.pdf", blocks[1]["title"]!!.jsonPrimitive.content)
+    }
+
+    @Test
     fun serverFallbackIsEnabledForFirstPartySupportedModels() {
         val firstParty = profile(baseUrl = null)
         assertTrue(AnthropicProvider.supportsServerFallback(firstParty))

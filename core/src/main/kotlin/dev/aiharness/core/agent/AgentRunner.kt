@@ -104,8 +104,11 @@ class AgentRunner(private val h: Harness) {
             val conversation = h.updateConversation(conversationId) { it.copy(updatedAt = now, lastUserMessageAt = now) }
                 ?: setup.conversation
             send(AgentEvent.UserMessageSaved(userMessage))
+            // What the persona's model can't take in, the utility model may describe before it reads the note.
+            val arrived = if (userMessage.images.isEmpty() && userMessage.attachments.isEmpty()) userMessage
+            else runCatching { h.describer.onArrival(userMessage, setup.profile, setup.settings) }.getOrDefault(userMessage)
 
-            runGuarded(setup.copy(conversation = conversation), history + userMessage) { send(it) }
+            runGuarded(setup.copy(conversation = conversation), history + arrived) { send(it) }
         }
     }
 

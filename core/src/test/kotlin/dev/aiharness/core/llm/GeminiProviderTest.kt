@@ -35,6 +35,26 @@ class GeminiProviderTest {
     )
 
     @Test
+    fun picturesAndMediaGoAsInlineData() = runTest {
+        server.enqueue(
+            MockResponse().setHeader("Content-Type", "text/event-stream")
+                .setBody("data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Nice.\"}]},\"finishReason\":\"STOP\"}]}\n\n"),
+        )
+        val parts = listOf(
+            LlmPart.Text("Listen."),
+            LlmPart.Image(byteArrayOf(9), "image/jpeg"),
+            LlmPart.Media(byteArrayOf(1, 2, 3), "audio/mp3", "song.mp3"),
+        )
+        // Every Gemini model sees pictures, whatever the profile's switch says.
+        GeminiProvider().complete(LlmRequest(profile().copy(supportsVision = false), "gkey", "sys", listOf(LlmMessage.User(parts))))
+        val body = HarnessJson.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        val sent = body["contents"]!!.jsonArray.single().jsonObject["parts"]!!.jsonArray.map { it.jsonObject }
+        assertEquals("Listen.", sent[0]["text"]!!.jsonPrimitive.content)
+        assertEquals(listOf("image/jpeg", "audio/mp3"), sent.drop(1).map { it["inlineData"]!!.jsonObject["mimeType"]!!.jsonPrimitive.content })
+        assertEquals("AQID", sent[2]["inlineData"]!!.jsonObject["data"]!!.jsonPrimitive.content)
+    }
+
+    @Test
     fun preservesThoughtSignaturesForReplay() = runTest {
         server.enqueue(
             MockResponse().setHeader("Content-Type", "text/event-stream").setBody(

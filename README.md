@@ -18,6 +18,7 @@ tested without a device and reused elsewhere.
 | Long-term memory: agent-written via tools, hybrid keyword + optional embedding recall, core memories, episode recaps | `core/memory`, `core/tools/BuiltinTools.kt` |
 | Heartbeat: **Proactive** (background reflection + optional messages), **Time-aware**, or **Off** | `core/agent/HeartbeatEngine.kt`, `app/heartbeat` |
 | Pictures from NovelAI, Stable Diffusion (Forge, Automatic1111, ComfyUI), OpenAI or Google, through image profiles (persona can call it as a tool, or you can request one) | `core/image` |
+| Photos, files, songs, playlists, videos and links in letters, framed as stationery; each model receives what it can take in | `core/media`, `app/media`, `app/ui/media` |
 | Stickers: emoji, each persona's own sheet (drawn from its looks), and a shared library (from photos, cut out on the phone); placed by you or by personas through tools, inline `:name:` in letters | `core/stickers`, `core/tools/StickerTools.kt`, `app/ui/stickers` |
 | API keys encrypted with the Android Keystore | `app/data/PlatformStores.kt` |
 
@@ -61,6 +62,7 @@ core/                         Plain Kotlin/JVM library: no Android dependencies
   tools/                      AgentTool interface, registry, memory, image, outfit and sticker tools
   image/                      Image profiles and hosts (NovelAI, Stable Diffusion, ComfyUI, OpenAI, Google), picture prompts
   stickers/                   StickerService (names, placing, peeling, notes to the persona), StickerMaker, emoji names
+  media/                      What each model takes in, the parts it receives, descriptions, link previews
 app/                          Android shell
   data/                       Room (JSON-document rows, migrations kept for three versions), Keystore secrets, DataStore settings, file blobs
   engine/GenerationManager    Runs turns in an app-wide scope so replies survive leaving the screen
@@ -85,6 +87,12 @@ Claude rejects (or drops) them if earlier turns or the system prompt were edited
   is the documented recovery.
 - **Compaction** summarizes the oldest turns (cut at a user-turn boundary, never mid tool round)
   into a running summary in the new system prompt, and records the chunk as an *episode* memory.
+- **Pictures and files** you send go whole where the model takes them (`core/media/MediaSupport.kt`:
+  Claude reads pictures and PDFs, Gemini also songs and videos, OpenAI-compatible servers pictures
+  with "Sees pictures"; text files go as text everywhere), else as pictures standing in (a video's
+  three frames, a PDF's first page) or a stand-in line. After a turn a short description is written
+  (`MediaDescriber`); epochs that begin after it carry the description instead of the file. One the
+  persona's model can't take in at all is described by the utility model before it first reads it.
 
 This also keeps prompt caches warm: Anthropic requests mark the system prompt and conversation
 prefix with `cache_control`.
@@ -196,8 +204,7 @@ stickers. Fonts are bundled placeholders (SIL OFL, see `app/src/main/assets/lice
 
 - Generation runs in the app process; Android may stop a long reply if the app is backgrounded for a
   long time. A foreground service would make this robust.
-- Images can be viewed but not yet saved to the gallery or shared.
-- Vision input (sending your own photos) is supported by the providers but not yet exposed in the
-  chat input.
+- Videos and songs larger than a request can carry (about 14 MB for Gemini) go by their frames or
+  label; Gemini's file upload API isn't used yet.
 - Heartbeat timing is best-effort: WorkManager batches periodic work, and battery optimizations can
   delay wakeups.

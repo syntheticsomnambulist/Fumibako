@@ -28,6 +28,21 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   frame offers Save to phone, Share and Copy link; tapping opens it in the phone's own app until
   the players and browser come. Stickers go on frames too, as their own target, and the persona
   hears where (`[Sam stuck :heart: on the cassette in Sam's Fri 00:26 note]`).
+- **Step 3, what the persona receives: done.** Per provider (`core/media/MediaSupport.kt`):
+  Claude sees pictures and reads PDFs (as documents); Gemini also hears songs and watches videos
+  (inline, under its 20 MB request size); OpenAI-compatible servers see pictures when "Sees
+  pictures" is on (the switch is now only shown for them: every Claude and Gemini model sees);
+  text files go as text everywhere, cut to a third of the context budget. Where a model can't take
+  something whole, pictures stand in when it sees (a video's three frames, a PDF's first page,
+  now stored at 1280 px), else the stand-in; a cutting's stand-in carries the page's description.
+  Anything over a third of the budget (a long video, a 600-page PDF) goes by its stand-in, and
+  whole things are chosen newest first within the request size. After each turn a short
+  description is written, by the utility model or the persona's own; epochs that begin after it
+  carry the description instead (history stays append-only within an epoch). What the persona's
+  model can't take in at all, the utility model describes before the persona first reads it, so a
+  text-only model hears what's in a photo. Under each frame in your note, a line says what the
+  persona can't take in ("Aria can read the label, but can't hear the songs."), and a model's
+  settings say what it takes in. Token estimates for compaction count pictures and files.
 
 ## What v0.3.5 includes
 
