@@ -47,7 +47,7 @@ class MediaParts(private val blobs: BlobStore) {
             for (a in message.attachments) {
                 if (described(a.describedAt, message.createdAt, epochStartedAt)) continue
                 if (MediaSupport.takesWhole(a, profile, senses)) {
-                    val bytes = a.ref?.let { blobs.get(it) }
+                    val bytes = MediaSupport.sentRef(a)?.let { blobs.get(it) }
                     if (bytes != null && (MediaSupport.isText(a) || bytes.size <= room)) {
                         if (!MediaSupport.isText(a)) room -= bytes.size
                         chosen[a.id] = Way.WHOLE to listOf(bytes)
@@ -88,8 +88,8 @@ class MediaParts(private val blobs: BlobStore) {
 
     /** What the model is told the thing is, as the provider wants it named. */
     private fun wireType(a: ContentPart.Attachment): String = when (a.kind) {
-        AttachmentKind.SONG -> MediaSupport.geminiAudioType(a.mimeType) ?: a.mimeType.orEmpty()
-        AttachmentKind.VIDEO -> MediaSupport.geminiVideoType(a.mimeType) ?: a.mimeType.orEmpty()
+        AttachmentKind.SONG -> MediaSupport.sentType(a).let { MediaSupport.geminiAudioType(it) ?: it.orEmpty() }
+        AttachmentKind.VIDEO -> MediaSupport.sentType(a).let { MediaSupport.geminiVideoType(it) ?: it.orEmpty() }
         else -> if (MediaSupport.isPdf(a)) "application/pdf" else a.mimeType ?: "application/octet-stream"
     }
 

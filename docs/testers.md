@@ -74,8 +74,8 @@ be turned off in Settings, Media. There are no accounts, ads or analytics.
 - **From personas:** they can share links and songs back. Songs from YouTube, SoundCloud or
   Bandcamp play in their own player; Spotify and Apple Music open in their apps.
 - **Keepsakes:** a memory can keep something from its letter (the persona chooses), shown in
-  the memory book as a scrapbook piece; tap it to play or open it. The book's Keepsakes tab
-  shows just those.
+  the memory book as a scrapbook piece; tap it to play or open it, or hold it to stick a sticker
+  on it. The book's Keepsakes tab shows just those.
 - **Settings, Media** has where links open, picture size, playback and motion switches.
 
 ## If something goes wrong

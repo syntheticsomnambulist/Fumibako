@@ -112,7 +112,7 @@ class MediaDescriber(private val h: Harness) {
             is ContentPart.Attachment -> {
                 val senses = MediaSupport.of(profile)
                 if (whole) {
-                    val bytes = part.ref?.let { h.blobs.get(it) } ?: return null
+                    val bytes = MediaSupport.sentRef(part)?.let { h.blobs.get(it) } ?: return null
                     parts.attachmentParts(part, MediaParts.Way.WHOLE, listOf(bytes), describedNow = false, profile = profile)
                 } else {
                     val pictures = MediaSupport.picturesFor(part, senses).mapNotNull { h.blobs.get(it) }

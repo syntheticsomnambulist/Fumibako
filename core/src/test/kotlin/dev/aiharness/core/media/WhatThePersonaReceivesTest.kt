@@ -150,6 +150,22 @@ class WhatThePersonaReceivesTest {
     }
 
     @Test
+    fun aBigVideosSmallerCopyGoesWholeToGemini() = runTest {
+        val env = env(ProviderType.GEMINI, modelId = "gemini-3-flash")
+        val conversation = env.harness.createConversation(env.persona.id)
+        val copy = env.harness.blobs.put(ByteArray(6_000) { 9 }, "mp4")
+        // A two-and-a-half-minute phone video, far too big itself, with its 360p copy.
+        val walk = env.video().copy(sizeBytes = 400L * 1024 * 1024, lengthMs = 150_000, modelRef = copy, modelMimeType = "video/mp4", modelSizeBytes = 6_000)
+        env.harness.agent.send(conversation.id, "", attachments = listOf(walk)).toList()
+        val media = env.personaRequests().last().lastNote().filterIsInstance<LlmPart.Media>().single()
+        assertEquals("video/mp4", media.mimeType)
+        assertEquals(6_000, media.bytes.size, "the copy, not the original")
+
+        val older = env.profile.copy(provider = ProviderType.GEMINI, modelId = "gemini-2.5-flash", contextBudgetTokens = 48_000)
+        assertFalse(MediaSupport.takesWhole(walk, older), "older Gemini models watch at higher cost, so it's too long for them")
+    }
+
+    @Test
     fun theLineUnderAFrameSaysWhatThePersonaCantTakeIn() = runTest {
         val env = env(ProviderType.ANTHROPIC)
         val claude = env.profile.copy(provider = ProviderType.ANTHROPIC, contextBudgetTokens = 48_000)

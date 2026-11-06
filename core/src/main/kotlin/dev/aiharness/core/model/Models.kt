@@ -313,6 +313,13 @@ sealed interface ContentPart {
         val frameRefs: List<String> = emptyList(),
         /** A small picture of it for lists and the memory book. */
         val thumbRef: String? = null,
+        /**
+         * A smaller copy made on the phone for models that take it whole (a video at 360p, a song as
+         * compact AAC), so it fits in a request; the original still plays and saves.
+         */
+        val modelRef: String? = null,
+        val modelMimeType: String? = null,
+        val modelSizeBytes: Long? = null,
         /** A short description written when it arrived, which later context epochs carry instead of the file. */
         val description: String? = null,
         /** When [description] was written: epochs that began after it send the description. */

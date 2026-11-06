@@ -75,6 +75,11 @@ fun StickerTray(
     onDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    /** What the back button says, and what it does for TalkBack. */
+    backLabel: String = "‹ Add",
+    backHint: String = "Back to everything you can add",
+    /** The line at the foot of the tray, on where a tap and a drag put a sticker. */
+    hint: String = "Tap: onto your note. Hold and drag: onto any letter.",
 ) {
     val colors = paper
     var page by rememberSaveable { mutableStateOf(if (recent.isEmpty()) TrayPage.EMOJI else TrayPage.RECENT) }
@@ -103,10 +108,10 @@ fun StickerTray(
         ) {
             onBack?.let { back ->
                 Text(
-                    "‹ Add",
+                    backLabel,
                     style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp),
                     color = colors.usuzumi1,
-                    modifier = Modifier.clip(PaperCorner).clickable(onClickLabel = "Back to everything you can add") { back() }.padding(horizontal = 4.dp, vertical = 6.dp),
+                    modifier = Modifier.clip(PaperCorner).clickable(onClickLabel = backHint) { back() }.padding(horizontal = 4.dp, vertical = 6.dp),
                 )
             }
             listOf(TrayPage.RECENT to "Recent", TrayPage.PERSONA to "$personaName's", TrayPage.SHARED to "Shared", TrayPage.EMOJI to "Emoji").forEach { (p, label) ->
@@ -159,7 +164,7 @@ fun StickerTray(
             }
         }
         Text(
-            "Tap: onto your note. Hold and drag: onto any letter.",
+            hint,
             style = PaperType.meta.copy(fontSize = 11.5.sp, letterSpacing = 0.sp),
             color = colors.kasure2,
             modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 10.dp),

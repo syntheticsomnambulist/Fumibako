@@ -798,7 +798,7 @@ private fun ImageDialog(
 
 /** A slip above the composer about the selected sticker: whose it is, and peel it off or be done. */
 @Composable
-private fun StickerSlip(text: String, peel: (() -> Unit)? = null, putBack: (() -> Unit)? = null, done: () -> Unit) {
+internal fun StickerSlip(text: String, peel: (() -> Unit)? = null, putBack: (() -> Unit)? = null, done: () -> Unit) {
     Row(
         Modifier
             .padding(horizontal = 18.dp, vertical = 6.dp)

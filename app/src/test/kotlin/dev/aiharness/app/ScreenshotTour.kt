@@ -23,6 +23,8 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -400,6 +402,14 @@ class ScreenshotTour {
         compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(hasText("+", substring = true))
         compose.waitForIdle()
         shot("${prefix}_20b2_memory_book_keepsakes")
+        // Hold a keepsake to stick a sticker on it; it shows on the letter's cassette too.
+        compose.onNodeWithText("RAINY DAY MIX").performTouchInput { longClick() }
+        waitFor("Hold and drag")
+        compose.waitUntilAtLeastOneExists(hasContentDescription(":blush:"), 10_000)
+        click(":blush:")
+        compose.waitUntilAtLeastOneExists(hasContentDescription(":blush: sticker"), 10_000)
+        shot("${prefix}_20b3_sticker_on_keepsake")
+        click("Close")
         top()
         compose.onNodeWithText("Keepsakes").performScrollTo().performClick()
         waitFor("rainy day mix")

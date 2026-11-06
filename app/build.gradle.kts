@@ -16,8 +16,8 @@ android {
         applicationId = "dev.fumibako.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.3.5"
+        versionCode = 8
+        versionName = "0.3.5.1"
     }
 
     signingConfigs {
@@ -101,6 +101,8 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.ui.compose)
+    implementation(libs.androidx.media3.transformer)
+    implementation(libs.androidx.media3.effect)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)

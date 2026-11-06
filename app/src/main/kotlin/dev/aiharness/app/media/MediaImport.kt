@@ -29,6 +29,21 @@ import kotlin.math.roundToInt
  * cover, a PDF's pages and first page, a video's length and three frames.
  */
 class MediaImport(private val context: Context, private val blobs: FileBlobStore) {
+    private val shrinker = Shrinker(context)
+
+    /** The smaller copy models are sent, stored beside the original: (ref, size), or null. */
+    private suspend fun smallerCopy(ref: String, video: Boolean): Pair<String, Long>? {
+        val source = blobs.fileFor(ref)?.takeIf { it.exists() } ?: return null
+        val out = File(context.cacheDir, "shrink-${newId()}.mp4")
+        val made = (if (video) shrinker.video(source, out) else shrinker.song(source, out)) ?: return null
+        return try {
+            val stored = made.inputStream().use { blobs.putStream(it, if (video) "mp4" else "m4a") } ?: return null
+            stored to made.length()
+        } finally {
+            made.delete()
+        }
+    }
+
     private val resolver get() = context.contentResolver
 
     /** A photo, scaled so its longer side is at most [maxSide] (0 keeps it full size). */
@@ -76,7 +91,15 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
         when {
             tracks.isEmpty() -> null
             tracks.size == 1 -> tracks.single().let { (t, cover) ->
-                ContentPart.Attachment(newId(), AttachmentKind.SONG, ref = t.ref, mimeType = t.mimeType, name = t.name, title = t.title, artist = t.artist, lengthMs = t.lengthMs, pictureRef = cover)
+                val size = t.ref?.let { blobs.fileFor(it)?.length() }
+                val known = dev.aiharness.core.media.MediaSupport.geminiAudioType(t.mimeType) != null
+                // A big or unusual file gets a compact copy for models that hear songs.
+                val small = if (t.ref != null && (!known || (size ?: 0L) > Shrinker.SMALL_SONG)) smallerCopy(t.ref!!, video = false) else null
+                ContentPart.Attachment(
+                    newId(), AttachmentKind.SONG, ref = t.ref, mimeType = t.mimeType, name = t.name, title = t.title, artist = t.artist,
+                    lengthMs = t.lengthMs, pictureRef = cover, sizeBytes = size,
+                    modelRef = small?.first, modelMimeType = small?.let { "audio/mp4" }, modelSizeBytes = small?.second,
+                )
             }
             else -> ContentPart.Attachment(
                 newId(),
@@ -131,9 +154,12 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
                 val us = ((length ?: 0L) * at * 1000).toLong()
                 retriever.getFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)?.let { blobs.put(jpeg(scale(it, 480)), "jpg") }
             }
+            // A smaller copy for models that watch video, when it's short enough to be worth it.
+            val small = if (length != null && length <= Shrinker.LONGEST_VIDEO_MS) smallerCopy(ref, video = true) else null
             ContentPart.Attachment(
                 newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size,
                 title = name?.substringBeforeLast('.'), lengthMs = length, frameRefs = frames, thumbRef = frames.getOrNull(1) ?: frames.firstOrNull(),
+                modelRef = small?.first, modelMimeType = small?.let { "video/mp4" }, modelSizeBytes = small?.second,
             )
         } catch (e: Exception) {
             ContentPart.Attachment(newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size, title = name?.substringBeforeLast('.'))

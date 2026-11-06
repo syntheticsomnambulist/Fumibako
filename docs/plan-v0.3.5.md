@@ -107,6 +107,14 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   kept ticket stub or J-card peeking out of its envelope. The memory card shows them under the
   card, so letting it go burns them with it; with "Let me edit memories" on, you can keep more
   from its letter or take them out.
+- **After 0.3.5's first build** (your answers): videos and big or unusual songs get a smaller
+  copy made on the phone when picked (360 px video at about 400 kbit/s, 64 kbit/s AAC), which
+  models are sent instead, so a clip of two or three minutes fits a single request to Gemini 3
+  and later (which watch at about 100 tokens a second); nothing is stored at Google. Stickers go
+  on keepsakes in the memory book too: hold one to open the tray for it, or drag a sticker onto
+  any keepsake; tap one to move, resize or peel it (the same peeling rules as letters); it shows
+  on the letter's frame as well. Links: letters stay as they are (only links already in the
+  conversation); a heartbeat activity that needs the web (none yet) may be given more.
 - **Step 8, polish and the APK: done.** 0.3.5 (code 7). The testers' guide says what reaches
   websites now (link previews, personas opening links) and what to try. Checks, and all four
   screenshot tours, pass. Not yet tried on a phone: picking photos, files, songs and videos;

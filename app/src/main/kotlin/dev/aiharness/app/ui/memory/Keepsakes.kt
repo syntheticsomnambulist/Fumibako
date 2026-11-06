@@ -42,6 +42,31 @@ import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.StickerTargetKind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.background
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import dev.aiharness.app.ui.chat.StickerSlip
+import dev.aiharness.app.ui.chat.StickerTray
+import dev.aiharness.app.ui.chat.letterStamp
+import dev.aiharness.app.ui.chat.stickerLabel
+import dev.aiharness.app.ui.stickers.LocalStickerSettings
+import dev.aiharness.app.ui.stickers.StickerBaker
+import dev.aiharness.app.ui.stickers.StickerPicture
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.model.StickerTarget
+import dev.aiharness.core.stickers.StickResult
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -84,6 +109,18 @@ class KeepsakeMarks(
     val readBy: Map<String, Color> = emptyMap(),
     /** Whose ink a keepsake is in: yours for something from your note, the persona's for its own. */
     val inkOfKeepsake: (Keepsake) -> Color = { Color.Unspecified },
+    /** Stickers you can move and peel on keepsakes, and holding one to stick a sticker on it. */
+    val selectedId: String? = null,
+    val onTap: ((Sticker) -> Unit)? = null,
+    val onChange: ((Sticker) -> Unit)? = null,
+    val paper: (StickerTarget, String?) -> Modifier = { _, _ -> Modifier },
+    val onHold: ((StickerTarget, String?) -> Unit)? = null,
+    /** A keepsake that scrolled away can't be dropped on. */
+    val forget: (StickerTarget) -> Unit = {},
+    /** The conversation a keepsake's letter is in, found from the letter. */
+    val conversationOf: (Keepsake) -> String? = { null },
+    /** A sticker's name, ":heart: sticker", for TalkBack. */
+    val nameOf: (Sticker) -> String? = { null },
 )
 
 /**
@@ -105,23 +142,77 @@ fun KeepsakeHost(personaId: String, persona: Persona?, name: String, content: @C
     val you = users.firstOrNull { it.id == settings?.activeUserPersonaId } ?: users.firstOrNull()
     val personaInk = sheet.dayColors.ink(persona?.ink)
     val yourInk = sheet.dayColors.ink(you?.ink ?: "sora")
-    val stuck by produceState(emptyMap<String, List<Sticker>>(), mine) {
-        value = withContext(Dispatchers.IO) {
-            mine.flatMap { harness.stickers.forConversation(it.id) }
-                .filter { it.target.kind == StickerTargetKind.ATTACHMENT && !it.isPeeled }
-                .groupBy { it.target.id }
+    val stuckFlow = remember(mine) {
+        if (mine.isEmpty()) kotlinx.coroutines.flow.flowOf(emptyList())
+        else combine(mine.map { harness.stickers.observeForConversation(it.id) }) { lists -> lists.flatMap { it } }
+    }
+    val allStuck by stuckFlow.collectAsStateWithLifecycle(emptyList())
+    val scope = rememberCoroutineScope()
+
+    // Stickers on keepsakes: one selected to move, resize or peel; holding a keepsake opens the tray for it.
+    var selectedId by remember { mutableStateOf<String?>(null) }
+    var moving by remember { mutableStateOf<Sticker?>(null) }
+    var trayFor by remember { mutableStateOf<Pair<StickerTarget, String>?>(null) }
+    var dragging by remember { mutableStateOf<Pair<StickerRef, Offset>?>(null) }
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    val papers = remember { mutableStateMapOf<StickerTarget, Pair<Rect, String>>() }
+    LaunchedEffect(moving) {
+        val m = moving ?: return@LaunchedEffect
+        delay(400)
+        harness.stickerService.move(m, m.x, m.y, m.rotationDeg, m.scale)
+    }
+    val finish = {
+        moving?.let { m -> scope.launch { harness.stickerService.move(m, m.x, m.y, m.rotationDeg, m.scale) } }
+        moving = null
+        selectedId = null
+    }
+    val shown = remember(allStuck, moving) {
+        val m = moving
+        allStuck.filter { it.target.kind == StickerTargetKind.ATTACHMENT && !it.isPeeled }
+            .map { if (m != null && it.id == m.id) m else it }
+            .groupBy { it.target.id }
+    }
+    fun stick(target: StickerTarget, conversationId: String, ref: StickerRef, x: Float? = null, y: Float? = null) {
+        scope.launch {
+            val n = harness.stickerService.on(conversationId, target).size
+            val (sx, sy, tilt) = x?.let { Triple(it, y ?: 0.5f, (Math.random() * 16 - 8).toFloat()) } ?: SPOTS[n % SPOTS.size]
+            when (val r = harness.stickerService.stick(conversationId, target, ref, null, sx, sy, rotationDeg = tilt, scale = 0.8f)) {
+                is StickResult.Stuck -> container.usedSticker(ref)
+                is StickResult.Refused -> android.widget.Toast.makeText(context, r.reason, android.widget.Toast.LENGTH_SHORT).show()
+            }
         }
     }
-    val allMarks by remember { harness.marks.observeAll() }.collectAsStateWithLifecycle(emptyList())
-    val marks = remember(stuck, allMarks, personaInk, yourInk) {
-        KeepsakeMarks(
-            stickers = { stuck[it].orEmpty() },
-            inkOf = { st -> stickerInk(st, sheet, persona, you) },
-            punched = allMarks.filter { it.kind == MarkKind.PUNCHED }.map { it.attachmentId }.toSet(),
-            readBy = allMarks.filter { it.kind == MarkKind.READ && it.byPersonaId == personaId }.associate { it.attachmentId to personaInk },
-            inkOfKeepsake = { if (it.fromYou) yourInk else personaInk },
-        )
+    val art by remember { harness.stickers.observeArt() }.collectAsStateWithLifecycle(emptyList())
+    val artById = remember(art) { art.associateBy { it.id } }
+    // Which conversation each letter is in, for keepsakes whose memory doesn't say.
+    val letterConversation by produceState(emptyMap<String, String>(), mine) {
+        value = withContext(Dispatchers.IO) { mine.flatMap { c -> harness.conversations.getMessages(c.id).map { it.id to c.id } }.toMap() }
     }
+    val allMarks by remember { harness.marks.observeAll() }.collectAsStateWithLifecycle(emptyList())
+    val marks = KeepsakeMarks(
+        stickers = { shown[it].orEmpty() },
+        inkOf = { st -> stickerInk(st, sheet, persona, you) },
+        punched = remember(allMarks) { allMarks.filter { it.kind == MarkKind.PUNCHED }.map { it.attachmentId }.toSet() },
+        readBy = remember(allMarks, personaInk) { allMarks.filter { it.kind == MarkKind.READ && it.byPersonaId == personaId }.associate { it.attachmentId to personaInk } },
+        inkOfKeepsake = { if (it.fromYou) yourInk else personaInk },
+        selectedId = selectedId,
+        onTap = { st ->
+            if (selectedId == st.id) finish() else {
+                moving?.let { m -> scope.launch { harness.stickerService.move(m, m.x, m.y, m.rotationDeg, m.scale) } }
+                moving = null
+                selectedId = st.id
+            }
+        },
+        onChange = { moving = it },
+        paper = { target, conversationId ->
+            if (conversationId == null) Modifier else Modifier.onGloballyPositioned { papers[target] = it.boundsInRoot() to conversationId }
+        },
+        onHold = { target, conversationId -> if (conversationId != null) { finish(); trayFor = target to conversationId } },
+        forget = { papers.remove(it) },
+        conversationOf = { k -> k.messageId?.let { letterConversation[it] } },
+        nameOf = { st -> stickerLabel(st, artById) },
+    )
+    val recent by container.recentStickers.collectAsStateWithLifecycle()
     var viewing by remember { mutableStateOf<String?>(null) }
     var watching by remember { mutableStateOf<Pair<ContentPart.Attachment, Color>?>(null) }
     var playerOpen by remember { mutableStateOf(false) }
@@ -141,12 +232,58 @@ fun KeepsakeHost(personaId: String, persona: Persona?, name: String, content: @C
             },
         )
     }
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot() }) {
         CompositionLocalProvider(LocalKeepsakeTaps provides taps, LocalKeepsakeMarks provides marks) {
-            content(if (nowPlaying != null) 70.dp else 0.dp)
+            content(if (nowPlaying != null || trayFor != null || selectedId != null) 70.dp else 0.dp)
         }
-        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
-            nowPlaying?.let { MiniPlayer(it, container.playback, onOpen = { playerOpen = true }) }
+        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(paper.hyoshi)) {
+            val selected = selectedId?.let { id -> shown.values.flatten().firstOrNull { it.id == id } }
+            selected?.let { st ->
+                val mine = st.byPersonaId == null
+                val canPeel = harness.stickerService.youMayPeel(st, persona?.stickers?.youCanPeel == true)
+                StickerSlip(
+                    text = if (mine) "Your ${stickerLabel(st, artById).removeSuffix(" sticker")}, stuck ${letterStamp(st.createdAt).lowercase()}."
+                    else "$name stuck this ${letterStamp(st.createdAt).lowercase()}." + if (canPeel) "" else " Only $name can peel it off.",
+                    peel = if (canPeel) ({ scope.launch { harness.stickerService.peel(st, null) }; moving = null; selectedId = null }) else null,
+                    done = { finish() },
+                )
+            }
+            trayFor?.let { (target, conversationId) ->
+                StickerTray(
+                    onBack = { trayFor = null },
+                    backLabel = "Close",
+                    backHint = "Close the stickers",
+                    hint = "Tap: onto the one you held. Hold and drag: onto any keepsake.",
+                    personaName = name,
+                    personaId = personaId,
+                    recent = recent,
+                    art = artById,
+                    youInk = yourInk,
+                    onPick = { stick(target, conversationId, it) },
+                    onDragStart = { ref, at -> dragging = ref to at },
+                    onDrag = { delta -> dragging = dragging?.let { (ref, at) -> ref to (at + delta) } },
+                    onDragEnd = {
+                        dragging?.let { (ref, at) ->
+                            // Onto whichever keepsake is under the finger.
+                            papers.entries.filter { it.value.first.contains(at) }.minByOrNull { it.value.first.width * it.value.first.height }?.let { (t, value) ->
+                                val (rect, c) = value
+                                stick(t, c, ref, (at.x - rect.left) / rect.width, (at.y - rect.top) / rect.height)
+                            }
+                        }
+                        dragging = null
+                    },
+                )
+            }
+            if (trayFor == null) nowPlaying?.let { MiniPlayer(it, container.playback, onOpen = { playerOpen = true }) }
+        }
+        dragging?.let { (ref, at) ->
+            val side = (LocalStickerSettings.current.size.dp * StickerBaker.BOX).dp
+            val half = with(LocalDensity.current) { side.toPx() / 2f }
+            StickerPicture(
+                ref,
+                yourInk,
+                Modifier.offset { IntOffset((at.x - origin.x - half).roundToInt(), (at.y - origin.y - half).roundToInt()) }.size(side),
+            )
         }
         val playing = nowPlaying
         if (playerOpen && playing != null) FullPlayer(playing, container.playback, knows = null, onClose = { playerOpen = false })
@@ -170,8 +307,17 @@ const val KEEPSAKE_SCALE = 0.66f
  * cassette's J-card, a smaller cutting, two frames snipped from the strip. Still while you scroll;
  * aged with its memory; its stickers stay stuck.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun KeepsakeObject(keepsake: Keepsake, ink: Color, age: MemoryAge?, modifier: Modifier = Modifier, scale: Float = KEEPSAKE_SCALE) {
+fun KeepsakeObject(
+    keepsake: Keepsake,
+    ink: Color,
+    age: MemoryAge?,
+    modifier: Modifier = Modifier,
+    scale: Float = KEEPSAKE_SCALE,
+    /** The conversation its letter is in, where its stickers belong. */
+    conversationId: String? = null,
+) {
     val taps = LocalKeepsakeTaps.current
     val marks = LocalKeepsakeMarks.current
     val part = keepsake.part
@@ -186,15 +332,34 @@ fun KeepsakeObject(keepsake: Keepsake, ink: Color, age: MemoryAge?, modifier: Mo
             else -> null
         }
     }
+    val target = StickerTarget.attachment(keepsake.key)
+    val convo = conversationId ?: marks.conversationOf(keepsake)
+    val hold = marks.onHold?.let { h -> { h(target, convo) } }
+    androidx.compose.runtime.DisposableEffect(target) { onDispose { marks.forget(target) } }
     StuckOn(
         stickers = marks.stickers(keepsake.key),
         inkOf = marks.inkOf,
-        modifier = modifier.graphicsLayer { rotationZ = seededTilt(keepsake.key, 3f) },
-        nameOf = { null },
+        modifier = modifier.graphicsLayer { rotationZ = seededTilt(keepsake.key, 3f) }.then(marks.paper(target, convo)),
+        nameOf = marks.nameOf,
+        selectedId = marks.selectedId,
+        onTap = marks.onTap,
+        onChange = marks.onChange,
     ) {
         Box(
             Modifier.aged(age, part, keepsake.key)
-                .then(if (tap != null) Modifier.clickable(role = Role.Button, onClickLabel = "Open it", onClick = tap) else Modifier),
+                .then(
+                    if (tap != null || hold != null) {
+                        Modifier.combinedClickable(
+                            role = Role.Button,
+                            onClickLabel = "Open it",
+                            onClick = { tap?.invoke() },
+                            onLongClickLabel = "Stick a sticker",
+                            onLongClick = hold,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
         ) {
             when (part) {
                 is ContentPart.Image -> BookPolaroid(part.ref, polaroidCaptionOf(part), ink, keepsake.key) { tap?.invoke() }
@@ -285,7 +450,7 @@ fun DayKeepsakes(kept: List<Pair<Keepsake, BookPage>>, onMore: (String) -> Unit)
         verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.padding(top = 4.dp, end = 10.dp),
     ) {
-        kept.take(2).forEach { (keepsake, page) -> KeepsakeObject(keepsake, inkOf(keepsake), page.age) }
+        kept.take(2).forEach { (keepsake, page) -> KeepsakeObject(keepsake, inkOf(keepsake), page.age, conversationId = page.memory.sourceConversationId) }
         if (kept.size > 2) {
             val (_, page) = kept[2]
             Box(Modifier.align(Alignment.CenterVertically).clickable(role = Role.Button, onClickLabel = "See the rest") { onMore(page.memory.id) }.padding(8.dp)) {
@@ -294,3 +459,6 @@ fun DayKeepsakes(kept: List<Pair<Keepsake, BookPage>>, onMore: (String) -> Unit)
         }
     }
 }
+
+/** Where stickers tapped onto a keepsake land, in turn: around its top edge, tilted. */
+private val SPOTS = listOf(Triple(0.88f, 0.12f, 10f), Triple(0.14f, 0.14f, -9f), Triple(0.86f, 0.82f, 14f), Triple(0.16f, 0.84f, -6f), Triple(0.5f, 0.08f, 8f), Triple(0.5f, 0.9f, -12f))

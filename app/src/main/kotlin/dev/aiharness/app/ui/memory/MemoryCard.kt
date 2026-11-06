@@ -324,7 +324,7 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
                         if (m.keepsakes.isNotEmpty()) {
                             val inkOf = LocalKeepsakeMarks.current.inkOfKeepsake
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(start = 6.dp, bottom = 18.dp)) {
-                                m.keepsakes.forEach { KeepsakeObject(it, inkOf(it), age, scale = 0.8f) }
+                                m.keepsakes.forEach { KeepsakeObject(it, inkOf(it), age, scale = 0.8f, conversationId = m.sourceConversationId) }
                             }
                         }
                     }

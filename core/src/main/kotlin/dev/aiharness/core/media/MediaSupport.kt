@@ -92,22 +92,35 @@ object MediaSupport {
         a.kind == AttachmentKind.FILE && isPdf(a) -> (a.pages ?: 10) * if (profile.provider == ProviderType.GEMINI) 300 else 2_000
         a.kind == AttachmentKind.FILE && isText(a) -> ((a.sizeBytes ?: 4_000L) / CHARS_PER_TOKEN).toInt()
         a.kind == AttachmentKind.SONG -> ((a.lengthMs ?: 240_000L) / 1000 * 32).toInt()
-        a.kind == AttachmentKind.VIDEO -> ((a.lengthMs ?: 60_000L) / 1000 * 300).toInt()
+        // Gemini 3 and later watch video at about 70 tokens a frame by default (100 a second with sound); older ones at about 290.
+        a.kind == AttachmentKind.VIDEO -> ((a.lengthMs ?: 60_000L) / 1000 * if (modernGemini(profile)) 100 else 300).toInt()
         else -> 0
     }
 
+    /** Gemini 3 or later, by its model id. */
+    fun modernGemini(profile: ModelProfile): Boolean {
+        if (profile.provider != ProviderType.GEMINI) return false
+        val major = Regex("gemini-(\\d+)").find(profile.modelId.lowercase())?.groupValues?.get(1)?.toIntOrNull() ?: return profile.modelId.isBlank()
+        return major >= 3
+    }
+
+    /** The file a model is sent for [a]: its smaller copy when there is one, else the original. */
+    fun sentRef(a: ContentPart.Attachment): String? = a.modelRef ?: a.ref
+    fun sentType(a: ContentPart.Attachment): String? = if (a.modelRef != null) a.modelMimeType else a.mimeType
+    fun sentSize(a: ContentPart.Attachment): Long = (if (a.modelRef != null) a.modelSizeBytes else a.sizeBytes) ?: 0L
+
     /** Whether [profile]'s model takes [a] in whole: the right sense, a kind it knows, and small enough. */
     fun takesWhole(a: ContentPart.Attachment, profile: ModelProfile, senses: Senses = of(profile)): Boolean {
-        val size = a.sizeBytes ?: 0L
-        val fits = size <= inlineBudget(profile) && wholeTokens(a, profile) <= tokenCap(profile)
+        val fits = sentSize(a) <= inlineBudget(profile) && wholeTokens(a, profile) <= tokenCap(profile)
+        val ref = sentRef(a)
         return when (a.kind) {
             AttachmentKind.FILE -> when {
                 isText(a) -> a.ref != null
                 isPdf(a) -> senses.pdfs && a.ref != null && fits
                 else -> false
             }
-            AttachmentKind.SONG -> senses.audio && a.ref != null && geminiAudioType(a.mimeType) != null && fits
-            AttachmentKind.VIDEO -> senses.video && a.ref != null && geminiVideoType(a.mimeType) != null && fits
+            AttachmentKind.SONG -> senses.audio && ref != null && geminiAudioType(sentType(a)) != null && fits
+            AttachmentKind.VIDEO -> senses.video && ref != null && geminiVideoType(sentType(a)) != null && fits
             AttachmentKind.PLAYLIST, AttachmentKind.LINK -> false
         }
     }
