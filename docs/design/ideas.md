@@ -21,14 +21,15 @@ Updated 2026-11-06, with the user's rough plan to v0.7.
     switch, thinking lines the persona chooses, and searching past letters. The context slip sits
     beside the "Show thoughts" slip under a letter, each with an icon of its own (to design).
 - **v0.6: activities,** in [`activities.md`](activities.md): the writing desk, today's activities
-  moved onto it, shiritori, and pen pals ([`pen-pals.md`](pen-pals.md)). **v0.6.5:**
+  moved onto it, shiritori, trinkets, and pen pals ([`pen-pals.md`](pen-pals.md)), with at least a
+  small desk of your own for the trinkets you're given. **v0.6.5:**
   probably another batch of activities, with more games (candidates in
   [`activities.md`](activities.md)).
 - **v0.7: the outdoor update:** seasons, and what it means for a persona to live in a place of its
   own (often fictional) with its own weather; weather events for personas (below). It will feed
   back into the "going out" activities.
-- **Not designed or scheduled:** a scrapbook of your own (see [`keepsakes.md`](keepsakes.md)), a
-  Discord bridge, and the rest of this page.
+- **Not designed or scheduled:** a desk of your own with your scrapbooks and trinkets (see
+  [`activities.md`](activities.md)), a Discord bridge, and the rest of this page.
 
 ## Name and icon
 

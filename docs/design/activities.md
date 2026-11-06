@@ -179,7 +179,8 @@ games box itself is proposed):
 
 The user's idea (2026-11-06): little things a persona keeps, like buttons, plants and nice
 stones. Each is a picture and a description, and can be tied to memories. Personas come by them
-when they go out, and can give them to you or to their pen pals. Proposed details:
+when they go out, and can give them to you or to their pen pals. **Planned for v0.6**, with going
+out, and open to more in the v0.7 outdoor update. The details below were agreed as proposed:
 
 - **What one is:** a name ("a striped river stone"), a description in the persona's words, where
   and when it came from (found on a walk, from Juno, from you), a picture, and the memories it's
@@ -190,24 +191,30 @@ when they go out, and can give them to you or to their pen pals. Proposed detail
   the v0.7 outdoor update): the activity may offer "keep something you found", with
   `keep_trinket(name, description, kind)`. Free with the activity it belongs to, not a slot of
   its own.
-- **Pictures:** proposed, a built-in set of small drawings in the desk's look (buttons, stones,
-  shells, acorns, leaves, feathers, keys, marbles, little plants), each tinted from the
-  persona's inks, so a trinket costs no picture tokens. Personas with drawing switched on could
-  draw one instead (¥¥).
+- **Pictures:** a built-in set of small drawings in the desk's look (buttons, stones, shells,
+  acorns, leaves, feathers, keys, marbles, little plants), each tinted from the persona's inks,
+  so a trinket costs no picture tokens. Personas with drawing switched on can draw one instead
+  (¥¥).
 - **Memories:** `memory_save` and `memory_update` can keep a trinket the way they keep an
   attachment (see [`keepsakes.md`](keepsakes.md)); the persona sees "(kept with a trinket: a
   striped river stone)", and the memory book shows it with the memory.
 - **Giving:** the persona can enclose one in a letter to you, where it arrives in a small glassine
   envelope (a new frame), or post one to a pen pal. A given trinket moves to its new owner and
   remembers where it came from.
-- **Yours:** the trinkets you're given need a home of your own, which could be the start of the
-  scrapbook of your own (see [`keepsakes.md`](keepsakes.md)). You might also give trinkets: a
-  photo of a real stone, left on the desk, becoming a trinket.
+- **Yours:** the trinkets you're given live on a desk of your own (below). You might also give
+  trinkets: a photo of a real stone, left on a persona's desk, becoming a trinket.
 - **Limits:** at most one find per going-out, and a dish that holds a set number before older
   ones move to a box in the drawer.
 - **Later, maybe:** plants that grow a little over time.
 - **Storage:** trinkets are a new table (owner, name, description, kind, tint or picture, origin,
   given-by, created), a migration step.
+
+## Your desk (not designed yet)
+
+The user's idea (2026-11-06): a desk of your own, beside your personas'. It would hold your
+scrapbooks (more than one), a trinket dish for what personas give you, and the like. It takes
+over "a scrapbook of your own" from [`keepsakes.md`](keepsakes.md). Trinkets in v0.6 need
+somewhere to land, so at least a small version of it comes then.
 
 ## The look
 
@@ -301,7 +308,6 @@ https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn
 
 ## Open
 
-- **Trinkets:** when they land (with going out in v0.6, or the v0.7 outdoor update), the
-  built-in set versus drawn pictures, and where yours live.
+- **Your desk:** what's on it and where it lives in the app, and how much of it comes in v0.6.
 
 - **The look beyond the desk:** whether the v0.5 stationery update takes it across the app.

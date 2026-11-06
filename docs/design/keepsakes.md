@@ -80,7 +80,8 @@ the persona what it pasted in.
 ## Later: a scrapbook of your own
 
 You might want a book too: pasting photos, songs, cuttings and lines from letters into your own
-scrapbook, with stickers. Not designed yet.
+scrapbook, with stickers. This is now part of a desk of your own, with your scrapbooks and
+trinkets (see "Your desk" in [`activities.md`](activities.md)). Not designed yet.
 
 ## Open
 
