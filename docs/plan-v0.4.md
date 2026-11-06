@@ -111,6 +111,25 @@ From the agreed decisions in `calendar.md`:
   the planner, not a letter, and a day holds twice a letter's stickers; a plan's go when it's
   deleted, and a planner's when that persona of yours is. A persona's stickers on days and plans
   are still step 4.
+- **After 0.4.0-preview.2:** the ghost a moved plan left behind looked like a mistake, so it's
+  gone: a moved plan carries its 延 seal to its new day (moved back, it's just a plan again), and
+  the seals sit over a plan's bottom corner rather than over its title. A plan takes taps a little
+  above and below itself (40dp at least), so a near miss no longer opens its day. Any of your
+  stickers, on letters and the planner, can be held and dragged to move it without selecting it
+  (a tap still selects it, to peel, turn or resize).
+- **Step 3, the month and the seasons: under way.** The season engine is done: the 24 solar terms
+  and 72 microseasons are worked out on the phone from the sun's position (no network, no data
+  file), in the phone's own time zone (so the December solstice is the 22nd in Tokyo and the 21st
+  in New York), and turned half a year round south of the equator. Your side of the equator comes
+  from your saved location, else your time zone, and can be set. The theme's seasons can follow
+  the weather (as before, now flipped in the south without a saved location too) or the solar
+  terms. A letter is told the season once as each microseason begins ("Season: 立冬 (winter
+  begins), camellias open."), with time awareness on. Public holidays come from Nager.Date once
+  you choose whose (only the country and year are sent; this year's and next year's lists are
+  kept, and fetched again after three months): public ones only, nationwide or your region's. A
+  persona that sees your planner is told of the week's ("Thursday is a public holiday:
+  Thanksgiving."). Still to come in step 3: the month page, the season band on the pages,
+  holidays on the pages, and the settings for them.
 
 ## Noted for later
 

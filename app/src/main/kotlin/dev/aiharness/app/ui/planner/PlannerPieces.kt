@@ -26,6 +26,7 @@ import dev.aiharness.app.ui.media.LocalMediaSettings
 import dev.aiharness.app.ui.media.reducedMotion
 import dev.aiharness.app.ui.theme.HarnessFonts
 import dev.aiharness.core.model.EntryState
+import dev.aiharness.core.model.PlannerEntry
 import java.time.DayOfWeek
 
 /** Highlighter: a band of ink with slightly rough ends, as your plans are marked on the week page. */
@@ -55,10 +56,11 @@ fun dayInk(day: DayOfWeek, plain: Color, night: Boolean): Color = when (day) {
 }
 
 /** The stamp a state leaves: 済 done, 止 cancelled (or not going), 延 moved. */
-fun stampOf(state: EntryState): String? = when (state) {
+fun stampOf(entry: PlannerEntry): String? = when (entry.state) {
     EntryState.DONE, EntryState.KEPT -> "済"
     EntryState.CANCELLED -> "止"
-    else -> null
+    // A moved plan carries its 延 with it (its old place is left clear).
+    else -> "延".takeIf { entry.movedFrom != null }
 }
 
 /**

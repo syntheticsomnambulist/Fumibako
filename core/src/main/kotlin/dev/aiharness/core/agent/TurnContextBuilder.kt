@@ -11,6 +11,8 @@ import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.seasons.Seasons
+import dev.aiharness.core.theme.ThemeClock
 import dev.aiharness.core.stickers.StickerService
 import dev.aiharness.core.tools.feelingNote
 import dev.aiharness.core.util.Clock
@@ -30,6 +32,15 @@ class TurnContextBuilder(
     private val planner: dev.aiharness.core.planner.Planner? = null,
 ) {
     private val timeFormat = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy, HH:mm")
+
+    /** "Season: 立冬 (winter begins), camellias open." */
+    private fun seasonLine(settings: AppSettings, now: Long): String {
+        val zone = clock.zone
+        val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+        val micro = Seasons.microOn(today, zone, ThemeClock.hemisphere(settings.theme, zone))
+        fun lower(text: String) = text.replaceFirstChar { it.lowercase() }
+        return "$SEASON ${micro.term.kanji} (${lower(micro.term.english)}), ${lower(micro.english)}."
+    }
     private val dateFormat = DateTimeFormatter.ofPattern("d MMM yyyy")
 
     suspend fun build(
@@ -62,6 +73,14 @@ class TurnContextBuilder(
 
         // What's on in your planner, when the two of you share it (here, not the system prompt, so the cache holds).
         planner?.contextFor(persona, userPersona, settings)?.let { lines += it }
+
+        // The season, once in each letter as each microseason begins; like the time, only with time awareness.
+        if (settings.planner.seasonBand && settings.heartbeat.mode != HeartbeatMode.OFF) {
+            val line = seasonLine(settings, now)
+            val told = history.lastOrNull { it.role == MessageRole.USER && it.turnContext?.contains(SEASON) == true }
+                ?.turnContext?.lines()?.firstOrNull { it.startsWith(SEASON) }
+            if (line != told) lines += line
+        }
 
         if (stickers != null && conversationId != null) {
             val lastTurn = history.lastOrNull { it.role == MessageRole.ASSISTANT }?.createdAt ?: 0L
@@ -112,6 +131,8 @@ class TurnContextBuilder(
     }
 
     companion object {
+        private const val SEASON = "Season:"
+
         fun wrap(context: String): String = "<context>\n$context\n</context>"
     }
 }

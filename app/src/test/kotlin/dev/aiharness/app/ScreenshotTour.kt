@@ -27,6 +27,8 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -476,6 +478,13 @@ class ScreenshotTour {
         compose.waitUntilAtLeastOneExists(hasContentDescription(":blush: sticker"), 10_000)
         shot("${prefix}_24a_planner_stickers")
         compose.onAllNodesWithText("Close").onFirst().performClick()
+        compose.waitForIdle()
+        // A tap just under a short plan still picks it (an hour is small to aim at), not its day.
+        compose.onNodeWithContentDescription("Call Grandma", substring = true).performScrollTo()
+            .performTouchInput { click(androidx.compose.ui.geometry.Offset(center.x, height + 6.dp.toPx())) }
+        waitFor("Done")
+        assertTrue(compose.onAllNodes(hasClickActionLabel("Stick stickers on the planner")).fetchSemanticsNodes().isNotEmpty(), "still on the week")
+        compose.onNode(hasClickActionLabel("Put the stamps away")).performClick()
         compose.waitForIdle()
         // A plan's stamps, then the days to move it to.
         compose.onNodeWithContentDescription("Dinner with Jo", substring = true).performClick()

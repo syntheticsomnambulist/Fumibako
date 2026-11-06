@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -202,6 +203,9 @@ fun PlannerScreen(nav: NavController) {
 
 /** Space at the side for the hours. */
 private val GUTTER = 24.dp
+
+/** How tall a plan's place to tap is at least, however short the plan. */
+private val PLAN_TARGET = 40.dp
 
 /**
  * The grid's small type, which grows with the phone's text size only so far (to 1.15 times):
@@ -478,26 +482,26 @@ private fun WeekGrid(
             Box(Modifier.offset(x = GUTTER + col * i - 3.dp, y = at - 3.dp).size(7.dp).background(ink, CircleShape))
         }
 
-        // Ghosts where plans were moved from.
         val plans = occurrences.filter { it.entry.kind == EntryKind.PLAN && it.entry.byPersonaId == null && it.start != null && !it.entry.allDay }
-        plans.filter { it.entry.movedFrom != null }.forEach { o ->
-            val from = LocalDate.parse(o.entry.movedFrom)
-            val i = days.indexOf(from).takeIf { it >= 0 } ?: return@forEach
+        // Your plans, in highlighter; two at once share their day.
+        val lanes = lanesOf(plans, zone)
+        // Each plan takes taps a little above and below it too (an hour is small to aim at), so a
+        // near miss picks the plan rather than opening its day. Under the plans, so a plan right
+        // beside another still gets its own taps.
+        plans.forEach { o ->
+            val i = days.indexOf(o.day).takeIf { it >= 0 } ?: return@forEach
+            val (lane, of) = lanes[o] ?: (0 to 1)
             val start = o.start ?: return@forEach
             val top = y(minute(start, o.day))
             val bottom = maxOf(y(minute(o.end ?: start, o.day)), top + 16.dp)
+            val reach = maxOf(bottom - top, PLAN_TARGET)
+            val width = (col - 4.dp) / of
             Box(
-                Modifier.offset(x = GUTTER + col * i + 2.dp, y = top).size(col - 4.dp, bottom - top)
-                    .border(1.dp, ink.copy(alpha = 0.55f), RoundedCornerShape(1.dp))
-                    .semantics { contentDescription = "${o.entry.title}, moved to ${o.day.dayOfWeek.getDisplayName(DayText.FULL, Locale.US)}" },
-            ) {
-                Text("${o.entry.title}\n→ ${PlannerDays.kanji(o.day.dayOfWeek)}", style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = grid(9f), lineHeight = grid(10.5f)), color = ink.copy(alpha = 0.6f), modifier = Modifier.padding(2.dp), maxLines = 3)
-                Stamp("延", ink, Modifier.align(Alignment.BottomEnd).offset(x = 2.dp, y = 2.dp))
-            }
+                Modifier.offset(x = GUTTER + col * i + 2.dp + width * lane, y = (top + bottom) / 2 - reach / 2).size(width, reach)
+                    .clickable(onClickLabel = "Stamps for ${o.entry.title}") { onPick(Picked(o.entry.id, o.day)) }
+                    .clearAndSetSemantics { },
+            )
         }
-
-        // Your plans, in highlighter; two at once share their day.
-        val lanes = lanesOf(plans, zone)
         plans.forEach { o ->
             val i = days.indexOf(o.day).takeIf { it >= 0 } ?: return@forEach
             val (lane, of) = lanes[o] ?: (0 to 1)
@@ -506,7 +510,7 @@ private fun WeekGrid(
             val bottom = maxOf(y(minute(o.end ?: start, o.day)), top + 16.dp)
             val width = (col - 4.dp) / of
             val e = o.entry
-            val stamp = stampOf(e.state)
+            val stamp = stampOf(e)
             stickers.On(StickerTarget.entry(e.id), Modifier.offset(x = GUTTER + col * i + 2.dp + width * lane, y = top).size(width, bottom - top)) {
             Box(
                 Modifier
@@ -532,7 +536,8 @@ private fun WeekGrid(
             }
             }
             if (stamp != null) {
-                Stamp(stamp, ink, Modifier.offset(x = GUTTER + col * i + width * (lane + 1) - 20.dp, y = maxOf(bottom - 21.dp, top)), fresh = e.updatedAt > now - 1_500)
+                // Over the plan's bottom corner, half off it, so it doesn't cover the title.
+                Stamp(stamp, ink, Modifier.offset(x = GUTTER + col * i + width * (lane + 1) - 16.dp, y = bottom - 10.dp), fresh = e.updatedAt > now - 1_500)
             }
         }
 
@@ -696,7 +701,7 @@ private fun Memo(
                     color = ink,
                 )
                 Text(o.day.dayOfWeek.getDisplayName(DayText.SHORT, Locale.US).uppercase(), style = PaperType.meta.copy(fontSize = 10.sp), color = colors.kasure2)
-                stampOf(e.state)?.let { Stamp(it, ink, size = 22.dp, fresh = e.updatedAt > System.currentTimeMillis() - 1_500) }
+                stampOf(e)?.let { Stamp(it, ink, size = 22.dp, fresh = e.updatedAt > System.currentTimeMillis() - 1_500) }
             }
         }
         if (untimed.isEmpty()) {

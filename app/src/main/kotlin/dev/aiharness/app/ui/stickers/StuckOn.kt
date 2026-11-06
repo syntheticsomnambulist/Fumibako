@@ -1,7 +1,10 @@
 package dev.aiharness.app.ui.stickers
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
@@ -28,7 +31,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -53,7 +59,8 @@ import kotlin.math.sin
  *
  * With [onTap], tapping a sticker reports it. The one whose id is [selectedId] shows a dashed box
  * and a corner handle, and with [onChange] it can be dragged, pinched and twisted, or turned and
- * sized by the handle; each step reports the moved sticker.
+ * sized by the handle; each step reports the moved sticker. Any of yours can also be held and
+ * dragged straight away, without selecting it first (to move one, not to peel it).
  */
 @Composable
 fun StuckOn(
@@ -82,6 +89,8 @@ fun StuckOn(
                     onTap = onTap,
                     // Only your own stickers move; a persona's can be selected to see whose it is.
                     onChange = onChange.takeIf { sticker.id == selectedId && sticker.byPersonaId == null },
+                    // Held, one of yours moves without being selected (a selected one already drags).
+                    onHold = onChange.takeIf { sticker.id != selectedId && sticker.byPersonaId == null },
                 )
             }
         },
@@ -111,10 +120,14 @@ private fun OnePiece(
     paperSize: () -> IntSize,
     onTap: ((Sticker) -> Unit)?,
     onChange: ((Sticker) -> Unit)?,
+    onHold: ((Sticker) -> Unit)?,
 ) {
     val current by rememberUpdatedState(sticker)
     val change by rememberUpdatedState(onChange)
+    val hold by rememberUpdatedState(onHold)
     val tap by rememberUpdatedState(onTap)
+    var held by remember { mutableStateOf(false) }
+    val haptics = LocalHapticFeedback.current
     val frame = paper.sumi
     val density = LocalDensity.current
     // From the sticker's centre to the handle's, along each axis (the handle sits in the corner).
@@ -123,10 +136,51 @@ private fun OnePiece(
     )
     Box(
         Modifier
-            .graphicsLayer { rotationZ = sticker.rotationDeg }
+            .graphicsLayer {
+                rotationZ = sticker.rotationDeg
+                // Lifted off the paper while it's held.
+                if (held) { scaleX = 1.08f; scaleY = 1.08f }
+            }
             .then(
                 if (onTap == null) Modifier else Modifier
-                    .pointerInput(sticker.id) { detectTapGestures { tap?.invoke(current) } }
+                    .pointerInput(sticker.id) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown()
+                            // Let go before a long press: a tap. Moved first (the page scrolling): nothing.
+                            var timedOut = true
+                            val up = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                                waitForUpOrCancellation().also { timedOut = false }
+                            }
+                            when {
+                                up != null -> { up.consume(); tap?.invoke(current) }
+                                timedOut && hold != null -> {
+                                    held = true
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    try {
+                                        drag(down.id) { pointer ->
+                                            val delta = pointer.positionChange()
+                                            pointer.consume()
+                                            val s = current
+                                            val paper = paperSize()
+                                            if (paper.width > 0 && paper.height > 0) {
+                                                val moved = delta.rotate(s.rotationDeg)
+                                                hold?.invoke(
+                                                    s.copy(
+                                                        x = (s.x + moved.x / paper.width).coerceIn(0f, 1f),
+                                                        y = (s.y + moved.y / paper.height).coerceIn(0f, 1f),
+                                                    ),
+                                                )
+                                            }
+                                        }
+                                    } finally {
+                                        held = false
+                                    }
+                                }
+                                // Held, but not one that moves (a persona's, or the one already selected): a tap when let go.
+                                timedOut -> waitForUpOrCancellation()?.let { it.consume(); tap?.invoke(current) }
+                            }
+                        }
+                    }
                     .semantics {
                         role = Role.Button
                         onClick(label = if (selected) "Done with this sticker" else "Select this sticker") { tap?.invoke(current); true }

@@ -94,9 +94,10 @@ class Planner(private val entries: PlannerRepository, private val clock: Clock) 
     suspend fun contextFor(persona: Persona, you: UserPersona?, settings: AppSettings): String? {
         if (you == null || !shared(persona, you, settings)) return null
         val all = entries.forPlanner(you.id)
-        if (all.isEmpty()) return null
         val now = clock.nowMillis()
         val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone)
+        val holidays = Holidays.between(settings.planner.holidays, today, today.plusDays(6))
+        if (all.isEmpty() && holidays.isEmpty()) return null
         val name = you.name.ifBlank { "Your writer" }
         val lines = mutableListOf<String>()
 
@@ -119,6 +120,10 @@ class Planner(private val entries: PlannerRepository, private val clock: Clock) 
             .filter { o -> o.entry.allDay || o.day in wroteOn }
             .take(3)
         if (ahead.isNotEmpty()) lines += "Coming up: " + ahead.joinToString("; ") { "${weekday(it.day, today)}: ${described(it)}" } + "."
+        // Public holidays this week (they leave your typical week as it is: few are days off for everyone).
+        if (holidays.isNotEmpty()) lines += holidays.joinToString(" ") { (day, h) ->
+            "${weekday(day, today).replaceFirstChar { it.uppercase() }} is a public holiday: ${h.name}."
+        }
 
         // Its own writing.
         val mine = all.filter { it.byPersonaId == persona.id }

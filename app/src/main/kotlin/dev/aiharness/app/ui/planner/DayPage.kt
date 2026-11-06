@@ -276,7 +276,7 @@ private fun DayRow(o: Occurrence, day: LocalDate, clock: ClockFormat, zone: Zone
             val meta = listOfNotNull(e.place?.uppercase(), "BUSY".takeIf { busy }, "MOVED".takeIf { e.movedFrom != null }).joinToString(" · ")
             if (meta.isNotEmpty()) Text(meta, style = PaperType.meta.copy(fontSize = 10.5.sp), color = colors.kasure2)
         }
-        stampOf(e.state)?.let { Stamp(it, ink, size = 22.dp) }
+        stampOf(e)?.let { Stamp(it, ink, size = 22.dp) }
     }
 }
 

@@ -184,6 +184,20 @@ enum class Season { HARU, NATSU, AKI, FUYU }
 @Serializable
 enum class TimeOfDay { HIRU, YORU }
 
+/** Which side of the equator you're on, which turns the year's seasons half a year round. */
+@Serializable
+enum class Hemisphere { NORTH, SOUTH }
+
+/**
+ * What the theme's seasons follow: the weather's seasons (spring from March, or September south
+ * of the equator), or the solar terms the planner shows (spring from 立春, in early February).
+ */
+@Serializable
+enum class SeasonsFollow(val label: String) {
+    WEATHER("The weather"),
+    SOLAR_TERMS("The solar terms"),
+}
+
 @Serializable
 enum class DayNightMode {
     /** Day between two clock times (default 06:00 to 18:00). */
@@ -212,6 +226,10 @@ data class ThemeSettings(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val locationLabel: String? = null,
+    /** What the seasons follow, for the theme (the planner's season band always shows the solar terms). */
+    val seasonsFollow: SeasonsFollow = SeasonsFollow.WEATHER,
+    /** Your side of the equator, for the theme and the planner; null works it out (from the saved location, else the time zone). */
+    val hemisphere: Hemisphere? = null,
     /**
      * Die-cut outline colour for stickers, also the default polaroid frame colour: a hex colour, or
      * [OUTLINE_PAPER] or [OUTLINE_INK] (the ink of whoever stuck it).
@@ -285,7 +303,40 @@ data class PlannerSettings(
     val weekStartsSunday: Boolean = false,
     /** Hours you're asleep on every day of the week shown fold to a thin band (tap it to open them). */
     val foldSleep: Boolean = true,
+    /** The season band: the solar terms and microseasons on the planner's pages, and a line to personas as each begins. */
+    val seasonBand: Boolean = true,
+    val holidays: HolidaySettings = HolidaySettings(),
 )
+
+/**
+ * Public holidays in the planner: off until you choose whose, then fetched from Nager.Date once a
+ * year (only the country and the year are sent) and kept here. A holiday leaves your typical week
+ * alone, since few are days off for everyone.
+ */
+@Serializable
+data class HolidaySettings(
+    val show: Boolean = false,
+    /** ISO country code ("US"). */
+    val country: String? = null,
+    /** A region within it where holidays differ ("US-MA"); null shows only the nationwide ones. */
+    val region: String? = null,
+    /** The years fetched for [country], kept until they're out of date. */
+    val years: List<HolidayYear> = emptyList(),
+)
+
+@Serializable
+data class HolidayYear(val country: String, val year: Int, val fetchedAt: Long, val holidays: List<Holiday>)
+
+/** A public holiday: its day (ISO), its English name and its own, and the regions it's kept in (none: everywhere). */
+@Serializable
+data class Holiday(
+    val date: String,
+    val name: String,
+    val localName: String? = null,
+    val regions: List<String> = emptyList(),
+) {
+    fun keptIn(region: String?): Boolean = regions.isEmpty() || (region != null && region in regions)
+}
 
 /** Where a song opens to be heard whole: the service its link is from, or always one app. */
 @Serializable
