@@ -87,7 +87,7 @@ fun LookPaper(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) {
 
     Text("Paper and frames", style = PaperType.entryTitle, color = paper.sumi)
     Text("Sticker outline", style = PaperType.label, color = paper.kasure2)
-    Text("Stickers arrive in the next version; the outline colour also frames polaroids.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
+    Text("Stickers arrive in the next version; the outline color also frames polaroids.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         OutlinePresets.forEach { (label, hex) ->
             val on = theme.outlineColor.equals(hex, ignoreCase = true)
@@ -122,7 +122,7 @@ fun LookPaper(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) {
         )
     }
     Text("Polaroid frames", style = PaperType.label, color = paper.kasure2)
-    val frames = listOf(FrameStyle.MATCH_OUTLINE to "Outline colour", FrameStyle.PAPER to "Paper")
+    val frames = listOf(FrameStyle.MATCH_OUTLINE to "Outline color", FrameStyle.PAPER to "Paper")
     PaperChoice(frames, theme.polaroidFrame, { style -> updateTheme { it.copy(polaroidFrame = style) } })
     SwitchRow(
         "Mood words",

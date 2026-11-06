@@ -204,7 +204,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
     val s = settings ?: return
     val canEdit = s.memory.userCanEdit
 
-    val pages = remember(all, s.learnedFeelings, s.memory.showAgeing) {
+    val pages = remember(all, s.learnedFeelings, s.memory.showAging) {
         val byId = all.associateBy { it.id }
         val updates = all.mapNotNull { it.replacedById }.toSet()
         all.map { m ->
@@ -212,7 +212,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
             BookPage(
                 memory = m,
                 feeling = feeling,
-                age = if (s.memory.showAgeing && !m.isReplaced) MemoryWeights.age(m, now, feeling) else null,
+                age = if (s.memory.showAging && !m.isReplaced) MemoryWeights.age(m, now, feeling) else null,
                 replacedBy = m.replacedById?.let(byId::get),
                 isUpdate = m.id in updates,
             )

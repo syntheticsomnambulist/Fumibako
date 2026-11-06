@@ -145,7 +145,7 @@ private fun summary(section: SettingsSection, s: AppSettings, profileCount: Int,
     SettingsSection.MODELS -> if (profileCount == 1) "1 model" else "$profileCount models"
     SettingsSection.YOU -> writingAs?.let { "Writing as $it" } ?: "Your personas"
     SettingsSection.PROMPTING -> if (s.baseInstructions == AppSettings.DEFAULT_BASE_INSTRUCTIONS) "Default" else "Your own"
-    SettingsSection.ABOUT -> "v0.2 · licences"
+    SettingsSection.ABOUT -> "v0.2 · licenses"
 }
 
 /** "15 minutes", "1 hour", "3 hours". */

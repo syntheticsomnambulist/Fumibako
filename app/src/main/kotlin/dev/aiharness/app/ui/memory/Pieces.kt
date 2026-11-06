@@ -71,7 +71,7 @@ import kotlin.random.Random
 data class BookPage(
     val memory: MemoryEntry,
     val feeling: Feeling?,
-    /** Null when ageing isn't shown. */
+    /** Null when aging isn't shown. */
     val age: MemoryAge?,
     val replacedBy: MemoryEntry? = null,
     /** This memory is the newer version of one it replaced. */

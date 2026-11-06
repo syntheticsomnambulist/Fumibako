@@ -8,6 +8,8 @@
 - **The repository is private for now.** Before it goes public, follow
   [`docs/going-public.md`](docs/going-public.md): the committed debug signing key must be replaced.
   CI fails on a public repository while `app/debug.keystore` exists.
+- **App text uses American spelling** (aging, color, license, summarize), since that's how the app's
+  user writes.
 - **Where things are:**
   - Plans and progress: [`docs/plan-v0.2.md`](docs/plan-v0.2.md) (current),
     [`docs/plan-v0.1.md`](docs/plan-v0.1.md).

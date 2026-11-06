@@ -90,7 +90,7 @@ data class MemorySettings(
     /** Most memories a persona can keep at "matters deeply"; the heartbeat asks it to let others settle. */
     val deepLimit: Int = 20,
     /** Show memories fading and wearing in the memory book. */
-    val showAgeing: Boolean = true,
+    val showAging: Boolean = true,
     /** Play the burn when a memory is let go. */
     val burnOnForget: Boolean = true,
 )

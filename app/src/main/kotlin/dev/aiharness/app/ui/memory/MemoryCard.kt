@@ -164,7 +164,7 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
         return
     }
     val feeling = FeelingWords.lookup(m.currentMood, s.learnedFeelings)
-    val age = if (s.memory.showAgeing && !m.isReplaced && !isNew) MemoryWeights.age(m, now, feeling) else null
+    val age = if (s.memory.showAging && !m.isReplaced && !isNew) MemoryWeights.age(m, now, feeling) else null
     val about = users.firstOrNull { it.id == m.aboutUserPersonaId }
     val replacedBy = m.replacedById?.let { id -> all.firstOrNull { it.id == id } }
     val replaces = all.firstOrNull { it.replacedById == m.id }
@@ -380,8 +380,8 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
                     Fact("Kept", keptWhen(m, zone, origin))
                     Fact("Recalled", if (m.accessCount == 0) "Not yet" else "${if (m.accessCount == 1) "Once" else "${m.accessCount} times"} · last ${letterTimeInSentence(m.lastAccessedAt).removePrefix("at ").removePrefix("on ")}")
                     when (age) {
-                        MemoryAge.FADING -> Fact("Ageing", "Fading: it hasn't come up for a while")
-                        MemoryAge.WORN -> Fact("Ageing", "Worn: it doesn't come up on its own any more, but $name can still find it")
+                        MemoryAge.FADING -> Fact("Aging", "Fading: it hasn't come up for a while")
+                        MemoryAge.WORN -> Fact("Aging", "Worn: it doesn't come up on its own any more, but $name can still find it")
                         else -> Unit
                     }
                 }

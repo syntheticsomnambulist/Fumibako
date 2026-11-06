@@ -250,7 +250,7 @@ internal fun SettingsCards.memoryPage(s: AppSettings, update: Update) {
     }
     card {
         CardTitle("Forgetting")
-        SwitchRow("Show memories ageing", m.showAgeing, { v -> memory { it.copy(showAgeing = v) } }, subtitle = "Faded and worn pages in the memory book.")
+        SwitchRow("Show memories aging", m.showAging, { v -> memory { it.copy(showAging = v) } }, subtitle = "Faded and worn pages in the memory book.")
         SwitchRow("Burn forgotten memories", m.burnOnForget, { v -> memory { it.copy(burnOnForget = v) } }, subtitle = "Play the burning when one is let go.")
         StepperRow("Most that matter deeply", m.deepLimit, { n -> memory { it.copy(deepLimit = n) } }, 5..60, step = 5)
         Hint("Over this, a heartbeat asks the persona which memories can settle to \"worth keeping\".")
@@ -433,9 +433,9 @@ internal fun SettingsCards.aboutPage() {
         Text("Letters with personas who remember, feel, and write to you on their own.", style = PaperType.prose, color = paper.usuzumi1)
     }
     card {
-        CardTitle("Thanks and licences")
+        CardTitle("Thanks and licenses")
         Text(
-            "Colours: madoromi by samhain (madoromi.moonwit.ch), MPL-2.0.\nFonts: Cormorant Garamond, Literata, LINE Seed JP and Yuji Syuku, SIL Open Font License 1.1.",
+            "Colors: madoromi by samhain (madoromi.moonwit.ch), MPL-2.0.\nFonts: Cormorant Garamond, Literata, LINE Seed JP and Yuji Syuku, SIL Open Font License 1.1.",
             style = PaperType.prose,
             color = paper.usuzumi1,
         )
@@ -448,7 +448,7 @@ private fun FontLicence() {
     val context = LocalContext.current
     val text by produceState("") { value = runCatching { context.assets.open("licenses/fonts.txt").bufferedReader().readText() }.getOrDefault("") }
     var open by remember { mutableStateOf(false) }
-    InkLink(if (open) "Hide the font licence" else "Read the font licence") { open = !open }
+    InkLink(if (open) "Hide the font license" else "Read the font license") { open = !open }
     if (open) {
         Text(
             text,

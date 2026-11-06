@@ -389,8 +389,8 @@ private fun LazyListScope.editCards(
     }
     item {
         val ink = stationery.ink(p.ink)
-        PageCard(p, layouts[4], "behaviour") {
-            CardTitle("Behaviour")
+        PageCard(p, layouts[4], "behavior") {
+            CardTitle("Behavior")
             PaperSelect("Model", profiles, profiles.firstOrNull { it.id == p.defaultModelProfileId }, { it.name }, { m -> onChange(p.copy(defaultModelProfileId = m?.id)) }, noneLabel = "App default")
             SwitchRow("Heartbeat", p.heartbeatEnabled, { v -> onChange(p.copy(heartbeatEnabled = v)) }, subtitle = "Wakes now and then to reflect, and may write to you.")
             if (!isNew) InkLink("Heartbeat settings", ink) { nav.navigate(Routes.personaHeartbeat(p.id)) }

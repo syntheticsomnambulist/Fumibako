@@ -222,7 +222,7 @@ fun ModelEditScreen(nav: NavController, profileId: String) {
                 CardTitle("Limits")
                 NumberField("Longest reply (tokens)", profile.maxOutputTokens, { v -> v.toIntOrNull()?.let { n -> update { it.copy(maxOutputTokens = n.coerceAtLeast(16)) } } })
                 NumberField("Context window (tokens)", profile.contextWindowTokens, { v -> v.toIntOrNull()?.let { n -> update { it.copy(contextWindowTokens = n.coerceAtLeast(1_000)) } } })
-                NumberField("Summarise after (tokens)", profile.contextBudgetTokens, { v -> v.toIntOrNull()?.let { n -> update { it.copy(contextBudgetTokens = n.coerceAtLeast(2_000)) } } })
+                NumberField("Summarize after (tokens)", profile.contextBudgetTokens, { v -> v.toIntOrNull()?.let { n -> update { it.copy(contextBudgetTokens = n.coerceAtLeast(2_000)) } } })
             }
         }
         item("generation") {
