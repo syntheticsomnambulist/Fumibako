@@ -111,7 +111,7 @@ class Harness(
     val holidays = dev.aiharness.core.planner.Holidays(settings, clock, log = log)
     val linkReading = LinkReading(conversations, marks, clock)
     val keepsakeFinder = KeepsakeFinder(conversations, clock)
-    val tools = ToolRegistry(
+    val tools: ToolRegistry = ToolRegistry(
         listOf(
             MemorySaveTool(memory, keepsakeFinder),
             MemorySearchTool(memory),
@@ -119,7 +119,7 @@ class Harness(
             MemoryForgetTool(memory),
             GenerateImageTool(images, personas),
             ChangeOutfitTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
-            PlaceStickerTool(stickerService, personas, conversations) { id, kind, conversationId, note -> logActivity(id, kind, conversationId, note = note) },
+            PlaceStickerTool(stickerService, personas, conversations, { id, kind, conversationId, note -> logActivity(id, kind, conversationId, note = note) }, { planner }, clock),
             PeelStickerTool(stickerService, personas, conversations),
             DrawStickerTool(stickerMaker, personas, stickers),
             OpenLinkTool(links, linkReading),
@@ -127,9 +127,9 @@ class Harness(
         ),
     )
     val prompts = PromptAssembler()
-    val planner = dev.aiharness.core.planner.Planner(plannerEntries, clock).also { planner ->
+    val planner: dev.aiharness.core.planner.Planner = dev.aiharness.core.planner.Planner(plannerEntries, clock).also { planner ->
         tools.register(dev.aiharness.core.planner.PlannerLookTool(planner, clock))
-        tools.register(dev.aiharness.core.planner.PlannerWriteTool(planner, plannerEntries, personas, clock))
+        tools.register(dev.aiharness.core.planner.PlannerWriteTool(planner, plannerEntries, personas, clock, stickerService))
     }
     val turnContext = TurnContextBuilder(memory, clock, stickerService, planner)
     val contextBuilder = ContextBuilder(prompts, memory, blobs, clock, log)

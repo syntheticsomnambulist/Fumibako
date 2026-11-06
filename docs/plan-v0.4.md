@@ -168,7 +168,7 @@ From the agreed decisions in `calendar.md`:
   - **Big stickers:** a sticker grown big hid under the next day (or letter), handle and all.
     Now the day, plan or letter holding the sticker you've picked or are moving comes to the
     front.
-- **Step 4, the persona's side: under way.**
+- **Step 4, the persona's side: done.**
   - **Two tools,** not five (to keep the tool list short):
     - `planner_look` reads days further ahead than a letter's context shows.
     - `planner_write` writes a note, a suggestion, a reminder (at a time, or after one of your
@@ -203,8 +203,18 @@ From the agreed decisions in `calendar.md`:
     - All of this goes in the week's メモ and on the day's page; the month shows dots in its ink.
   - **A persona's heartbeat page** has "The planner": "Sees my planner", and "Writes a haiku
     as each season begins".
-  - **Still to come in step 4:** choosing its marks (wake and done; the seal from your side),
-    and its stickers on days and plans, with notes to it about yours.
+  - **Marks:** a persona's stickers page has "Its marks in your planner": its seal (one
+    character), where it means to wake (its seal by default) and a reminder kept (済). A mark is
+    a character, an emoji or one of its stickers, and the persona can choose them too
+    (`planner_write`, kinds `wake_mark` and `done_mark`).
+  - **Stickers:** `place_sticker` can stick onto a day or one of your plans in the planner you
+    share. Its stickers show there like yours. A letter is told of stickers you stick or peel in
+    the planner since its last turn ("[Sam stuck :star: on Saturday in their planner]").
+- **The ribbon is a movable bookmark** (your idea, 2026-11-06). A long press puts it on the
+  week (or month) shown, and a tap goes back to that page from anywhere. It hangs on its page,
+  and only its end shows elsewhere; until it's moved, it marks today.
+- **Times of day follow the clock setting everywhere**, not only in the planner: letter stamps,
+  sticker slips ("stuck fri 2:10 pm"), the letters list, and sunrise and sunset on the Look page.
 
 ## Noted for later
 

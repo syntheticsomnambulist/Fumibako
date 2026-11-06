@@ -94,6 +94,8 @@ fun ChatsScreen(nav: NavController) {
     var picking by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf<Conversation?>(null) }
     val visible = conversations.filter { !it.archived }
+    // Drawn once the profiles are in, so "Getting started" doesn't pop in above the first rows as the app starts.
+    if (profiles == null) return
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
@@ -101,15 +103,16 @@ fun ChatsScreen(nav: NavController) {
             contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item { ScreenTitle("Letters", Modifier.statusBarsPadding()) }
+            // Every row has a key, so the list keeps its place as rows come and go.
+            item(key = "title") { ScreenTitle("Letters", Modifier.statusBarsPadding()) }
             if (profiles?.isEmpty() == true) {
-                item { GettingStarted(nav) }
+                item(key = "getting-started") { GettingStarted(nav) }
             }
             if (activity.any { it.kind != ActivityKind.RESTED }) {
-                item { AwayCard(activity, personas, onDismiss = container::dismissAway) }
+                item(key = "away") { AwayCard(activity, personas, onDismiss = container::dismissAway) }
             }
             if (visible.isEmpty()) {
-                item {
+                item(key = "no-letters") {
                     Text(
                         "No letters yet. Start one with a persona.",
                         style = PaperType.preview.copy(fontStyle = FontStyle.Italic),

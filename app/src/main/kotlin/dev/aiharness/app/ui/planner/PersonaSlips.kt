@@ -77,6 +77,11 @@ fun PersonaSeal(persona: Persona, modifier: Modifier = Modifier, size: Dp = 20.d
 fun WakeMark(persona: Persona, kept: Boolean, modifier: Modifier = Modifier, size: Dp = 16.dp) {
     val ink = stationery.ink(persona.ink)
     val glyph = if (kept) persona.planner.doneMark ?: "済" else persona.planner.wakeMark ?: sealOf(persona)
+    // One of its stickers (by id), drawn as itself; else the character in a ring.
+    if (isStickerMark(glyph)) {
+        dev.aiharness.app.ui.stickers.StickerPicture(dev.aiharness.core.model.StickerRef.Art(glyph), ink, modifier.size(size * 1.4f))
+        return
+    }
     Box(
         modifier.size(size).background(paper.kami, CircleShape).border(1.2.dp, ink, CircleShape),
         contentAlignment = Alignment.Center,
@@ -84,6 +89,9 @@ fun WakeMark(persona: Persona, kept: Boolean, modifier: Modifier = Modifier, siz
         Text(glyph, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = (size.value * 0.55f).sp, lineHeight = (size.value * 0.6f).sp), color = ink, maxLines = 1)
     }
 }
+
+/** A mark is one of the persona's stickers when it's a sticker's id, not a character or emoji. */
+fun isStickerMark(mark: String): Boolean = mark.length >= 16 && mark.none { it.isWhitespace() }
 
 /**
  * One thing a persona wrote in your planner, as it sits under the week's grid or on a day's page:

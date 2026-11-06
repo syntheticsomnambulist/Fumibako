@@ -347,6 +347,8 @@ class ScreenshotTour {
         shot("${prefix}_04c_persona_stickers")
         scrollTo("can peel off mine")
         shot("${prefix}_04d_persona_stickers_more")
+        scrollTo("marks in your planner")
+        shot("${prefix}_04e_persona_planner_marks")
         back()
         waitFor("Open sheet")
 
@@ -970,6 +972,11 @@ class ScreenshotTour {
         hers(aria.id, dev.aiharness.core.model.EntryKind.SUGGESTION, "Meteors? The shower peaks tonight") { it.copy(start = at(week[5], 22)) }
         hers(aria.id, dev.aiharness.core.model.EntryKind.REMINDER, "write after the interview") { it.copy(start = at(week[2], 16)) }
         hers(aria.id, dev.aiharness.core.model.EntryKind.HAIKU, "maple and ivy\nletting go of their summer\none leaf at a time") { it.copy(day = today.toString()) }
+        // And a sticker of hers on Saturday.
+        h.stickerService.stick(
+            dev.aiharness.core.model.StickerTarget.plannerConversation(sam.id), dev.aiharness.core.model.StickerTarget.day(sam.id, week[5].toString()),
+            dev.aiharness.core.model.StickerRef.Emoji("🌠", "shooting_star"), aria.id, 0.5f, 0.25f, rotationDeg = 8f, scale = 0.7f,
+        )
         h.personas.getAll().firstOrNull { it.name == "Juno" }?.let { juno ->
             hers(juno.id, dev.aiharness.core.model.EntryKind.AWAY, "resting after the move") { it.copy(start = now - 3_600_000L, end = at(week[6], 9)) }
         }

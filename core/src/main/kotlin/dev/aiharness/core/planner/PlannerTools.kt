@@ -93,6 +93,7 @@ class PlannerWriteTool(
     private val entries: PlannerRepository,
     private val personas: PersonaRepository,
     private val clock: Clock,
+    private val stickers: dev.aiharness.core.stickers.StickerService? = null,
 ) : AgentTool {
     override val spec = ToolSpec(
         name = "planner_write",
@@ -100,9 +101,10 @@ class PlannerWriteTool(
             "note (a slip on a day, for them to find); suggestion (a plan you'd like them to consider; they add it or say not this time); " +
             "reminder (something you mean to do, which wakes you then: give a day and time, or after one of their plans); " +
             "away (your own time away, in your words: resting, busy with something, on a trip; heartbeats leave you be until it ends, though their letters still reach you); " +
-            "haiku (three short lines of your own on a new season); seal (the one character you sign your slips with); erase (something you wrote).",
+            "haiku (three short lines of your own on a new season); seal (the one character you sign your slips with); " +
+            "wake_mark and done_mark (what marks where you mean to wake, and a reminder you kept: a character, an emoji, or one of your stickers as :name:); erase (something you wrote).",
         parameters = schema {
-            string("kind", "What to write.", required = true, enum = listOf("note", "suggestion", "reminder", "away", "haiku", "seal", "erase"))
+            string("kind", "What to write.", required = true, enum = listOf("note", "suggestion", "reminder", "away", "haiku", "seal", "wake_mark", "done_mark", "erase"))
             string(
                 "text",
                 "The words: the note; the plan you suggest; what the reminder is for; your time away in your own words; the haiku; your seal's one character; or, to erase, words from what you wrote.",
@@ -121,6 +123,7 @@ class PlannerWriteTool(
         val text = args.requireString("text").trim()
         val persona = personas.get(context.persona.id) ?: context.persona
         if (kind == "seal") return seal(persona, text)
+        if (kind == "wake_mark" || kind == "done_mark") return mark(persona, text, wake = kind == "wake_mark")
         val you = context.userPersona
         if (you == null || !planner.shared(persona, you, context.settings)) return ToolOutcome("This planner isn't shared with you.", isError = true)
         val name = you.name.ifBlank { "They" }
@@ -206,6 +209,20 @@ class PlannerWriteTool(
         if (seal.isEmpty() || seal.codePointCount(0, seal.length) > 2 || seal.any { it.isWhitespace() }) return ToolOutcome("A seal is one character.", isError = true)
         personas.upsert(persona.copy(planner = persona.planner.copy(seal = seal), updatedAt = clock.nowMillis()))
         return ToolOutcome("Your seal is $seal; it signs your slips.")
+    }
+
+    /** Its wake or done mark: one of its stickers by name, an emoji, or a character. */
+    private suspend fun mark(persona: Persona, text: String, wake: Boolean): ToolOutcome {
+        val t = text.trim()
+        val mark = when (val ref = stickers?.resolve(persona.id, t)) {
+            is dev.aiharness.core.model.StickerRef.Art -> ref.artId
+            is dev.aiharness.core.model.StickerRef.Emoji -> ref.emoji
+            null -> t.takeIf { it.isNotEmpty() && it.codePointCount(0, it.length) <= 2 && it.none(Char::isWhitespace) }
+                ?: return ToolOutcome("A mark is a character, an emoji, or one of your stickers as :name:.", isError = true)
+        }
+        val marks = if (wake) persona.planner.copy(wakeMark = mark) else persona.planner.copy(doneMark = mark)
+        personas.upsert(persona.copy(planner = marks, updatedAt = clock.nowMillis()))
+        return ToolOutcome(if (wake) "Where you mean to wake now shows $t." else "A reminder you keep now shows $t.")
     }
 
     companion object {

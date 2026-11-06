@@ -56,12 +56,15 @@ private fun names(shelf: StickerShelf): String = buildString {
     append("Or any emoji, by name like :tada: or as the emoji itself.")
 }
 
-/** Lets a persona stick a sticker on your note or its own letter, by name. */
+/** Lets a persona stick a sticker on your note or its own letter, or on a day or plan in your planner, by name. */
 class PlaceStickerTool(
     private val service: StickerService,
     private val personas: PersonaRepository,
     private val conversations: ConversationRepository,
     private val log: suspend (personaId: String, kind: ActivityKind, conversationId: String, note: String) -> Unit,
+    /** The planner, for stickers on its days and plans (made after the tools). */
+    private val planner: () -> dev.aiharness.core.planner.Planner? = { null },
+    private val clock: dev.aiharness.core.util.Clock = dev.aiharness.core.util.SystemClock,
 ) : AgentTool {
     override val spec = ToolSpec(
         name = "place_sticker",
@@ -71,6 +74,7 @@ class PlaceStickerTool(
             string("sticker", "Which: one of your stickers or a shared one by name, like :name:, or any emoji.", required = true)
             string("on", ON_HELP)
             string("spot", "Where on the paper (default top right).", enum = StickerSpot.entries.map { it.label })
+            string("in_planner", "Instead of a letter, a day (today, tomorrow, a weekday, YYYY-MM-DD) or one of their plans (its title) in the planner you share.")
         },
     )
 
@@ -84,6 +88,7 @@ class PlaceStickerTool(
         val spotText = args.string("spot")
         val spot = if (spotText == null) StickerSpot.TOP_RIGHT else StickerSpot.parse(spotText)
             ?: return ToolOutcome("Spot must be one of: ${StickerSpot.entries.joinToString { it.label }}.", isError = true)
+        args.string("in_planner")?.let { where -> return inPlanner(where, ref, spot, persona, context) }
         val history = conversations.getMessages(context.conversation.id)
         val target = findTarget(args.string("on"), history, context, service)
             ?: return ToolOutcome("I couldn't find that letter or note. $ON_HELP", isError = true)
@@ -95,6 +100,25 @@ class PlaceStickerTool(
                 if (context.background && target.role == MessageRole.USER) log(persona.id, ActivityKind.STUCK_STICKER, context.conversation.id, name)
                 ToolOutcome("Stuck $name on $where (${spot.label}).")
             }
+        }
+    }
+
+    /** Onto a day or plan in the planner of the person it writes to, when they share it. */
+    private suspend fun inPlanner(where: String, ref: dev.aiharness.core.model.StickerRef, spot: StickerSpot, persona: Persona, context: ToolContext): ToolOutcome {
+        val planner = planner() ?: return ToolOutcome("There's no planner here.", isError = true)
+        val you = context.userPersona
+        if (you == null || !planner.shared(persona, you, context.settings)) return ToolOutcome("Their planner isn't shared with you.", isError = true)
+        val today = java.time.LocalDate.ofInstant(java.time.Instant.ofEpochMilli(clock.nowMillis()), clock.zone)
+        val day = dev.aiharness.core.planner.parseDay(where, today)
+        val target = if (day != null) StickerTarget.day(you.id, day.toString()) else {
+            val plan = planner.days(you.id, today.minusDays(7), today.plusDays(21))
+                .firstOrNull { it.entry.byPersonaId == null && it.entry.title.contains(where, ignoreCase = true) }
+                ?: return ToolOutcome("I couldn't find a day or a plan called '$where' in their planner.", isError = true)
+            StickerTarget.entry(plan.entry.id)
+        }
+        return when (val result = service.stickAt(StickerTarget.plannerConversation(you.id), target, ref, persona.id, spot)) {
+            is StickResult.Refused -> ToolOutcome(result.reason, isError = true)
+            is StickResult.Stuck -> ToolOutcome("Stuck ${service.nameOf(ref)} on ${planner.describeTarget(target) ?: where} in ${you.name.ifBlank { "their" }}'s planner.")
         }
     }
 }

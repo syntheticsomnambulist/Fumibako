@@ -187,4 +187,43 @@ class PersonasPlannerTest {
         assertEquals(first.toString(), haiku.day)
         assertEquals("麦秋至", env.activity.forPersona(env.persona.id, 0).last { it.kind == ActivityKind.WROTE_HAIKU }.note)
     }
+
+    @Test
+    fun itSetsItsMarksAndSticksOnYourDaysAndPlans() = runTest {
+        val env = TestEnv().apply { seed() }
+        env.plannerEntries.upsert(PlannerEntry("p1", env.user.id, null, EntryKind.PLAN, "dinner with Jo", start = at(29, 19), end = at(29, 21), createdAt = 0, updatedAt = 0))
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(toolTurn("m1", "planner_write", """{"kind":"wake_mark","text":"⏰"}"""))
+        env.provider.then(toolTurn("m2", "planner_write", """{"kind":"done_mark","text":"花"}"""))
+        env.provider.then(toolTurn("s1", "place_sticker", """{"sticker":":star:","in_planner":"Saturday"}"""))
+        env.provider.then(toolTurn("s2", "place_sticker", """{"sticker":":tada:","in_planner":"dinner"}"""))
+        env.provider.then(LlmTurnResult(text = "Decorated!"))
+        env.harness.agent.send(conversation.id, "Hi").toList()
+
+        val marks = env.personas.get(env.persona.id)!!.planner
+        assertEquals("⏰", marks.wakeMark)
+        assertEquals("花", marks.doneMark)
+        val planner = dev.aiharness.core.model.StickerTarget.plannerConversation(env.user.id)
+        assertEquals(1, env.harness.stickerService.on(planner, dev.aiharness.core.model.StickerTarget.day(env.user.id, "2026-05-30")).size)
+        assertEquals(1, env.harness.stickerService.on(planner, dev.aiharness.core.model.StickerTarget.entry("p1")).size)
+        assertContains(env.results(conversation.id)[3], "Stuck :tada: on \"dinner with Jo\" in Sam's planner.")
+    }
+
+    @Test
+    fun itHearsOfStickersYouPutInThePlanner() = runTest {
+        val env = TestEnv().apply { seed() }
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(LlmTurnResult(text = "Hi"))
+        env.harness.agent.send(conversation.id, "Hi").toList()
+        env.clock.advanceMinutes(5)
+        val planner = dev.aiharness.core.model.StickerTarget.plannerConversation(env.user.id)
+        env.harness.stickerService.stick(planner, dev.aiharness.core.model.StickerTarget.day(env.user.id, "2026-05-30"), dev.aiharness.core.model.StickerRef.Emoji("⭐", "star"), null, 0.5f, 0.5f)
+        env.provider.then(LlmTurnResult(text = "A star!"))
+        env.harness.agent.send(conversation.id, "Look at Saturday").toList()
+        assertContains(lastNote(env), "[Sam stuck :star: on Saturday in their planner]")
+        // Only once.
+        env.provider.then(LlmTurnResult(text = "Ok"))
+        env.harness.agent.send(conversation.id, "Again").toList()
+        assertTrue("stuck :star: on Saturday" !in lastNote(env))
+    }
 }

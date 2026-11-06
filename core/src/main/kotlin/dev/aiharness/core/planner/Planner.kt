@@ -214,6 +214,13 @@ class Planner(private val entries: PlannerRepository, private val clock: Clock) 
         return lines.takeIf { it.isNotEmpty() }?.joinToString("\n")
     }
 
+    /** A planner sticker's place in words: "Saturday", "dinner with Jo"; null when it's gone. */
+    suspend fun describeTarget(target: dev.aiharness.core.model.StickerTarget): String? = when (target.kind) {
+        dev.aiharness.core.model.StickerTargetKind.DAY -> runCatching { LocalDate.parse(target.id.substringAfterLast('/')) }.getOrNull()?.let(::daySaid)
+        dev.aiharness.core.model.StickerTargetKind.ENTRY -> entries.get(target.id)?.let { e -> e.title.ifBlank { null }?.let { "\"$it\"" } }
+        else -> null
+    }
+
     /** What [personaId] has written, anywhere. */
     suspend fun mine(personaId: String): List<PlannerEntry> = entries.writtenBy(personaId)
 

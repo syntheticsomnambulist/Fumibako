@@ -86,6 +86,10 @@ class TurnContextBuilder(
             val lastTurn = history.lastOrNull { it.role == MessageRole.ASSISTANT }?.createdAt ?: 0L
             val userName = userPersona?.name?.takeIf { it.isNotBlank() } ?: "The user"
             lines += stickers.notesSince(conversationId, lastTurn, history, currentMessageId, userName)
+            // And on the planner the two of you share.
+            if (planner != null && userPersona != null && planner.shared(persona, userPersona, settings)) {
+                lines += stickers.plannerNotesSince(userPersona.id, lastTurn, userName) { target -> planner.describeTarget(target) }
+            }
             if (persona.stickers.sticks) {
                 // Stickers added since this epoch's system prompt named them.
                 val fresh = stickers.newSince(persona.id, maxOf(epoch?.startedAt ?: Long.MAX_VALUE, lastTurn))

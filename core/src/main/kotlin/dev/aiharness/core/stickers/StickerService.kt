@@ -203,6 +203,25 @@ class StickerService(
         }
     }
 
+    /**
+     * What you stuck or peeled in a planner since [since] ("[Sam stuck :star: on Saturday in their
+     * planner]"), for a persona that sees it; [where] says a day or plan in words (null skips it).
+     */
+    suspend fun plannerNotesSince(plannerId: String, since: Long, userName: String, where: suspend (StickerTarget) -> String?): List<String> =
+        stickers.changedSince(StickerTarget.plannerConversation(plannerId), since).mapNotNull { s ->
+            if (s.byPersonaId != null && s.peeledByPersonaId == null && !s.isPeeled) return@mapNotNull null
+            val place = where(s.target) ?: return@mapNotNull null
+            val stuckNow = s.byPersonaId == null && s.createdAt > since
+            val peeledNow = s.isPeeled && s.peeledByPersonaId == null && (s.peeledAt ?: 0L) > since
+            val name = nameOf(s.ref)
+            when {
+                stuckNow && peeledNow -> null
+                stuckNow -> "[$userName stuck $name on $place in their planner]"
+                peeledNow -> "[$userName peeled ${if (s.byPersonaId == null) "" else "your "}$name off $place in their planner]"
+                else -> null
+            }
+        }
+
     /** "this note", "your Fri 00:14 letter" or "Sam's Fri 00:13 note"; null for messages it can't see. */
     private fun place(messageId: String, byId: Map<String, ChatMessage>, currentMessageId: String?, userName: String): String? {
         if (messageId == currentMessageId) return "this note"

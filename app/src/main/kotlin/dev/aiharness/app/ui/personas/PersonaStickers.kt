@@ -2,7 +2,12 @@ package dev.aiharness.app.ui.personas
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -117,11 +122,12 @@ fun PersonaStickersScreen(nav: NavController, personaId: String) {
                     subtitle = "Now and then in a heartbeat. However many ${p.words(4).they} ${p.words(4).verb("draws", "draw")}, that's one of the heartbeat's activities.",
                     ink = ink,
                 )
-                SwitchRow("${p.name} can stick stickers", p.stickers.sticks, { switches(p.stickers.copy(sticks = it)) }, subtitle = "On your notes and ${p.words(5).their} own letters.", ink = ink)
+                SwitchRow("${p.name} can stick stickers", p.stickers.sticks, { switches(p.stickers.copy(sticks = it)) }, subtitle = "On your notes, ${p.words(5).their} own letters, and the days and plans in your planner when you share it.", ink = ink)
                 SwitchRow("I can peel off ${p.name}'s stickers", p.stickers.youCanPeel, { switches(p.stickers.copy(youCanPeel = it)) }, ink = ink)
                 SwitchRow("${p.name} can peel off mine", p.stickers.canPeelYours, { switches(p.stickers.copy(canPeelYours = it)) }, ink = ink)
             }
         }
+        item { PlannerMarks(p, sheet, dayInk, ink) { update(p.copy(planner = it)) } }
         item { Box(Modifier.navigationBarsPadding()) }
     }
 
@@ -223,4 +229,68 @@ private fun DrawSticker(p: Persona, ready: Boolean, full: Boolean, ink: Color) {
             }
         }
     }
+}
+
+/**
+ * The persona's marks in your planner (docs/design/calendar.md, "Marks"): the seal it signs its
+ * slips with, where it means to wake (its seal until chosen) and a reminder kept (済). Each can be
+ * a character or emoji, or one of its stickers; it can choose them too.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun PlannerMarks(p: Persona, sheet: List<StickerArt>, dayInk: Color, ink: Color, onChange: (dev.aiharness.core.model.PersonaPlanner) -> Unit) {
+    val marks = p.planner
+    Column(Modifier.paperCard().fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("${p.name}'s marks in your planner", style = PaperType.entryTitle, color = paper.sumi)
+        Text("${p.name} can choose these too, and picks a seal when your planner is first shared.", style = PaperType.postscript.copy(fontSize = 13.sp), color = paper.kasure2)
+        var seal by remember(marks.seal) { mutableStateOf(marks.seal.orEmpty()) }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            dev.aiharness.app.ui.planner.PersonaSeal(p, size = 30.dp)
+            dev.aiharness.app.ui.paper.IndexCardField(
+                "Signature seal (one character)", seal,
+                { v ->
+                    val one = v.trim().let { t -> if (t.codePointCount(0, t.length) > 1) t.substring(t.offsetByCodePoints(0, t.codePointCount(0, t.length) - 1)) else t }
+                    seal = one
+                    onChange(marks.copy(seal = one.ifEmpty { null }))
+                },
+                modifier = Modifier.weight(1f), ink = ink, singleLine = true,
+            )
+        }
+        MarkChoice("Where ${p.name} means to wake", marks.wakeMark, dev.aiharness.app.ui.planner.sealOf(p), "Its seal", sheet, dayInk, ink) { onChange(marks.copy(wakeMark = it)) }
+        MarkChoice("A reminder ${p.name} kept", marks.doneMark, "済", "済", sheet, dayInk, ink) { onChange(marks.copy(doneMark = it)) }
+    }
+}
+
+/** One mark: the default, one of the persona's stickers, or a character or emoji typed in. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun MarkChoice(label: String, current: String?, defaultGlyph: String, defaultLabel: String, sheet: List<StickerArt>, dayInk: Color, ink: Color, onPick: (String?) -> Unit) {
+    val colors = paper
+    Text(label.uppercase(), style = PaperType.meta, color = colors.kasure2)
+    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        @Composable
+        fun Option(on: Boolean, spoken: String, onClick: () -> Unit, content: @Composable () -> Unit) {
+            Box(
+                Modifier.size(48.dp)
+                    .border(if (on) 2.dp else 1.dp, if (on) ink else colors.nijimi1, dev.aiharness.app.ui.paper.PaperCorner)
+                    .clickable(onClickLabel = spoken, onClick = onClick)
+                    .semantics { contentDescription = spoken + if (on) ", chosen" else "" },
+                contentAlignment = Alignment.Center,
+            ) { content() }
+        }
+        Option(current == null, defaultLabel, { onPick(null) }) {
+            Text(defaultGlyph, style = TextStyle(fontFamily = dev.aiharness.app.ui.theme.HarnessFonts.Brush, fontSize = 18.sp), color = ink)
+        }
+        sheet.forEach { a ->
+            Option(current == a.id, ":${a.name}:", { onPick(a.id) }) {
+                dev.aiharness.app.ui.stickers.StickerPicture(dev.aiharness.core.model.StickerRef.Art(a.id), dayInk, Modifier.size(36.dp))
+            }
+        }
+    }
+    var typed by remember(current) { mutableStateOf(current?.takeIf { it.length < 16 }.orEmpty()) }
+    dev.aiharness.app.ui.paper.IndexCardField(
+        "Or a character or emoji", typed,
+        { v -> typed = v.trim().take(4); if (typed.isNotEmpty()) onPick(typed) },
+        ink = ink, singleLine = true,
+    )
 }
