@@ -22,9 +22,19 @@ when we work through them: [`calendar.md`](calendar.md), [`pen-pals.md`](pen-pal
 - **A + button to the left of the text field** opens a tray: photo or camera, file, music, video,
   link, and stickers (v0.3). Personas can share things too: pictures (already possible), links
   they found, songs.
-- **Attachments look like stationery:** photos are polaroids (built), files are luggage tags,
-  music is a cassette or a ticket stub, links are newspaper cuttings with the page's title and
-  picture, videos are film strips.
+- **Attachments look like stationery** (agreed 2026-11-06; mockups on the "Media frames" design
+  canvas). Whose it is shows in the sender's ink: tape, paperclip, labels and tints.
+  - Photos are polaroids taped in the sender's ink (today's letters show plain pictures; the
+    polaroid is the personas gallery's). Several photos are a small stack with a count.
+  - Files are luggage tags tinted with the sender's ink: name, kind and size.
+  - Music: a cassette for a playlist (labelled in the sender's hand), a ticket stub for a single
+    song (tinted with the sender's ink).
+  - Links are newspaper cuttings: the site as a masthead, the title, the page's picture and a
+    snippet, held by a paperclip in the sender's ink. When the persona opens a link you shared,
+    its 読 ("read") stamp lands on the cutting.
+  - Videos are film strips; the frames shown are the ones a model that can't watch video gets.
+  - Under a song, an app-written line says what the persona can and can't take in ("Aria can read
+    the label, but can't hear the songs").
 - **What each provider takes.** Claude: pictures, PDFs (up to 600 pages), text, plus server-side
   web fetch (only for links already in the conversation) and web search; no audio or video.
   Gemini: pictures, PDFs, audio and video (to confirm). OpenAI-compatible: depends on the model.
