@@ -19,6 +19,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.aiharness.core.media.MusicLinks
 import dev.aiharness.core.media.SongSource
+import dev.aiharness.core.model.SongsOpenIn
+import dev.aiharness.app.ui.paper.PaperButton
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.MediaSettings
 import androidx.compose.foundation.Canvas
@@ -214,6 +218,7 @@ fun FullPlayer(now: NowPlaying, controls: PlayerControls, knows: String?, onClos
                     RepeatButton(now.repeat, ink) { controls.cycleRepeat() }
                 }
                 if (now.isPlaylist) JCard(now, ink) { controls.playTrack(it) }
+                if (!now.isPlaylist) WholeSongButton(now.attachment, whole = true)
                 knows?.let { Text(it, style = PaperType.postscript, color = colors.usuzumi1, modifier = Modifier.fillMaxWidth()) }
                 Spacer(Modifier.height(8.dp))
             }
@@ -354,6 +359,30 @@ private fun LittleTicket(ink: Color) {
 fun ContentPart.Attachment.playable(): Boolean =
     (ref ?: tracks.firstOrNull()?.ref) != null || (kind == AttachmentKind.SONG && MusicLinks.sourceOf(url) == SongSource.AUDIO)
 
+/**
+ * Opens [song] in your music app, by the "Open songs in" setting: the whole song, for a ticket
+ * carrying only its preview ([whole]), or the song in the app for one already playing here. Not
+ * shown for a song with no link, or one that's only an audio file.
+ */
+@Composable
+fun WholeSongButton(song: ContentPart.Attachment, whole: Boolean) {
+    val url = song.url ?: return
+    val source = MusicLinks.sourceOf(url)
+    if (source == SongSource.AUDIO) return
+    val context = LocalContext.current
+    val music = dev.aiharness.app.ui.LocalAppContainer.current.harness.music
+    val app = LocalMediaSettings.current.songsOpenIn
+    val scope = rememberCoroutineScope()
+    val where = if (app == SongsOpenIn.AS_LINKED) source?.label ?: "your browser" else app.label
+    val label = if (whole && song.previewOnly) "Listen to the whole song in $where" else "Open in $where"
+    PaperButton(label) {
+        scope.launch {
+            // Music services open in their own apps when they're installed, so not in the app's browser.
+            music.whereToHear(song, app)?.let { FrameActions.openLink(context, it, inApp = false, toolbar = 0, night = false) }
+        }
+    }
+}
+
 /** Android's "Remove animations", and the Media settings, as the frames see them. */
 val LocalMediaSettings = staticCompositionLocalOf { MediaSettings() }
 
@@ -401,6 +430,7 @@ fun EmbedPlayer(song: ContentPart.Attachment, embed: String, ink: Color, from: S
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)).background(Color.Black)
                         .then(if (height == null) Modifier.aspectRatio(16f / 9f) else Modifier.height(height)),
                 ) { EmbedView(embed, Modifier.fillMaxSize()) }
+                WholeSongButton(song, whole = false)
                 Text(
                     "From $from, playing from ${source?.label ?: "the web"} while this is open.",
                     style = PaperType.postscript,

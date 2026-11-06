@@ -8,6 +8,7 @@ import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.MediaSettings
+import dev.aiharness.core.model.SongsOpenIn
 
 /** 九 Media: links, pictures you send, playback, and the paper's motion (docs/design/media.md, "Settings: a Media page"). */
 internal fun SettingsCards.mediaPage(s: AppSettings, update: Update) {
@@ -40,6 +41,17 @@ internal fun SettingsCards.mediaPage(s: AppSettings, update: Update) {
         CardTitle("Playback")
         SwitchRow("Keep music playing after leaving the letters", m.keepPlaying, { v -> media { it.copy(keepPlaying = v) } })
         SwitchRow("Start videos muted", m.videosMuted, { v -> media { it.copy(videosMuted = v) } })
+        Text("OPEN SONGS IN", style = PaperType.meta, color = paper.kasure2)
+        PaperChoice(
+            listOf(SongsOpenIn.AS_LINKED to "Its own app", SongsOpenIn.SPOTIFY to "Spotify", SongsOpenIn.APPLE_MUSIC to "Apple Music", SongsOpenIn.YOUTUBE_MUSIC to "YouTube Music"),
+            m.songsOpenIn,
+            { v -> media { it.copy(songsOpenIn = v) } },
+            columns = 2,
+        )
+        Hint(
+            "Where a song opens to be heard whole. \"Its own app\" opens a Spotify link in Spotify, and so on. Otherwise Apple Music finds the same song; " +
+                "Spotify and YouTube Music open a search for it (a YouTube video opens as itself in YouTube Music).",
+        )
     }
     card {
         CardTitle("Paper motion")

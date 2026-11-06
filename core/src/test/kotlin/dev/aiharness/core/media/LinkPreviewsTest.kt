@@ -60,6 +60,73 @@ class LinkPreviewsTest {
     }
 
     @Test
+    fun aBigPageStillGivesItsHeadline() = runTest {
+        val server = MockWebServer()
+        val head = "<html><head><title>Welfare Regard in Multi-Agent Systems</title></head><body>"
+        server.enqueue(MockResponse().setBody(head + "<p>words</p>".repeat(120_000) + "</body></html>").setHeader("Content-Type", "text/html"))
+        server.start()
+        val cutting = LinkPreviews(InMemoryBlobStore(), allowPrivate = true).cutting(server.url("/welfare").toString())
+        server.shutdown()
+        assertEquals("Welfare Regard in Multi-Agent Systems", cutting.title, "read from the top of a page of over a megabyte")
+    }
+
+    @Test
+    fun aServicesOwnLookupGivesTitleAuthorAndPicture() = runTest {
+        val server = MockWebServer()
+        server.enqueue(
+            MockResponse().setHeader("Content-Type", "application/json").setBody(
+                """{"title":"Harness Your Hopes (Official Music Video)","author_name":"Pavement","provider_name":"YouTube","thumbnail_url":"https://i.ytimg.com/vi/x/hqdefault.jpg"}""",
+            ),
+        )
+        server.start()
+        val lookups = mutableListOf<String>()
+        val previews = LinkPreviews(InMemoryBlobStore(), allowPrivate = true, oEmbedFor = { u -> lookups += u.toString(); server.url("/oembed").toString() })
+        val cutting = previews.cutting("https://m.youtube.com/watch?v=w2Ww_O3ceKU")
+        assertEquals(1, server.requestCount, "the lookup is enough: the page isn't fetched")
+        server.shutdown()
+        assertEquals("Harness Your Hopes (Official Music Video)", cutting.title)
+        assertEquals("Pavement", cutting.artist)
+        assertEquals("YouTube", cutting.site)
+        assertTrue(cutting.standIn.startsWith("[cutting: Harness Your Hopes (Official Music Video), by Pavement, YouTube, "))
+        assertEquals("https://www.youtube.com/oembed?format=json&url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3Dw2Ww_O3ceKU", LinkPreviews.oEmbedAddress(okhttp3.HttpUrl.Builder().scheme("https").host("youtu.be").addPathSegment("w2Ww_O3ceKU").build()))
+    }
+
+    @Test
+    fun aBotCheckIsNotTheHeadline() = runTest {
+        val server = MockWebServer()
+        server.enqueue(MockResponse().setBody("<html><head><title>Client Challenge</title></head><body>…</body></html>").setHeader("Content-Type", "text/html"))
+        server.start()
+        val cutting = LinkPreviews(InMemoryBlobStore(), allowPrivate = true).cutting(server.url("/track/october-walk").toString())
+        server.shutdown()
+        assertNull(cutting.title, "a plain cutting, which shows its address")
+    }
+
+    @Test
+    fun addressesAreLookedUpOffTheCallersThread() = runTest {
+        // Android refuses network work on the main thread, looking up an address included.
+        val caller = Thread.currentThread()
+        var lookedUpOn: Thread? = null
+        val previews = LinkPreviews(InMemoryBlobStore(), resolve = { host ->
+            lookedUpOn = Thread.currentThread()
+            listOf(InetAddress.getByAddress(host, byteArrayOf(192.toByte(), 168.toByte(), 1, 1)))
+        })
+        previews.cutting("https://router.example/")
+        assertNotNull(lookedUpOn)
+        assertTrue(lookedUpOn !== caller)
+    }
+
+    @Test
+    fun aCuttingWithoutAHeadlineShowsItsAddressTidily() {
+        assertEquals("sshhole.com", LinkPreviews.address("https://sshhole.com/"))
+        assertEquals("youtube.com/watch?v=w2Ww_O3ceKU", LinkPreviews.address("https://m.youtube.com/watch?v=w2Ww_O3ceKU&si=abc123&feature=share"))
+        assertEquals("example.com/two words/page", LinkPreviews.address("https://www.example.com/two%20words/page/?utm_source=x"))
+        assertEquals("youtube.com", LinkPreviews.siteOf("m.youtube.com"))
+        assertEquals("*sshole", LinkPreviews.withoutSiteName("*sshole · sshhole.com", null, "sshhole.com"))
+        assertEquals("Welfare Regard", LinkPreviews.withoutSiteName("Welfare Regard | Alignment", null, "alignment.anthropic.com"))
+        assertEquals("Why tea - a guide", LinkPreviews.withoutSiteName("Why tea - a guide", "Kettle", "kettle.example"))
+    }
+
+    @Test
     fun linksAreFoundWithoutTheirSentencePunctuation() {
         assertEquals(
             listOf("https://example.com/a?b=1", "http://tea.example/second"),

@@ -119,12 +119,7 @@ class ShareLinkTool(private val links: LinkPreviews) : AgentTool {
             ContentPart.Attachment(dev.aiharness.core.util.newId(), AttachmentKind.SONG, url = url, title = title, artist = artist, mimeType = type.ifEmpty { null }, site = url.toHttpUrlOrNull()?.host)
         } else {
             val page = links.fetched(url) ?: return notSent()
-            if (asSong && source != null) {
-                val (title, artist) = MusicLinks.titleAndArtist(source, page.title, page.snippet, url)
-                page.copy(kind = AttachmentKind.SONG, title = title, artist = artist, site = source.label, snippet = null)
-            } else {
-                page
-            }
+            if (asSong && source != null) MusicLinks.ticket(page, source) else page
         }
         val where = if (shared.kind == AttachmentKind.SONG) "a ticket" else "a cutting"
         return ToolOutcome("In your letter now, as $where: ${shared.standIn}", attachments = listOf(shared))

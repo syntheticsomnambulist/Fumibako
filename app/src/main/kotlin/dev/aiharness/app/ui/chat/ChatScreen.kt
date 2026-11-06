@@ -141,6 +141,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     // Stickers: the tray, the one selected (and its live position while it moves), dragging one in.
     var trayOpen by rememberSaveable { mutableStateOf(false) }
     var stickerPage by rememberSaveable { mutableStateOf(false) }
+    var musicPage by rememberSaveable { mutableStateOf(false) }
     val going by vm.going.collectAsStateWithLifecycle()
     var editingMix by remember { mutableStateOf<dev.aiharness.core.model.ContentPart.Attachment?>(null) }
     val scope = rememberCoroutineScope()
@@ -148,7 +149,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     val pickVideo = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let { vm.addVideo(it); trayOpen = false } }
     val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { vm.addFile(it); trayOpen = false } }
     val pickSongs = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        if (uris.isNotEmpty()) { vm.addSongs(uris) { mix -> editingMix = mix }; trayOpen = false }
+        if (uris.isNotEmpty()) { vm.addSongs(uris) { mix -> editingMix = mix }; trayOpen = false; musicPage = false }
     }
     val moreSongs = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         val mix = editingMix ?: return@rememberLauncherForActivityResult
@@ -174,7 +175,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 takePicture.launch(uri)
             }
             TrayItem.FILE -> pickFile.launch(arrayOf("*/*"))
-            TrayItem.MUSIC -> pickSongs.launch(arrayOf("audio/*"))
+            TrayItem.MUSIC -> musicPage = true
             TrayItem.VIDEO -> pickVideo.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
             TrayItem.STICKERS -> stickerPage = true
         }
@@ -369,7 +370,8 @@ fun ChatScreen(nav: NavController, conversationId: String) {
         }
 
         nowPlaying?.let { MiniPlayer(it, container.playback, onOpen = { playerOpen = true }) }
-        GoingWithYourNote(going, onRemove = { vm.remove(it) }, onOpen = { item ->
+        GoingWithYourNote(going, onRemove = { vm.remove(it) }, switchesTo = vm::switchesTo, onOpen = { item ->
+            if (vm.switchesTo(item) != null) vm.switchSongOrCutting(item)
             ((item as? Going.Item)?.attachment)?.takeIf { it.kind == dev.aiharness.core.model.AttachmentKind.PLAYLIST }?.let { editingMix = it }
         })
         val youInk = header.userPersona?.ink?.let { stationery.ink(it) } ?: stationery.you
@@ -390,7 +392,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             personaInk = stationery.ink(persona?.ink),
             youInk = youInk,
             busy = generation.active,
-            onSend = { vm.send(input); input = ""; trayOpen = false },
+            onSend = { if (vm.send(input)) { input = ""; trayOpen = false } },
             hasAttachments = going.isNotEmpty() && going.none { it is Going.Preparing },
             onStop = { vm.stop() },
             trayOpen = trayOpen,
@@ -399,6 +401,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                     keyboard?.hide()
                     focus.clearFocus()
                     stickerPage = false
+                    musicPage = false
                     trayOpen = true
                 }
             },
@@ -415,7 +418,18 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 ) { field() }
             },
         )
-        if (trayOpen && !stickerPage) TrayButtons(pickFromTray)
+        if (trayOpen && !stickerPage && !musicPage) TrayButtons(pickFromTray)
+        if (trayOpen && musicPage) {
+            val songSearch by vm.songSearch.collectAsStateWithLifecycle()
+            MusicTray(
+                search = songSearch,
+                onQuery = vm::searchSongs,
+                onPick = { song -> vm.addFoundSong(song); trayOpen = false; musicPage = false },
+                onFromPhone = { pickSongs.launch(arrayOf("audio/*")) },
+                onBack = { musicPage = false },
+                youInk = stationery.dayColors.ink(header.userPersona?.ink ?: "sora"),
+            )
+        }
         if (trayOpen && stickerPage) {
             StickerTray(
                 onBack = { stickerPage = false },

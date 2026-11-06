@@ -17,6 +17,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -94,6 +95,45 @@ class ScreenshotTour {
 
     private fun click(text: String) = compose.onAllNodesWithText(text).onFirst().performClick()
 
+    /** Lets the app's short waits pass (a link noticed once typing pauses; a search, the same): Robolectric's clock moves only when told. */
+    private fun pause() {
+        compose.waitForIdle()
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(1))
+        compose.waitForIdle()
+    }
+
+    /** A stand-in for Apple's catalog, with songs that don't exist, and their covers. */
+    private val catalog = okhttp3.mockwebserver.MockWebServer()
+
+    @org.junit.After
+    fun closeCatalog() = runCatching { catalog.shutdown() }.let { }
+
+    private fun startCatalog(): String {
+        val cover = Bitmap.createBitmap(120, 120, Bitmap.Config.ARGB_8888)
+        val paint = Paint().apply { shader = LinearGradient(0f, 0f, 120f, 120f, 0xFFE8B07A.toInt(), 0xFF8E5A7E.toInt(), Shader.TileMode.CLAMP) }
+        Canvas(cover).drawRect(0f, 0f, 120f, 120f, paint)
+        val png = ByteArrayOutputStream().also { cover.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        catalog.dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+            override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest): okhttp3.mockwebserver.MockResponse {
+                val path = request.path.orEmpty()
+                if (path.startsWith("/art")) return okhttp3.mockwebserver.MockResponse().setBody(okio.Buffer().write(png))
+                fun song(track: String, artist: String, album: String, year: Int, ms: Long) =
+                    """{"wrapperType":"track","kind":"song","trackName":"$track","artistName":"$artist","collectionName":"$album","releaseDate":"$year-09-01T12:00:00Z",""" +
+                        """"trackTimeMillis":$ms,"artworkUrl100":"${catalog.url("/art/100x100bb.jpg")}","previewUrl":"${catalog.url("/preview.m4a")}",""" +
+                        """"trackViewUrl":"https://music.apple.com/us/album/x/1?i=${track.length}"}"""
+                val results = listOf(
+                    song("October Walk", "Hana Sato", "Paper Seasons", 2024, 222_000),
+                    song("October Walk (Acoustic)", "Hana Sato", "Paper Seasons (Deluxe)", 2025, 236_000),
+                    song("Walk Home in October", "The Lanterns", "Kettle Songs", 2019, 194_000),
+                    song("Octobers", "Mira Lane", "Low Tide", 2021, 251_000),
+                )
+                return okhttp3.mockwebserver.MockResponse().setBody("""{"resultCount":${results.size},"results":[${results.joinToString(",")}]}""")
+            }
+        }
+        catalog.start()
+        return catalog.url("/").toString().trimEnd('/')
+    }
+
     @Test
     fun nightTour() = tour("night", TimeOfDay.YORU)
 
@@ -163,6 +203,19 @@ class ScreenshotTour {
         compose.onNodeWithContentDescription("Add something").performClick()
         waitFor("Camera")
         shot("${prefix}_02c0_tray")
+        // Music: a search of the catalog (a local stand-in here), with songs from the phone a tap away.
+        click("Music")
+        waitFor("Find a song")
+        shot("${prefix}_02c01_music_tray")
+        compose.onAllNodes(hasSetTextAction()).onLast().performTextInput("october")
+        pause()
+        waitFor("Paper Seasons")
+        // The covers come from the web too.
+        compose.waitUntil(10_000) { catalog.requestCount >= 3 }
+        pause()
+        shot("${prefix}_02c02_music_results")
+        click("‹ Add")
+        waitFor("Camera")
         click("Stickers")
         waitFor("Hold and drag")
         compose.waitUntilAtLeastOneExists(hasContentDescription(":blush:"), 10_000)
@@ -184,6 +237,7 @@ class ScreenshotTour {
         click("Done")
         // A link written in the note waits as a cutting (a local address: never fetched).
         compose.onNode(hasSetTextAction()).performTextInput(" http://localhost/tea")
+        pause()
         waitFor("GOING WITH YOUR NOTE")
         shot("${prefix}_02c9_going_with_your_note")
         // Typing a :name: offers the stickers it could be.
@@ -581,6 +635,7 @@ class ScreenshotTour {
     private fun seed(time: TimeOfDay, season: Season) = runBlocking {
         val container = ApplicationProvider.getApplicationContext<HarnessApp>().container
         val h = container.harness
+        h.music.base = startCatalog()
         // Wait for first-launch seeding (Aria + default user persona).
         repeat(50) { if (h.personas.getAll().isEmpty()) Thread.sleep(100) }
         val now = System.currentTimeMillis()
@@ -668,7 +723,11 @@ class ScreenshotTour {
                 MessageRole.USER,
                 ContentPart.Text("And these, from the walk."),
                 ContentPart.Image(picture2), ContentPart.Image(image),
-                ContentPart.Attachment("song1", AttachmentKind.SONG, title = "October Walk", artist = "Hana Sato", lengthMs = 222_000),
+                // Picked from the song search: its preview, and the whole song in Apple Music.
+                ContentPart.Attachment(
+                    "song1", AttachmentKind.SONG, title = "October Walk", artist = "Hana Sato", album = "Paper Seasons", year = 2024, lengthMs = 222_000,
+                    url = "https://music.apple.com/us/album/october-walk/1?i=2", previewOnly = true,
+                ),
                 ContentPart.Attachment("film1", AttachmentKind.VIDEO, ref = "file:not-here.mp4", mimeType = "video/mp4", title = "the river", lengthMs = 42_000, frameRefs = listOf(image, picture2, image)),
                 origin = MessageOrigin.USER,
             ),

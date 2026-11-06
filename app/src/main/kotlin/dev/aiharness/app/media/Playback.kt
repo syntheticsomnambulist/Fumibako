@@ -54,7 +54,7 @@ data class NowPlaying(
 ) {
     val tracks: List<Track>
         get() = if (attachment.kind == AttachmentKind.PLAYLIST) attachment.tracks
-        else listOf(Track(attachment.ref, attachment.mimeType, attachment.title, attachment.artist, attachment.lengthMs, attachment.name))
+        else listOf(Track(ref = attachment.ref, mimeType = attachment.mimeType, title = attachment.title, artist = attachment.artist, lengthMs = attachment.lengthMs, name = attachment.name, album = attachment.album, year = attachment.year))
 
     val track: Track? get() = tracks.getOrNull(index)
     val isPlaylist: Boolean get() = attachment.kind == AttachmentKind.PLAYLIST

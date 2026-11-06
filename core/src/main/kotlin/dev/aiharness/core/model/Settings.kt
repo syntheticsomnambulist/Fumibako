@@ -264,9 +264,20 @@ data class MediaSettings(
     val paperMotion: Boolean = true,
     /** The light haptic ticks (a read stamp landing). */
     val haptics: Boolean = true,
+    /** Which app a song opens in, to hear the whole of it. */
+    val songsOpenIn: SongsOpenIn = SongsOpenIn.AS_LINKED,
 ) {
     /** The longest side pictures you send are scaled to. */
     val pictureSide: Int get() = if (fullSizePictures) 4096 else 1280
+}
+
+/** Where a song opens to be heard whole: the service its link is from, or always one app. */
+@Serializable
+enum class SongsOpenIn(val label: String) {
+    AS_LINKED("Wherever its link is from"),
+    SPOTIFY("Spotify"),
+    APPLE_MUSIC("Apple Music"),
+    YOUTUBE_MUSIC("YouTube Music"),
 }
 
 @Serializable

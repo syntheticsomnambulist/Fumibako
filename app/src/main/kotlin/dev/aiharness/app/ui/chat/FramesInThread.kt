@@ -293,11 +293,19 @@ fun FramedAttachment(
     val media = LocalMediaSettings.current
     val toolbar = paper.kami.toArgb()
     val night = stationery.isNight
-    // Pages open in the app's browser (or the phone's, by the setting); files in the app that handles them.
-    val open = {
+    val music = LocalAppContainer.current.harness.music
+    // Pages open in the app's browser (or the phone's, by the setting); a song in your music app
+    // (by "Open songs in"); files in the app that handles them.
+    val open: () -> Unit = {
         val url = attachment.url
-        if (url != null && attachment.ref == null) FrameActions.openLink(context, url, media.linksInApp, toolbar, night)
-        else FrameActions.open(context, blobs, attachment)
+        when {
+            url != null && attachment.ref == null && attachment.kind == AttachmentKind.SONG -> {
+                scope.launch { music.whereToHear(attachment, media.songsOpenIn)?.let { FrameActions.openLink(context, it, inApp = false, toolbar, night) } }
+            }
+            url != null && attachment.ref == null -> FrameActions.openLink(context, url, media.linksInApp, toolbar, night)
+            else -> FrameActions.open(context, blobs, attachment)
+        }
+        Unit
     }
     val embed = if (attachment.kind == AttachmentKind.SONG && attachment.ref == null) MusicLinks.embedFor(attachment.url, attachment.embed) else null
     val stamps = LocalReadStamps.current

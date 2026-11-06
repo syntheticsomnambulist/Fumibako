@@ -7,6 +7,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -52,7 +54,10 @@ import dev.aiharness.app.ui.theme.stationery
 
 val PaperCorner = RoundedCornerShape(2.dp)
 
-/** One choice from a few, as a row of boxed cells; the chosen one is shaded and underlined in ink. */
+/**
+ * One choice from a few, as a row of boxed cells (or rows of [columns] each); the chosen one is
+ * shaded and underlined in ink.
+ */
 @Composable
 fun <T> PaperChoice(
     options: List<Pair<T, String>>,
@@ -60,38 +65,48 @@ fun <T> PaperChoice(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     ink: Color = stationery.you,
+    /** Two lets longer labels ("Apple Music") wrap rather than be cut short. */
+    maxLines: Int = 1,
+    /** Cells to a row; fewer than the options puts them on several rows. */
+    columns: Int = options.size,
 ) {
     val colors = paper
-    Row(
+    Column(
         modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
             .border(1.dp, colors.nijimi1, PaperCorner)
             .clip(PaperCorner),
     ) {
-        options.forEachIndexed { index, (value, label) ->
-            val on = value == selected
-            if (index > 0) Box(Modifier.width(1.dp).fillMaxHeight().background(colors.nijimi1))
-            Box(
-                Modifier
-                    .weight(1f)
-                    .heightIn(min = 40.dp)
-                    .background(if (on) lerp(colors.kami, ink, 0.16f) else colors.kami)
-                    .drawBehind {
-                        if (on) drawLine(ink, Offset(0f, size.height - 1.dp.toPx()), Offset(size.width, size.height - 1.dp.toPx()), 2.dp.toPx())
+        options.chunked(columns.coerceAtLeast(1)).forEachIndexed { row, cells ->
+            if (row > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(colors.nijimi1))
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                cells.forEachIndexed { index, (value, label) ->
+                    val on = value == selected
+                    if (index > 0) Box(Modifier.width(1.dp).fillMaxHeight().background(colors.nijimi1))
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .heightIn(min = 40.dp)
+                            .background(if (on) lerp(colors.kami, ink, 0.16f) else colors.kami)
+                            .drawBehind {
+                                if (on) drawLine(ink, Offset(0f, size.height - 1.dp.toPx()), Offset(size.width, size.height - 1.dp.toPx()), 2.dp.toPx())
+                            }
+                            .selectable(selected = on, role = Role.RadioButton) { onSelect(value) }
+                            .padding(horizontal = 6.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            label,
+                            style = PaperType.noteBody.copy(fontSize = 13.sp, lineHeight = 17.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal),
+                            color = if (on) colors.sumi else colors.usuzumi1,
+                            maxLines = maxLines,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                        )
                     }
-                    .selectable(selected = on, role = Role.RadioButton) { onSelect(value) }
-                    .padding(horizontal = 6.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    label,
-                    style = PaperType.noteBody.copy(fontSize = 13.sp, lineHeight = 17.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal),
-                    color = if (on) colors.sumi else colors.usuzumi1,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                )
+                }
+                // A short last row keeps its cells the same width as the rows above.
+                repeat(columns - cells.size) { Box(Modifier.width(1.dp).fillMaxHeight().background(colors.nijimi1)); Spacer(Modifier.weight(1f)) }
             }
         }
     }

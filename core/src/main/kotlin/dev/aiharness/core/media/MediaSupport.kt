@@ -91,7 +91,7 @@ object MediaSupport {
     fun wholeTokens(a: ContentPart.Attachment, profile: ModelProfile): Int = when {
         a.kind == AttachmentKind.FILE && isPdf(a) -> (a.pages ?: 10) * if (profile.provider == ProviderType.GEMINI) 300 else 2_000
         a.kind == AttachmentKind.FILE && isText(a) -> ((a.sizeBytes ?: 4_000L) / CHARS_PER_TOKEN).toInt()
-        a.kind == AttachmentKind.SONG -> ((a.lengthMs ?: 240_000L) / 1000 * 32).toInt()
+        a.kind == AttachmentKind.SONG -> ((if (a.previewOnly) PREVIEW_MS else a.lengthMs ?: 240_000L) / 1000 * 32).toInt()
         // Gemini 3 and later watch video at about 70 tokens a frame by default (100 a second with sound); older ones at about 290.
         a.kind == AttachmentKind.VIDEO -> ((a.lengthMs ?: 60_000L) / 1000 * if (modernGemini(profile)) 100 else 300).toInt()
         else -> 0
@@ -144,10 +144,10 @@ object MediaSupport {
         // A persona that can open links reads the page itself (open_link, or Claude's web fetch).
         if (a.kind == AttachmentKind.LINK && opensLinks && profile.toolMode != ToolMode.NONE) return null
         if (takesWhole(a, profile, senses)) {
-            return if (a.kind == AttachmentKind.FILE && isText(a) && (a.sizeBytes ?: 0L) > textChars(profile)) {
-                "$name reads the beginning of it."
-            } else {
-                null
+            return when {
+                a.kind == AttachmentKind.FILE && isText(a) && (a.sizeBytes ?: 0L) > textChars(profile) -> "$name reads the beginning of it."
+                a.kind == AttachmentKind.SONG && a.previewOnly -> "$name hears its 30-second preview."
+                else -> null
             }
         }
         return when (a.kind) {
@@ -168,6 +168,9 @@ object MediaSupport {
         if (of(profile).pictures) null else if (several) "$name can't see these photos." else "$name can't see this photo."
 
     const val CHARS_PER_TOKEN = 3.6
+
+    /** How long a music service's preview of a song runs. */
+    const val PREVIEW_MS = 30_000L
     private const val MB = 1024L * 1024L
     private val TEXT_TYPES = setOf(
         "application/json", "application/xml", "application/x-yaml", "application/yaml", "application/javascript",

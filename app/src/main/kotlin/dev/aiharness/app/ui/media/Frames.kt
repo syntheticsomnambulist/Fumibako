@@ -72,6 +72,7 @@ import dev.aiharness.app.ui.paper.Tape
 import dev.aiharness.app.ui.paper.drawTape
 import dev.aiharness.app.ui.theme.HarnessFonts
 import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.core.media.LinkPreviews
 import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.Lamplight
@@ -462,7 +463,11 @@ fun Cutting(link: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifie
                 // Kept narrower than the rules, so a long site name stays clear of the clip.
                 modifier = Modifier.fillMaxWidth().rules().padding(vertical = (3 * scale).dp, horizontal = (34 * scale).dp),
             )
-            Text(link.title ?: link.url ?: "", style = news(19f * scale, bold = true, height = 1.22f), color = NewsInk, maxLines = 4, overflow = TextOverflow.Ellipsis)
+            // The page's headline; without one, the address as you'd say it.
+            Text(link.title ?: link.url?.let(LinkPreviews::address) ?: "", style = news(19f * scale, bold = true, height = 1.22f), color = NewsInk, maxLines = 4, overflow = TextOverflow.Ellipsis)
+            link.artist?.let { by ->
+                Text("BY " + by.uppercase(), style = news(10f * scale, spacing = 0.14f), color = Color(0xFF3E342B), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
             link.pictureRef?.let { ref ->
                 BlobImage(ref, Modifier.fillMaxWidth().height((100 * scale).dp).graphicsLayer {}.greyscale(), contentScale = ContentScale.Crop, maxSize = 640)
             }

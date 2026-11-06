@@ -176,7 +176,7 @@ private fun DrawScope.cassette(at: Offset, s: Float, label: Color = Color(0xFF11
 
 /** What's waiting to go with your note, as small versions of their frames, each with a remove button. */
 @Composable
-fun GoingWithYourNote(items: List<Going>, onRemove: (Going) -> Unit, onOpen: (Going) -> Unit) {
+fun GoingWithYourNote(items: List<Going>, onRemove: (Going) -> Unit, onOpen: (Going) -> Unit, switchesTo: (Going) -> String? = { null }) {
     if (items.isEmpty()) return
     val colors = paper
     Column(
@@ -190,7 +190,8 @@ fun GoingWithYourNote(items: List<Going>, onRemove: (Going) -> Unit, onOpen: (Go
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             items.forEach { item ->
                 Box(Modifier.padding(top = 6.dp, end = 6.dp)) {
-                    Box(Modifier.clip(PaperCorner).clickable(role = Role.Button) { onOpen(item) }) { GoingThumb(item) }
+                    val switch = switchesTo(item)
+                    Box(Modifier.clip(PaperCorner).clickable(role = Role.Button, onClickLabel = switch?.let { "Send it as $it" }) { onOpen(item) }) { GoingThumb(item, switch) }
                     Box(
                         Modifier
                             .align(Alignment.TopEnd)
@@ -211,7 +212,7 @@ fun GoingWithYourNote(items: List<Going>, onRemove: (Going) -> Unit, onOpen: (Go
 }
 
 @Composable
-private fun GoingThumb(item: Going) {
+private fun GoingThumb(item: Going, switchesTo: String? = null) {
     val colors = paper
     val label: String
     when (item) {
@@ -239,6 +240,8 @@ private fun GoingThumb(item: Going) {
     Column(Modifier.width(78.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         if (drawing != null) TrayDrawing(drawing, Modifier.size(56.dp, 42.dp)) else Box(Modifier.size(56.dp, 42.dp).background(colors.kami).border(1.dp, colors.nijimi1, PaperCorner))
         Text(label, style = PaperType.meta.copy(fontSize = 10.sp, letterSpacing = 0.sp), color = colors.usuzumi1, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // A music link can go as a ticket or a cutting; a tap switches.
+        switchesTo?.let { Text("tap: $it", style = PaperType.meta.copy(fontSize = 9.5.sp, letterSpacing = 0.sp), color = colors.kasure2, maxLines = 1) }
     }
 }
 

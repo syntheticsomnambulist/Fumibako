@@ -17,6 +17,7 @@ import dev.aiharness.core.llm.anthropic.AnthropicProvider
 import dev.aiharness.core.llm.gemini.GeminiProvider
 import dev.aiharness.core.llm.openai.OpenAiCompatibleProvider
 import dev.aiharness.core.media.LinkPreviews
+import dev.aiharness.core.media.MusicSearch
 import dev.aiharness.core.media.MediaDescriber
 import dev.aiharness.core.memory.KeepsakeFinder
 import dev.aiharness.core.tools.LinkReading
@@ -104,7 +105,8 @@ class Harness(
     val images = ImageService(imageGenerator, blobs, ::apiKey)
     val stickerService = StickerService(stickers, settings, clock)
     val stickerMaker = StickerMaker(images, blobs, stickers, stickerCutter, clock)
-    val links = LinkPreviews(blobs)
+    val links = LinkPreviews(blobs, log = log)
+    val music = MusicSearch(blobs, log = log)
     val linkReading = LinkReading(conversations, marks, clock)
     val keepsakeFinder = KeepsakeFinder(conversations, clock)
     val tools = ToolRegistry(

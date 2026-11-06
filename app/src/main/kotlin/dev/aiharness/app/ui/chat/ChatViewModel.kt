@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dev.aiharness.app.AppContainer
 import dev.aiharness.app.engine.GenerationState
 import dev.aiharness.core.media.LinkPreviews
+import dev.aiharness.core.media.MusicLinks
+import dev.aiharness.core.media.SongSource
+import dev.aiharness.core.util.newId
 import dev.aiharness.core.model.Track
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.AttachmentKind
@@ -27,7 +30,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 data class ChatHeader(
     val conversation: Conversation? = null,
@@ -124,17 +131,37 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     /** What's waiting to go with your note. */
     val going = MutableStateFlow<List<Going>>(emptyList())
 
-    /** Sends the note with what's waiting. A link on a line of its own leaves the text: its cutting carries it. */
-    fun send(text: String) {
-        val waiting = going.value
-        if (waiting.any { it is Going.Preparing }) return
-        val cut = waiting.mapNotNull { (it as? Going.Item)?.attachment?.url }.toSet()
-        val body = text.lines().filterNot { it.trim() in cut }.joinToString("\n").trim()
-        val images = waiting.filterIsInstance<Going.Picture>().map { it.image }
-        val attachments = waiting.filterIsInstance<Going.Item>().map { it.attachment }
-        if (body.isBlank() && images.isEmpty() && attachments.isEmpty()) return
-        going.value = emptyList()
-        container.generation.send(conversationId, body, images, attachments)
+    /**
+     * Sends the note with what's waiting, and says whether it went (so the box is only cleared
+     * then). A link on a line of its own leaves the text: its cutting carries it. Cuttings still
+     * being made are waited for, a few seconds at most (then the link goes as a plain cutting);
+     * photos, files and videos being prepared hold the note back.
+     */
+    fun send(text: String): Boolean {
+        if (sending?.isActive == true) return false
+        linkPause?.cancel()
+        noticeLinksNow(text)
+        if (going.value.any { it is Going.Preparing && !it.key.startsWith(LINK_KEY) }) return false
+        if (text.isBlank() && going.value.isEmpty()) return false
+        sending = viewModelScope.launch {
+            withTimeoutOrNull(LINK_WAIT_MS) { going.first { list -> list.none { it is Going.Preparing } } }
+            // Anything picked while this waited, and still being prepared, stays for the next note.
+            val current = going.value.filterNot { it is Going.Preparing && !it.key.startsWith(LINK_KEY) }
+            val waiting = current.map { item ->
+                if (item is Going.Preparing) Going.Item(harness.links.cutting(item.key.removePrefix(LINK_KEY), fetch = false)) else item
+            }
+            val cut = waiting.mapNotNull { (it as? Going.Item)?.attachment?.url }.toSet()
+            val body = text.lines().filterNot { it.trim() in cut }.joinToString("\n").trim()
+            val images = waiting.filterIsInstance<Going.Picture>().map { it.image }
+            val attachments = waiting.filterIsInstance<Going.Item>().map { it.attachment }
+            if (body.isBlank() && images.isEmpty() && attachments.isEmpty()) return@launch
+            // By what they were waiting under: a cutting that timed out goes plain, in its place.
+            val sent = current.map { it.key }.toSet()
+            going.update { list -> list.filterNot { it.key in sent } }
+            dismissedLinks.clear()
+            container.generation.send(conversationId, body, images, attachments)
+        }
+        return true
     }
 
     private fun prepare(label: String, work: suspend () -> List<Going>) {
@@ -162,25 +189,113 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         listOfNotNull(made?.let { Going.Item(it) })
     }
 
+    /** The tray's song search. */
+    val songSearch = MutableStateFlow(SongSearch())
+    private var searching: Job? = null
+
+    /** Searches Apple's catalog for [query], once typing pauses. */
+    fun searchSongs(query: String) {
+        searching?.cancel()
+        if (query.isBlank()) {
+            songSearch.value = SongSearch()
+            return
+        }
+        songSearch.update { it.copy(query = query, searching = true) }
+        searching = viewModelScope.launch {
+            delay(SEARCH_PAUSE_MS)
+            val found = harness.music.songs(query)
+            songSearch.update { it.copy(searching = false, searched = query, results = found.orEmpty(), failed = found == null) }
+        }
+    }
+
+    /** A song picked from the search, as a ticket with its preview. */
+    fun addFoundSong(song: dev.aiharness.core.media.FoundSong) = prepare("a song") { listOf(Going.Item(harness.music.ticket(song))) }
+
     /** More songs for the mix being edited. */
     suspend fun moreTracks(uris: List<android.net.Uri>): List<Track> = container.media.tracks(uris)
 
-    /** A link written in your note becomes a cutting waiting with the rest, once. */
+    private var linkPause: Job? = null
+    private var sending: Job? = null
+
+    /**
+     * A link written in your note becomes a cutting waiting with the rest, once, when you pause
+     * (so an address isn't fetched letter by letter as it's typed), or straight away when
+     * something follows it.
+     */
     fun noticeLinks(text: String) {
-        val known = going.value.mapNotNull { (it as? Going.Item)?.attachment?.url } + going.value.mapNotNull { (it as? Going.Preparing)?.key?.removePrefix("link:") }
-        LinkPreviews.findLinks(text).filter { it !in known }.forEach { url ->
-            val key = "link:$url"
-            going.update { it + Going.Preparing(key, url.substringAfter("://").substringBefore('/')) }
+        linkPause?.cancel()
+        noticeLinksNow(text, finishedOnly = true)
+        linkPause = viewModelScope.launch {
+            delay(LINK_PAUSE_MS)
+            noticeLinksNow(text)
+        }
+    }
+
+    private fun noticeLinksNow(text: String, finishedOnly: Boolean = false) {
+        val known = going.value.mapNotNull { (it as? Going.Item)?.attachment?.url } + going.value.mapNotNull { (it as? Going.Preparing)?.key?.removePrefix(LINK_KEY) }
+        val links = LinkPreviews.findLinks(text).filter { url -> !finishedOnly || text.contains("$url ") || text.contains("$url\n") }
+        links.filter { it !in known && it !in dismissedLinks }.forEach { url ->
+            val key = LINK_KEY + url
+            going.update { it + Going.Preparing(key, LinkPreviews.siteOf(url.substringAfter("://").substringBefore('/'))) }
             viewModelScope.launch {
-                val cutting = harness.links.cutting(url, fetch = harness.settings.current().media.linkPreviews)
-                going.update { list -> list.map { if (it.key == key) Going.Item(cutting) else it } }
+                val made = madeFrom(url)
+                going.update { list -> list.map { if (it.key == key) Going.Item(made) else it } }
             }
         }
     }
 
+    /** Tickets made from a link's cutting, by the ticket's id: switching back gives the cutting as it was. */
+    private val cuttingsOf = java.util.concurrent.ConcurrentHashMap<String, ContentPart.Attachment>()
+
+    /**
+     * What a link in your note goes as: a ticket for a music service's song (Spotify, Apple Music,
+     * SoundCloud, Bandcamp, YouTube Music) or an audio file, a cutting for anything else (a
+     * YouTube video too, which a tap can turn into a song).
+     */
+    private suspend fun madeFrom(url: String): ContentPart.Attachment {
+        val source = MusicLinks.sourceOf(url)
+        if (source == SongSource.AUDIO) {
+            // An audio file isn't a page: it isn't fetched.
+            val (title, artist) = MusicLinks.titleAndArtist(SongSource.AUDIO, null, null, url)
+            return ContentPart.Attachment(newId(), AttachmentKind.SONG, url = url, title = title, artist = artist, site = LinkPreviews.siteOf(url.substringAfter("://").substringBefore('/')))
+        }
+        val cutting = harness.links.cutting(url, fetch = harness.settings.current().media.linkPreviews)
+        if (source == null || !MusicLinks.isMusicOnly(url)) return cutting
+        return MusicLinks.ticket(cutting, source).also { cuttingsOf[it.id] = cutting }
+    }
+
+    /** Whether [item] can go either as a ticket or as a cutting (a music service's link), and what a tap makes it. */
+    fun switchesTo(item: Going): String? {
+        val a = (item as? Going.Item)?.attachment ?: return null
+        if (a.ref != null || MusicLinks.sourceOf(a.url).let { it == null || it == SongSource.AUDIO }) return null
+        return when (a.kind) {
+            AttachmentKind.LINK -> "a song"
+            AttachmentKind.SONG -> "a cutting"
+            else -> null
+        }
+    }
+
+    /** Turns a music link's cutting into a ticket, or back. */
+    fun switchSongOrCutting(item: Going) {
+        val a = (item as? Going.Item)?.attachment ?: return
+        val source = MusicLinks.sourceOf(a.url) ?: return
+        val switched = when (a.kind) {
+            AttachmentKind.LINK -> MusicLinks.ticket(a, source).also { cuttingsOf[it.id] = a }
+            AttachmentKind.SONG -> cuttingsOf.remove(a.id) ?: a.copy(kind = AttachmentKind.LINK)
+            else -> return
+        }
+        replace(Going.Item(switched))
+    }
+
     fun replace(item: Going) = going.update { list -> list.map { if (it.key == item.key) item else it } }
 
-    fun remove(item: Going) = going.update { list -> list.filterNot { it.key == item.key } }
+    /** Links whose cutting you took out: they stay in the text without coming back as cuttings. */
+    private val dismissedLinks = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    fun remove(item: Going) {
+        ((item as? Going.Item)?.attachment?.url ?: (item as? Going.Preparing)?.key?.takeIf { it.startsWith(LINK_KEY) }?.removePrefix(LINK_KEY))?.let { dismissedLinks += it }
+        going.update { list -> list.filterNot { it.key == item.key } }
+    }
 
     fun stop() = container.generation.cancel(conversationId)
     fun regenerate() = container.generation.regenerate(conversationId)
@@ -212,3 +327,15 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         harness.updateConversation(conversationId, transform)
     }
 }
+
+/** What a link's cutting waits under while it's made, before its address. */
+private const val LINK_KEY = "link:"
+
+/** How long typing pauses before a link at the end of the note is fetched. */
+private const val LINK_PAUSE_MS = 900L
+
+/** How long a note waits on its links' cuttings when you send it. */
+private const val LINK_WAIT_MS = 8_000L
+
+/** How long typing pauses before a song search runs. */
+private const val SEARCH_PAUSE_MS = 450L

@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.graphics.pdf.PdfRenderer
 import android.media.MediaMetadataRetriever
+import dev.aiharness.core.media.FileFacts
+import dev.aiharness.core.media.PdfInfo
 import android.net.Uri
 import android.os.Build
 import android.os.ParcelFileDescriptor
@@ -76,9 +78,11 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
                 }
             }
         }
+        // A PDF's own title and author, from its start and end, where they're kept.
+        val info = if (mime == "application/pdf") blobs.fileFor(ref)?.let { pdfInfo(it, name) } else null
         ContentPart.Attachment(
             newId(), AttachmentKind.FILE, ref = ref, mimeType = mime, name = name, sizeBytes = size, pages = pages,
-            pictureRef = firstPage, thumbRef = thumb,
+            title = info?.title, artist = info?.author, pictureRef = firstPage, thumbRef = thumb,
         )
     }
 
@@ -97,7 +101,7 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
                 val small = if (t.ref != null && (!known || (size ?: 0L) > Shrinker.SMALL_SONG)) smallerCopy(t.ref!!, video = false) else null
                 ContentPart.Attachment(
                     newId(), AttachmentKind.SONG, ref = t.ref, mimeType = t.mimeType, name = t.name, title = t.title, artist = t.artist,
-                    lengthMs = t.lengthMs, pictureRef = cover, sizeBytes = size,
+                    album = t.album, year = t.year, lengthMs = t.lengthMs, pictureRef = cover, sizeBytes = size,
                     modelRef = small?.first, modelMimeType = small?.let { "audio/mp4" }, modelSizeBytes = small?.second,
                 )
             }
@@ -129,8 +133,11 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
             Track(
                 ref = ref,
                 mimeType = mime,
-                title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)?.takeIf { it.isNotBlank() } ?: name?.substringBeforeLast('.'),
-                artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)?.takeIf { it.isNotBlank() },
+                title = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)) ?: name?.substringBeforeLast('.'),
+                artist = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST))
+                    ?: FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST)),
+                album = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)),
+                year = FileFacts.year(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)),
                 lengthMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull(),
                 name = name,
             ) to cover
@@ -141,7 +148,21 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
         }
     }
 
-    /** A video, as a film strip: its length and three frames (what a model that can't watch it receives). */
+    /** A PDF's title and author; a big one is looked through at its start and end only. */
+    private fun pdfInfo(file: File, name: String?): PdfInfo.Info? = runCatching {
+        val bytes = if (file.length() <= 2L * PdfInfo.LOOK) file.readBytes() else java.io.RandomAccessFile(file, "r").use { f ->
+            val head = ByteArray(PdfInfo.LOOK).also { f.readFully(it) }
+            val tail = ByteArray(PdfInfo.LOOK).also { f.seek(f.length() - PdfInfo.LOOK); f.readFully(it) }
+            head + tail
+        }
+        PdfInfo.of(bytes, name)
+    }.getOrNull()
+
+    /**
+     * A video, as a film strip: its length, three frames (what a model that can't watch it
+     * receives), and what it says of itself: its title, who made it, when it was recorded. Where it
+     * was recorded stays out.
+     */
     suspend fun video(uri: Uri): ContentPart.Attachment? = withContext(Dispatchers.IO) {
         val (name, size) = nameAndSize(uri)
         val mime = resolver.getType(uri) ?: mimeOf(name) ?: "video/mp4"
@@ -158,7 +179,11 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
             val small = if (length != null && length <= Shrinker.LONGEST_VIDEO_MS) smallerCopy(ref, video = true) else null
             ContentPart.Attachment(
                 newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size,
-                title = name?.substringBeforeLast('.'), lengthMs = length, frameRefs = frames, thumbRef = frames.getOrNull(1) ?: frames.firstOrNull(),
+                title = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)) ?: name?.substringBeforeLast('.'),
+                artist = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST))
+                    ?: FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR)),
+                recordedAt = FileFacts.recordedAt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)),
+                lengthMs = length, frameRefs = frames, thumbRef = frames.getOrNull(1) ?: frames.firstOrNull(),
                 modelRef = small?.first, modelMimeType = small?.let { "video/mp4" }, modelSizeBytes = small?.second,
             )
         } catch (e: Exception) {

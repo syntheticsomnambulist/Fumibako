@@ -48,7 +48,9 @@ phone, and your key is encrypted there. Your letters (with their photos and file
 model provider you chose. Two things also reach websites: a link you write becomes a cutting
 with the page's title and picture, which means visiting the page; and a persona can open a link
 you shared (Claude does that on Anthropic's servers; other models through your phone). Both can
-be turned off in Settings, Media. There are no accounts, ads or analytics.
+be turned off in Settings, Media. Searching for a song sends your search words to Apple's catalog,
+and so does opening a song in Apple Music when the link is from elsewhere. There are no accounts,
+ads or analytics.
 
 ## Things to try
 
@@ -63,9 +65,12 @@ be turned off in Settings, Media. There are no accounts, ads or analytics.
   peel it. Personas stick their own, and can draw stickers of themselves (their page, Stickers).
   Shared stickers, stamps and decor are in Settings, Stickers; one can come from a photo.
 - Type `:` and a few letters to write a sticker into your note.
-- **Sending things:** the **+** also has Photos, Camera, File, Music and Video. Several songs
-  make a mixtape (a cassette) you can name and reorder; a link in your note becomes a newspaper
-  cutting. Each arrives as stationery, and a line under it says what the persona can't take in
+- **Sending things:** the **+** also has Photos, Camera, File, Music and Video. Music searches
+  Apple's catalog: tap a song's play button to hear a preview, tap the song to send it as a ticket with its preview
+  and a link to the whole song; "From your phone" picks files. Several songs make a mixtape (a
+  cassette) you can name and reorder. A link in your note becomes a newspaper cutting with the
+  page's title; a Spotify, Apple Music, SoundCloud or Bandcamp link becomes a ticket, and a
+  YouTube video can be either (tap it under "Going with your note"). Each arrives as stationery, and a line under it says what the persona can't take in
   with its model (Claude reads PDFs; Gemini also hears songs and watches videos).
 - **Tapping things:** songs and mixtapes play (a small player docks above where you write, and
   music carries on outside the app); photos open to swipe and zoom; videos play; a file's tag
@@ -76,7 +81,8 @@ be turned off in Settings, Media. There are no accounts, ads or analytics.
 - **Keepsakes:** a memory can keep something from its letter (the persona chooses), shown in
   the memory book as a scrapbook piece; tap it to play or open it, or hold it to stick a sticker
   on it. The book's Keepsakes tab shows just those.
-- **Settings, Media** has where links open, picture size, playback and motion switches.
+- **Settings, Media** has where links open, which app songs open in, picture size, playback and
+  motion switches.
 
 ## If something goes wrong
 

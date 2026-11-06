@@ -121,6 +121,36 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   the camera; playback in the background and its notification; the video player's full screen;
   Custom Tabs; the YouTube, SoundCloud and Bandcamp players (YouTube's in a web view may refuse
   without the right origin); Claude's web fetch and Gemini's audio and video with live keys.
+- **After 0.3.5.1** (your notes and answers):
+  - **Cuttings show the page's title.** They were bare addresses on phones because the site's
+    address was looked up on the main thread, which Android refuses; all of it runs off it now.
+    A page bigger than half a megabyte gives its title from its top (read until its head ends).
+    YouTube, Spotify, SoundCloud and Vimeo are asked through their own title lookups (oEmbed),
+    which also give the channel or artist ("BY PAVEMENT" under the headline, and "by Pavement"
+    in what the persona reads). A site's name tacked onto a title goes ("*sshole · sshhole.com"
+    is "*sshole"), and a robot check ("Client Challenge", "Just a moment") isn't taken for the
+    page. With no title, the cutting shows its address the way you'd say it: no `https://`, no
+    `www.`, no tracking tags. A link in your note is fetched once you pause typing, not letter
+    by letter. Sending while a cutting is still being made waits a few seconds for it; before,
+    the note was quietly dropped.
+  - **Files say what they are.** A video passes its own title, who made it and the day it was
+    recorded ("[film: Lantern walk by Sam, 3:47, recorded 3 Nov 2026]"), not where; a song its
+    album and year; a PDF its own title and author, from its information or XMP (titles that
+    only repeat a file name, like "Microsoft Word - report.docx", are left out).
+  - **Songs from the catalog.** The tray's Music opens a page searching Apple's catalog (the
+    iTunes Search API: no key or account), with "From your phone" for files. Each result can
+    play its 30-second preview; picked, it goes as a ticket with the song's title, artist,
+    album, year and cover, its preview (which plays in the app, and which Gemini hears: "Aria
+    hears its 30-second preview."), and a link to the whole song. The player offers "Listen to
+    the whole song in Apple Music".
+  - **Open songs in** (Settings, Media): "Its own app" until set, so a Spotify link opens
+    Spotify. Set to Apple Music, the same song is found in the catalog; YouTube Music opens a
+    YouTube video as itself. song.link, which would have found the same song on Spotify and
+    YouTube Music, retired its API on 31 July 2026, so those open a search for the song instead.
+  - **Pasted music links are tickets.** Spotify, Apple Music, SoundCloud, Bandcamp and YouTube
+    Music links go as tickets, with the title, artist, album and year their pages give; an
+    audio file's link too (not fetched). A YouTube video stays a cutting; under "Going with your
+    note" it says "tap: a song", and a tap switches it (and back).
 
 ## What v0.3.5 includes
 

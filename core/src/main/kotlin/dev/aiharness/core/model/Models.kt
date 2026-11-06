@@ -290,11 +290,18 @@ sealed interface ContentPart {
         val sizeBytes: Long? = null,
         /** A PDF's pages. */
         val pages: Int? = null,
-        /** A song's or playlist's title, or a link's headline. */
+        /** A song's or playlist's title, a video's or document's own title, or a link's headline. */
         val title: String? = null,
+        /** Who made it: a song's artist, a video's maker, a document's author, a link's channel or writer. */
         val artist: String? = null,
         val album: String? = null,
+        /** A song's year, from its tags. */
+        val year: Int? = null,
         val lengthMs: Long? = null,
+        /** When a video was recorded, from the file itself. */
+        val recordedAt: Long? = null,
+        /** The file is the song's 30-second preview (picked from a music search); the whole song is at [url]. */
+        val previewOnly: Boolean = false,
         /** A playlist's songs, in order. */
         val tracks: List<Track> = emptyList(),
         /** The line beneath a playlist's title ("for Aria, from Sam"). */
@@ -328,17 +335,33 @@ sealed interface ContentPart {
         /** What a model that can't take it in reads, and the handle it knows it by: `[ticket: October Walk by Hana Sato, 3:42]`. */
         val standIn: String
             get() = "[" + when (kind) {
-                AttachmentKind.FILE -> "tag: " + listOfNotNull(name ?: "a file", fileFacts()).joinToString(", ")
-                AttachmentKind.SONG -> "ticket: " + listOfNotNull(songLine(title, artist), lengthMs?.let(::clock)).joinToString(", ")
+                AttachmentKind.FILE -> "tag: " + listOfNotNull(name ?: "a file", documentLine(), fileFacts()).joinToString(", ")
+                AttachmentKind.SONG -> "ticket: " + listOfNotNull(
+                    songLine(title, artist), albumLine(), lengthMs?.let(::clock), "with its 30-second preview".takeIf { previewOnly && ref != null },
+                ).joinToString(", ")
                 AttachmentKind.PLAYLIST -> "cassette: " + listOfNotNull(
                     title ?: "a mix",
                     subtitle,
                     "${tracks.size} songs".takeIf { tracks.isNotEmpty() },
                     tracks.takeIf { it.isNotEmpty() }?.joinToString("; ") { songLine(it.title ?: it.name, it.artist) },
                 ).joinToString(", ")
-                AttachmentKind.VIDEO -> "film: " + listOfNotNull(title ?: name ?: "a video", lengthMs?.let(::clock)).joinToString(", ")
-                AttachmentKind.LINK -> "cutting: " + listOfNotNull(title, site, url).joinToString(", ")
+                AttachmentKind.VIDEO -> "film: " + listOfNotNull(
+                    listOfNotNull(title ?: name ?: "a video", artist?.let { "by $it" }).joinToString(" "),
+                    lengthMs?.let(::clock),
+                    recordedAt?.let { "recorded " + RECORDED.format(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault())) },
+                ).joinToString(", ")
+                AttachmentKind.LINK -> "cutting: " + listOfNotNull(title, artist?.let { "by $it" }, lengthMs?.let(::clock), site, url).joinToString(", ")
             } + "]"
+
+        /** A document's own title and author: `"Quarterly Review" by Ana Ruiz`. */
+        private fun documentLine(): String? = when {
+            title != null -> "\"$title\"" + (artist?.let { " by $it" } ?: "")
+            artist != null -> "by $artist"
+            else -> null
+        }
+
+        /** `from Whenever You Need Somebody (1987)`. */
+        private fun albumLine(): String? = album?.let { "from $it" + (year?.let { y -> " ($y)" } ?: "") } ?: year?.toString()
 
         private fun fileFacts(): String? = listOfNotNull(
             mimeType?.substringAfter('/')?.uppercase()?.takeIf { it.length <= 12 },
@@ -385,10 +408,15 @@ data class Track(
     val mimeType: String? = null,
     val title: String? = null,
     val artist: String? = null,
+    val album: String? = null,
+    val year: Int? = null,
     val lengthMs: Long? = null,
     /** The file's name, for songs without tags. */
     val name: String? = null,
 )
+
+/** The day a video was recorded, as the persona's context writes days: "3 Nov 2026". */
+private val RECORDED = java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy", java.util.Locale.US)
 
 private fun songLine(title: String?, artist: String?): String =
     listOfNotNull(title ?: "a song", artist?.let { "by $it" }).joinToString(" ")

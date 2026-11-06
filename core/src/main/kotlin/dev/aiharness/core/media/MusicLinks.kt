@@ -1,5 +1,7 @@
 package dev.aiharness.core.media
 
+import dev.aiharness.core.model.AttachmentKind
+import dev.aiharness.core.model.ContentPart
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Where a song a persona shares can be heard (docs/design/media.md, "Songs from personas"). */
@@ -32,7 +34,7 @@ object MusicLinks {
             host == "youtu.be" || host == "youtube.com" || host == "music.youtube.com" -> SongSource.YOUTUBE.takeIf { youtubeId(url) != null }
             host == "soundcloud.com" && u.pathSegments.filter { it.isNotEmpty() }.size >= 2 -> SongSource.SOUNDCLOUD
             host.endsWith(".bandcamp.com") && (path.startsWith("/track/") || path.startsWith("/album/")) -> SongSource.BANDCAMP
-            host == "open.spotify.com" -> SongSource.SPOTIFY
+            host == "open.spotify.com" || host == "spotify.link" -> SongSource.SPOTIFY
             host == "music.apple.com" -> SongSource.APPLE_MUSIC
             else -> null
         }
@@ -72,6 +74,53 @@ object MusicLinks {
         return id?.takeIf { Regex("[A-Za-z0-9_-]{6,20}").matches(it) }
     }
 
+    /** What a Spotify page's description says of a song. */
+    private data class SpotifyFacts(val artist: String?, val album: String?, val year: Int?)
+
+    /**
+     * "Rick Astley · Whenever You Need Somebody · Song · 1987" (artist, album, kind, year), or the
+     * older "Listen to X on Spotify. Song · Artist · 1987".
+     */
+    private fun spotifyFacts(description: String?): SpotifyFacts {
+        val parts = description?.substringAfter("Spotify.", description)?.split(" · ")?.map { it.trim().trimEnd('.') }.orEmpty()
+        val i = parts.indexOf("Song")
+        return when {
+            i == 0 -> SpotifyFacts(parts.getOrNull(1), null, FileFacts.year(parts.getOrNull(2)))
+            i > 0 -> SpotifyFacts(parts[0], parts.getOrNull(1)?.takeIf { i >= 2 }, FileFacts.year(parts.getOrNull(i + 1)))
+            else -> SpotifyFacts(parts.getOrNull(0)?.takeIf { parts.size >= 2 }, null, null)
+        }
+    }
+
+    /** Words a video's title carries that a song's doesn't: "(Official Music Video)", "[Lyrics]", "(Visualizer)". */
+    private val VIDEO_WORDS = Regex("""\s*[(\[][^)\]]*\b(official|video|audio|lyrics?|visuali[sz]er|mv|hd|4k)\b[^)\]]*[)\]]""", RegexOption.IGNORE_CASE)
+
+    /**
+     * A ticket made from the cutting of a music service's page (or its own title lookup): the
+     * song's title and artist as the service writes them, and its album, year and length where
+     * the page says. "Pavement - Harness Your Hopes (Official Video)" on YouTube is Harness Your
+     * Hopes by Pavement.
+     */
+    fun ticket(cutting: ContentPart.Attachment, source: SongSource): ContentPart.Attachment {
+        val url = cutting.url.orEmpty()
+        var (title, artist) = titleAndArtist(source, cutting.title, cutting.snippet, url)
+        val channel = cutting.artist?.removeSuffix(" - Topic")?.removeSuffix("VEVO")?.removeSuffix(" Official")?.trim()?.ifBlank { null }
+        if (artist == null && channel != null) {
+            artist = channel
+            title = title?.let { t -> Regex("^" + Regex.escape(channel) + "\\s*[-\u2013\u2014:|]\\s*", RegexOption.IGNORE_CASE).replace(t, "") }
+        }
+        if (source == SongSource.YOUTUBE || source == SongSource.SOUNDCLOUD) title = title?.let { VIDEO_WORDS.replace(it, "") }
+        title = title?.trim()?.trim('"', '\u201C', '\u201D', '\'')?.trim()?.ifBlank { null }
+        val spotify = if (source == SongSource.SPOTIFY) spotifyFacts(cutting.snippet) else null
+        // Apple Music's description: "Song · 1997 · Duration 3:26".
+        val apple = if (source == SongSource.APPLE_MUSIC) cutting.snippet else null
+        val year = spotify?.year ?: apple?.let { Regex("\\b(1[89]\\d\\d|2\\d\\d\\d)\\b").find(it)?.value?.toIntOrNull() }
+        val length = cutting.lengthMs ?: apple?.let { Regex("Duration (\\d+):(\\d\\d)").find(it) }?.let { m -> (m.groupValues[1].toLong() * 60 + m.groupValues[2].toLong()) * 1000 }
+        return cutting.copy(
+            kind = AttachmentKind.SONG, title = title, artist = artist, album = spotify?.album, year = year, lengthMs = length,
+            site = source.label, snippet = null,
+        )
+    }
+
     /**
      * A song's title and artist from its page's title, as each service writes it:
      * "Artist - Title" (YouTube), "Title, by Artist" (Bandcamp), "Title by Artist on Apple Music",
@@ -85,11 +134,7 @@ object MusicLinks {
             SongSource.YOUTUBE -> title?.split(" - ", limit = 2)?.takeIf { it.size == 2 }?.let { it[1].trim() to it[0].trim() } ?: (title to null)
             SongSource.BANDCAMP -> title?.split(", by ", limit = 2)?.takeIf { it.size == 2 }?.let { it[0].trim() to it[1].trim() } ?: (title to null)
             SongSource.APPLE_MUSIC -> title?.split(" by ", limit = 2)?.takeIf { it.size == 2 }?.let { it[0].trim() to it[1].trim() } ?: (title to null)
-            SongSource.SPOTIFY -> {
-                val parts = description?.substringAfter("Spotify.", description)?.split(" · ")?.map { it.trim().trimEnd('.') }.orEmpty()
-                val artist = parts.indexOf("Song").takeIf { it >= 0 }?.let { parts.getOrNull(it + 1) } ?: parts.getOrNull(1)?.takeIf { parts.size >= 3 }
-                title to artist
-            }
+            SongSource.SPOTIFY -> title to spotifyFacts(description).artist
             SongSource.SOUNDCLOUD -> title?.substringBefore(" | ")?.removePrefix("Stream ")?.split(" by ", limit = 2)?.takeIf { it.size == 2 }?.let { it[0].trim() to it[1].trim() } ?: (title to null)
         }
     }

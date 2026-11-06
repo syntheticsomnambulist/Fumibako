@@ -16,8 +16,8 @@ android {
         applicationId = "dev.fumibako.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.3.5.1"
+        versionCode = 9
+        versionName = "0.3.5.2"
     }
 
     signingConfigs {
@@ -124,6 +124,7 @@ dependencies {
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.okhttp.mockwebserver)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
 }

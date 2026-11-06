@@ -72,6 +72,34 @@ class LinksTest {
         assertEquals("October Walk" to "Hana Sato", MusicLinks.titleAndArtist(SongSource.SPOTIFY, "October Walk", "Listen to October Walk on Spotify. Song · Hana Sato · 2024", ""))
     }
 
+    @Test
+    fun aMusicServicesCuttingBecomesATicketWithWhatItsPageSays() {
+        fun cutting(url: String, title: String?, snippet: String? = null, author: String? = null) =
+            ContentPart.Attachment("c", AttachmentKind.LINK, url = url, title = title, snippet = snippet, artist = author, site = "x")
+
+        // YouTube's own title lookup: the channel is the artist, the video's words go.
+        val youtube = MusicLinks.ticket(cutting("https://youtu.be/w2Ww_O3ceKU", "Pavement- \"Harness Your Hopes\" (Official Music Video)", author = "Pavement"), SongSource.YOUTUBE)
+        assertEquals("Harness Your Hopes" to "Pavement", youtube.title to youtube.artist)
+        assertEquals(AttachmentKind.SONG, youtube.kind)
+        assertEquals("YouTube", youtube.site)
+        val topic = MusicLinks.ticket(cutting("https://music.youtube.com/watch?v=w2Ww_O3ceKU", "Harness Your Hopes", author = "Pavement - Topic"), SongSource.YOUTUBE)
+        assertEquals("Harness Your Hopes" to "Pavement", topic.title to topic.artist)
+
+        // Spotify, as its pages describe songs now: artist, album, kind, year.
+        val spotify = MusicLinks.ticket(cutting("https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT", "Never Gonna Give You Up", "Rick Astley · Whenever You Need Somebody · Song · 1987"), SongSource.SPOTIFY)
+        assertEquals(listOf("Never Gonna Give You Up", "Rick Astley", "Whenever You Need Somebody", "1987"), listOf(spotify.title, spotify.artist, spotify.album, spotify.year.toString()))
+        assertEquals("[ticket: Never Gonna Give You Up by Rick Astley, from Whenever You Need Somebody (1987)]", spotify.standIn)
+
+        val apple = MusicLinks.ticket(
+            cutting("https://music.apple.com/us/album/x/1?i=2", "Harness Your Hopes (B-side) by Pavement on Apple Music", "Song · 1997 · Duration 3:26"),
+            SongSource.APPLE_MUSIC,
+        )
+        assertEquals(listOf("Harness Your Hopes (B-side)", "Pavement", "1997", "206000"), listOf(apple.title, apple.artist, apple.year.toString(), apple.lengthMs.toString()))
+
+        val soundcloud = MusicLinks.ticket(cutting("https://soundcloud.com/forss/flickermood", "Flickermood by Forss", author = "Forss"), SongSource.SOUNDCLOUD)
+        assertEquals("Flickermood" to "Forss", soundcloud.title to soundcloud.artist)
+    }
+
     private suspend fun context(env: TestEnv, conversationId: String) =
         ToolContext(env.conversations.get(conversationId)!!, env.persona, env.user, env.settingsRepo.current(), background = false)
 

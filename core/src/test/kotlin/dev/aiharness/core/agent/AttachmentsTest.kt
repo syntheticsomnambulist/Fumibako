@@ -32,6 +32,22 @@ class AttachmentsTest {
     }
 
     @Test
+    fun standInsCarryWhatTheFilesSayOfThemselves() {
+        assertEquals(
+            "[ticket: October Walk by Hana Sato, from Paper Seasons (2024), 3:42]",
+            song.copy(album = "Paper Seasons", year = 2024).standIn,
+        )
+        assertEquals(
+            "[tag: market-map.pdf, \"Night Market Stalls\" by Ana Ruiz, PDF, 3 pages, 2.4 MB]",
+            pdf.copy(title = "Night Market Stalls", artist = "Ana Ruiz").standIn,
+        )
+        // Noon UTC is the same day in every zone from UTC-11 to UTC+11.
+        val recorded = java.time.Instant.parse("2026-11-03T12:00:00Z").toEpochMilli()
+        val film = ContentPart.Attachment("a4", AttachmentKind.VIDEO, name = "VID_20261103.mp4", title = "Lantern walk", artist = "Sam", lengthMs = 227_000, recordedAt = recorded)
+        assertEquals("[film: Lantern walk by Sam, 3:47, recorded 3 Nov 2026]", film.standIn)
+    }
+
+    @Test
     fun aNoteCarriesItsAttachmentsToTheModel() = runTest {
         val env = TestEnv().apply { seed() }
         val conversation = env.harness.createConversation(env.persona.id)
