@@ -280,6 +280,7 @@ class ContextBuilder(
         input.persona.scenario,
         input.persona.exampleDialogue,
         input.persona.systemPromptOverride,
+        input.persona.pronouns?.forPrompt,
         input.userPersona?.id,
         input.userPersona?.name,
         input.userPersona?.description,

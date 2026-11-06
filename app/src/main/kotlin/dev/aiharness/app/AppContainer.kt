@@ -19,6 +19,8 @@ import dev.aiharness.app.heartbeat.HeartbeatScheduler
 import dev.aiharness.app.heartbeat.Notifier
 import dev.aiharness.app.ui.stickers.PlainBackgroundCutter
 import dev.aiharness.core.Harness
+import dev.aiharness.core.model.Pronouns
+import dev.aiharness.core.model.PronounKind
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
@@ -129,6 +131,7 @@ class AppContainer(private val context: Context) {
                 greeting = "Hi {{user}}! I'm Aria. Tell me something about your day?",
                 selfPrompt = "1girl, solo, long silver hair, green eyes, soft smile",
                 defaultOutfit = "cozy cream sweater",
+                pronouns = Pronouns(PronounKind.SHE),
                 createdAt = now,
                 updatedAt = now,
             ),

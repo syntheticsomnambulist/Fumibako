@@ -28,9 +28,11 @@ class PromptAssembler {
         val override = persona.systemPromptOverride?.takeIf { it.isNotBlank() }
         if (override != null) {
             sections += override
+            persona.pronouns?.let { sections += it.forPrompt }
         } else {
             sections += buildString {
                 append("You are ${persona.name}, talking with $userName.")
+                persona.pronouns?.let { append(' ').append(it.forPrompt) }
                 persona.description.ifNotBlank { append("\n\n").append(it) }
                 persona.personality.ifNotBlank { append("\n\n## Personality\n").append(it) }
                 persona.scenario.ifNotBlank { append("\n\n## Scenario\n").append(it) }

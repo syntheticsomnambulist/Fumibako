@@ -127,6 +127,8 @@ data class Persona(
      */
     val unreadMark: String? = null,
     val stickers: PersonaStickers = PersonaStickers(),
+    /** Its pronouns; null until chosen (the app then uses its name, and the model isn't told). */
+    val pronouns: Pronouns? = null,
     val createdAt: Long,
     val updatedAt: Long,
 ) {
