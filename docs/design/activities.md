@@ -221,8 +221,9 @@ you somewhere to land.
 - **A fifth tab, 机 Desk,** between Personas and Planner (文 Letters, 人 Personas, 机 Desk,
   帳 Planner, 設 Settings), where you look between all the desks: yours and your personas'.
 - **Name tabs along the top** switch desks, like folder tabs, each with its owner's portrait and
-  a band of their tape: your personas' desks first ("Sam, your desk"), a small gap, then the
-  personas' (Aria, Juno, Haru). The chosen tab joins the page.
+  a band of their tape: each of your personas' desks first, a tab each ("Sam, your desk"), a
+  small gap, then the personas' (Aria, Juno, Haru) in the Letters list's order, most recent
+  first. The chosen tab joins the page.
 - **One desk for each of your personas,** like their planners: what a persona gives Sam lands on
   Sam's desk.
 - **In v0.6:** the trinket dish and one scrapbook. More scrapbooks and other objects later.
@@ -235,8 +236,8 @@ you somewhere to land.
 ### Proposed
 
 - **Your desk** (Sam's, in your ink and tape): the scrapbook, the trinket dish, your sticker sheet
-  (the one in Settings, Stickers, now also on your desk) and a pencil, on a desk pad like hers,
-  with room for more later. Below: **Lately on your desk** ("Aria gave you an acorn, in a glassine
+  (agreed: the one in Settings, Stickers, also on your desk) and a pencil, on a desk pad like
+  hers, with room for more later. Below: **Lately on your desk** ("Aria gave you an acorn, in a glassine
   envelope"; "You pasted the window cat into your scrapbook. Aria heard.").
 - **Your trinket dish** opens a sheet: each trinket's picture, its name in the giver's hand, what
   it is, who gave it and in which letter (**Open the letter it came in**).
@@ -278,8 +279,10 @@ from. The rest of the app is right as it is; the desk should match it.
   stickers on their sheet; a scalloped postage stamp and a postmark; a luggage tag; an index tab
   rising from the in-tray; a paperclip; a cup pull on the drawer.
 - **Depth:** trays and the drawer are drawn as boxes seen from above, with a darker back wall,
-  side walls, a floor and a front lip. The drawer's front has only a cup pull (its label was
-  taken off, 6 November).
+  side walls, a floor and a front lip. The drawer's front has only a cup pull (its labels were
+  taken off, 6 November). **The drawer slides open:** opening it, the drawer comes out from under
+  the desk's front edge with a small overshoot, as if just pulled; tapping the pull slides it
+  shut and out again; on her desk, the drawer front gives a little tug when pressed.
 - **Tape is opaque,** as in the app: a solid tint of the owner's ink with its pattern in the
   paper colour.
 - **Everything else is the app's existing stationery:** `kami` cards with a hairline `nijimi0`
@@ -359,7 +362,7 @@ https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn
 
 ## Open
 
-- **Your desk:** the proposed details in *Your desk and the Desk tab* (the sticker sheet on it, the pieces, arranging).
+- **Your desk:** the proposed details in *Your desk and the Desk tab* (the pieces, arranging).
 
 - **The look beyond the desk:** mostly settled in v0.5 (soft shadows, the chosen faces, tapes in
   two shades, all across the app); drawn objects in the desk's style elsewhere are still to come.
