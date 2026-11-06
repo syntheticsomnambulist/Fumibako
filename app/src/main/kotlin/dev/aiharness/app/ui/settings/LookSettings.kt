@@ -170,7 +170,4 @@ private fun fetchCoarseLocation(context: Context, onLocation: (Location) -> Unit
     }
 }
 
-private fun clock(millis: Long): String {
-    val t = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
-    return "%02d:%02d".format(t.hour, t.minute)
-}
+private fun clock(millis: Long): String = dev.aiharness.app.ui.planner.AppClock.time(millis)

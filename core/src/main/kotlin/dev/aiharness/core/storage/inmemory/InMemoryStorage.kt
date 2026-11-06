@@ -219,6 +219,8 @@ class InMemoryPlannerRepository : dev.aiharness.core.storage.PlannerRepository {
     override suspend fun delete(id: String) = entries.update { it - id }
     override suspend fun deletePlanner(plannerId: String) = entries.update { all -> all.filterValues { it.plannerId != plannerId } }
     override suspend fun deleteWrittenBy(personaId: String) = entries.update { all -> all.filterValues { it.byPersonaId != personaId } }
+    override suspend fun writtenBy(personaId: String) = entries.value.values.filter { it.byPersonaId == personaId }.sortedBy { it.createdAt }
+    override fun observeWrittenByPersonas() = entries.map { all -> all.values.filter { it.byPersonaId != null }.sortedBy { it.createdAt } }
 }
 
 class InMemoryMarkRepository : MarkRepository {

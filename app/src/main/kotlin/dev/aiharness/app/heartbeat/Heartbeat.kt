@@ -71,6 +71,30 @@ object HeartbeatScheduler {
         WorkManager.getInstance(context).enqueueUniqueWork(ONE_SHOT, ExistingWorkPolicy.REPLACE, request)
     }
 
+    /** A persona's reminder: when it wakes it. */
+    data class Wake(val reminderId: String, val personaId: String, val at: Long)
+
+    /**
+     * One wakeup for each reminder still to come, at its time (a little after, so it's due). A
+     * wakeup runs that persona's heartbeat, which its due reminder lets through whatever its pace.
+     */
+    fun wakeFor(context: Context, settings: HeartbeatSettings, wakes: Set<Wake>) {
+        if (settings.mode != HeartbeatMode.PROACTIVE) return
+        val workManager = WorkManager.getInstance(context)
+        val now = System.currentTimeMillis()
+        wakes.filter { it.at > now }.forEach { wake ->
+            val request = OneTimeWorkRequestBuilder<HeartbeatWorker>()
+                .setInitialDelay(wake.at - now + 30_000L, TimeUnit.MILLISECONDS)
+                .setConstraints(constraints(settings))
+                .setInputData(androidx.work.Data.Builder().putString(KEY_PERSONA, wake.personaId).build())
+                .addTag(REMINDER_TAG)
+                .build()
+            workManager.enqueueUniqueWork("reminder-${wake.reminderId}", ExistingWorkPolicy.REPLACE, request)
+        }
+    }
+
+    private const val REMINDER_TAG = "persona-reminder"
+
     private fun constraints(settings: HeartbeatSettings) = Constraints.Builder()
         .setRequiredNetworkType(if (settings.requireUnmeteredNetwork) NetworkType.UNMETERED else NetworkType.CONNECTED)
         .build()

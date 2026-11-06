@@ -477,10 +477,10 @@ class ScreenshotTour {
         compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
         compose.waitForIdle()
         shot("${prefix}_24_planner_week")
-        // To the week after, and back to today by the ribbon.
+        // To the week after, and back by the Today tab.
         compose.onNodeWithContentDescription("The week after").performClick()
         compose.waitForIdle()
-        compose.onNodeWithContentDescription("Back to today").performClick()
+        compose.onNodeWithContentDescription("Back to this week").performClick()
         compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
         // Stickers: the tray, and one tapped onto today.
         compose.onNode(hasClickActionLabel("Stick stickers on the planner")).performClick()
@@ -511,9 +511,14 @@ class ScreenshotTour {
         compose.waitForIdle()
         shot("${prefix}_24d_planner_unfolded")
         compose.onAllNodes(hasClickActionLabel("Fold your sleep hours")).onFirst().performScrollTo().performClick()
-        // The メモ area, and a plan's card.
-        compose.onNodeWithText("Your typical week").performScrollTo()
+        // The メモ area, with Aria's slips, and a plan's card.
+        compose.onNodeWithText("Add to my planner").performScrollTo()
         shot("${prefix}_24e_planner_memo")
+        compose.onNodeWithText("Your typical week").performScrollTo()
+        shot("${prefix}_24e2_planner_memo_slips")
+        // Her suggestion, added: it's your plan now, with her slip beside it.
+        compose.onNodeWithText("Add to my planner").performScrollTo().performClick()
+        waitFor("Added to your planner.")
         click("+ Add a plan")
         waitFor("At a time")
         shot("${prefix}_24f_plan_card")
@@ -948,6 +953,17 @@ class ScreenshotTour {
         plan("Buy sencha") { it.copy(day = week[4].toString()) }
         plan("Return the library books") { it.copy(day = week[2].toString(), state = dev.aiharness.core.model.EntryState.DONE) }
         plan("Jo's birthday") { it.copy(day = week[5].toString(), allDay = true) }
+        // What Aria wrote in Sam's planner (signed with her seal), and Juno's time away.
+        h.personas.upsert(aria.copy(planner = dev.aiharness.core.model.PersonaPlanner(seal = "歌")))
+        suspend fun hers(by: String, kind: dev.aiharness.core.model.EntryKind, title: String, build: (dev.aiharness.core.model.PlannerEntry) -> dev.aiharness.core.model.PlannerEntry) =
+            h.plannerEntries.upsert(build(dev.aiharness.core.model.PlannerEntry(newId(), sam.id, by, kind, title, createdAt = now - 3_600_000L, updatedAt = now - 3_600_000L)))
+        hers(aria.id, dev.aiharness.core.model.EntryKind.NOTE, "ask how the interview went") { it.copy(day = week[2].toString()) }
+        hers(aria.id, dev.aiharness.core.model.EntryKind.SUGGESTION, "Meteors? The shower peaks tonight") { it.copy(start = at(week[5], 22)) }
+        hers(aria.id, dev.aiharness.core.model.EntryKind.REMINDER, "write after the interview") { it.copy(start = at(week[2], 16)) }
+        hers(aria.id, dev.aiharness.core.model.EntryKind.HAIKU, "maple and ivy\nletting go of their summer\none leaf at a time") { it.copy(day = today.toString()) }
+        h.personas.getAll().firstOrNull { it.name == "Juno" }?.let { juno ->
+            hers(juno.id, dev.aiharness.core.model.EntryKind.AWAY, "resting after the move") { it.copy(start = now - 3_600_000L, end = at(week[6], 9)) }
+        }
         // Public holidays, as if already fetched (the tour stays offline): a made-up one on this week's Wednesday.
         fun fetched(y: Int) = dev.aiharness.core.model.HolidayYear(
             "US", y, now, listOfNotNull(dev.aiharness.core.model.Holiday(week[2].toString(), "Founders' Day").takeIf { week[2].year == y }),

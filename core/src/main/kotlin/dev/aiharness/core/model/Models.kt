@@ -135,6 +135,8 @@ data class Persona(
     val pronounsMix: PronounMix = PronounMix.TAKE_TURNS,
     /** It sees the planner of the persona of yours it writes to (when that one shares it). */
     val seesPlanner: Boolean = true,
+    /** Its seal and marks in the planner, and whether it writes season haiku. */
+    val planner: PersonaPlanner = PersonaPlanner(),
     val createdAt: Long,
     val updatedAt: Long,
 ) {

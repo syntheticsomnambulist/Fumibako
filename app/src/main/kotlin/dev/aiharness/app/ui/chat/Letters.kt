@@ -312,7 +312,8 @@ fun stickerLabel(sticker: Sticker, art: Map<String, StickerArt>): String = when 
 /** "WED 08:14": the stamp on letters and notes. */
 fun letterStamp(millis: Long, zone: ZoneId = ZoneId.systemDefault()): String {
     val t = Instant.ofEpochMilli(millis).atZone(zone)
-    return "%s %02d:%02d".format(t.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).uppercase(), t.hour, t.minute)
+    // The time as the clock setting writes it ("FRI 2:10 pm", or "FRI 14:10").
+    return "%s %s".format(t.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).uppercase(), dev.aiharness.app.ui.planner.AppClock.format.time(t.hour * 60 + t.minute))
 }
 
 /** A soft tint of [ink] over paper for small surfaces (notes, banners). */

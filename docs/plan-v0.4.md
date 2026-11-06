@@ -158,6 +158,54 @@ From the agreed decisions in `calendar.md`:
   than a Japanese diary shows); public holidays stay off until you choose whose, since turning
   them on sends a request to Nager.Date.
 
+- **After 0.4.0-preview.4:**
+  - **Side tabs:** the ribbon and the kanji month tabs repeated "Before / Today / After", so the
+    navigation moved to the side: ‹ Before, 今 Today and › After are tabs at the right edge,
+    under 週 and 月, on both pages. The button row is gone, and the week's grid leaves room for
+    the tabs.
+  - **The ribbon** stays as a bookmark to look at, no longer a button (your answer, 2026-11-06),
+    unless it finds another job.
+  - **Big stickers:** a sticker grown big hid under the next day (or letter), handle and all.
+    Now the day, plan or letter holding the sticker you've picked or are moving comes to the
+    front.
+- **Step 4, the persona's side: under way.**
+  - **Two tools,** not five (to keep the tool list short):
+    - `planner_look` reads days further ahead than a letter's context shows.
+    - `planner_write` writes a note, a suggestion, a reminder (at a time, or after one of your
+      plans), its time away (in its own words), a haiku, or its seal, and erases what it
+      wrote.
+    They're offered to a persona that sees your planner, and only work when the planner of
+    whoever it writes to is shared.
+  - **Time away:** heartbeats leave the persona alone while it's away, except for its own
+    reminders. Your letters still reach it.
+  - **Reminders:** a reminder that comes due wakes the persona.
+    - The app sets a one-off wakeup for its time; any heartbeat after that does too.
+    - The persona is reminded of what it meant to do, and the minimum wait after a letter
+      doesn't hold it back.
+    - Writing keeps the reminder. One left waiting half a day (its wakeup never came) is
+      missed, and the persona is told so.
+  - **Two new heartbeat activities:**
+    - **The look-ahead:** free, at most once a day. It puts your week before the persona, to
+      leave a note, suggest something or set a reminder.
+    - **The season haiku:** on a new microseason's first day it takes a slot, and it can be
+      switched off.
+  - **The seal:** a persona that hasn't picked a seal is asked to, once its planner is
+    shared.
+  - **On the pages:**
+    - Notes and haiku are 一筆箋 slips in its ink with the season's motif, signed with its seal
+      (the first letter of its name until it picks one).
+    - Suggestions are dashed 付箋 tabs with "Add to my planner" (it becomes your plan, the slip
+      kept beside it) and "Not this time". A small tab also sits on the grid at the
+      suggestion's time.
+    - Reminders show the persona's wake mark on the grid, with a line saying when it will wake
+      and whether it kept or missed it.
+    - Time away is a band across the days it's away, and a line in its words.
+    - All of this goes in the week's メモ and on the day's page; the month shows dots in its ink.
+  - **A persona's heartbeat page** has "The planner": "Sees my planner", and "Writes a haiku
+    as each season begins".
+  - **Still to come in step 4:** choosing its marks (wake and done; the seal from your side),
+    and its stickers on days and plans, with notes to it about yours.
+
 ## Noted for later
 
 - **Explaining the utility model in setup:** what it's for, with examples, so you know you can

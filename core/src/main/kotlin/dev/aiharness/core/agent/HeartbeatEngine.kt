@@ -51,6 +51,9 @@ class HeartbeatEngine(private val h: Harness) {
         MakeStickersActivity(),
         SettleActivity(),
         SortFeelingsActivity(),
+        RemindersActivity(),
+        LookAheadActivity(),
+        SeasonHaikuActivity(),
     )
 
     /** Runs a heartbeat for every persona that is due ([force]: all of them, e.g. "Run a heartbeat now"). */
@@ -66,12 +69,21 @@ class HeartbeatEngine(private val h: Harness) {
             val rhythm = settings.heartbeat.rhythmFor(persona)
             val recent = h.activity.forPersona(persona.id, now - ACTIVITY_RETENTION_MILLIS)
             val lastBeat = recent.lastOrNull { it.kind.isBeat }?.createdAt
+            // A reminder it set itself wakes it whatever its pace, and even while it's away.
+            val due = runCatching { h.planner.dueReminders(persona.id) }.getOrDefault(emptyList())
+            // Away in its own words (resting, busy, on a trip): heartbeats leave it be, unless you ask for one.
+            if (!force && due.isEmpty() && runCatching { h.planner.awayNow(persona.id) }.getOrNull() != null) {
+                outcomes += HeartbeatOutcome.Skipped(persona.id, "away")
+                return@forEach
+            }
             // WorkManager wakes at the shortest interval any persona needs; each keeps its own pace.
-            if (!force && lastBeat != null && now - lastBeat < rhythm.intervalMinutes * 60_000L - PACE_TOLERANCE_MILLIS) {
+            if (!force && due.isEmpty() && lastBeat != null && now - lastBeat < rhythm.intervalMinutes * 60_000L - PACE_TOLERANCE_MILLIS) {
                 outcomes += HeartbeatOutcome.Skipped(persona.id, "not time yet")
                 return@forEach
             }
-            val conversation = conversations.filter { it.personaId == persona.id }.maxByOrNull { it.updatedAt }
+            // A due reminder's own letter, if it's still there; else its latest.
+            val conversation = due.firstNotNullOfOrNull { r -> conversations.firstOrNull { it.id == r.conversationId && it.personaId == persona.id } }
+                ?: conversations.filter { it.personaId == persona.id }.maxByOrNull { it.updatedAt }
             if (conversation == null) {
                 outcomes += HeartbeatOutcome.Skipped(persona.id, "no conversation")
                 return@forEach
@@ -117,7 +129,8 @@ class HeartbeatEngine(private val h: Harness) {
                 }
             }
             // Slots can already be gone: an activity may act on its own before the moment (in prepare).
-            val blocked = blockedReason(rhythm, beat.history) ?: if (beat.slotsLeft == 0) "no activities left this time" else null
+            val promised = runCatching { h.planner.dueReminders(persona.id) }.getOrDefault(emptyList()).isNotEmpty()
+            val blocked = blockedReason(rhythm, beat.history, promised) ?: if (beat.slotsLeft == 0) "no activities left this time" else null
             if (blocked != null && invitations.isEmpty()) {
                 h.logActivity(persona.id, ActivityKind.RESTED, initial.id, note = blocked)
                 return HeartbeatOutcome.Skipped(persona.id, blocked)
@@ -251,11 +264,12 @@ class HeartbeatEngine(private val h: Harness) {
         null
     }
 
-    internal fun blockedReason(rhythm: HeartbeatRhythm, history: List<ChatMessage>): String? {
+    /** Why the persona can't write now, or null. [promised]: a reminder it set itself is due, so a recent letter doesn't hold it back. */
+    internal fun blockedReason(rhythm: HeartbeatRhythm, history: List<ChatMessage>, promised: Boolean = false): String? {
         val now = h.clock.nowMillis()
         if (inQuietHours(rhythm, now)) return "quiet hours"
         val lastVisible = history.lastOrNull { !it.hidden } ?: return "empty conversation"
-        if (now - lastVisible.createdAt < rhythm.minSilenceMinutes * 60_000L) return "conversation is recent"
+        if (!promised && now - lastVisible.createdAt < rhythm.minSilenceMinutes * 60_000L) return "conversation is recent"
         val dayAgo = now - 86_400_000L
         val sentToday = history.count { it.isProactive() && it.createdAt >= dayAgo }
         if (sentToday >= rhythm.maxProactivePerDay) return "daily limit reached"

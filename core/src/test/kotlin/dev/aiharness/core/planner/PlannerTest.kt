@@ -58,7 +58,8 @@ class PlannerTest {
         env.plannerEntries.upsert(entry(EntryKind.PLAN, "dinner with Jo", start = at(28, 19), end = at(28, 21)))
         env.plannerEntries.upsert(entry(EntryKind.PLAN, "dentist", start = at(29, 10)))
         env.plannerEntries.upsert(entry(EntryKind.PLAN, "Jo's birthday", day = "2026-06-01", allDay = true))
-        val context = env.harness.planner.contextFor(env.persona, env.user, env.settingsRepo.current())!!
+        // With its seal picked (else it's asked to pick one).
+        val context = env.harness.planner.contextFor(env.persona.copy(planner = dev.aiharness.core.model.PersonaPlanner(seal = "歌")), env.user, env.settingsRepo.current())!!
         assertEquals(
             "Sam's planner: at work until 17:30. Later today: dinner with Jo, 19:00 to 21:00. Tomorrow: work, 09:00 to 17:30; dentist, 10:00.\n" +
                 "Coming up: Monday: Jo's birthday.",

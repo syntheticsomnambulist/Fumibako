@@ -188,6 +188,8 @@ interface HarnessDao {
     @Query("DELETE FROM planner_entries WHERE id = :id") suspend fun deletePlannerEntry(id: String)
     @Query("DELETE FROM planner_entries WHERE plannerId = :plannerId") suspend fun deletePlanner(plannerId: String)
     @Query("DELETE FROM planner_entries WHERE byPersonaId = :personaId") suspend fun deletePlannerEntriesBy(personaId: String)
+    @Query("SELECT * FROM planner_entries WHERE byPersonaId = :personaId ORDER BY rowid") suspend fun plannerEntriesBy(personaId: String): List<PlannerEntryEntity>
+    @Query("SELECT * FROM planner_entries WHERE byPersonaId IS NOT NULL ORDER BY rowid") fun observePersonasEntries(): Flow<List<PlannerEntryEntity>>
 }
 
 @Database(

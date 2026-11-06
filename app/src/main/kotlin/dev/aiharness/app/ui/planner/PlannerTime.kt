@@ -9,6 +9,19 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
+/**
+ * The clock setting, app-wide: the theme keeps it current, and anything writing a time of day
+ * (a letter's stamp, a sticker's slip, sunrise) reads it. It's snapshot state, so a change redraws.
+ */
+object AppClock {
+    var format: ClockFormat by androidx.compose.runtime.mutableStateOf(ClockFormat(ClockStyle.PHONE, true))
+
+    /** [millis] as a time of day in [zone], as the setting writes it. */
+    fun time(millis: Long, zone: ZoneId = ZoneId.systemDefault()): String = Instant.ofEpochMilli(millis).atZone(zone).let { format.time(it.hour * 60 + it.minute) }
+}
 
 /** Times as the clock setting writes them: "16:00", or "4:00 pm" and, on the week page's side, "4p". */
 class ClockFormat(style: ClockStyle, phoneIs24: Boolean) {

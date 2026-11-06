@@ -224,4 +224,6 @@ class RoomPlannerRepository(private val dao: HarnessDao) : dev.aiharness.core.st
         dao.deletePlanner(plannerId)
     }
     override suspend fun deleteWrittenBy(personaId: String) = dao.deletePlannerEntriesBy(personaId)
+    override suspend fun writtenBy(personaId: String) = dao.plannerEntriesBy(personaId).map { s.decode(it.json) }
+    override fun observeWrittenByPersonas() = dao.observePersonasEntries().map { rows -> rows.map { s.decode(it.json) } }
 }

@@ -44,6 +44,12 @@ enum class ActivityKind {
 
     /** Drew new stickers for its sheet ([ActivityEntry.count] of them; [ActivityEntry.tags]: their art ids). */
     DREW_STICKERS,
+
+    /** Wrote in your planner while you were away: notes, suggestions, reminders ([ActivityEntry.count] of them). */
+    WROTE_IN_PLANNER,
+
+    /** Wrote a haiku in your planner on a new season's first day ([ActivityEntry.note]: the microseason). */
+    WROTE_HAIKU,
     ;
 
     /** Kinds that mark a heartbeat having happened. */

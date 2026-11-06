@@ -133,6 +133,12 @@ interface PlannerRepository {
 
     /** A persona is gone: what it wrote in your planners goes too. */
     suspend fun deleteWrittenBy(personaId: String)
+
+    /** Everything [personaId] has written, in any of your planners. */
+    suspend fun writtenBy(personaId: String): List<PlannerEntry>
+
+    /** What all personas have written (for their reminders' wakeups). */
+    fun observeWrittenByPersonas(): Flow<List<PlannerEntry>>
 }
 
 interface StickerRepository {

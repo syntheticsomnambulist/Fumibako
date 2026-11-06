@@ -164,8 +164,86 @@ class Planner(private val entries: PlannerRepository, private val clock: Clock) 
                 }
             }
         if (stood.isNotEmpty()) lines += stood.joinToString(". ") + "."
+        // It signs its slips with a seal it picks itself, once.
+        if (persona.planner.seal == null) lines += "You haven't picked a signature seal for what you write in $name's planner yet: one character of your choosing, set with planner_write (kind seal)."
         return lines.takeIf { it.isNotEmpty() }?.joinToString("\n")
     }
+
+    /**
+     * [you]'s planner from [from] to [to] as [persona] may see it (for planner_look and the
+     * look-ahead): each day's plans and typical week, its public holidays, and what the persona
+     * wrote; other personas' writing isn't shown. Null when there's nothing on those days.
+     */
+    suspend fun lookFor(persona: Persona, you: UserPersona, settings: AppSettings, from: LocalDate, to: LocalDate): String? {
+        val all = entries.forPlanner(you.id).filter { it.byPersonaId == null || it.byPersonaId == persona.id }
+        val today = LocalDate.ofInstant(Instant.ofEpochMilli(clock.nowMillis()), zone)
+        val byDay = occurrences(all, from, to).groupBy { it.day }
+        val lines = mutableListOf<String>()
+        var day = from
+        while (!day.isAfter(to)) {
+            val parts = mutableListOf<String>()
+            Holidays.on(settings.planner.holidays, day).forEach { parts += "${it.name} (public holiday)" }
+            byDay[day].orEmpty().filter { it.entry.routine != RoutineKind.SLEEP && it.entry.kind != EntryKind.AWAY }.forEach { o ->
+                val e = o.entry
+                parts += when {
+                    e.byPersonaId != null -> "your " + when (e.kind) {
+                        EntryKind.NOTE -> "note: ${e.title}"
+                        EntryKind.SUGGESTION -> "suggestion: ${e.title}" + when (e.state) {
+                            EntryState.ADDED -> " (added)"
+                            EntryState.DECLINED -> " (not this time)"
+                            else -> " (not answered yet)"
+                        }
+                        EntryKind.REMINDER -> "reminder at ${o.start?.let(::time) ?: "?"}: ${e.title}"
+                        EntryKind.HAIKU -> "haiku"
+                        else -> e.title
+                    }
+                    else -> described(o) + when {
+                        e.state == EntryState.DONE -> " (done)"
+                        e.state == EntryState.CANCELLED -> " (cancelled)"
+                        e.movedFrom != null -> " (moved here from ${weekday(LocalDate.parse(e.movedFrom), today)})"
+                        else -> ""
+                    }
+                }
+            }
+            if (parts.isNotEmpty()) lines += "${weekday(day, today).replaceFirstChar { it.uppercase() }} (${DATE.format(day)}): " + parts.joinToString("; ")
+            day = day.plusDays(1)
+        }
+        mine(persona.id).firstOrNull { it.kind == EntryKind.AWAY && (it.end ?: 0) > clock.nowMillis() }?.let { away ->
+            lines += "You're away until ${weekday(dayAt(away.end!!), today)} ${time(away.end)}" + (away.title.takeIf { it.isNotBlank() }?.let { ": $it" } ?: "") + "."
+        }
+        return lines.takeIf { it.isNotEmpty() }?.joinToString("\n")
+    }
+
+    /** What [personaId] has written, anywhere. */
+    suspend fun mine(personaId: String): List<PlannerEntry> = entries.writtenBy(personaId)
+
+    /** [personaId]'s time away going on now, if any. */
+    suspend fun awayNow(personaId: String): PlannerEntry? {
+        val now = clock.nowMillis()
+        return mine(personaId).firstOrNull { it.kind == EntryKind.AWAY && (it.start ?: 0) <= now && (it.end ?: 0) > now }
+    }
+
+    /**
+     * [personaId]'s reminders that have come due and are still waiting, oldest first. One left
+     * waiting past [MISSED_AFTER] (its wakeup didn't come in time) is marked missed here, and the
+     * persona is told so in its next letter.
+     */
+    suspend fun dueReminders(personaId: String): List<PlannerEntry> {
+        val now = clock.nowMillis()
+        val waiting = mine(personaId).filter { it.kind == EntryKind.REMINDER && it.state == EntryState.OPEN && (it.start ?: Long.MAX_VALUE) <= now }
+        val (late, due) = waiting.partition { it.start!! < now - MISSED_AFTER }
+        late.forEach { entries.upsert(it.copy(state = EntryState.MISSED, updatedAt = now)) }
+        return due.sortedBy { it.start }
+    }
+
+    /** "Thursday 17:00", "tomorrow 09:30", "Sat 14 Nov 10:00": when [millis] is, said from today. */
+    fun whenSaid(millis: Long): String {
+        val today = LocalDate.ofInstant(Instant.ofEpochMilli(clock.nowMillis()), zone)
+        return "${weekday(dayAt(millis), today)} ${time(millis)}"
+    }
+
+    /** "today", "tomorrow", "Saturday", "Sat 14 Nov": a day, said from today. */
+    fun daySaid(day: LocalDate): String = weekday(day, LocalDate.ofInstant(Instant.ofEpochMilli(clock.nowMillis()), zone))
 
     /**
      * For a heartbeat, in place of "They may be busy": what the planner says of now. During a busy
@@ -216,6 +294,9 @@ class Planner(private val entries: PlannerRepository, private val clock: Clock) 
     companion object {
         private const val MINUTE = 60_000L
         private const val DAY = 24 * 60 * MINUTE
+
+        /** How long a reminder waits for its wakeup before it's missed. */
+        const val MISSED_AFTER = 12 * 60 * MINUTE
         private val TIME = DateTimeFormatter.ofPattern("HH:mm", Locale.US)
         private val DATE = DateTimeFormatter.ofPattern("EEE d MMM", Locale.US)
 

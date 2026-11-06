@@ -112,6 +112,19 @@ class AppContainer(private val context: Context) {
                     .onFailure { Log.w("Harness", "Couldn't schedule heartbeat", it) }
             }
         }
+        appScope.launch {
+            // A reminder a persona set itself wakes it then (best effort, like the heartbeat).
+            harness.plannerEntries.observeWrittenByPersonas()
+                .map { all ->
+                    all.filter { it.kind == dev.aiharness.core.model.EntryKind.REMINDER && it.state == dev.aiharness.core.model.EntryState.OPEN && it.start != null }
+                        .map { HeartbeatScheduler.Wake(it.id, it.byPersonaId!!, it.start!!) }.toSet()
+                }
+                .distinctUntilChanged()
+                .collect { wakes ->
+                    runCatching { HeartbeatScheduler.wakeFor(context, harness.settings.current().heartbeat, wakes) }
+                        .onFailure { Log.w("Harness", "Couldn't schedule a reminder", it) }
+                }
+        }
     }
 
     /**

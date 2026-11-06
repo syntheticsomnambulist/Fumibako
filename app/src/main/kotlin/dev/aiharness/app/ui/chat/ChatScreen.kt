@@ -56,6 +56,7 @@ import dev.aiharness.app.ui.media.VideoPlayer
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.app.ui.media.EmbedPlayer
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -310,7 +311,20 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 if (writing != null && writingInto == null) {
                     item(key = "writing") { LetterSheet(null, persona, writing, onLongPress = {}, onImage = { viewing = it }) }
                 }
+                // The letter holding the sticker picked or being moved comes in front of its neighbors,
+                // so a big one (and its handle) isn't under the next letter.
+                val liftedId = selectedStickerId ?: moving?.id
+                val liftedOn = liftedId?.let { id -> shownStickers.entries.firstOrNull { (_, list) -> list.any { it.id == id } }?.key }
+                fun holds(messages: List<ChatMessage>) = liftedOn != null && messages.any { m ->
+                    m.id == liftedOn || m.attachments.any { it.id == liftedOn } || m.images.any { it.ref == liftedOn }
+                }
                 items(rows.asReversed(), key = { it.key }) { row ->
+                    val lifted = when (row) {
+                        is ThreadRow.Note -> holds(listOf(row.message))
+                        is ThreadRow.Letter -> holds(row.messages)
+                        else -> false
+                    }
+                    Box(Modifier.zIndex(if (lifted) 1f else 0f)) {
                     when (row) {
                         is ThreadRow.Day -> DayHeading(row.date)
                         is ThreadRow.Note -> NoteSlip(
@@ -334,6 +348,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                             stickerName = stickerName,
                             handling = handling,
                         )
+                    }
                     }
                     // A row that scrolls away can't be dropped on.
                     if (row !is ThreadRow.Day) {

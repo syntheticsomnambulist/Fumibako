@@ -117,6 +117,10 @@ fun HarnessTheme(
         onPauseOrDispose { }
     }
     val stationery = remember(choice, settings, youInk, youPattern) { Stationery.of(choice, settings, youInk, youPattern) }
+    // The clock setting, for every time of day the app writes.
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val clockFormat = remember(settings.clock) { dev.aiharness.app.ui.planner.ClockFormat(settings.clock, android.text.format.DateFormat.is24HourFormat(context)) }
+    androidx.compose.runtime.SideEffect { dev.aiharness.app.ui.planner.AppClock.format = clockFormat }
     CompositionLocalProvider(LocalStationery provides stationery) {
         MaterialTheme(colorScheme = stationery.colors.toColorScheme(), typography = HarnessTypography, shapes = PaperShapes, content = content)
     }

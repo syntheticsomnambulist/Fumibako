@@ -223,13 +223,13 @@ fun relativeTime(millis: Long, now: Long = System.currentTimeMillis()): String {
     }
 }
 
-/** Times on letters and cards: "08:14" today, "Yesterday", a weekday this week, else "12 Oct". */
+/** Times on letters and cards: "8:14" (or "8:14 am", as the clock setting has it) today, "Yesterday", a weekday this week, else "12 Oct". */
 fun letterTime(millis: Long, now: Long = System.currentTimeMillis(), zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): String {
     val time = java.time.Instant.ofEpochMilli(millis).atZone(zone)
     val today = java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
     val date = time.toLocalDate()
     return when {
-        date == today -> "%02d:%02d".format(time.hour, time.minute)
+        date == today -> dev.aiharness.app.ui.planner.AppClock.format.time(time.hour * 60 + time.minute)
         date == today.minusDays(1) -> "Yesterday"
         date.isAfter(today.minusDays(7)) -> time.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault())
         else -> "${date.dayOfMonth} ${date.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault())}"
@@ -271,5 +271,7 @@ fun activityPhrase(kind: dev.aiharness.core.model.ActivityKind, count: Int = 1, 
         dev.aiharness.core.model.ActivityKind.CHANGED_OUTFIT -> note?.takeIf { it.isNotBlank() }?.let { "changed into $it" } ?: "changed back into the usual clothes"
         dev.aiharness.core.model.ActivityKind.STUCK_STICKER -> "stuck ${note ?: "a sticker"} on your note"
         dev.aiharness.core.model.ActivityKind.DREW_STICKERS -> if (count == 1) "drew a new sticker" else "drew $count new stickers"
+        dev.aiharness.core.model.ActivityKind.WROTE_IN_PLANNER -> n("wrote in your planner", "wrote in your planner # times")
+        dev.aiharness.core.model.ActivityKind.WROTE_HAIKU -> "wrote a haiku in your planner" + (note?.let { " for $it" } ?: "")
     }
 }

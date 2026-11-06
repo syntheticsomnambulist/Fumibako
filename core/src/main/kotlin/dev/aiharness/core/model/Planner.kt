@@ -5,10 +5,27 @@ import kotlinx.serialization.Serializable
 /**
  * What a planner entry is (docs/design/calendar.md on the design branch). Yours: a plan, or part
  * of your typical week. A persona's: a note on a day, a plan it suggests, a reminder or promise
- * (which wakes it), or its time away (resting, busy, traveling: its own words say which).
+ * (which wakes it), its time away (resting, busy, traveling: its own words say which), or a haiku
+ * on a new season's first day.
  */
 @Serializable
-enum class EntryKind { PLAN, ROUTINE, NOTE, SUGGESTION, REMINDER, AWAY }
+enum class EntryKind { PLAN, ROUTINE, NOTE, SUGGESTION, REMINDER, AWAY, HAIKU }
+
+/**
+ * A persona's side of the planner: the seal it signs its slips with, and its marks (docs/design,
+ * "Marks"). A mark is one of its stickers (by id), or a character or emoji; null is the default.
+ */
+@Serializable
+data class PersonaPlanner(
+    /** Its signature seal: one character it picks (歌 "song", 月 "moon"); null until it does. */
+    val seal: String? = null,
+    /** Where it means to wake and write; null is its seal. */
+    val wakeMark: String? = null,
+    /** On a reminder it kept; null is 済 in its ink. */
+    val doneMark: String? = null,
+    /** Writes a haiku slip on the first day of a new season (a making activity, so it takes a slot). */
+    val haiku: Boolean = true,
+)
 
 /** What part of your typical week a routine is. Work and sleep are busy; sleep also folds the week page and sets quiet hours. */
 @Serializable

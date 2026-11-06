@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
@@ -58,6 +59,8 @@ import kotlin.math.roundToInt
 class PlannerStickers internal constructor(
     private val stuck: Map<StickerTarget, List<Sticker>>,
     val selectedId: String?,
+    /** The sticker picked or being moved, whose paper comes to the front so it (and its handle) isn't under its neighbors. */
+    val liftedId: String?,
     val onTap: (Sticker) -> Unit,
     val onChange: (Sticker) -> Unit,
     val inkOf: (Sticker) -> Color,
@@ -67,6 +70,9 @@ class PlannerStickers internal constructor(
     val openTray: (onto: StickerTarget) -> Unit,
 ) {
     fun on(target: StickerTarget): List<Sticker> = stuck[target].orEmpty()
+
+    /** Whether [target] holds the sticker picked or being moved. */
+    fun lifts(target: StickerTarget): Boolean = liftedId != null && on(target).any { it.id == liftedId }
 
     /** Where [target] is on screen, so a sticker dragged from the tray can land on it. */
     fun paper(target: StickerTarget): Modifier = Modifier.onGloballyPositioned { papers[target] = it.boundsInRoot() }
@@ -82,7 +88,8 @@ class PlannerStickers internal constructor(
         StuckOn(
             stickers = on(target),
             inkOf = inkOf,
-            modifier = modifier.then(paper(target)),
+            // Its paper comes to the front while one of its stickers is picked or moved.
+            modifier = modifier.zIndex(if (lifts(target)) 1f else 0f).then(paper(target)),
             nameOf = nameOf,
             selectedId = selectedId,
             onTap = onTap,
@@ -148,6 +155,7 @@ fun PlannerStickerHost(plannerId: String?, you: UserPersona?, content: @Composab
     val stickers = PlannerStickers(
         stuck = shown,
         selectedId = selectedId,
+        liftedId = selectedId ?: moving?.id,
         onTap = { st ->
             if (selectedId == st.id) finish() else {
                 moving?.let { m -> scope.launch { harness.stickerService.move(m, m.x, m.y, m.rotationDeg, m.scale) } }

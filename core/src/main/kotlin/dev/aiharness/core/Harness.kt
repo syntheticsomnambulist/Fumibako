@@ -127,7 +127,10 @@ class Harness(
         ),
     )
     val prompts = PromptAssembler()
-    val planner = dev.aiharness.core.planner.Planner(plannerEntries, clock)
+    val planner = dev.aiharness.core.planner.Planner(plannerEntries, clock).also { planner ->
+        tools.register(dev.aiharness.core.planner.PlannerLookTool(planner, clock))
+        tools.register(dev.aiharness.core.planner.PlannerWriteTool(planner, plannerEntries, personas, clock))
+    }
     val turnContext = TurnContextBuilder(memory, clock, stickerService, planner)
     val contextBuilder = ContextBuilder(prompts, memory, blobs, clock, log)
     val summarizer = LlmSummarizer(this)

@@ -79,6 +79,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle as DayText
 import java.util.Locale
 import dev.aiharness.core.model.Hemisphere
+import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.HolidaySettings
 import dev.aiharness.core.planner.Holidays
 import dev.aiharness.core.seasons.SolarTerm
@@ -137,12 +138,6 @@ fun PlannerScreen(nav: NavController) {
         Column(Modifier.fillMaxSize().stitched(lerp(colors.nijimi2, colors.kami, 0.2f)).statusBarsPadding().padding(bottom = bottom)) {
           if (view == PlannerView.MONTH) {
             MonthHeader(month) { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisMonth) today else month.atDay(1)).toString())) } }
-            PageTools(
-                unit = "Month", here = thisMonth, ink = ink,
-                onPrevious = { vm.shownDay.value = month.minusMonths(1).atDay(1) },
-                onToday = { vm.shownDay.value = vm.today() },
-                onNext = { vm.shownDay.value = month.plusMonths(1).atDay(1) },
-            )
             MonthPage(
                 month = month, today = today, startsSunday = settings.planner.weekStartsSunday, occurrences = monthOccurrences,
                 holidays = holidays, seasonBand = settings.planner.seasonBand, zone = vm.zone, hemisphere = hemisphere,
@@ -152,18 +147,13 @@ fun PlannerScreen(nav: NavController) {
             )
           } else {
             WeekHeader(days) { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisWeek) today else days.first()).toString())) } }
-            PageTools(
-                unit = "Week", here = thisWeek, ink = ink,
-                onPrevious = { vm.shownDay.value = shown.minusWeeks(1); picked = null },
-                onToday = { vm.shownDay.value = vm.today(); picked = null },
-                onNext = { vm.shownDay.value = shown.plusWeeks(1); picked = null },
-            )
             if (settings.planner.seasonBand) SeasonBand(if (thisWeek) today else days.first(), vm.zone, hemisphere)
-            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(start = 18.dp, end = 6.dp)) {
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(start = 18.dp, end = 30.dp)) {
                 val col = ((maxWidth - GUTTER) / 7).coerceAtLeast(36.dp)
                 Column(Modifier.fillMaxSize()) {
                     // The days and the all-day row stay put while the hours scroll.
                     DayHeads(days, today, col, holidays) { day -> nav.navigate(Routes.plannerDay(day.toString())) }
+                    AwayRow(days, occurrences, personas, col)
                     AllDayRow(
                         days, occurrences, col, ink, holidays,
                         termOf = if (settings.planner.seasonBand) remember(days, hemisphere) { Seasons.termsBeginning(days.first(), days.last(), vm.zone, hemisphere).toMap() } else emptyMap(),
@@ -172,7 +162,7 @@ fun PlannerScreen(nav: NavController) {
                         WeekGrid(
                             days = days, occurrences = occurrences, entries = entries, layout = layout, col = col, today = today,
                             now = vm.now(), zone = vm.zone, clock = clock, ink = ink, picked = picked,
-                            plannerId = you?.id, stickers = stickers,
+                            plannerId = you?.id, stickers = stickers, personas = personas,
                             onPick = { picked = if (picked?.entryId == it.entryId && !it.moving) null else it },
                             onClose = { picked = null },
                             onStamp = { e, state -> vm.stamp(e, state); picked = null },
@@ -183,6 +173,8 @@ fun PlannerScreen(nav: NavController) {
                         )
                         Memo(
                             days = days, occurrences = occurrences, ink = ink, seenBy = seenBy.map { it.name },
+                            personas = personas, zone = vm.zone, clock = clock, hemisphereOf = { hemisphere },
+                            onAddSuggestion = vm::addSuggestion, onDeclineSuggestion = vm::declineSuggestion,
                             onToggle = { e -> vm.stamp(e, EntryState.DONE) },
                             onOpen = { o -> card = PlanDraft.of(o.entry, o.day) },
                             onAdd = { card = PlanDraft.new(if (today in days) today else days.first()) },
@@ -193,16 +185,14 @@ fun PlannerScreen(nav: NavController) {
             }
           }
         }
-        // The ribbon (栞) in your ink hangs from the page's top edge, below the phone's status bar
-        // (where a tap isn't the app's), and goes back to today.
+        // The ribbon (栞) in your ink hangs from the page's top edge, below the phone's status bar:
+        // a bookmark, for now just to look at (the side tabs go back to today).
         Box(
             Modifier
                 .align(Alignment.TopEnd)
                 .statusBarsPadding()
                 .padding(end = 58.dp)
-                .size(44.dp, 64.dp)
-                .clickable(role = Role.Button, onClickLabel = "Back to today") { vm.shownDay.value = vm.today(); picked = null }
-                .semantics { contentDescription = "Back to today" },
+                .size(44.dp, 64.dp),
             contentAlignment = Alignment.TopCenter,
         ) {
             Box(
@@ -225,10 +215,21 @@ fun PlannerScreen(nav: NavController) {
             onWeek = { vm.view.value = PlannerView.WEEK },
             onMonth = { vm.view.value = PlannerView.MONTH; picked = null },
         )
+        // Going between weeks (or months): tabs at the right edge, under 週 and 月.
         if (view == PlannerView.MONTH) {
-            MonthTabs(month, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 132.dp)) { m ->
-                vm.shownDay.value = if (m == YearMonth.from(today)) today else m.atDay(1)
-            }
+            NavTabs(
+                "Month", thisMonth, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 132.dp),
+                onPrevious = { vm.shownDay.value = month.minusMonths(1).atDay(1) },
+                onToday = { vm.shownDay.value = vm.today() },
+                onNext = { vm.shownDay.value = month.plusMonths(1).atDay(1) },
+            )
+        } else {
+            NavTabs(
+                "Week", thisWeek, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 132.dp),
+                onPrevious = { vm.shownDay.value = shown.minusWeeks(1); picked = null },
+                onToday = { vm.shownDay.value = vm.today(); picked = null },
+                onNext = { vm.shownDay.value = shown.plusWeeks(1); picked = null },
+            )
         }
         card?.let { draft ->
             PlanCard(
@@ -356,21 +357,16 @@ private fun SeasonBand(day: LocalDate, zone: java.time.ZoneId, hemisphere: Hemis
 }
 
 /**
- * Going between weeks (or months): clear paper buttons under the title, clear of the index tabs.
- * With large text they wrap rather than being squeezed.
+ * Going between weeks (or months), as tabs at the page's right edge under 週 and 月: the one
+ * before, today (in your ink while you're on it), and the one after.
  */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun PageTools(unit: String, here: Boolean, ink: Color, onPrevious: () -> Unit, onToday: () -> Unit, onNext: () -> Unit) {
+private fun NavTabs(unit: String, here: Boolean, ink: Color, modifier: Modifier, onPrevious: () -> Unit, onToday: () -> Unit, onNext: () -> Unit) {
     val word = unit.lowercase()
-    androidx.compose.foundation.layout.FlowRow(
-        Modifier.fillMaxWidth().padding(start = 18.dp, end = 34.dp, top = 4.dp, bottom = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        ToolButton("‹  $unit before", "The $word before", onClick = onPrevious)
-        ToolButton("Today", if (here) "This $word, the $word you're on" else "Back to this $word", on = here, ink = ink, onClick = onToday)
-        ToolButton("$unit after  ›", "The $word after", onClick = onNext)
+    Column(modifier, horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        EdgeTab("‹", "Before", false, ink, spoken = "The $word before", onClick = onPrevious)
+        EdgeTab("今", "Today", here, ink, spoken = if (here) "This $word, the $word you're on" else "Back to this $word", onClick = onToday)
+        EdgeTab("›", "After", false, ink, spoken = "The $word after", onClick = onNext)
     }
 }
 
@@ -387,37 +383,20 @@ private fun StickersButton(onClick: () -> Unit) {
     ) { StickersMark() }
 }
 
-@Composable
-private fun ToolButton(label: String, spoken: String, on: Boolean = false, ink: Color = paper.sumi, onClick: () -> Unit) {
-    val colors = paper
-    Box(
-        Modifier
-            .heightIn(min = 36.dp)
-            .border(1.dp, if (on) ink else colors.nijimi2, dev.aiharness.app.ui.paper.PaperCorner)
-            .background(if (on) lerp(colors.kami, ink, 0.12f) else colors.kami, dev.aiharness.app.ui.paper.PaperCorner)
-            .clickable(role = Role.Button, onClickLabel = spoken, onClick = onClick)
-            .semantics { contentDescription = spoken }
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(label, style = TextStyle(fontFamily = HarnessFonts.Ui, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, fontSize = 12.5.sp), color = colors.sumi, maxLines = 1, softWrap = false)
-    }
-}
-
 private fun month(day: LocalDate) = day.month.getDisplayName(DayText.SHORT, Locale.US)
 
 /** The index tabs at the page's right edge: 週 Week and 月 Month, the open one in your ink. */
 @Composable
 private fun IndexTabs(view: PlannerView, ink: Color, modifier: Modifier, onWeek: () -> Unit, onMonth: () -> Unit) {
     Column(modifier, horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        EdgeTab("週", "Week", view == PlannerView.WEEK, ink, onWeek)
-        EdgeTab("月", "Month", view == PlannerView.MONTH, ink, onMonth)
+        EdgeTab("週", "Week", view == PlannerView.WEEK, ink, onClick = onWeek)
+        EdgeTab("月", "Month", view == PlannerView.MONTH, ink, onClick = onMonth)
     }
 }
 
-/** One index tab: open, it's in [ink] and a little proud of the others. */
+/** One tab at the page's edge: open, it's in [ink] and a little proud of the others. */
 @Composable
-private fun EdgeTab(kanji: String, word: String, open: Boolean, ink: Color, onClick: () -> Unit) {
+private fun EdgeTab(kanji: String, word: String, open: Boolean, ink: Color, spoken: String? = null, onClick: () -> Unit) {
     val colors = paper
     val shape = RoundedCornerShape(topStart = 3.dp, bottomStart = 3.dp)
     val on = if (open) colors.onInk(ink) else colors.sumi
@@ -425,8 +404,8 @@ private fun EdgeTab(kanji: String, word: String, open: Boolean, ink: Color, onCl
     Box(
         Modifier
             .size(44.dp, 56.dp)
-            .clickable(role = Role.Tab, onClickLabel = if (open) null else "Open the $word page", onClick = onClick)
-            .semantics { contentDescription = if (open) "$word, the page you're on" else word },
+            .clickable(role = if (spoken != null) Role.Button else Role.Tab, onClickLabel = spoken ?: if (open) null else "Open the $word page", onClick = onClick)
+            .semantics { contentDescription = spoken ?: if (open) "$word, the page you're on" else word },
         contentAlignment = Alignment.CenterEnd,
     ) {
         Column(
@@ -443,42 +422,34 @@ private fun EdgeTab(kanji: String, word: String, open: Boolean, ink: Color, onCl
     }
 }
 
-/** On the month page, the months either side and this one as kanji tabs below the index tabs (十月, 十一月, 十二月). */
+/** A band under the days for each persona away this week, across the days it's away, in its ink. */
 @Composable
-private fun MonthTabs(month: YearMonth, ink: Color, modifier: Modifier, onMonth: (YearMonth) -> Unit) {
-    val colors = paper
-    val shape = RoundedCornerShape(topStart = 3.dp, bottomStart = 3.dp)
-    Column(modifier, horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        listOf(month.minusMonths(1), month, month.plusMonths(1)).forEach { m ->
-            val open = m == month
-            val name = m.month.getDisplayName(DayText.FULL, Locale.US)
-            Box(
-                Modifier
-                    .width(44.dp)
-                    .clickable(role = Role.Tab, onClickLabel = if (open) null else "Open $name") { onMonth(m) }
-                    .semantics { contentDescription = if (open) "$name, the month you're on" else name },
-                contentAlignment = Alignment.CenterEnd,
+private fun AwayRow(days: List<LocalDate>, occurrences: List<Occurrence>, personas: List<Persona>, col: Dp) {
+    val aways = occurrences.filter { it.entry.kind == EntryKind.AWAY }.groupBy { it.entry.id }
+    if (aways.isEmpty()) return
+    Column(Modifier.fillMaxWidth().padding(bottom = 2.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        aways.values.forEach { span ->
+            val e = span.first().entry
+            val persona = personas.firstOrNull { it.id == e.byPersonaId } ?: return@forEach
+            val first = days.indexOf(span.minOf { it.day }).coerceAtLeast(0)
+            val last = days.indexOf(span.maxOf { it.day }).let { if (it < 0) days.size - 1 else it }
+            val pInk = stationery.ink(persona.ink)
+            Row(
+                Modifier.offset(x = GUTTER + col * first).width(col * (last - first + 1)).height(16.dp)
+                    .background(pInk.copy(alpha = 0.16f), RoundedCornerShape(2.dp)).padding(horizontal = 4.dp)
+                    .semantics { contentDescription = "${persona.name} is away" + (e.title.takeIf { it.isNotBlank() }?.let { ": $it" } ?: "") },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                Column(
-                    Modifier
-                        .width(if (open) 26.dp else 22.dp)
-                        .then(if (open) Modifier.shadow(1.dp, shape).background(ink, shape) else Modifier.background(colors.hyoshi, shape).border(1.dp, colors.nijimi1, shape))
-                        .padding(vertical = 6.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    kanjiMonth(m.monthValue).forEach { c ->
-                        Text("$c", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = if (open) 12.5.sp else 11.5.sp, lineHeight = 14.sp), color = if (open) colors.onInk(ink) else colors.sumi)
-                    }
-                }
+                Moon(pInk, Modifier.size(8.dp))
+                Text(
+                    "${persona.name} away" + (e.title.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""),
+                    style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = grid(8f), lineHeight = grid(9f)),
+                    color = lerp(pInk, paper.sumi, 0.4f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }
-}
-
-/** 十一月: a month in kanji numerals. */
-private fun kanjiMonth(n: Int): String {
-    val digits = "〇一二三四五六七八九"
-    return (if (n >= 10) "十" + (if (n > 10) digits[n - 10].toString() else "") else digits[n].toString()) + "月"
 }
 
 @Composable
@@ -573,6 +544,7 @@ private fun WeekGrid(
     picked: Picked?,
     plannerId: String?,
     stickers: PlannerStickers,
+    personas: List<Persona>,
     onPick: (Picked) -> Unit,
     onClose: () -> Unit,
     onStamp: (PlannerEntry, EntryState) -> Unit,
@@ -734,6 +706,33 @@ private fun WeekGrid(
         }
 
 
+        // A persona's suggestion as a small sticky tab at its time, and where it means to wake, its mark.
+        occurrences.filter { it.entry.byPersonaId != null && it.start != null && (it.entry.kind == EntryKind.SUGGESTION || it.entry.kind == EntryKind.REMINDER) }.forEach { o ->
+            val persona = personas.firstOrNull { it.id == o.entry.byPersonaId } ?: return@forEach
+            val i = days.indexOf(o.day).takeIf { it >= 0 } ?: return@forEach
+            val top = y(minute(o.start!!, o.day))
+            val pInk = stationery.ink(persona.ink)
+            if (o.entry.kind == EntryKind.REMINDER) {
+                WakeMark(
+                    persona, kept = o.entry.state == EntryState.KEPT,
+                    Modifier.offset(x = GUTTER + col * (i + 1) - 18.dp, y = top - 8.dp)
+                        .semantics { contentDescription = "${persona.name} means to wake here: ${o.entry.title}" },
+                )
+            } else if (o.entry.state != EntryState.ADDED) {
+                Text(
+                    o.entry.title,
+                    style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = grid(8f), lineHeight = grid(9.5f), textDecoration = if (o.entry.state == EntryState.DECLINED) TextDecoration.LineThrough else null),
+                    color = colors.onInk(pInk),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.offset(x = GUTTER + col * i + col * 0.3f, y = top).width(col * 0.7f)
+                        .background(pInk.copy(alpha = if (o.entry.state == EntryState.DECLINED) 0.45f else 0.9f), RoundedCornerShape(topStart = 2.dp, bottomStart = 2.dp))
+                        .padding(horizontal = 3.dp, vertical = 1.dp)
+                        .semantics { contentDescription = "${persona.name} suggests: ${o.entry.title}" },
+                )
+            }
+        }
+
         // What's stuck on each day, over its plans.
         if (plannerId != null) {
             days.forEachIndexed { i, day ->
@@ -861,6 +860,12 @@ private fun Memo(
     occurrences: List<Occurrence>,
     ink: Color,
     seenBy: List<String>,
+    personas: List<Persona>,
+    zone: java.time.ZoneId,
+    clock: ClockFormat,
+    hemisphereOf: (LocalDate) -> Hemisphere,
+    onAddSuggestion: (PlannerEntry) -> Unit,
+    onDeclineSuggestion: (PlannerEntry) -> Unit,
     onToggle: (PlannerEntry) -> Unit,
     onOpen: (Occurrence) -> Unit,
     onAdd: () -> Unit,
@@ -898,6 +903,13 @@ private fun Memo(
         }
         if (untimed.isEmpty()) {
             Text("Plans with no time go here, to stamp done when they are.", style = PaperType.postscript, color = colors.usuzumi1)
+        }
+        // What your personas wrote this week: their slips, in day and time order (time away once).
+        val theirs = occurrences.filter { it.entry.byPersonaId != null }.distinctBy { if (it.entry.kind == EntryKind.AWAY) it.entry.id else it.entry.id + it.day }
+            .sortedWith(compareBy<Occurrence> { it.entry.kind != EntryKind.AWAY }.thenBy { it.day }.thenBy { it.start ?: Long.MIN_VALUE })
+        theirs.forEach { o ->
+            val persona = personas.firstOrNull { it.id == o.entry.byPersonaId } ?: return@forEach
+            PersonaSlip(o, persona, zone, hemisphereOf, clock, onAdd = onAddSuggestion, onDecline = onDeclineSuggestion)
         }
         Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             dev.aiharness.app.ui.paper.PaperButton("+ Add a plan", onClick = onAdd)

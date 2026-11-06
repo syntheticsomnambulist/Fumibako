@@ -164,7 +164,10 @@ fun PlannerDayScreen(nav: NavController, date: String) {
     val seenBy by vm.seenBy.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val clock = remember(settings.theme.clock) { ClockFormat(settings.theme.clock, DateFormat.is24HourFormat(context)) }
-    val occurrences = remember(entries, day) { vm.occurrences(entries, day, day).filter { it.entry.byPersonaId == null } }
+    val all = remember(entries, day) { vm.occurrences(entries, day, day) }
+    val occurrences = all.filter { it.entry.byPersonaId == null }
+    val theirs = all.filter { it.entry.byPersonaId != null }.sortedWith(compareBy<Occurrence> { it.entry.kind != EntryKind.AWAY }.thenBy { it.start ?: Long.MIN_VALUE })
+    val personas by vm.personas.collectAsStateWithLifecycle()
     var card by remember { mutableStateOf<PlanDraft?>(null) }
     val colors = paper
     val ink = stationery.you
@@ -227,6 +230,11 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                 timed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { card = PlanDraft.of(o.entry, day, vm.zone) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
                 untimed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { card = PlanDraft.of(o.entry, day, vm.zone) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
                 if (occurrences.isEmpty()) Text("Nothing planned yet.", style = PaperType.postscript, color = colors.usuzumi1)
+                // What your personas wrote on this day.
+                theirs.forEach { o ->
+                    val persona = personas.firstOrNull { it.id == o.entry.byPersonaId } ?: return@forEach
+                    PersonaSlip(o, persona, vm.zone, { vm.hemisphere(settings) }, clock, onAdd = vm::addSuggestion, onDecline = vm::declineSuggestion)
+                }
                 PaperButton("+ Add a plan", modifier = Modifier.padding(top = 6.dp)) { card = PlanDraft.new(day) }
             }
             }

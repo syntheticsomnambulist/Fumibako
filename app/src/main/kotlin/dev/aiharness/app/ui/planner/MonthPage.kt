@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
@@ -117,7 +118,9 @@ fun MonthPage(
                     }
                 }
                 days.chunked(7).forEach { week ->
-                    Row {
+                    // A week holding the sticker picked or moved comes to the front (its square does within it).
+                    val lifted = plannerId != null && week.any { stickers.lifts(StickerTarget.day(plannerId, it.toString())) }
+                    Row(Modifier.zIndex(if (lifted) 1f else 0f)) {
                         week.forEach { day ->
                             DayCell(
                                 day = day, inMonth = YearMonth.from(day) == month, today = day == today, col = col,

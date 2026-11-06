@@ -90,6 +90,19 @@ fun PersonaHeartbeatScreen(nav: NavController, personaId: String) {
                 PaperChoice(listOf(false to "The usual settings", true to "${p.name}'s own"), own != null, { mine -> save { it.copy(ownHeartbeat = if (mine) s.heartbeat.rhythm else null) } }, ink = ink)
             }
         }
+        item {
+            TapedCard(layouts[2], tape, tilt = cardTilt("${p.id}-hb-planner")) {
+                Text("THE PLANNER", style = PaperType.meta, color = paper.kasure2)
+                SwitchRow(
+                    "Sees my planner", p.seesPlanner, { v -> save { it.copy(seesPlanner = v) } },
+                    subtitle = "When the persona of yours ${p.name} writes to shares theirs. ${p.name} can then write in it: notes, suggestions, reminders, time away.", ink = ink,
+                )
+                SwitchRow(
+                    "Writes a haiku as each season begins", p.planner.haiku, { v -> save { it.copy(planner = it.planner.copy(haiku = v)) } },
+                    subtitle = "On a slip in your planner, on the first day of a new microseason. It counts as one of ${p.name}'s things in a heartbeat.", ink = ink,
+                )
+            }
+        }
         if (own != null) {
             item {
                 TapedCard(layouts[1], tape, tilt = cardTilt("${p.id}-hb-1")) {

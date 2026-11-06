@@ -88,6 +88,21 @@ class PlannerViewModel(private val container: AppContainer) : ViewModel() {
 
     fun delete(entry: PlannerEntry) = viewModelScope.launch { h.plannerEntries.delete(entry.id) }
 
+    /** A persona's suggestion becomes your plan, in your ink, with its slip kept beside it; the persona hears it was added. */
+    fun addSuggestion(suggestion: PlannerEntry) = viewModelScope.launch {
+        val now = now()
+        h.plannerEntries.upsert(
+            suggestion.copy(
+                id = newId(), byPersonaId = null, kind = EntryKind.PLAN, state = EntryState.OPEN, fromSuggestion = suggestion.id,
+                conversationId = null, messageId = null, createdAt = now, updatedAt = now,
+            ),
+        )
+        h.plannerEntries.upsert(suggestion.copy(state = EntryState.ADDED, updatedAt = now))
+    }
+
+    /** "Not this time": the slip is crossed through gently, and the persona hears so on its next turn. */
+    fun declineSuggestion(suggestion: PlannerEntry) = save(suggestion.copy(state = EntryState.DECLINED))
+
     /** Stamps [entry] [state] (done, cancelled), or lifts the stamp when it already has it. */
     fun stamp(entry: PlannerEntry, state: EntryState) = save(entry.copy(state = if (entry.state == state) EntryState.OPEN else state))
 
