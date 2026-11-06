@@ -65,10 +65,9 @@ planner:
   from 立夏 in early May, autumn from 立秋 in early August, winter from 立冬 in early November),
   so the theme and the planner's season band agree. In the southern hemisphere both would flip
   (see "Local seasons" in [`calendar.md`](calendar.md)).
-- **The look from the writing desk** (to decide for v0.5): cel shading with fine printed
-  linework, sharp corners, layers of card, and details from the stationery shop (index tabs,
-  washi tape, stamp cards, screentone); no soft gradients, thick outlines or pixel fonts. See
-  "The look" in [`activities.md`](activities.md).
+- **Drawn objects in the app's look** (from the writing desk): lineless or thin lines, minimal
+  shading, and fills that are inks mixed into the paper, all in madoromi; new stationery pieces
+  like stamp cards where they fit. See "The look" in [`activities.md`](activities.md).
 - **Persona marks** (agreed per persona; see [`calendar.md`](calendar.md)): besides the unread
   mark, a signature seal, a wake mark and a done mark. The signature seal could also sign letters
   or sit by the persona's name.

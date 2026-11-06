@@ -34,8 +34,8 @@ and the persona's heartbeat page.
   to decide whether to write to you.
 - **Two calls are fine:** sitting down, then one call per thing taken up.
 - **The first game is shiritori** (below).
-- **The look:** cel shading with fine printed linework, sharp corners, and everything grounded in
-  Japanese stationery; no soft gradients, no thick outlines, no pixel font (see *The look* below).
+- **The look:** the app's own, in the madoromi palette: lineless or thin lines, minimal shading,
+  ink tints on paper (see *The look* below).
 - **You choose which activities use a slot** and which are free, per persona, in the drawer.
   Today's split is the default. **¥¥** marks the expensive ones.
 - **Games are separate from other activities,** with their own controls (see *Games* below).
@@ -176,25 +176,29 @@ Agreed: games are separate from other activities, with controls of their own. Pr
 
 ## The look
 
-From the user's notes on two rounds of mockups: lean into the theme and away from the generic
-look of soft gradients, but stay grounded in Japanese stationery rather than icons or video games.
+Settled over three rounds of mockups: draw the desk the way the app already looks, in madoromi
+(https://madoromi.moonwit.ch/), the palette the app's colours come from.
 
-- **Cel shading:** flat fills, a single hard-edged darker shape for shade and a lighter sliver for
-  a highlight. Objects on the desk cast flat, offset shadows.
-- **Fine printed linework:** objects are outlined at about 1dp in a warm sepia, like printed
-  stationery illustration; cards and fields keep the app's hairline paper borders. Thick dark
-  outlines made everything look like an icon set, so they're out.
-- **Sharp corners** everywhere except round things (seals, portraits).
-- **Layers of card:** cards and buttons sit on a hard, unblurred offset in a paper tone, as if
-  cut from card and stacked; a pressed button or a chosen cell moves onto it.
-- **From the stationery shop:** coloured index tabs for section labels; a strip of washi tape for
-  the "last visit" line; a radio-exercise stamp card for the daily limit; screentone (the manga
-  artist's dotted sheet) behind open sheets instead of a blurred dim; graph paper behind diagrams;
-  small printed sparkles for new things.
-- **No pixel font:** it read as a video game. Labels use the app's label face.
-- **Motion** stays paper-like: quick eases, a stamp landing, an item dropping into a tray.
-- **Fonts** are still placeholders, for the font audit planned in v0.5.
-- Whether this look goes beyond the desk is a question for the v0.5 stationery update.
+- **The desk is the app's desk:** madoromi's `hyoshi` ("the desk under the paper") is the page,
+  with a desk mat in `chitsu`, the deepest surface. No wood.
+- **Objects are lineless or thinly lined:** flat shapes in ink tints, each an ink mixed into the
+  paper colour the way the app already mixes them (`lerp(kami, ink, t)`, at about 12, 25, 40, 55
+  and 70%). Wire, ruled lines and seals can be thin lines; nothing gets a dark outline.
+- **Minimal shading:** at most one deeper tint for a spine or an edge, and the app's small soft
+  shadow under each object, as under its paper cards. No gradients.
+- **Everything else is the app's existing stationery:** `kami` cards with a hairline `nijimi0`
+  border; section headings with an ink underline; boxed-cell choices, the chosen cell shaded and
+  underlined in ink; tick boxes; text in `sumi` and `usuzumi`; washi tape in the persona's ink and
+  pattern.
+- **New stationery pieces that fit:** the "last visit" line on the persona's washi tape, and the
+  daily limit as a radio-exercise stamp card.
+- **Tried and dropped:** thick dark outlines (too much like icons), a pixel font (too much like a
+  video game), hard paper-coloured offset shadows, index-tab labels, screentone, and a wooden
+  desk.
+- **Fonts** stay the app's (display, reading, label, brush, handwriting and newsprint faces) until
+  the font audit planned for v0.5.
+- Whether anything from this reaches the rest of the app is a question for the v0.5 stationery
+  update.
 
 ## What every activity defines (for builders)
 
@@ -229,7 +233,7 @@ in the private moment until then, and moves to the desk in v0.6.
 ## Mockups
 
 The "Writing desk" design canvas (private claude.ai artifact:
-https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn twice the same day, ending in the look above:
+https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn three times the same day, ending in the look above:
 
 - **Aria's desk** (interactive): her desk from above with a diary (one entry sealed), a
   sketchbook, the games box (shiritori with you, with a challenge you can make and withdraw), a
