@@ -188,6 +188,11 @@ class ScreenshotTour {
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("something for when it rains", substring = true))
         waitFor("rainy day mix")
         shot("${prefix}_02k_frames_mix")
+        // A tag swings and shows Open and Save beneath it.
+        click("market-map.pdf")
+        waitFor("Save to phone")
+        shot("${prefix}_02k1_tag_actions")
+        click("market-map.pdf")
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("second steeping made me", substring = true))
         shot("${prefix}_02l_frames_cutting")
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("from the walk", substring = true))
@@ -217,6 +222,9 @@ class ScreenshotTour {
         // The photo viewer, from the stack, and the video player (its file isn't there: the middle frame stands in).
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("from the walk", substring = true))
         click("2 photos")
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Photo 2 of 2"), 10_000)
+        shot("${prefix}_02q0_stack_fanned")
+        compose.onNodeWithContentDescription("Photo 1 of 2").performClick()
         compose.waitUntilAtLeastOneExists(hasContentDescription("Photo 1 of 2"), 10_000)
         shot("${prefix}_02q_photo_viewer")
         compose.onNodeWithContentDescription("Close").performClick()

@@ -6,6 +6,9 @@ import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -92,7 +95,8 @@ fun PhotoViewer(images: List<ContentPart.Image>, start: Int, onClose: () -> Unit
     val context = LocalContext.current
     val blobs = LocalAppContainer.current.blobStore
     val scope = rememberCoroutineScope()
-    Box(Modifier.fillMaxSize().background(Dark).clickable(remember { MutableInteractionSource() }, indication = null) {}) {
+    val shown = fadeIn()
+    Box(Modifier.fillMaxSize().graphicsLayer { alpha = shown.value }.background(Dark).clickable(remember { MutableInteractionSource() }, indication = null) {}) {
         HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
             Zoomable {
                 BlobImage(
@@ -210,7 +214,8 @@ fun VideoPlayer(
     }
     BackHandler(onBack = close)
 
-    Column(Modifier.fillMaxSize().background(Dark).clickable(remember { MutableInteractionSource() }, indication = null) {}) {
+    val shown = fadeIn()
+    Column(Modifier.fillMaxSize().graphicsLayer { alpha = shown.value }.background(Dark).clickable(remember { MutableInteractionSource() }, indication = null) {}) {
         Row(Modifier.fillMaxWidth().statusBarsPadding().padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
             ViewerButton(Icons.AutoMirrored.Rounded.ArrowBack, "Close") { close() }
             Spacer(Modifier.weight(1f))
@@ -270,6 +275,15 @@ fun VideoPlayer(
             }
         }
     }
+}
+
+/** The viewers fade in (220ms), at once with "Remove animations". */
+@Composable
+private fun fadeIn(): Animatable<Float, AnimationVector1D> {
+    val instant = reducedMotion()
+    val shown = remember { Animatable(if (instant) 1f else 0f) }
+    LaunchedEffect(Unit) { shown.animateTo(1f, tween(220)) }
+    return shown
 }
 
 @Composable

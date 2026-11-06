@@ -27,6 +27,16 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.runtime.remember
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -112,12 +122,13 @@ fun polaroidCaption(caption: String?): String? = caption?.trim()?.takeIf { it.is
 @Composable
 fun PolaroidFrame(image: ContentPart.Image, ink: Color, pattern: TapePattern, scale: Float = 1f, modifier: Modifier = Modifier) {
     val caption = polaroidCaption(image.caption)
+    val lift = LocalLift.current
     Box(modifier.lamplit(photo = true)) {
         Column(
             Modifier
                 .padding(top = (9 * scale).dp)
                 .width((236 * scale).dp)
-                .shadow((2 * scale).dp, RoundedCornerShape(3.dp))
+                .shadow(((2 + 8 * lift) * scale).dp, RoundedCornerShape(3.dp))
                 .background(FramePaper, RoundedCornerShape(3.dp))
                 .border(1.dp, FrameEdge.copy(alpha = 0.5f), RoundedCornerShape(3.dp))
                 .padding(start = (12 * scale).dp, end = (12 * scale).dp, top = (12 * scale).dp),
@@ -131,16 +142,42 @@ fun PolaroidFrame(image: ContentPart.Image, ink: Color, pattern: TapePattern, sc
     }
 }
 
-/** Several photos: a small stack of up to three polaroids, the first on top, with a count. */
+/**
+ * Several photos: a small stack of up to three polaroids, the first on top, with a count. Tapped,
+ * it fans out ([fan], 0 to 1, overshooting a little): the back photos swing to ±15°, about 75dp
+ * out, and each can be tapped ([onPhoto], by index).
+ */
 @Composable
-fun PhotoStack(images: List<ContentPart.Image>, ink: Color, pattern: TapePattern, scale: Float = 1f, modifier: Modifier = Modifier) {
+fun PhotoStack(
+    images: List<ContentPart.Image>,
+    ink: Color,
+    pattern: TapePattern,
+    scale: Float = 1f,
+    modifier: Modifier = Modifier,
+    fan: Float = 0f,
+    onPhoto: ((Int) -> Unit)? = null,
+) {
     val behind = images.drop(1).take(2)
-    Box(modifier.size((272 * scale).dp, (300 * scale).dp).lamplit(photo = true)) {
+    fun Modifier.openable(index: Int) = if (onPhoto == null) this else
+        clickable(onClickLabel = "Open this photo") { onPhoto(index) }.semantics { contentDescription = "Photo ${index + 1} of ${images.size}" }
+    // Lit photo by photo (not the stack as one layer), so a photo fanned past the stack isn't cut off.
+    val lit = Modifier.lamplit(photo = true)
+    Box(modifier.size((272 * scale).dp, (300 * scale).dp)) {
+        // Three fan to ±15° about 75dp out; a pair opens like two cards in a hand, the front leaning left.
+        val pair = behind.size == 1
         behind.forEachIndexed { i, image ->
+            val out = if (pair) 36f else if (i == 0) 75f else -75f
+            val tilt = if (i == 0) 6f else -7f
+            val fanned = if (pair) 12f else if (i == 0) 15f else -15f
             Box(
                 Modifier
                     .offset(x = ((if (i == 0) 66 else 4) * scale).dp, y = ((if (i == 0) 8 else 22) * scale).dp)
-                    .graphicsLayer { rotationZ = if (i == 0) 6f else -7f }
+                    .graphicsLayer {
+                        translationX = out * fan * scale * density
+                        rotationZ = tilt + (fanned - tilt) * fan
+                    }
+                    .then(lit)
+                    .openable(i + 1)
                     .width((200 * scale).dp)
                     .shadow((1.5f * scale).dp, RoundedCornerShape(3.dp))
                     .background(FramePaper, RoundedCornerShape(3.dp))
@@ -149,7 +186,17 @@ fun PhotoStack(images: List<ContentPart.Image>, ink: Color, pattern: TapePattern
                 BlobImage(image.ref, Modifier.size((178 * scale).dp), contentScale = ContentScale.Crop, maxSize = 480)
             }
         }
-        Box(Modifier.offset(x = (30 * scale).dp, y = (21 * scale).dp)) {
+        Box(
+            Modifier.offset(x = (30 * scale).dp, y = (21 * scale).dp)
+                .graphicsLayer {
+                    if (pair) {
+                        translationX = -30f * fan * scale * density
+                        rotationZ = -5f * fan
+                    }
+                }
+                .then(lit)
+                .openable(0),
+        ) {
             Column(
                 Modifier
                     .padding(top = (9 * scale).dp)
@@ -169,6 +216,7 @@ fun PhotoStack(images: List<ContentPart.Image>, ink: Color, pattern: TapePattern
             color = Brown,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
+                .then(lit)
                 .offset(x = (-2 * scale).dp, y = (-4 * scale).dp)
                 .graphicsLayer { rotationZ = 4f }
                 .background(Color(0xFFFBF6F1))
@@ -301,6 +349,9 @@ private fun Reels(scale: Float, modifier: Modifier, turn: Boolean = false, wound
     }
 }
 
+/** How far a frame is lifted off the page (0 to 1) as it's tapped open: its shadow deepens. */
+val LocalLift = compositionLocalOf { 0f }
+
 /** Whether Android's "Remove animations" is on, so every effect is instant. */
 @Composable
 fun reducedMotion(): Boolean {
@@ -325,6 +376,19 @@ private fun Modifier.ruled(scale: Float) = drawWithContent {
 @Composable
 fun TicketStub(song: ContentPart.Attachment, ink: Color, behind: Color, scale: Float = 1f, punched: Boolean = false, modifier: Modifier = Modifier) {
     val ticket = lerp(Color(0xFFF7F0E4), ink, 0.18f)
+    // Punched the first time it plays: the hole pops open (260ms) and the chad falls and fades (700ms).
+    val instant = reducedMotion()
+    val wasPunched = remember { punched }
+    val hole = remember { Animatable(if (punched) 1f else 0f) }
+    val chad = remember { Animatable(0f) }
+    LaunchedEffect(punched) {
+        if (!punched) return@LaunchedEffect hole.snapTo(0f)
+        if (wasPunched || instant) return@LaunchedEffect hole.snapTo(1f)
+        launch { hole.animateTo(1f, tween(260, easing = FastOutSlowInEasing)) }
+        chad.snapTo(0.001f)
+        chad.animateTo(1f, tween(700, delayMillis = 120, easing = FastOutLinearInEasing))
+        chad.snapTo(0f)
+    }
     Box(modifier.size((280 * scale).dp, (108 * scale).dp).lamplit()) {
         Row(Modifier.fillMaxSize().shadow((1.5f * scale).dp, RoundedCornerShape((4 * scale).dp)).background(ticket, RoundedCornerShape((4 * scale).dp))) {
             Column(
@@ -352,7 +416,13 @@ fun TicketStub(song: ContentPart.Attachment, ink: Color, behind: Color, scale: F
             drawLine(lerp(ticket, ink, 0.55f), Offset(x, 4 * k), Offset(x, size.height - 4 * k), 2 * k, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5 * k, 4 * k)))
             drawCircle(behind, 7 * k, Offset(x, 0f))
             drawCircle(behind, 7 * k, Offset(x, size.height))
-            if (punched) drawCircle(behind, 6 * k, Offset(246 * k, 18 * k))
+            if (hole.value > 0f) {
+                val pop = if (hole.value < 1f) 1f + 0.25f * kotlin.math.sin(hole.value * Math.PI).toFloat() else 1f
+                drawCircle(behind, 6 * k * hole.value * pop, Offset(246 * k, 18 * k))
+            }
+            if (chad.value > 0f) {
+                drawCircle(ticket.copy(alpha = 1f - chad.value), 6 * k, Offset(246 * k + 6 * k * chad.value, 18 * k + 46 * k * chad.value))
+            }
         }
     }
 }
@@ -459,21 +529,36 @@ private const val CLIP_EDGE = 27f
 
 /** A video as a film strip: sprocket holes, its three frames, the play mark and its length on a label. */
 @Composable
-fun FilmStrip(video: ContentPart.Attachment, scale: Float = 1f, modifier: Modifier = Modifier) {
+fun FilmStrip(video: ContentPart.Attachment, scale: Float = 1f, modifier: Modifier = Modifier, run: Boolean = false) {
+    // Running, the strip moves through as if in a projector: one set of frames each 1.1 s.
+    val through = if (run && !reducedMotion()) {
+        rememberInfiniteTransition(label = "film").animateFloat(0f, 280f, infiniteRepeatable(tween(1_100, easing = LinearEasing)), label = "frames").value
+    } else {
+        0f
+    }
     Box(modifier.size((300 * scale).dp, (132 * scale).dp)) {
-        Box(Modifier.fillMaxSize().shadow((2 * scale).dp, RoundedCornerShape(2.dp)).background(Color(0xFF2A2420), RoundedCornerShape(2.dp)).lamplit()) {
+        Box(
+            Modifier.fillMaxSize().shadow((2 * scale).dp, RoundedCornerShape(2.dp)).background(Color(0xFF2A2420), RoundedCornerShape(2.dp))
+                .clip(RoundedCornerShape(2.dp)).lamplit(),
+        ) {
             Canvas(Modifier.fillMaxSize()) {
                 val k = size.width / 300f
-                var x = 10 * k
+                var x = 10 * k - (through % 20f) * k
                 while (x < size.width) {
                     drawRoundRect(Color(0xFFF0E6DD), Offset(x, 5 * k), Size(10 * k, 7 * k), CornerRadius(1.5f * k))
                     drawRoundRect(Color(0xFFF0E6DD), Offset(x, size.height - 12 * k), Size(10 * k, 7 * k), CornerRadius(1.5f * k))
                     x += 20 * k
                 }
             }
-            Row(Modifier.padding(start = (10 * scale).dp, top = (19 * scale).dp), horizontalArrangement = Arrangement.spacedBy((5.33f * scale).dp)) {
+            Row(
+                Modifier.padding(start = (10 * scale).dp, top = (19 * scale).dp).wrapContentWidth(Alignment.Start, unbounded = true)
+                    .graphicsLayer { translationX = -through * scale * density },
+                horizontalArrangement = Arrangement.spacedBy((5.33f * scale).dp),
+            ) {
                 val frames = video.frameRefs.ifEmpty { listOfNotNull(video.thumbRef) }
-                repeat(3) { i ->
+                // Running, a second set follows the first, so the strip never runs out.
+                repeat(if (through > 0f) 6 else 3) { n ->
+                    val i = n % 3
                     val ref = frames.getOrNull(i)
                     if (ref != null) {
                         BlobImage(ref, Modifier.size((88 * scale).dp, (94 * scale).dp), contentScale = ContentScale.Crop, maxSize = 320)
@@ -519,13 +604,21 @@ fun TapePiece(ink: Color, pattern: TapePattern, modifier: Modifier, tilt: Float 
 
 /** An attachment's frame by its kind. */
 @Composable
-fun AttachmentFrame(attachment: ContentPart.Attachment, ink: Color, behind: Color, scale: Float = 1f, punched: Boolean = false, modifier: Modifier = Modifier) {
+fun AttachmentFrame(
+    attachment: ContentPart.Attachment,
+    ink: Color,
+    behind: Color,
+    scale: Float = 1f,
+    punched: Boolean = false,
+    modifier: Modifier = Modifier,
+    run: Boolean = false,
+) {
     when (attachment.kind) {
         AttachmentKind.FILE -> LuggageTag(attachment, ink, scale, modifier)
         AttachmentKind.PLAYLIST -> Cassette(attachment, ink, scale, modifier)
         AttachmentKind.SONG -> TicketStub(attachment, ink, behind, scale, punched, modifier)
         AttachmentKind.LINK -> Cutting(attachment, ink, scale, modifier)
-        AttachmentKind.VIDEO -> FilmStrip(attachment, scale, modifier)
+        AttachmentKind.VIDEO -> FilmStrip(attachment, scale, modifier, run)
     }
 }
 

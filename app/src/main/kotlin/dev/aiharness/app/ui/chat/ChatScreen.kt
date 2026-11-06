@@ -215,6 +215,10 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     var selected by remember { mutableStateOf<List<ChatMessage>?>(null) }
     var viewing by remember { mutableStateOf<String?>(null) }
     var watching by remember { mutableStateOf<Watching?>(null) }
+    // The letters already here when the thread opened; anything after them has just arrived.
+    var baseline by remember { mutableStateOf<Set<String>?>(null) }
+    LaunchedEffect(messages.isNotEmpty()) { if (baseline == null && messages.isNotEmpty()) baseline = messages.map { it.id }.toSet() }
+    val droppedFrames = remember { mutableSetOf<String>() }
     var imageDialog by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -252,6 +256,18 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             stickerArt.values.filter { it.ownerPersonaId == null || it.ownerPersonaId == persona?.id }.associateBy { it.name }
         }
         val reader = header.persona?.let { persona -> header.profile?.let { PersonaReader(persona.name, it) } }
+        // Frames in letters that arrive (and notes sent) while the thread is open drop onto the page.
+        val arrivals = remember(messages, baseline) {
+            baseline?.let { seen ->
+                val order = mutableMapOf<String, Int>()
+                messages.filter { it.id !in seen }.forEach { m ->
+                    var place = 0
+                    m.images.forEach { order[it.ref] = place++ }
+                    m.attachments.forEach { order[it.id] = place++ }
+                }
+                Arrivals(order, droppedFrames)
+            }
+        }
         val taps = remember(conversationId) {
             FrameTaps(
                 play = { attachment, ink, fromYou -> container.playback.play(attachment, conversationId, ink.toArgb(), fromYou) },
@@ -262,6 +278,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             LocalInlineStickers provides inlineStickers,
             LocalPersonaReader provides reader,
             LocalFrameTaps provides taps,
+            LocalArrivals provides arrivals,
             LocalPunched provides punched,
         ) {
             LazyColumn(

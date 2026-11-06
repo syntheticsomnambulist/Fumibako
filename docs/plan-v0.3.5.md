@@ -43,7 +43,7 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   text-only model hears what's in a photo. Under each frame in your note, a line says what the
   persona can't take in ("Aria can read the label, but can't hear the songs."), and a model's
   settings say what it takes in. Token estimates for compaction count pictures and files.
-- **Step 4, players and tapping: in progress.** Songs and playlists play through Media3 in a
+- **Step 4, players and tapping: done.** Songs and playlists play through Media3 in a
   playback service with a media session (notification, lock screen, headphones), and keep playing
   after leaving the thread. Tapping a cassette or ticket plays it; the mini player docks above the
   composer (a progress line in the sender's ink, a small cassette or ticket, play/pause, next,
@@ -56,7 +56,15 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   and Save. A film strip opens the video player (its own Media3 player; the music pauses): tap
   the picture for back 10 seconds, play/pause and forward 10 seconds; below, mute, the scrubber,
   full screen (landscape), the title, who it's from, what the persona sees of it, and the letter's
-  other clips. Still to come: the motion.
+  other clips.
+  The motion, from the design's table: a photo lifts, straightens and grows a little with a
+  deeper shadow, then the viewer fades in; several photos fan out on a spring (a pair like two
+  cards in a hand) and a tapped one opens; a luggage tag swings on its string around the eyelet
+  while Open and Save to phone slide out beneath it; a ticket's punch pops and the chad falls
+  the first time it plays; a cutting lifts before opening; a film strip runs through as if in a
+  projector while its player opens; frames in a letter that arrives, or a note just sent, drop
+  onto the page one after another. With Android's "Remove animations" on, every effect is
+  instant. Still to come in step 5: the read stamp, and the in-app browser for cuttings.
 
 ## What v0.3.5 includes
 
