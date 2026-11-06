@@ -58,7 +58,7 @@ class PromptAssembler {
                             "matters or how you feel about it, and memory_forget to let one go. Don't save trivia or repeats.",
                     )
                 }
-                append(" Memories come with how you felt about them; let that colour how you speak of them.")
+                append(" Memories come with how you felt about them; let that color how you speak of them.")
                 if (coreMemories.isNotEmpty()) {
                     append("\n\nThings you always keep in mind:\n")
                     coreMemories.forEach { append("- ").append(it.content).append(it.keptNote).append('\n') }

@@ -107,6 +107,12 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   kept ticket stub or J-card peeking out of its envelope. The memory card shows them under the
   card, so letting it go burns them with it; with "Let me edit memories" on, you can keep more
   from its letter or take them out.
+- **Step 8, polish and the APK: done.** 0.3.5 (code 7). The testers' guide says what reaches
+  websites now (link previews, personas opening links) and what to try. Checks, and all four
+  screenshot tours, pass. Not yet tried on a phone: picking photos, files, songs and videos;
+  the camera; playback in the background and its notification; the video player's full screen;
+  Custom Tabs; the YouTube, SoundCloud and Bandcamp players (YouTube's in a web view may refuse
+  without the right origin); Claude's web fetch and Gemini's audio and video with live keys.
 
 ## What v0.3.5 includes
 

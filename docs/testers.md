@@ -43,9 +43,12 @@ Set a spending limit with your provider if you'd like to be sure.
 
 ## What stays on your phone
 
-Everything: letters, personas, memories and pictures are stored only on your phone, and your key
-is encrypted there. Your letters are sent to the model provider you chose, and to nowhere else.
-There are no accounts, ads or analytics.
+Everything: letters, personas, memories, pictures and the files you send are stored only on your
+phone, and your key is encrypted there. Your letters (with their photos and files) are sent to the
+model provider you chose. Two things also reach websites: a link you write becomes a cutting
+with the page's title and picture, which means visiting the page; and a persona can open a link
+you shared (Claude does that on Anthropic's servers; other models through your phone). Both can
+be turned off in Settings, Media. There are no accounts, ads or analytics.
 
 ## Things to try
 
@@ -60,6 +63,20 @@ There are no accounts, ads or analytics.
   peel it. Personas stick their own, and can draw stickers of themselves (their page, Stickers).
   Shared stickers, stamps and decor are in Settings, Stickers; one can come from a photo.
 - Type `:` and a few letters to write a sticker into your note.
+- **Sending things:** the **+** also has Photos, Camera, File, Music and Video. Several songs
+  make a mixtape (a cassette) you can name and reorder; a link in your note becomes a newspaper
+  cutting. Each arrives as stationery, and a line under it says what the persona can't take in
+  with its model (Claude reads PDFs; Gemini also hears songs and watches videos).
+- **Tapping things:** songs and mixtapes play (a small player docks above where you write, and
+  music carries on outside the app); photos open to swipe and zoom; videos play; a file's tag
+  swings and offers Open and Save; a cutting opens the page. When a persona opens a link you
+  shared, its 読 ("read") stamp lands on the cutting.
+- **From personas:** they can share links and songs back. Songs from YouTube, SoundCloud or
+  Bandcamp play in their own player; Spotify and Apple Music open in their apps.
+- **Keepsakes:** a memory can keep something from its letter (the persona chooses), shown in
+  the memory book as a scrapbook piece; tap it to play or open it. The book's Keepsakes tab
+  shows just those.
+- **Settings, Media** has where links open, picture size, playback and motion switches.
 
 ## If something goes wrong
 

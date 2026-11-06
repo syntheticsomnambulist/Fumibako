@@ -596,7 +596,7 @@ class ScreenshotTour {
         }
 
         val kestrel = Persona(
-            newId(), "Kestrel", "A stoic knight-errant sworn to an order that no longer exists.", personality = "Dry humour, fiercely loyal.",
+            newId(), "Kestrel", "A stoic knight-errant sworn to an order that no longer exists.", personality = "Dry humor, fiercely loyal.",
             greeting = "You keep late hours. So do I. Sit, if you like.", ink = "tokiwa", tapePattern = TapePattern.STRIPES, createdAt = now, updatedAt = now,
         )
         val juno = Persona(
