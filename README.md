@@ -35,7 +35,7 @@ tested without a device and reused elsewhere.
 5. **Settings → Image generation** → pick your NovelAI key to enable images.
 6. Write to a persona from **Letters → New letter**. A sample persona, *Aria*, is created on first launch.
 7. **Settings → Look** sets how the theme switches between day and night (set hours, sunrise and
-   sunset, or a fixed theme), the polaroid frame and outline colours, and mood words.
+   sunset, or a fixed theme), the polaroid frame and outline colors, and mood words.
 
 ### Builds
 
@@ -207,7 +207,7 @@ HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests 
 
 ## Design
 
-The visual direction (madoromi ink colours, letter-style messages, washi tape, stickers) is written
+The visual direction (madoromi ink colors, letter-style messages, washi tape, stickers) is written
 up in [`docs/design/`](docs/design/README.md), with interactive mockups; v0.1 builds all of it except
 stickers. Fonts are bundled placeholders (SIL OFL, see `app/src/main/assets/licenses/fonts.txt`). Plans:
 [`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md),
