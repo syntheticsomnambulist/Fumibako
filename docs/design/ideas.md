@@ -9,9 +9,13 @@ when we work through them: [`calendar.md`](calendar.md), [`pen-pals.md`](pen-pal
   short. 文 is already the Letters tab. A search found no app by that name, only a physical tray.
   The rename waits until the v0.2 work has landed; changing the application id makes it a fresh
   install, which is fine before 1.0.
-- **Icon:** a wax seal pressed with 文 in an ink colour, with a strip of washi tape across one
-  corner. Round shapes read well at launcher size, and it belongs with the unread seals and the
-  seals on pen pals' letters. Mockup to come.
+- **Icon (agreed 2026-11-06):** a flat wax seal with an uneven edge, 文 cut out of it in the
+  paper colour inside a thin ring (hakubun), in Yuji Syuku, raised slightly so it sits centred in
+  the ring. The seal closes an envelope: the flap's V lines run in from the top corners and meet
+  behind it, and the flap is a shade darker than the envelope. No tape. Beni wax in the mockups.
+  The themed (single-colour) icon is the seal alone. The embossed wax and corner-tape versions
+  were dropped: the 文 didn't read, and the tape unbalanced it. Mockups: the "Fumibako icon"
+  design canvas (private claude.ai artifact).
 
 ## Media
 
