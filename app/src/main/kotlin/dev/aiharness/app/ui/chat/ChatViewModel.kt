@@ -12,6 +12,9 @@ import dev.aiharness.core.model.MoodTags
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.Sticker
 import dev.aiharness.core.model.StickerArt
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.model.StickerTarget
+import dev.aiharness.core.stickers.StickResult
 import dev.aiharness.core.model.UserPersona
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -63,6 +66,35 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     val stickers: StateFlow<Map<String, List<Sticker>>> = harness.stickers.observeForConversation(conversationId)
         .map { list -> list.filterNot { it.isPeeled }.groupBy { it.target.id } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** Stickers you've used lately, newest first. */
+    val recentStickers: StateFlow<List<StickerRef>> = container.recentStickers
+
+    /** Sticks [ref] on your draft, in the top corner of the field, a little crooked; refused when it's full. */
+    fun stickOnDraft(ref: StickerRef) = viewModelScope.launch {
+        val target = StickerTarget.draft(conversationId)
+        val n = harness.stickerService.on(conversationId, target).size
+        val slots = listOf(Triple(0.94f, 0.08f, 10f), Triple(0.82f, 0.02f, -9f), Triple(0.70f, 0.10f, 14f), Triple(0.58f, 0.03f, -6f), Triple(0.46f, 0.09f, 8f), Triple(0.34f, 0.02f, -12f))
+        val (x, y, r) = slots[n % slots.size]
+        if (harness.stickerService.stick(conversationId, target, ref, null, x, y, rotationDeg = r, scale = 0.7f) is StickResult.Stuck) container.usedSticker(ref)
+    }
+
+    /** Sticks [ref] on a letter or note, where it was dropped. */
+    fun stickOn(messageId: String, ref: StickerRef, x: Float, y: Float) = viewModelScope.launch {
+        val tilt = (Math.random() * 16 - 8).toFloat()
+        if (harness.stickerService.stick(conversationId, StickerTarget.message(messageId), ref, null, x, y, rotationDeg = tilt) is StickResult.Stuck) container.usedSticker(ref)
+    }
+
+    fun moveSticker(sticker: Sticker) = viewModelScope.launch {
+        harness.stickerService.move(sticker, sticker.x, sticker.y, sticker.rotationDeg, sticker.scale)
+    }
+
+    fun peelSticker(sticker: Sticker) = viewModelScope.launch { harness.stickerService.peel(sticker, null) }
+
+    /** Puts a sticker you just peeled back where it was. */
+    fun unpeelSticker(sticker: Sticker) = viewModelScope.launch {
+        harness.stickers.get(sticker.id)?.let { harness.stickers.upsert(it.copy(peeledAt = null, peeledByPersonaId = null)) }
+    }
 
     /** Sticker pictures by id, for their `:name:`s. */
     val stickerArt: StateFlow<Map<String, StickerArt>> = harness.stickers.observeArt()

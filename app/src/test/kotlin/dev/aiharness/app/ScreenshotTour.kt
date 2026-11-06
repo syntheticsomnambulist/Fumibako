@@ -144,6 +144,24 @@ class ScreenshotTour {
         // Writing a reply: the field grows and the send button stays.
         compose.onNode(hasSetTextAction()).performTextInput("You'll get to pick for yourself :3\nWe've just updated to a new version.")
         assertDrawn(compose.onNodeWithContentDescription("Send"), shot("${prefix}_02b_chat_typing"))
+        // The + tray: tap a sticker onto your note.
+        compose.onNodeWithContentDescription("Add a sticker").performClick()
+        waitFor("Hold and drag")
+        compose.waitUntilAtLeastOneExists(hasContentDescription(":blush:"), 10_000)
+        shot("${prefix}_02c_sticker_tray")
+        click(":blush:")
+        compose.waitUntilAtLeastOneExists(hasContentDescription(":blush: sticker"), 10_000)
+        shot("${prefix}_02d_sticker_on_draft")
+        // Selecting your own sticker shows its handle; Aria's says whose it is.
+        compose.onNodeWithContentDescription("Close the tray").performClick()
+        compose.onNodeWithContentDescription(":gold-star: sticker").performClick()
+        waitFor("Peel off")
+        shot("${prefix}_02e_sticker_selected")
+        click("Done")
+        compose.onNodeWithContentDescription(":aria-heart: sticker").performClick()
+        waitFor("Only Aria can peel it off")
+        shot("${prefix}_02f_her_sticker")
+        click("Done")
         back()
         back()
 

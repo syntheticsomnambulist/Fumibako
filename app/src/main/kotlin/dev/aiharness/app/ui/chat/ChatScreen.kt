@@ -80,6 +80,30 @@ import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Sticker
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.unit.IntOffset
+import dev.aiharness.app.ui.stickers.LocalStickerSettings
+import dev.aiharness.app.ui.stickers.StickerBaker
+import dev.aiharness.app.ui.stickers.StickerPicture
+import dev.aiharness.app.ui.stickers.StuckOn
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.model.StickerTargetKind
+import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 @Composable
@@ -93,6 +117,48 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     val stickers by vm.stickers.collectAsStateWithLifecycle()
     val stickerArt by vm.stickerArt.collectAsStateWithLifecycle()
     val stickerName: (Sticker) -> String = { stickerLabel(it, stickerArt) }
+    val recentStickers by vm.recentStickers.collectAsStateWithLifecycle()
+
+    // Stickers: the tray, the one selected (and its live position while it moves), dragging one in.
+    var trayOpen by rememberSaveable { mutableStateOf(false) }
+    var selectedStickerId by remember { mutableStateOf<String?>(null) }
+    var moving by remember { mutableStateOf<Sticker?>(null) }
+    var peeled by remember { mutableStateOf<Sticker?>(null) }
+    var dragging by remember { mutableStateOf<Pair<StickerRef, Offset>?>(null) }
+    var screenOrigin by remember { mutableStateOf(Offset.Zero) }
+    val papers = remember { mutableStateMapOf<String, Rect>() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focus = LocalFocusManager.current
+    LaunchedEffect(moving) {
+        val m = moving ?: return@LaunchedEffect
+        delay(400)
+        vm.moveSticker(m)
+    }
+    val finishSticker = {
+        moving?.let { vm.moveSticker(it) }
+        moving = null
+        selectedStickerId = null
+    }
+    val shownStickers = remember(stickers, moving) {
+        val m = moving
+        if (m == null) stickers else stickers.mapValues { (_, list) -> list.map { if (it.id == m.id) m else it } }
+    }
+    val handling = StickerHandling(
+        selectedId = selectedStickerId,
+        onTap = { sticker ->
+            peeled = null
+            if (selectedStickerId == sticker.id) finishSticker() else {
+                moving?.let { vm.moveSticker(it) }
+                moving = null
+                selectedStickerId = sticker.id
+            }
+        },
+        onChange = { moving = it },
+        paper = { id ->
+            Modifier.onGloballyPositioned { papers[id] = it.boundsInRoot() }
+        },
+    )
+    val selectedSticker = selectedStickerId?.let { id -> shownStickers.values.flatten().firstOrNull { it.id == id } }
 
     var input by rememberSaveable { mutableStateOf("") }
     var selected by remember { mutableStateOf<List<ChatMessage>?>(null) }
@@ -118,6 +184,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     // Everything on screen counts as read, including letters that arrive while it is open.
     LaunchedEffect(messages.lastOrNull()?.id) { vm.markRead() }
 
+    Box(Modifier.fillMaxSize().onGloballyPositioned { screenOrigin = it.positionInRoot() }) {
     Column(Modifier.fillMaxSize().background(paper.hyoshi).imePadding()) {
         LettersTopBar(
             vm = vm,
@@ -147,9 +214,10 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                         header.userPersona,
                         onLongPress = { selected = listOf(row.message) },
                         onImage = { viewing = it },
-                        stickers = stickers[row.message.id].orEmpty(),
+                        stickers = shownStickers[row.message.id].orEmpty(),
                         persona = persona,
                         stickerName = stickerName,
+                        handling = handling,
                     )
                     is ThreadRow.Letter -> LetterSheet(
                         row,
@@ -157,10 +225,20 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                         writing.takeIf { row === writingInto },
                         onLongPress = { selected = row.messages },
                         onImage = { viewing = it },
-                        stickers = row.messages.flatMap { stickers[it.id].orEmpty() },
+                        stickers = row.messages.flatMap { shownStickers[it.id].orEmpty() },
                         user = header.userPersona,
                         stickerName = stickerName,
+                        handling = handling,
                     )
+                }
+                // A row that scrolls away can't be dropped on.
+                if (row !is ThreadRow.Day) {
+                    val id = when (row) {
+                        is ThreadRow.Note -> row.message.id
+                        is ThreadRow.Letter -> row.messages.first().id
+                        else -> ""
+                    }
+                    DisposableEffect(id) { onDispose { papers.remove(id) } }
                 }
             }
         }
@@ -169,16 +247,89 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             ErrorSlip(error, onRetry = { vm.dismissError(); vm.regenerate() }, onDismiss = { vm.dismissError() })
         }
 
+        val youCanPeel = header.persona?.stickers?.youCanPeel == true
+        selectedSticker?.let { sticker ->
+            val mine = sticker.byPersonaId == null
+            StickerSlip(
+                text = if (mine) "Your ${stickerName(sticker).removeSuffix(" sticker")}, stuck ${letterStamp(sticker.createdAt).lowercase().replaceFirstChar { it.uppercase() }}."
+                else "$personaName stuck this ${letterStamp(sticker.createdAt).lowercase().replaceFirstChar { it.uppercase() }}." + if (youCanPeel) "" else " Only $personaName can peel it off.",
+                peel = if (mine || youCanPeel) ({ vm.peelSticker(sticker); peeled = sticker; moving = null; selectedStickerId = null }) else null,
+                done = { finishSticker() },
+            )
+        }
+        peeled?.let { sticker ->
+            StickerSlip(
+                text = "Peeled off." + if (sticker.target.kind == StickerTargetKind.MESSAGE) " $personaName will hear about it next time." else "",
+                putBack = if (sticker.target.kind == StickerTargetKind.MESSAGE) ({ vm.unpeelSticker(sticker); peeled = null }) else null,
+                done = { peeled = null },
+            )
+        }
+
+        val youInk = header.userPersona?.ink?.let { stationery.ink(it) } ?: stationery.you
+        val sheet = stationery
         EntryBar(
             value = input,
             onValueChange = { input = it },
             placeholder = "Write to $personaName…",
             personaInk = stationery.ink(persona?.ink),
-            youInk = header.userPersona?.ink?.let { stationery.ink(it) } ?: stationery.you,
+            youInk = youInk,
             busy = generation.active,
-            onSend = { vm.send(input); input = "" },
+            onSend = { vm.send(input); input = ""; trayOpen = false },
             onStop = { vm.stop() },
+            trayOpen = trayOpen,
+            onTray = {
+                if (trayOpen) trayOpen = false else {
+                    keyboard?.hide()
+                    focus.clearFocus()
+                    trayOpen = true
+                }
+            },
+            onFieldFocus = { trayOpen = false },
+            draft = { field ->
+                StuckOn(
+                    stickers = shownStickers[conversationId].orEmpty(),
+                    inkOf = { stickerInk(it, sheet, persona, header.userPersona) },
+                    modifier = Modifier.weight(1f),
+                    nameOf = stickerName,
+                    selectedId = selectedStickerId,
+                    onTap = handling.onTap,
+                    onChange = handling.onChange,
+                ) { field() }
+            },
         )
+        if (trayOpen) {
+            StickerTray(
+                personaName = personaName,
+                personaId = persona?.id,
+                recent = recentStickers,
+                art = stickerArt,
+                youInk = stationery.dayColors.ink(header.userPersona?.ink ?: "sora"),
+                onPick = { vm.stickOnDraft(it) },
+                onDragStart = { ref, at -> dragging = ref to at },
+                onDrag = { delta -> dragging = dragging?.let { (ref, at) -> ref to (at + delta) } },
+                onDragEnd = {
+                    dragging?.let { (ref, at) ->
+                        papers.entries.firstOrNull { it.value.contains(at) }?.let { (id, rect) ->
+                            vm.stickOn(id, ref, (at.x - rect.left) / rect.width, (at.y - rect.top) / rect.height)
+                        }
+                    }
+                    dragging = null
+                },
+            )
+        }
+    }
+    dragging?.let { (ref, at) ->
+        val side = (LocalStickerSettings.current.size.dp * StickerBaker.BOX).dp
+        val half = with(LocalDensity.current) { side.toPx() / 2f }
+        StickerPicture(
+            ref,
+            stationery.dayColors.ink(header.userPersona?.ink ?: "sora"),
+            Modifier
+                .offset { IntOffset((at.x - screenOrigin.x - half).roundToInt(), (at.y - screenOrigin.y - half).roundToInt()) }
+                .size(side)
+                .graphicsLayer { scaleX = 1.1f; scaleY = 1.1f; rotationZ = -6f },
+        )
+    }
     }
 
     selected?.let { group -> MessageActions(group, vm, onDismiss = { selected = null }) }
@@ -296,6 +447,10 @@ private fun EntryBar(
     busy: Boolean,
     onSend: () -> Unit,
     onStop: () -> Unit,
+    trayOpen: Boolean = false,
+    onTray: () -> Unit = {},
+    onFieldFocus: () -> Unit = {},
+    draft: @Composable RowScope.(field: @Composable () -> Unit) -> Unit = { it() },
 ) {
     val colors = paper
     Row(
@@ -309,6 +464,20 @@ private fun EntryBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         val shape = PaperCorner
+        // The + slip opens the tray (stickers now; photos, files and more later). It turns into × while open.
+        val turn by animateFloatAsState(if (trayOpen) 45f else 0f, label = "plus")
+        Box(
+            Modifier
+                .size(42.dp)
+                .clip(shape)
+                .background(if (trayOpen) colors.chitsu else colors.kami)
+                .border(1.dp, if (trayOpen) colors.nijimi2 else colors.nijimi1, shape)
+                .clickable(onClickLabel = if (trayOpen) "Close the tray" else "Add a sticker") { onTray() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Filled.Add, if (trayOpen) "Close the tray" else "Add a sticker", tint = colors.sumi, modifier = Modifier.size(20.dp).graphicsLayer { rotationZ = turn })
+        }
+        draft {
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -316,7 +485,8 @@ private fun EntryBar(
             cursorBrush = SolidColor(youInk),
             maxLines = 6,
             modifier = Modifier
-                .weight(1f)
+                .fillMaxWidth()
+                .onFocusChanged { if (it.isFocused) onFieldFocus() }
                 .border(1.5.dp, Brush.horizontalGradient(listOf(personaInk, youInk)), shape)
                 .background(colors.kami, shape)
                 .padding(horizontal = 14.dp, vertical = 10.dp),
@@ -329,6 +499,7 @@ private fun EntryBar(
                 }
             },
         )
+        }
         val canSend = value.isNotBlank()
         val active = busy || canSend
         // Dimmed by colour, not by an alpha layer: adding and removing that layer as you typed left the
@@ -447,4 +618,22 @@ private fun ImageDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
+}
+
+/** A slip above the composer about the selected sticker: whose it is, and peel it off or be done. */
+@Composable
+private fun StickerSlip(text: String, peel: (() -> Unit)? = null, putBack: (() -> Unit)? = null, done: () -> Unit) {
+    Row(
+        Modifier
+            .padding(horizontal = 18.dp, vertical = 6.dp)
+            .paperCard()
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text, style = PaperType.postscript, color = paper.usuzumi1, modifier = Modifier.weight(1f))
+        peel?.let { TextButton(onClick = it) { Text("Peel off", color = stationery.ink("beni")) } }
+        putBack?.let { TextButton(onClick = it) { Text("Put it back") } }
+        TextButton(onClick = done) { Text("Done") }
+    }
 }

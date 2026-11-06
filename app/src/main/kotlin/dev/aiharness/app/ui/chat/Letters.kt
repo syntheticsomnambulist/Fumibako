@@ -94,11 +94,20 @@ fun LetterSheet(
     stickers: List<Sticker> = emptyList(),
     user: UserPersona? = null,
     stickerName: (Sticker) -> String? = { null },
+    handling: StickerHandling? = null,
 ) {
     val s = stationery
     val ink = s.ink(persona?.ink)
     val mood = writing?.text?.let { dev.aiharness.core.model.MoodTags.parse(it) } ?: letter?.mood
-    StuckOn(stickers, inkOf = { stickerInk(it, s, persona, user) }, Modifier.fillMaxWidth(), stickerName) {
+    StuckOn(
+        stickers,
+        inkOf = { stickerInk(it, s, persona, user) },
+        Modifier.fillMaxWidth().then(letter?.let { handling?.paper(it.messages.first().id) } ?: Modifier),
+        stickerName,
+        selectedId = handling?.selectedId,
+        onTap = handling?.onTap,
+        onChange = handling?.onChange,
+    ) {
         Column(
             Modifier
                 .washiStrip(Tape(ink, persona?.tapePattern ?: TapePattern.DOTS), tiltDegrees = -0.7f, overhang = 8.dp)
@@ -160,6 +169,17 @@ fun LetterSheet(
     }
 }
 
+/**
+ * How the stickers in the thread respond: which one is selected, what tapping or moving one does,
+ * and [paper], which a letter or note puts on its paper so stickers can be dropped onto it.
+ */
+class StickerHandling(
+    val selectedId: String?,
+    val onTap: (Sticker) -> Unit,
+    val onChange: (Sticker) -> Unit,
+    val paper: (targetId: String) -> Modifier,
+)
+
 /** The ink of whoever stuck [sticker] (day ink: stickers keep their day colours). */
 fun stickerInk(sticker: Sticker, s: Stationery, persona: Persona?, user: UserPersona?): Color =
     if (sticker.byPersonaId != null) s.dayColors.ink(persona?.ink) else s.dayColors.ink(user?.ink ?: "sora")
@@ -189,12 +209,21 @@ fun NoteSlip(
     stickers: List<Sticker> = emptyList(),
     persona: Persona? = null,
     stickerName: (Sticker) -> String? = { null },
+    handling: StickerHandling? = null,
 ) {
     val s = stationery
     val you = user?.ink?.let { s.ink(it) } ?: s.you
     val pattern = user?.tapePattern ?: s.youPattern
     BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-        StuckOn(stickers, inkOf = { stickerInk(it, s, persona, user) }, Modifier.widthIn(max = maxWidth * 0.78f), stickerName) {
+        StuckOn(
+            stickers,
+            inkOf = { stickerInk(it, s, persona, user) },
+            Modifier.widthIn(max = maxWidth * 0.78f).then(handling?.paper(message.id) ?: Modifier),
+            stickerName,
+            selectedId = handling?.selectedId,
+            onTap = handling?.onTap,
+            onChange = handling?.onChange,
+        ) {
             Column(
                 Modifier
                     .washiStrip(Tape(you, pattern), side = TapeSide.End, tiltDegrees = 0.9f, overhang = 7.dp)

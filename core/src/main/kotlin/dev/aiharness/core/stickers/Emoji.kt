@@ -2,8 +2,9 @@ package dev.aiharness.core.stickers
 
 /**
  * Emoji that can be stuck as stickers, with the names they go by (Discord-style, so personas and
- * people can write `:tada:`). Grouped as the sticker tray shows them. Any other emoji can still be
- * stuck by writing the emoji itself.
+ * people can write `:tada:`). Grouped as the sticker tray shows them. Only emoji from before 2021
+ * (Unicode 13), which every supported phone can draw. Any other emoji can still be stuck by
+ * writing the emoji itself.
  */
 object Emoji {
     data class Entry(val emoji: String, val name: String)
@@ -13,23 +14,23 @@ object Emoji {
     val groups: List<Group> = listOf(
         group(
             "Faces",
-            "😊" to "blush", "😄" to "smile", "😂" to "joy", "🥹" to "holding_back_tears", "🥺" to "pleading",
+            "😊" to "blush", "😄" to "smile", "😂" to "joy", "🥺" to "pleading",
             "😭" to "sob", "😍" to "heart_eyes", "🥰" to "smiling_face_with_hearts", "😘" to "kissing_heart",
             "😌" to "relieved", "😴" to "sleeping", "🥱" to "yawning_face", "😳" to "flushed", "🤔" to "thinking",
-            "🫣" to "face_with_peeking_eye", "😮" to "open_mouth", "😤" to "triumph", "😠" to "angry", "😔" to "pensive",
+            "😮" to "open_mouth", "😤" to "triumph", "😠" to "angry", "😔" to "pensive",
             "🙃" to "upside_down", "😅" to "sweat_smile", "🤗" to "hugging", "🤭" to "hand_over_mouth", "😎" to "sunglasses",
-            "🥳" to "partying_face", "🤩" to "star_struck", "😇" to "innocent", "🫠" to "melting_face", "😶" to "no_mouth",
+            "🥳" to "partying_face", "🤩" to "star_struck", "😇" to "innocent", "😶" to "no_mouth",
         ),
         group(
             "Hearts",
-            "❤️" to "heart", "🩷" to "pink_heart", "🧡" to "orange_heart", "💛" to "yellow_heart", "💚" to "green_heart",
+            "❤️" to "heart", "🧡" to "orange_heart", "💛" to "yellow_heart", "💚" to "green_heart",
             "💙" to "blue_heart", "💜" to "purple_heart", "🤍" to "white_heart", "💕" to "two_hearts", "💖" to "sparkling_heart",
             "💗" to "heartpulse", "💌" to "love_letter", "💔" to "broken_heart", "❣️" to "heart_exclamation",
         ),
         group(
             "Hands",
             "👋" to "wave", "👏" to "clap", "🙌" to "raised_hands", "👍" to "thumbsup", "🤝" to "handshake", "🙏" to "pray",
-            "✌️" to "v", "🫶" to "heart_hands", "💪" to "muscle", "🤞" to "crossed_fingers", "👀" to "eyes", "🫡" to "saluting_face",
+            "✌️" to "v", "💪" to "muscle", "🤞" to "crossed_fingers", "👀" to "eyes",
         ),
         group(
             "Seasons",

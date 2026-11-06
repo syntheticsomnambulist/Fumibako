@@ -22,6 +22,8 @@ import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.util.newId
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.util.HarnessJson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -60,6 +62,17 @@ class AppContainer(private val context: Context) {
 
     /** When the user last left the app; the letters list sums up background activity since then. */
     val awaySince = MutableStateFlow(Long.MAX_VALUE)
+
+    /** Stickers you've used lately, newest first (for the tray's Recent page). Kept on this phone only. */
+    val recentStickers = MutableStateFlow(
+        runCatching { HarnessJson.decodeFromString<List<StickerRef>>(appState.getString(KEY_RECENT_STICKERS, null) ?: "[]") }.getOrDefault(emptyList()),
+    )
+
+    fun usedSticker(ref: StickerRef) {
+        val list = (listOf(ref) + recentStickers.value.filterNot { it == ref }).take(15)
+        recentStickers.value = list
+        appState.edit().putString(KEY_RECENT_STICKERS, HarnessJson.encodeToString(list)).apply()
+    }
 
     fun onForeground() {
         val left = appState.getLong(KEY_LAST_SEEN, 0L)
@@ -125,5 +138,6 @@ class AppContainer(private val context: Context) {
     private companion object {
         const val KEY_LAST_SEEN = "last_seen_at"
         const val KEY_SEEDED = "seeded"
+        const val KEY_RECENT_STICKERS = "recent_stickers"
     }
 }
