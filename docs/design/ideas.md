@@ -16,12 +16,14 @@ Updated 2026-11-06, with the user's rough plan to v0.7.
 - **v0.5: import and export, the stationery update, and quality of life:**
   - import and export (below);
   - the stationery update: Japanese stationery across the app (below);
+  - a font audit: the app's faces are all placeholders so far;
   - from Fieldwork (below): the context slip ("What she had in mind"), the note after a model
     switch, thinking lines the persona chooses, and searching past letters. The context slip sits
     beside the "Show thoughts" slip under a letter, each with an icon of its own (to design).
 - **v0.6: activities,** in [`activities.md`](activities.md): the writing desk, today's activities
-  moved onto it, at least one game, and pen pals ([`pen-pals.md`](pen-pals.md)). **v0.6.5:**
-  probably another batch of activities.
+  moved onto it, shiritori, and pen pals ([`pen-pals.md`](pen-pals.md)). **v0.6.5:**
+  probably another batch of activities, with more games (candidates in
+  [`activities.md`](activities.md)).
 - **v0.7: the outdoor update:** seasons, and what it means for a persona to live in a place of its
   own (often fictional) with its own weather; weather events for personas (below). It will feed
   back into the "going out" activities.
@@ -63,9 +65,10 @@ planner:
   from 立夏 in early May, autumn from 立秋 in early August, winter from 立冬 in early November),
   so the theme and the planner's season band agree. In the southern hemisphere both would flip
   (see "Local seasons" in [`calendar.md`](calendar.md)).
-- **The look from the writing desk** (to decide for v0.5): sharp corners, ink outlines, cel
-  shading with hard-edged shadows, screentone instead of soft gradients, and 1990s Japanese
-  touches; see "The look" in [`activities.md`](activities.md).
+- **The look from the writing desk** (to decide for v0.5): cel shading with fine printed
+  linework, sharp corners, layers of card, and details from the stationery shop (index tabs,
+  washi tape, stamp cards, screentone); no soft gradients, thick outlines or pixel fonts. See
+  "The look" in [`activities.md`](activities.md).
 - **Persona marks** (agreed per persona; see [`calendar.md`](calendar.md)): besides the unread
   mark, a signature seal, a wake mark and a done mark. The signature seal could also sign letters
   or sit by the persona's name.
@@ -140,8 +143,9 @@ Things a persona can do in its heartbeats, beyond what v0.2 has. They run at the
 writing desk, in v0.6 and after ([`activities.md`](activities.md)):
 
 - **Making:** a picture for its sketchbook or for you, a poem or a haiku, its own stickers (v0.3).
-- **Playing, by post:** shiritori first (v0.6; see [`activities.md`](activities.md)), then
-  correspondence chess, twenty questions, a riddle left in a letter. The app keeps the board and the model only makes a move. Pen pals can play each other.
+- **Playing, by post:** shiritori first (v0.6; see [`activities.md`](activities.md)); for v0.6.5,
+  renga, twenty questions, word ladders, dots and boxes, battleship and exquisite corpse; later,
+  correspondence chess. Games have their own section and controls. The app keeps the board and the model only makes a move. Pen pals can play each other.
 - **Keeping:** a diary (the persona can seal entries), collections, the memory book.
 - **Going out:** reading a link you shared and writing notes; looking up something it's curious
   about; postcards from an imagined trip.
@@ -152,9 +156,10 @@ writing desk, in v0.6 and after ([`activities.md`](activities.md)):
 Rules:
 
 - **Every activity can be switched on or off per persona.** Expensive ones (pictures, web
-  lookups) are meant for a small core cast, so they start off for new personas.
-- **Slots:** making, playing and going out use activity slots; keeping is free (see
-  [`pen-pals.md`](pen-pals.md)).
+  lookups) are meant for a small core cast, so they start off for new personas, and they're
+  marked ¥¥.
+- **Slots:** by default making, playing and going out use activity slots and keeping is free (see
+  [`pen-pals.md`](pen-pals.md)); you can change which use a slot, per persona.
 - **Things you leave on the desk** (a link, a riddle, a game challenge) are offered first at the
   persona's next heartbeat.
 
