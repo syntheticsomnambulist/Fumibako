@@ -44,8 +44,11 @@ Artifacts**). Debug builds share one signing key, so a new build installs over t
 the repository is private that key is committed (`app/debug.keystore`). It must be replaced before
 the repository goes public: see [`docs/going-public.md`](docs/going-public.md), which CI enforces.
 
-**Stored data before 1.0:** there are no migrations. A database schema change wipes the app's data
-and it starts fresh, re-creating the sample persona.
+**Stored data:** updates keep the app's data. A database schema change bumps `HarnessDatabase`'s
+version and adds a migration step, with a test against the exported schema in `app/schemas`. The
+last three steps are kept, plus every step a tester's phone still needs (currently every step from
+database version 2). A phone on an older database starts fresh, re-creating the sample persona.
+Model fields need no migration: rows are JSON, and new fields get defaults.
 
 ## Architecture
 
@@ -174,7 +177,10 @@ editor can generate an avatar.
 - **New image backend**: implement `ImageGenerator` and pass it to `Harness(imageGenerator = …)`.
 - **Different storage**: implement the interfaces in `core/storage/Repositories.kt`.
 - Domain objects are stored as JSON documents, so adding fields with defaults needs no schema change.
-  Before 1.0, a schema change simply bumps `HarnessDatabase`'s version, which wipes local data.
+  A schema change bumps `HarnessDatabase`'s version and adds a step to its `MIGRATIONS`, with a test
+  in `MigrationTest` against the schema exported to `app/schemas`. Keep the last three steps, plus
+  every step a tester's phone still needs (see [`CLAUDE.md`](CLAUDE.md)); a phone on an older
+  database starts fresh.
 
 ## Testing
 
