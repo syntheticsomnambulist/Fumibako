@@ -41,6 +41,9 @@ enum class ActivityKind {
 
     /** Stuck a sticker on your note while you were away ([ActivityEntry.note]: its `:name:`). */
     STUCK_STICKER,
+
+    /** Drew new stickers for its sheet ([ActivityEntry.count] of them; [ActivityEntry.tags]: their art ids). */
+    DREW_STICKERS,
     ;
 
     /** Kinds that mark a heartbeat having happened. */

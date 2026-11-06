@@ -14,6 +14,8 @@ import dev.aiharness.core.stickers.StickerShelf
 import dev.aiharness.core.stickers.StickerSpot
 import dev.aiharness.core.storage.ConversationRepository
 import dev.aiharness.core.storage.PersonaRepository
+import dev.aiharness.core.stickers.StickerMaker
+import dev.aiharness.core.storage.StickerRepository
 import kotlinx.serialization.json.JsonObject
 
 private const val ON_HELP =
@@ -129,3 +131,46 @@ class PeelStickerTool(
         return ToolOutcome("Peeled ${service.nameOf(ref)} off.")
     }
 }
+
+/**
+ * Lets a persona draw a new sticker of itself for its sheet. In a heartbeat it's one of the things
+ * the persona can choose to do, and drawing several takes one slot between them.
+ */
+class DrawStickerTool(
+    private val maker: StickerMaker,
+    private val personas: PersonaRepository,
+    private val stickers: StickerRepository,
+) : AgentTool {
+    override val spec = ToolSpec(
+        name = "draw_sticker",
+        description = "Draw a new sticker of yourself for your sticker sheet: an expression, a pose or a little moment you'd " +
+            "like to stick on letters. It's drawn with how you look and your drawing style, and you can use it straight away.",
+        parameters = schema {
+            string("shows", "What it shows, as short image tags, e.g. \"sleepy, hugging a pillow\" or \"waving, big smile\".", required = true)
+            string("name", "Its name, like :yourname-sleepy: (short, lowercase, dashes).")
+            string("feeling", "The feeling it stands for, in a word, e.g. sleepy, proud, fond (optional).")
+        },
+    )
+
+    override fun isAvailable(settings: AppSettings) = settings.imageGen.ready
+
+    override fun isAvailableFor(settings: AppSettings, persona: Persona) = isAvailable(settings) && persona.stickers.draws
+
+    override suspend fun execute(args: JsonObject, context: ToolContext): ToolOutcome {
+        val persona = personas.get(context.persona.id) ?: context.persona
+        if (stickers.art(persona.id).size >= StickerMaker.SHEET_SIZE) {
+            return ToolOutcome("Your sheet is full (${StickerMaker.SHEET_SIZE} stickers).", isError = true)
+        }
+        if (context.slots?.take(ACTIVITY) == false) return ToolOutcome("You have no activities left this time.", isError = true)
+        val shows = args.requireString("shows").take(200)
+        val ref = maker.draw(context.settings.imageGen, persona, shows)
+        val art = maker.keep(ref, persona.id, args.string("name") ?: maker.suggestName(persona, shows), args.string("feeling"), prompt = shows)
+        return ToolOutcome("Drew :${art.name}: and put it on your sheet. You can stick it now.")
+    }
+
+    companion object {
+        /** The heartbeat activity drawing belongs to (it takes that activity's slot). */
+        const val ACTIVITY = "stickers"
+    }
+}
+

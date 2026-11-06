@@ -48,6 +48,7 @@ class HeartbeatEngine(private val h: Harness) {
         RecordEpisodesActivity(),
         ReflectActivity(),
         RevisitActivity(),
+        MakeStickersActivity(),
         SettleActivity(),
         SortFeelingsActivity(),
     )
@@ -207,6 +208,7 @@ class HeartbeatEngine(private val h: Harness) {
             // Compaction waits for the next real turn so a discarded heartbeat never moves the window.
             allowCompaction = false,
             emit = {},
+            slots = { activity -> beat.takeSlotFor(activity) },
         )
         val text = MoodTags.strip(outcome.finalText).trim()
         // Writing to the user takes a slot; with none left (other choices used them up) the letter is held back.

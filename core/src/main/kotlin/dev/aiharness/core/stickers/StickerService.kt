@@ -222,6 +222,19 @@ class StickerService(
     suspend fun tidy() = stickers.deletePeeledBefore(clock.nowMillis() - 30 * DAY)
 
     companion object {
+        /**
+         * The sticker a persona's unread letters wear: the one it was given, else its sticker for
+         * "hello" (by feeling, then by name), else none (the seal).
+         */
+        fun unreadMark(persona: dev.aiharness.core.model.Persona, sheet: List<StickerArt>): StickerArt? =
+            if (persona.unreadMark == SEAL) null
+            else sheet.firstOrNull { it.id == persona.unreadMark }
+                ?: sheet.firstOrNull { it.feeling == "hello" }
+                ?: sheet.firstOrNull { "hello" in it.name || "wave" in it.name }
+
+        /** The unread mark that means the 新 seal, not a sticker. */
+        const val SEAL = "seal"
+
         const val MIN_SCALE = 0.5f
         const val MAX_SCALE = 2.6f
         private const val DAY = 24 * 60 * 60 * 1000L

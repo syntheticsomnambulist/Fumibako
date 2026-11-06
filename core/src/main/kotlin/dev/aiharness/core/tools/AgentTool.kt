@@ -31,7 +31,15 @@ data class ToolContext(
     val background: Boolean,
     /** The persona's message that made this tool call (memories link back to it). */
     val messageId: String? = null,
+    /** In a heartbeat, the slots its meaningful actions share; null in a conversation. */
+    val slots: SlotKeeper? = null,
 )
+
+/** The heartbeat's slots, as a tool sees them: an activity takes one slot, once, however often it acts. */
+fun interface SlotKeeper {
+    /** Takes a slot for [activity] unless it already has one; false when none is left. */
+    fun take(activity: String): Boolean
+}
 
 data class ToolOutcome(
     /** Text returned to the model. */

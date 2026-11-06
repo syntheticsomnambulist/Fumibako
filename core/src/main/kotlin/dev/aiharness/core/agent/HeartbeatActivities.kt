@@ -14,6 +14,8 @@ import dev.aiharness.core.model.MemoryKind
 import dev.aiharness.core.model.MemoryLevel
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.stickers.StickerMaker
+import dev.aiharness.core.tools.DrawStickerTool
 import dev.aiharness.core.tools.feelingNote
 import dev.aiharness.core.util.HarnessJson
 import kotlinx.serialization.json.JsonObject
@@ -79,6 +81,14 @@ class Beat internal constructor(
         if (slotsLeft == 0) return false
         slotsUsed++
         return true
+    }
+
+    private val activitiesWithSlots = mutableSetOf<String>()
+
+    /** Uses one slot for [activity] the first time it acts in this heartbeat; later acts are free. */
+    fun takeSlotFor(activity: String): Boolean {
+        if (activity in activitiesWithSlots) return true
+        return takeSlot().also { if (it) activitiesWithSlots += activity }
     }
 
     /** Recent activity log for this persona (last two weeks), oldest first. */
@@ -300,6 +310,40 @@ class SortFeelingsActivity : HeartbeatActivity {
             val intensity = if (parts.any { it == "strong" }) Intensity.STRONG else Intensity.MILD
             key to Feeling(family, intensity)
         }.toMap()
+    }
+}
+
+/**
+ * Now and then invites a persona that draws its own stickers to make one or a few for its sheet
+ * (at most every three days, while its sheet has room and pictures can be drawn). Making them is
+ * one of its choices and takes one slot, however many it draws.
+ */
+class MakeStickersActivity : HeartbeatActivity {
+    override val name = DrawStickerTool.ACTIVITY
+    override val usesSlot = true
+
+    override suspend fun invite(beat: Beat): String? {
+        val persona = beat.persona
+        if (!persona.stickers.draws || !beat.setup.settings.imageGen.ready) return null
+        if (!beat.h.tools.available(beat.setup.settings, persona).any { it.spec.name == "draw_sticker" }) return null
+        val now = beat.now
+        if ((beat.lastActivity(ActivityKind.DREW_STICKERS) ?: 0L) > now - 3 * DAY) return null
+        if ((beat.lastInvited(name) ?: 0L) > now - DAY) return null
+        val sheet = beat.h.stickers.art(persona.id)
+        if (sheet.size >= StickerMaker.SHEET_SIZE) return null
+        return buildString {
+            append("You could draw a sticker or a few for your sheet with draw_sticker: an expression or a little moment of ")
+            append("yourself you'd like to stick on letters.")
+            if (sheet.isEmpty()) append(" Your sheet is empty so far; one for saying hello is a good start.")
+            else append(" You have ").append(sheet.joinToString(" ") { ":${it.name}:" }).append('.')
+            append(" However many you draw, it counts as one thing.")
+        }
+    }
+
+    override suspend fun after(beat: Beat, moment: Moment?) {
+        moment ?: return
+        val drawn = moment.calls.count { (call, result) -> call.name == "draw_sticker" && result != null && !result.isError }
+        if (drawn > 0) beat.h.logActivity(beat.persona.id, ActivityKind.DREW_STICKERS, beat.setup.conversation.id, drawn)
     }
 }
 

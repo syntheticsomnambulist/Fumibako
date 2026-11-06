@@ -17,6 +17,7 @@ import dev.aiharness.app.data.db.HarnessDatabase
 import dev.aiharness.app.engine.GenerationManager
 import dev.aiharness.app.heartbeat.HeartbeatScheduler
 import dev.aiharness.app.heartbeat.Notifier
+import dev.aiharness.app.ui.stickers.PlainBackgroundCutter
 import dev.aiharness.core.Harness
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.Persona
@@ -53,6 +54,7 @@ class AppContainer(private val context: Context) {
         blobs = blobStore,
         activity = RoomActivityRepository(database.dao()),
         stickers = RoomStickerRepository(database.dao()),
+        stickerCutter = PlainBackgroundCutter,
         log = { Log.d("Harness", it) },
     )
 

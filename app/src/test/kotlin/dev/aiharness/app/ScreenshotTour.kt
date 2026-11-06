@@ -185,6 +185,14 @@ class ScreenshotTour {
         shot("${prefix}_04_persona_page")
         scrollTo("Wakes now and then")
         shot("${prefix}_04b_persona_page_more")
+        scrollTo("Open sheet")
+        click("Open sheet")
+        compose.waitUntilAtLeastOneExists(hasContentDescription(":aria-hello: sticker"), 10_000)
+        shot("${prefix}_04c_persona_stickers")
+        scrollTo("can peel off mine")
+        shot("${prefix}_04d_persona_stickers_more")
+        back()
+        waitFor("Open sheet")
 
         top()
         click("Edit")
@@ -389,6 +397,19 @@ class ScreenshotTour {
                 path.close()
                 canvas.drawPath(path, paint)
             }
+            "sun" -> {
+                paint.color = 0xFFE3940B.toInt()
+                canvas.drawCircle(100f, 100f, 46f, paint)
+                paint.strokeWidth = 12f
+                paint.strokeCap = Paint.Cap.ROUND
+                for (i in 0 until 8) {
+                    val a = Math.toRadians(i * 45.0)
+                    canvas.drawLine(100f + 62f * Math.cos(a).toFloat(), 100f + 62f * Math.sin(a).toFloat(), 100f + 88f * Math.cos(a).toFloat(), 100f + 88f * Math.sin(a).toFloat(), paint)
+                }
+                paint.color = 0xFF5D4C3C.toInt()
+                canvas.drawCircle(84f, 94f, 6f, paint)
+                canvas.drawCircle(116f, 94f, 6f, paint)
+            }
             else -> {
                 paint.color = 0xFFC43C32.toInt()
                 paint.style = Paint.Style.STROKE
@@ -476,7 +497,8 @@ class ScreenshotTour {
         val heart = StickerArt(newId(), "aria-heart", aria.id, imageRef = h.blobs.put(stickerShape("heart"), "png"), feeling = "fond", createdAt = now)
         val star = StickerArt(newId(), "gold-star", imageRef = h.blobs.put(stickerShape("star"), "png"), createdAt = now)
         val seal = StickerArt(newId(), "hanamaru", kind = StickerArtKind.STAMP, imageRef = h.blobs.put(stickerShape("ring"), "png"), createdAt = now)
-        listOf(heart, star, seal).forEach { h.stickers.upsertArt(it) }
+        val hello = StickerArt(newId(), "aria-hello", aria.id, imageRef = h.blobs.put(stickerShape("sun"), "png"), feeling = "hello", createdAt = now + 1)
+        listOf(heart, star, seal, hello).forEach { h.stickers.upsertArt(it) }
         val stick = h.stickerService
         stick.stick(conversation.id, StickerTarget.message(letters[4].id), StickerRef.Art(heart.id), aria.id, 0.03f, 0.7f, rotationDeg = -12f)
         stick.stick(conversation.id, StickerTarget.message(letters[5].id), StickerRef.Art(star.id), null, 0.86f, 0.72f, rotationDeg = 14f, scale = 1.1f)

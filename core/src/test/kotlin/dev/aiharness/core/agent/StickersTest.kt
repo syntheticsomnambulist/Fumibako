@@ -1,6 +1,11 @@
 package dev.aiharness.core.agent
 
 import dev.aiharness.core.TestEnv
+import dev.aiharness.core.image.ImageProfiles
+import dev.aiharness.core.model.Credential
+import dev.aiharness.core.model.CredentialKind
+import dev.aiharness.core.model.ImageHost
+import dev.aiharness.core.storage.SecretStore
 import dev.aiharness.core.llm.LlmMessage
 import dev.aiharness.core.llm.LlmPart
 import dev.aiharness.core.llm.LlmToolCall
@@ -171,4 +176,75 @@ class StickersTest {
         val logged = env.activity.forPersona(env.persona.id, 0).single { it.kind == ActivityKind.STUCK_STICKER }
         assertEquals(":crossed_fingers:", logged.note)
     }
+
+    private suspend fun readyToDraw(env: TestEnv) {
+        env.credentials.upsert(Credential("nai", "NovelAI", CredentialKind.NOVELAI))
+        env.secrets.put(SecretStore.credentialKey("nai"), "key")
+        env.settingsRepo.update { it.copy(imageGen = it.imageGen.copy(profiles = listOf(ImageProfiles.preset(ImageHost.NOVELAI, "pic").copy(credentialId = "nai")), defaultStyle = "watercolor")) }
+        env.personas.upsert(env.persona.copy(selfPrompt = "1girl, silver hair", defaultOutfit = "green cardigan"))
+    }
+
+    @Test
+    fun aPersonaDrawsAStickerOfItselfOntoItsSheet() = runTest {
+        val env = TestEnv().apply { seed() }
+        readyToDraw(env)
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(toolTurn("c1", "draw_sticker", """{"shows":"sleepy, hugging a pillow","name":":Mira Sleepy!:","feeling":"Sleepy"}"""))
+        env.provider.then(LlmTurnResult(text = "Made you something."))
+        env.harness.agent.send(conversation.id, "Draw yourself a sticker?").toList()
+
+        val art = env.stickers.art(env.persona.id).single()
+        assertEquals("mira-sleepy", art.name)
+        assertEquals("sleepy", art.feeling)
+        assertEquals("sleepy, hugging a pillow", art.prompt)
+        val prompt = env.images.requests.single().prompt
+        assertContains(prompt, "1girl, silver hair, green cardigan, chibi, sticker")
+        assertContains(prompt, "sleepy, hugging a pillow, watercolor")
+        assertTrue(env.harness.blobs.get(art.imageRef) != null, "the cut-out picture is kept")
+
+        // A second one with the same name gets its own.
+        env.provider.then(toolTurn("c2", "draw_sticker", """{"shows":"sleepy again","name":"mira-sleepy"}"""))
+        env.provider.then(LlmTurnResult(text = "Another!"))
+        env.harness.agent.send(conversation.id, "Again").toList()
+        assertEquals(listOf("mira-sleepy", "mira-sleepy-2"), env.stickers.art(env.persona.id).map { it.name })
+    }
+
+    @Test
+    fun drawingSeveralInAHeartbeatTakesOneSlot() = runTest {
+        val env = TestEnv().apply { seed() }
+        readyToDraw(env)
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(LlmTurnResult(text = "Night!"))
+        env.harness.agent.send(conversation.id, "Night").toList()
+        env.clock.advanceMinutes(240)
+        env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(activityLimit = 2))) }
+        env.provider.then { request ->
+            val note = (request.messages.last() as LlmMessage.User).parts.filterIsInstance<LlmPart.Text>().joinToString { it.text }
+            assertContains(note, "draw_sticker")
+            toolTurn("d1", "draw_sticker", """{"shows":"waving"}""")
+        }
+        env.provider.then(toolTurn("d2", "draw_sticker", """{"shows":"sleepy"}"""))
+        env.provider.then(LlmTurnResult(text = "I drew some stickers while you slept."))
+
+        assertIs<HeartbeatOutcome.Sent>(env.harness.heartbeat.run().single(), "two stickers took one slot, the letter the other")
+        assertEquals(2, env.stickers.art(env.persona.id).size)
+        assertEquals(2, env.activity.forPersona(env.persona.id, 0).single { it.kind == ActivityKind.DREW_STICKERS }.count)
+    }
+
+    @Test
+    fun withOneSlotTheStickersHoldTheLetterBack() = runTest {
+        val env = TestEnv().apply { seed() }
+        readyToDraw(env)
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(LlmTurnResult(text = "Night!"))
+        env.harness.agent.send(conversation.id, "Night").toList()
+        env.clock.advanceMinutes(240)
+        env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(activityLimit = 1))) }
+        env.provider.then(toolTurn("d1", "draw_sticker", """{"shows":"waving"}"""))
+        env.provider.then(LlmTurnResult(text = "And a letter too!"))
+
+        assertIs<HeartbeatOutcome.Silent>(env.harness.heartbeat.run().single())
+        assertEquals(1, env.stickers.art(env.persona.id).size, "the sticker stays on the sheet")
+    }
 }
+

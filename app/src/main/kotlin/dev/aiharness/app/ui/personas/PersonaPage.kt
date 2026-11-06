@@ -27,6 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
@@ -71,6 +73,10 @@ import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.TapePattern
 import dev.aiharness.core.util.newId
+import dev.aiharness.app.ui.stickers.StickerBaker
+import dev.aiharness.app.ui.stickers.StickerPicture
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.stickers.StickerService
 import kotlinx.coroutines.launch
 
 /**
@@ -311,12 +317,34 @@ private fun LazyListScope.viewCards(p: Persona, nav: NavController, mode: Heartb
         }
     }
     item {
-        PageCard(p, layouts[2], "unread") {
-            CardTitle("Unread mark")
+        val harness = LocalAppContainer.current.harness
+        val art by remember { harness.stickers.observeArt() }.collectAsStateWithLifecycle(emptyList())
+        val sheet = art.filter { it.ownerPersonaId == p.id }
+        val mark = StickerService.unreadMark(p, sheet)
+        val dayInk = stationery.dayColors.ink(p.ink)
+        PageCard(p, layouts[2], "stickers") {
+            CardTitle(
+                "Stickers",
+                note = if (sheet.size == 1) "1 sticker" else "${sheet.size} stickers",
+                trailing = { InkLink(if (sheet.isEmpty()) "Draw some" else "Open sheet", stationery.ink(p.ink)) { nav.navigate(Routes.personaStickers(p.id)) } },
+            )
+            if (sheet.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy((-6).dp)) {
+                    sheet.take(6).forEachIndexed { i, a ->
+                        StickerPicture(
+                            StickerRef.Art(a.id),
+                            dayInk,
+                            Modifier.size((44 * StickerBaker.BOX).dp).graphicsLayer { rotationZ = if (i % 2 == 0) -6f else 5f },
+                            name = ":${a.name}: sticker",
+                        )
+                    }
+                }
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                UnreadSeal(p.ink, size = 40.dp)
+                if (mark == null) UnreadSeal(p.ink, size = 34.dp)
                 Text(
-                    "The 新 seal, in ${p.name}'s ink. Custom marks arrive with stickers.",
+                    mark?.let { "Unread letters from ${p.name} wear :${it.name}:." } ?: "Unread letters wear the 新 seal in ${p.name}'s ink" +
+                        (if (sheet.isEmpty()) ", until ${p.name} has a sticker for hello." else "."),
                     style = PaperType.noteBody.copy(fontSize = 13.sp, lineHeight = 19.sp),
                     color = paper.usuzumi1,
                     modifier = Modifier.weight(1f),

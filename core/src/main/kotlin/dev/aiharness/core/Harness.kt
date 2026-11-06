@@ -37,10 +37,13 @@ import dev.aiharness.core.storage.PersonaRepository
 import dev.aiharness.core.storage.SecretStore
 import dev.aiharness.core.storage.SettingsRepository
 import dev.aiharness.core.storage.StickerRepository
+import dev.aiharness.core.stickers.StickerCutter
+import dev.aiharness.core.stickers.StickerMaker
 import dev.aiharness.core.stickers.StickerService
 import dev.aiharness.core.storage.UserPersonaRepository
 import dev.aiharness.core.tools.AgentTool
 import dev.aiharness.core.tools.ChangeOutfitTool
+import dev.aiharness.core.tools.DrawStickerTool
 import dev.aiharness.core.tools.GenerateImageTool
 import dev.aiharness.core.tools.MemoryForgetTool
 import dev.aiharness.core.tools.MemorySaveTool
@@ -85,11 +88,14 @@ class Harness(
     val providers: ProviderRegistry = defaultProviders(),
     imageGenerator: ImageGenerator = HostImageGenerator(),
     embedderFactory: EmbedderFactory? = null,
+    /** Cuts drawn stickers out of their white background; the app supplies one (this default leaves them as drawn). */
+    stickerCutter: StickerCutter = StickerCutter { it },
     val log: (String) -> Unit = {},
 ) {
     val memory = MemoryService(memories, settings, embedderFactory ?: EmbedderFactory.default(::apiKey), clock, log)
     val images = ImageService(imageGenerator, blobs, ::apiKey)
     val stickerService = StickerService(stickers, settings, clock)
+    val stickerMaker = StickerMaker(images, blobs, stickers, stickerCutter, clock)
     val tools = ToolRegistry(
         listOf(
             MemorySaveTool(memory),
@@ -100,6 +106,7 @@ class Harness(
             ChangeOutfitTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
             PlaceStickerTool(stickerService, personas, conversations) { id, kind, conversationId, note -> logActivity(id, kind, conversationId, note = note) },
             PeelStickerTool(stickerService, personas, conversations),
+            DrawStickerTool(stickerMaker, personas, stickers),
         ),
     )
     val prompts = PromptAssembler()

@@ -64,6 +64,7 @@ object Routes {
     fun chat(id: String) = "chat/$id"
     fun personaPage(id: String) = "page/$id"
     fun personaHeartbeat(id: String) = "page/$id/heartbeat"
+    fun personaStickers(id: String) = "page/$id/stickers"
     fun youPage(id: String) = "you/$id"
     fun settings(section: String) = "settings/$section"
     fun memory(personaId: String) = "memory/$personaId"
@@ -105,6 +106,7 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
             composable("chat/{id}") { entry -> ChatScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.PERSONAS) { PersonasScreen(nav) }
             composable("page/{id}/heartbeat") { entry -> PersonaHeartbeatScreen(nav, entry.arguments?.getString("id").orEmpty()) }
+            composable("page/{id}/stickers") { entry -> dev.aiharness.app.ui.personas.PersonaStickersScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("you/{id}") { entry -> YouPageScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("page/{id}") { entry -> PersonaPageScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("memory/{id}") { entry -> MemoryBookScreen(nav, entry.arguments?.getString("id").orEmpty()) }

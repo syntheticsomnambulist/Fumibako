@@ -21,6 +21,7 @@ import dev.aiharness.core.model.MoodTags
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.ToolMode
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.tools.SlotKeeper
 import dev.aiharness.core.tools.ToolContext
 import dev.aiharness.core.tools.ToolOutcome
 import dev.aiharness.core.util.newId
@@ -163,6 +164,7 @@ class AgentRunner(private val h: Harness) {
         background: Boolean,
         allowCompaction: Boolean,
         emit: suspend (AgentEvent) -> Unit,
+        slots: SlotKeeper? = null,
     ): TurnOutcome {
         var conversation = setup.conversation
         val transcript = baseHistory.toMutableList()
@@ -237,7 +239,7 @@ class AgentRunner(private val h: Harness) {
             // Don't run tools from a truncated turn: their arguments may be incomplete.
             if (turn.toolCalls.isEmpty() || turn.stopReason == StopReason.MAX_TOKENS) break
 
-            val toolContext = ToolContext(conversation, setup.persona, setup.userPersona, setup.settings, background, messageId = assistant.id)
+            val toolContext = ToolContext(conversation, setup.persona, setup.userPersona, setup.settings, background, messageId = assistant.id, slots = slots)
             val resultParts = mutableListOf<ContentPart>()
             turn.toolCalls.forEach { call ->
                 emit(AgentEvent.ToolStarted(call.name, call.argumentsJson))
