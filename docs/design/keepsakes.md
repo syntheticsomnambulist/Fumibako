@@ -81,9 +81,10 @@ the persona what it pasted in.
 
 You might want a book too: pasting photos, songs, cuttings and lines from letters into your own
 scrapbook, with stickers. This is now part of a desk of your own, with your scrapbooks and
-trinkets (see "Your desk" in [`activities.md`](activities.md)). Not designed yet.
+trinkets: see "Your desk and the Desk tab" in [`activities.md`](activities.md), designed for
+v0.6.
 
 ## Open
 
 - **When (settled):** shipped with media in v0.3.5 (see `docs/plan-v0.3.5.md` on the build branch).
-- **Your scrapbook:** what it holds and where it lives.
+- **Your scrapbook (designed):** see "Your desk and the Desk tab" in [`activities.md`](activities.md).

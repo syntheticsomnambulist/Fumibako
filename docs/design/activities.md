@@ -106,8 +106,9 @@ prompt cache is unaffected.
 
 ## The desk page (proposed)
 
-Reached from the persona's page ("Aria's desk") and by tapping a "While you were away" line. It
-replaces the persona's heartbeat page.
+In the **Desk** tab (see *Your desk and the Desk tab*), with the persona's name tab chosen; her
+page's "Aria's desk" and a "While you were away" line open the tab at her desk. It replaces the
+persona's heartbeat page.
 
 - **The desk:** seen from above, in the persona's paper, with one object for each activity that's
   switched on: a sketchbook (its drawings and stickers), a diary, a game board, a letter tray for
@@ -209,12 +210,51 @@ out, and open to more in the v0.7 outdoor update. The details below were agreed 
 - **Storage:** trinkets are a new table (owner, name, description, kind, tint or picture, origin,
   given-by, created), a migration step.
 
-## Your desk (not designed yet)
+## Your desk and the Desk tab
 
-The user's idea (2026-11-06): a desk of your own, beside your personas'. It would hold your
-scrapbooks (more than one), a trinket dish for what personas give you, and the like. It takes
-over "a scrapbook of your own" from [`keepsakes.md`](keepsakes.md). Trinkets in v0.6 need
-somewhere to land, so at least a small version of it comes then.
+The user's idea (2026-11-06): a desk of your own, beside your personas'. It takes over "a
+scrapbook of your own" from [`keepsakes.md`](keepsakes.md), and gives the trinkets personas give
+you somewhere to land.
+
+### Agreed
+
+- **A fifth tab, 机 Desk,** between Personas and Planner (文 Letters, 人 Personas, 机 Desk,
+  帳 Planner, 設 Settings), where you look between all the desks: yours and your personas'.
+- **Name tabs along the top** switch desks, like folder tabs, each with its owner's portrait and
+  a band of their tape: your personas' desks first ("Sam, your desk"), a small gap, then the
+  personas' (Aria, Juno, Haru). The chosen tab joins the page.
+- **One desk for each of your personas,** like their planners: what a persona gives Sam lands on
+  Sam's desk.
+- **In v0.6:** the trinket dish and one scrapbook. More scrapbooks and other objects later.
+- **Scrapbook pages:** adding is quick, things flowing into the next free spot; while arranging,
+  anything can go anywhere.
+- **Telling her:** when you paste something of a persona's (her drawing, a line from her letter),
+  she hears in her next context ("Sam pasted your window cat into their scrapbook"), with a switch
+  on each scrapbook to keep it private. Only the one whose it is hears.
+
+### Proposed
+
+- **Your desk** (Sam's, in your ink and tape): the scrapbook, the trinket dish, your sticker sheet
+  (the one in Settings, Stickers, now also on your desk) and a pencil, on a desk pad like hers,
+  with room for more later. Below: **Lately on your desk** ("Aria gave you an acorn, in a glassine
+  envelope"; "You pasted the window cat into your scrapbook. Aria heard.").
+- **Your trinket dish** opens a sheet: each trinket's picture, its name in the giver's hand, what
+  it is, who gave it and in which letter (**Open the letter it came in**).
+- **The scrapbook:** a page in its book (a cover in your ink with a label, pasted things peeking
+  out). Its pieces are what the memory book shows for keepsakes (a polaroid, a ticket stub, a
+  J-card, a cutting, a film strip's frames) plus **a line cut from a letter** (the words in the
+  letters face on a scissor-cut strip, with who wrote it and when), your own **photos**, **notes
+  in your hand**, and **stickers** from your sheet.
+- **Adding:** in a letter, select words and **Cut out for your scrapbook**, or hold a picture,
+  cutting, ticket or cassette and **Paste in your scrapbook**; or on the page, **From a letter**,
+  **A photo**, **A note**, **A sticker**. Each lands in the next free spot ("What you add next lands
+  here"), with "Aria will hear about it" when she will.
+- **Arranging:** **Arrange** outlines every piece; tap one, then move it, turn it, change its tape
+  (corners, top, none) or take it off the page; **Done** keeps it where you put it. Pieces keep
+  their place; new ones keep flowing after the last.
+- **Storage:** scrapbooks, pages and pieces (kind, what it points at, position, turn, tape),
+  pieces pointing at the original attachment or message so stickers stay stuck and "open the
+  letter it came from" works.
 
 ## The look
 
@@ -310,10 +350,16 @@ https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn
 - **What Aria sees at her desk:** one heartbeat's three calls (sitting down, her sketchbook,
   writing to you), what each is given, roughly what each costs, and the line that reaches your
   thread afterwards.
+- **The Desk tab** (added after the font audit): **Aria's desk** now sits in it, with the name tabs
+  along the top. **Sam's desk** has the scrapbook, the trinket dish (tap it for the sheet), the
+  sticker sheet and "Lately on your desk". **Your scrapbook**: add a note, photo or sticker and
+  watch it land in the next free spot; **Arrange**, tap a piece, then move, turn, re-tape or remove
+  it; the switch for telling personas. **Pasting from a letter**: cut out a line, or paste the
+  polaroid, from Aria's letter.
 
 ## Open
 
-- **Your desk:** what's on it and where it lives in the app, and how much of it comes in v0.6.
+- **Your desk:** the proposed details in *Your desk and the Desk tab* (the sticker sheet on it, the pieces, arranging).
 
 - **The look beyond the desk:** mostly settled in v0.5 (soft shadows, the chosen faces, tapes in
   two shades, all across the app); drawn objects in the desk's style elsewhere are still to come.
