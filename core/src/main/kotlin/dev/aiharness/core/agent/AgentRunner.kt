@@ -211,6 +211,8 @@ class AgentRunner(private val h: Harness) {
                 }
             }
             val turn = result ?: throw LlmException("The model stream ended without a result", retryable = true)
+            // Pages the provider opened itself (Claude's web fetch): the persona's read stamp lands on their cuttings.
+            turn.opened.forEach { url -> runCatching { h.linkReading.markRead(conversation.id, url, setup.persona.id) } }
             val refused = turn.stopReason == StopReason.REFUSAL
 
             val assistant = ChatMessage(

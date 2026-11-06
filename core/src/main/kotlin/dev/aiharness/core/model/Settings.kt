@@ -19,6 +19,7 @@ data class AppSettings(
     val moodTags: Boolean = true,
     val theme: ThemeSettings = ThemeSettings(),
     val stickers: StickerSettings = StickerSettings(),
+    val media: MediaSettings = MediaSettings(),
     /** Mood words the built-in list didn't know, sorted once by a model and remembered. */
     val learnedFeelings: Map<String, Feeling> = emptyMap(),
 ) {
@@ -241,6 +242,15 @@ enum class StickerSize(val label: String, val dp: Int) { SMALL("Small", 40), MED
 
 @Serializable
 enum class OutlineWidth(val label: String, val dp: Float) { THIN("Thin", 1.5f), USUAL("Usual", 2.5f), THICK("Thick", 3.5f) }
+
+/** Links, pictures and playback (the Media page). */
+@Serializable
+data class MediaSettings(
+    /** Open links in the app's own browser (Custom Tabs); off, in the phone's default browser. */
+    val linksInApp: Boolean = true,
+    /** Personas can open links you share (Claude's web fetch, or the app's fetcher on the phone). */
+    val personasOpenLinks: Boolean = true,
+)
 
 @Serializable
 data class StickerSettings(

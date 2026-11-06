@@ -8,12 +8,20 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.last
 import kotlinx.serialization.json.JsonObject
 
-/** A function tool offered to the model. [parameters] is a JSON Schema object. */
+/**
+ * A function tool offered to the model. [parameters] is a JSON Schema object. A tool with a
+ * [server] counterpart is sent as that provider-hosted tool where the provider has one (Claude's
+ * web fetch for `open_link`), and as this function tool elsewhere.
+ */
 data class ToolSpec(
     val name: String,
     val description: String,
     val parameters: JsonObject,
+    val server: ServerTool? = null,
 )
+
+/** Tools a provider can run on its own servers in place of ours. */
+enum class ServerTool { WEB_FETCH }
 
 /** Provider-neutral conversation message. Providers translate these to their wire format. */
 sealed interface LlmMessage {
@@ -69,6 +77,8 @@ data class LlmTurnResult(
     val replay: String? = null,
     val refusal: RefusalInfo? = null,
     val modelId: String? = null,
+    /** Pages the provider opened itself this turn (Claude's web fetch), by address. */
+    val opened: List<String> = emptyList(),
 )
 
 sealed interface LlmEvent {

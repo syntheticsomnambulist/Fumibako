@@ -145,7 +145,13 @@ private fun postscriptsOf(messages: List<ChatMessage>): List<Postscript> {
             )
             "peel_sticker" -> Postscript("Peeled", result.content.removePrefix("Peeled ").removeSuffix("."))
             "draw_sticker" -> Postscript("Drew a new sticker:", Regex(":[a-z0-9_-]+:").find(result.content)?.value)
-            "memory_search", "generate_image" -> null
+            // The page it read, by its title (its read stamp is on the cutting too).
+            "open_link" -> Postscript(
+                "Read the page:",
+                Regex("""<page url="([^"]*)"(?: title="([^"]*)")?""").find(result.content)?.let { m -> m.groupValues[2].ifBlank { m.groupValues[1] } },
+            )
+            // What it shared is in the letter, as a cutting or a ticket.
+            "memory_search", "generate_image", "share_link" -> null
             else -> Postscript("Used ${result.name}.", null)
         }
     }
@@ -158,6 +164,8 @@ private fun toolVerb(name: String) = when (name) {
     "change_outfit" -> "change clothes"
     "place_sticker" -> "stick a sticker"
     "peel_sticker" -> "peel a sticker off"
+    "open_link" -> "open the page"
+    "share_link" -> "share a link"
     "draw_sticker" -> "draw a sticker"
     else -> "use $name"
 }

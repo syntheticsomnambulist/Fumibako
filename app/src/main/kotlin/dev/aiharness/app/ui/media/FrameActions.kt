@@ -8,7 +8,10 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.browser.customtabs.CustomTabColorSchemeParams
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.FileProvider
+import dev.aiharness.app.R
 import dev.aiharness.app.data.FileBlobStore
 import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ContentPart
@@ -17,14 +20,38 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * What a frame does when tapped or held, until the in-app players (step 4) and browser (step 5):
- * open it in the app that handles it, share it, save it to the phone, or copy a link.
+ * What a frame does when opened outside the app's players, or held: open a page or a file, share
+ * it, save it to the phone, or copy a link.
  */
 object FrameActions {
     private fun uriFor(context: Context, file: File): Uri = FileProvider.getUriForFile(context, "${context.packageName}.files", file)
 
     /** The file behind an attachment or picture, when it's stored in the app. */
     fun fileOf(blobs: FileBlobStore, ref: String?): File? = ref?.let { blobs.fileFor(it) }?.takeIf { it.exists() }
+
+    /**
+     * Opens a web address: in the app's own browser (Custom Tabs, its toolbar in the paper's
+     * [toolbar] color, sliding up), or with [inApp] off in the phone's default browser. A music
+     * service's link opens in its app when that's installed.
+     */
+    fun openLink(context: Context, url: String, inApp: Boolean, toolbar: Int, night: Boolean) {
+        val uri = Uri.parse(url)
+        val web = uri.scheme == "https" || uri.scheme == "http"
+        if (inApp && web) {
+            val colors = CustomTabColorSchemeParams.Builder().setToolbarColor(toolbar).setNavigationBarColor(toolbar).build()
+            val tab = CustomTabsIntent.Builder()
+                .setDefaultColorSchemeParams(colors)
+                .setColorScheme(if (night) CustomTabsIntent.COLOR_SCHEME_DARK else CustomTabsIntent.COLOR_SCHEME_LIGHT)
+                .setShowTitle(true)
+                .setStartAnimations(context, R.anim.sheet_up, R.anim.stay)
+                .setExitAnimations(context, R.anim.stay, R.anim.sheet_down)
+                .build()
+            tab.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (runCatching { tab.launchUrl(context, uri) }.isSuccess) return
+        }
+        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            .onFailure { Toast.makeText(context, "No app on this phone opens that.", Toast.LENGTH_SHORT).show() }
+    }
 
     /** Opens [attachment]: a link's page, or the file in whichever app handles it. */
     fun open(context: Context, blobs: FileBlobStore, attachment: ContentPart.Attachment) {

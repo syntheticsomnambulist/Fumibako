@@ -37,6 +37,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.animation.core.spring
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -395,7 +396,9 @@ fun TicketStub(song: ContentPart.Attachment, ink: Color, behind: Color, scale: F
                 Modifier.weight(1f).fillMaxSize().padding(horizontal = (14 * scale).dp, vertical = (11 * scale).dp),
                 verticalArrangement = Arrangement.spacedBy((2 * scale).dp),
             ) {
-                Text("SIDE A · TRACK 1", style = ui(9.5f * scale, bold = true, spacing = 0.16f), color = ink)
+                // A song shared from a service says where it plays.
+                val label = song.site?.takeIf { song.ref == null && song.url != null }?.uppercase() ?: "SIDE A · TRACK 1"
+                Text(label, style = ui(9.5f * scale, bold = true, spacing = 0.16f), color = ink)
                 Text(song.title ?: "a song", style = news(20f * scale, bold = true), color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 song.artist?.let { Text(it, style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = (13 * scale).sp), color = SoftBrown, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 song.lengthMs?.let { Text(clock(it), style = ui(10f * scale, spacing = 0.08f), color = SoftBrown) }
@@ -433,7 +436,7 @@ fun TicketStub(song: ContentPart.Attachment, ink: Color, behind: Color, scale: F
  * front, as if gripping it.
  */
 @Composable
-fun Cutting(link: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifier: Modifier = Modifier) {
+fun Cutting(link: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifier: Modifier = Modifier, readBy: Color? = null) {
     Box(modifier.width((288 * scale).dp).lamplit()) {
         val clipAt = Modifier.align(Alignment.TopEnd).padding(end = (24 * scale).dp)
         Paperclip(ink, scale, front = false, clipAt)
@@ -463,8 +466,58 @@ fun Cutting(link: ContentPart.Attachment, ink: Color, scale: Float = 1f, modifie
             link.snippet?.let { Text(it, style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = (12.5f * scale).sp, lineHeight = (18.75f * scale).sp), color = Color(0xFF3E342B), maxLines = 4, overflow = TextOverflow.Ellipsis) }
         }
         Paperclip(ink, scale, front = true, clipAt)
+        readBy?.let { ReadStamp(it, scale, Modifier.align(Alignment.BottomEnd).padding(end = (14 * scale).dp, bottom = (12 * scale).dp)) }
     }
 }
+
+/**
+ * The persona's 読 ("read") stamp, inked on a cutting it opened. When it lands while you watch it
+ * comes down from 1.9× and −26° to 1× and −12° with a slight bounce (460ms) and a light tick.
+ */
+@Composable
+fun ReadStamp(ink: Color, scale: Float, modifier: Modifier = Modifier) {
+    val instant = reducedMotion()
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    // At rest unless it's just been made (see LandStamp).
+    val landing = remember { Animatable(1f) }
+    val size = (50 * scale).dp
+    Box(
+        modifier
+            .size(size)
+            .graphicsLayer {
+                val t = landing.value
+                val grow = 1f + 0.9f * (1f - t)
+                scaleX = grow
+                scaleY = grow
+                rotationZ = -12f - 14f * (1f - t)
+                alpha = (0.15f + t).coerceAtMost(1f) * 0.88f
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.matchParentSize()) {
+            val r = this.size.minDimension / 2
+            drawCircle(ink, r * 0.94f, style = Stroke(width = r * 0.11f))
+            drawCircle(ink, r * 0.78f, style = Stroke(width = r * 0.04f))
+        }
+        Text("読", style = TextStyle(fontSize = (size.value * 0.46f).sp, fontWeight = FontWeight.Bold), color = ink)
+    }
+    LandStamp(landing, instant) { haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.SegmentTick) }
+}
+
+/** Runs a stamp's landing once, when it first appears in a letter already on screen. */
+@Composable
+private fun LandStamp(landing: Animatable<Float, androidx.compose.animation.core.AnimationVector1D>, instant: Boolean, tick: () -> Unit) {
+    val fresh = LocalFreshStamp.current
+    LaunchedEffect(Unit) {
+        if (!fresh || instant) return@LaunchedEffect
+        landing.snapTo(0f)
+        landing.animateTo(1f, spring(dampingRatio = 0.55f, stiffness = 520f))
+        tick()
+    }
+}
+
+/** True where a read stamp has just been made (not one that was already there when the letter opened). */
+val LocalFreshStamp = compositionLocalOf { false }
 
 private val CutShape = GenericShape { size, _ ->
     val w = size.width
@@ -612,12 +665,13 @@ fun AttachmentFrame(
     punched: Boolean = false,
     modifier: Modifier = Modifier,
     run: Boolean = false,
+    readBy: Color? = null,
 ) {
     when (attachment.kind) {
         AttachmentKind.FILE -> LuggageTag(attachment, ink, scale, modifier)
         AttachmentKind.PLAYLIST -> Cassette(attachment, ink, scale, modifier)
         AttachmentKind.SONG -> TicketStub(attachment, ink, behind, scale, punched, modifier)
-        AttachmentKind.LINK -> Cutting(attachment, ink, scale, modifier)
+        AttachmentKind.LINK -> Cutting(attachment, ink, scale, modifier, readBy)
         AttachmentKind.VIDEO -> FilmStrip(attachment, scale, modifier, run)
     }
 }

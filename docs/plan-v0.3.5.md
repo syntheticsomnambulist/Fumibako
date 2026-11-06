@@ -64,7 +64,21 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   the first time it plays; a cutting lifts before opening; a film strip runs through as if in a
   projector while its player opens; frames in a letter that arrives, or a note just sent, drop
   onto the page one after another. With Android's "Remove animations" on, every effect is
-  instant. Still to come in step 5: the read stamp, and the in-app browser for cuttings.
+  instant.
+- **Step 5, links and personas' media: done.** Cuttings open in the app's own browser (Custom
+  Tabs, its toolbar in the paper color, sliding up), or the phone's default with Settings, Media,
+  "linksInApp" (the page comes in step 6). Personas open links already in the conversation
+  (`open_link`): with Claude on Anthropic's API, Anthropic's web fetch (`web_fetch_20260209` on
+  current Opus and Sonnet, the basic one on others; three pages a turn, 12,000 tokens each); with
+  other models, or Claude through a proxy, the app's own fetcher on the phone (public addresses
+  only, redirects checked), which hands the persona the page's readable words with its links kept.
+  Either way the persona's 読 stamp lands on the cutting, in its ink (a light tick when it lands
+  while you watch), kept as a mark like the punched ticket. Personas share links and songs
+  (`share_link`): the app opens each first and doesn't send one that doesn't open, and tells the
+  persona what the page really is. Songs: an audio file plays in the app's player (streamed);
+  YouTube, SoundCloud and Bandcamp play in their official embedded players in a sheet over the
+  thread, only while it's open; Spotify and Apple Music open in their apps; the ticket says
+  which. The line under a cutting goes once the persona can open it.
 
 ## What v0.3.5 includes
 

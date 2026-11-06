@@ -42,6 +42,12 @@ import dev.aiharness.app.ui.media.LocalLift
 import dev.aiharness.app.ui.media.reducedMotion
 import dev.aiharness.app.ui.paper.PaperButton
 import kotlinx.coroutines.delay
+import androidx.compose.ui.graphics.toArgb
+import dev.aiharness.app.ui.media.LocalFreshStamp
+import dev.aiharness.app.ui.media.LocalMediaSettings
+import dev.aiharness.app.ui.theme.paper
+import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.core.media.MusicLinks
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -201,7 +207,14 @@ fun OnPaper(
 class FrameTaps(
     val play: (attachment: ContentPart.Attachment, ink: Color, fromYou: Boolean) -> Unit,
     val watch: ((attachment: ContentPart.Attachment, ink: Color, fromYou: Boolean) -> Unit)? = null,
+    /** A persona's song from a service with an embeddable player: plays in the embed sheet. */
+    val embed: ((attachment: ContentPart.Attachment, embed: String, ink: Color) -> Unit)? = null,
 )
+
+/** Read stamps on cuttings: attachment id to the stamping persona's ink, and which were just made. */
+class ReadStamps(val inks: Map<String, Color> = emptyMap(), val fresh: Set<String> = emptySet())
+
+val LocalReadStamps = staticCompositionLocalOf { ReadStamps() }
 
 val LocalFrameTaps = staticCompositionLocalOf<FrameTaps?> { null }
 
@@ -277,7 +290,17 @@ fun FramedAttachment(
     val scope = rememberCoroutineScope()
     val instant = reducedMotion()
     val ref = attachment.ref ?: attachment.tracks.firstOrNull()?.ref
-    val open = { FrameActions.open(context, blobs, attachment) }
+    val media = LocalMediaSettings.current
+    val toolbar = paper.kami.toArgb()
+    val night = stationery.isNight
+    // Pages open in the app's browser (or the phone's, by the setting); files in the app that handles them.
+    val open = {
+        val url = attachment.url
+        if (url != null && attachment.ref == null) FrameActions.openLink(context, url, media.linksInApp, toolbar, night)
+        else FrameActions.open(context, blobs, attachment)
+    }
+    val embed = if (attachment.kind == AttachmentKind.SONG && attachment.ref == null) MusicLinks.embedFor(attachment.url, attachment.embed) else null
+    val stamps = LocalReadStamps.current
     // A tag shows Open and Save beneath it; a film strip runs while its player opens.
     var actions by remember { mutableStateOf(false) }
     var running by remember { mutableStateOf(false) }
@@ -288,6 +311,7 @@ fun FramedAttachment(
             onOpen = when {
                 taps != null && (attachment.kind == AttachmentKind.SONG || attachment.kind == AttachmentKind.PLAYLIST) && attachment.playable() ->
                     { { taps.play(attachment, ink, inNote) } }
+                taps?.embed != null && embed != null -> { { taps.embed.invoke(attachment, embed, ink) } }
                 taps?.watch != null && attachment.kind == AttachmentKind.VIDEO && attachment.ref != null -> {
                     {
                         if (instant) {
@@ -315,10 +339,12 @@ fun FramedAttachment(
                 else -> TapMotion.None
             },
         ) {
-            AttachmentFrame(
-                attachment, ink, behind, scale = if (inNote) noteScale(attachment.kind) else 1f,
-                punched = attachment.id in LocalPunched.current, run = running,
-            )
+            CompositionLocalProvider(LocalFreshStamp provides (attachment.id in stamps.fresh)) {
+                AttachmentFrame(
+                    attachment, ink, behind, scale = if (inNote) noteScale(attachment.kind) else 1f,
+                    punched = attachment.id in LocalPunched.current, run = running, readBy = stamps.inks[attachment.id],
+                )
+            }
         }
         if (tag) {
             AnimatedVisibility(

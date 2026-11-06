@@ -233,6 +233,13 @@ class ScreenshotTour {
         compose.waitUntilAtLeastOneExists(hasContentDescription("A frame from the video"), 10_000)
         shot("${prefix}_02r_video_player")
         compose.onNodeWithContentDescription("Close").performClick()
+        // Aria's read stamp on the cutting you sent, and the song she shared back (a ticket that opens Spotify).
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("think of your tea", substring = true))
+        waitFor("A field guide to oolong")
+        shot("${prefix}_02s_read_stamp")
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("walk home", substring = true))
+        waitFor("Paper Lanterns")
+        shot("${prefix}_02t_her_song")
         // A sticker written inline in a letter.
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("writing this one down", substring = true))
         compose.waitUntilAtLeastOneExists(hasContentDescription(":aria-heart:"), 10_000)
@@ -617,8 +624,32 @@ class ScreenshotTour {
                 ContentPart.Attachment("film1", AttachmentKind.VIDEO, ref = "file:not-here.mp4", mimeType = "video/mp4", title = "the river", lengthMs = 42_000, frameRefs = listOf(image, picture2, image)),
                 origin = MessageOrigin.USER,
             ),
+            // A cutting you sent, which Aria opened (her read stamp), and a song she shared back.
+            early(
+                MessageRole.USER,
+                ContentPart.Text("This made me think of your tea."),
+                ContentPart.Attachment(
+                    "link2", AttachmentKind.LINK, url = "https://teahouse.example/oolong", site = "The Tea House",
+                    title = "A field guide to oolong", snippet = "From green to dark, the oolongs worth knowing.",
+                ),
+                origin = MessageOrigin.USER,
+            ),
+            early(
+                MessageRole.ASSISTANT,
+                ContentPart.Text("I read every word of it. And this one's for the walk home."),
+                ContentPart.ToolCall("t9", "share_link", "{}"),
+            ),
+            early(
+                MessageRole.TOOL,
+                ContentPart.ToolResult("t9", "share_link", "In your letter now, as a ticket."),
+                ContentPart.Attachment(
+                    "song2", AttachmentKind.SONG, url = "https://open.spotify.com/track/paperlanterns", title = "Paper Lanterns",
+                    artist = "The Lanterns", site = "Spotify",
+                ),
+            ),
         )
         earlier.forEach { h.conversations.appendMessage(it) }
+        h.marks.add(AttachmentMark("link2", MarkKind.READ, conversationId = conversation.id, byPersonaId = aria.id, at = now))
         // The song has been played once: its ticket is punched.
         h.marks.add(AttachmentMark("song1", MarkKind.PUNCHED, conversationId = conversation.id, at = now))
         letters.forEach { h.conversations.appendMessage(it) }

@@ -27,14 +27,21 @@ class LinkPreviews(
     private val allowPrivate: Boolean = false,
     private val resolve: (String) -> List<InetAddress> = { host -> InetAddress.getAllByName(host).toList() },
 ) {
-    /** A cutting for [url]; with [fetch] off (the setting), just the address. */
-    suspend fun cutting(url: String, fetch: Boolean = true): ContentPart.Attachment {
-        val parsed = url.toHttpUrlOrNull()
-        val plain = ContentPart.Attachment(id = newId(), kind = AttachmentKind.LINK, url = url, site = parsed?.host?.removePrefix("www."))
-        if (!fetch || parsed == null || !isPublic(parsed.host)) return plain
+    /** A cutting for [url]; with [fetch] off (the setting), or when the page doesn't open, just the address. */
+    suspend fun cutting(url: String, fetch: Boolean = true): ContentPart.Attachment =
+        (if (fetch) fetched(url) else null) ?: plainCutting(url)
+
+    private fun plainCutting(url: String) =
+        ContentPart.Attachment(id = newId(), kind = AttachmentKind.LINK, url = url, site = url.toHttpUrlOrNull()?.host?.removePrefix("www."))
+
+    /** A cutting from the page at [url], or null when it doesn't open (private, gone, not a page). */
+    suspend fun fetched(url: String): ContentPart.Attachment? {
+        val parsed = url.toHttpUrlOrNull() ?: return null
+        if (!isPublic(parsed.host)) return null
+        val plain = plainCutting(url)
         return runCatching {
             withContext(Dispatchers.IO) {
-                val html = get(url, MAX_PAGE)?.toString(Charsets.UTF_8) ?: return@withContext plain
+                val html = get(url, MAX_PAGE)?.toString(Charsets.UTF_8) ?: return@withContext null
                 val tags = metaTags(html)
                 val title = tags["og:title"] ?: tags["twitter:title"] ?: titleOf(html)
                 val picture = (tags["og:image"] ?: tags["twitter:image"])?.let { parsed.resolve(it)?.toString() }
@@ -46,9 +53,59 @@ class LinkPreviews(
                     site = tags["og:site_name"]?.let(::clean)?.take(60) ?: plain.site,
                     snippet = (tags["og:description"] ?: tags["description"])?.let(::clean)?.take(300),
                     pictureRef = pictureRef,
+                    embed = (tags["og:video:secure_url"] ?: tags["og:video:url"] ?: tags["og:video"])?.takeIf { it.startsWith("https://") },
                 )
             }
-        }.getOrElse { plain }
+        }.getOrNull()
+    }
+
+    /** The type of what's at [url] when it opens (asked with HEAD, redirects checked), or null. */
+    suspend fun probe(url: String): String? {
+        val parsed = url.toHttpUrlOrNull() ?: return null
+        if (!isPublic(parsed.host)) return null
+        return runCatching {
+            withContext(Dispatchers.IO) {
+                val noRedirects = client.newBuilder().followRedirects(false).followSslRedirects(false).build()
+                var next = parsed
+                repeat(6) {
+                    if (!isPublic(next.host)) return@withContext null
+                    val request = Request.Builder().url(next).head().header("User-Agent", USER_AGENT).build()
+                    noRedirects.newCall(request).execute().use { response ->
+                        if (response.isRedirect) {
+                            next = response.header("Location")?.let { next.resolve(it) } ?: return@withContext null
+                            return@use
+                        }
+                        return@withContext if (response.isSuccessful) response.header("Content-Type") ?: "" else null
+                    }
+                }
+                null
+            }
+        }.getOrNull()
+    }
+
+    /**
+     * The words of the page at [url] for a persona to read, at most [maxChars] of them: an HTML
+     * page's readable text, or a text file as it is. Null when it can't be read (a private
+     * address, an error, too big, or not text).
+     */
+    suspend fun read(url: String, maxChars: Int = 12_000): PageText? {
+        val parsed = url.toHttpUrlOrNull() ?: return null
+        if (!isPublic(parsed.host)) return null
+        return runCatching {
+            withContext(Dispatchers.IO) {
+                val page = fetch(url, MAX_READ) ?: return@withContext null
+                val type = page.type?.lowercase().orEmpty()
+                val raw = page.bytes.toString(Charsets.UTF_8)
+                when {
+                    type.startsWith("text/html") || type.contains("xhtml") || (type.isEmpty() && raw.contains("<html", ignoreCase = true)) -> {
+                        val (text, cut) = Readable.of(raw, maxChars)
+                        PageText(page.url, metaTags(raw)["og:title"]?.let(::clean) ?: titleOf(raw)?.let(::clean), text, cut)
+                    }
+                    type.startsWith("text/") || type.contains("json") -> PageText(page.url, null, raw.take(maxChars), raw.length > maxChars)
+                    else -> null
+                }
+            }
+        }.getOrNull()
     }
 
     /** Whether [host] is out on the public internet (every address it resolves to). */
@@ -63,7 +120,11 @@ class LinkPreviews(
      * The body of [url], up to [limit] bytes (null past it, or on an error). Redirects are followed
      * by hand, at most five, each checked, so a public page can't send the fetch somewhere private.
      */
-    private fun get(url: String, limit: Int): ByteArray? {
+    private fun get(url: String, limit: Int): ByteArray? = fetch(url, limit)?.bytes
+
+    private class Fetched(val bytes: ByteArray, val type: String?, val url: String)
+
+    private fun fetch(url: String, limit: Int): Fetched? {
         val noRedirects = client.newBuilder().followRedirects(false).followSslRedirects(false).build()
         var next = url.toHttpUrlOrNull() ?: return null
         repeat(6) {
@@ -87,7 +148,7 @@ class LinkPreviews(
                         if (out.size() > limit) return null
                     }
                 }
-                return out.toByteArray()
+                return Fetched(out.toByteArray(), response.header("Content-Type"), next.toString())
             }
         }
         return null
@@ -95,6 +156,7 @@ class LinkPreviews(
 
     companion object {
         private const val MAX_PAGE = 512 * 1024
+        private const val MAX_READ = 2 * 1024 * 1024
         private const val MAX_PICTURE = 3 * 1024 * 1024
         private const val USER_AGENT = "Mozilla/5.0 (Android) Fumibako link preview"
 

@@ -257,13 +257,14 @@ fun NoteSlip(
                 val noteInk = s.dayColors.ink(user?.ink ?: "sora")
                 val notePaper = lerp(s.colors.kami, you, 0.06f)
                 val reader = LocalPersonaReader.current
+                val media = dev.aiharness.app.ui.media.LocalMediaSettings.current
                 FramedPictures(
                     message.images, noteInk, pattern, 0.86f, handling, { stickerInk(it, s, persona, user) }, stickerName, onImage, Alignment.CenterStart,
                 )
                 if (message.images.isNotEmpty()) reader?.let { MediaSupport.cantSee(it.profile, it.name, message.images.size > 1) }?.let { CantTakeIn(it) }
                 message.attachments.forEach { attachment ->
                     FramedAttachment(attachment, noteInk, notePaper, inNote = true, handling = handling, inkOf = { stickerInk(it, s, persona, user) }, nameOf = stickerName, alignment = Alignment.CenterStart)
-                    reader?.let { MediaSupport.cantTakeIn(attachment, it.profile, it.name) }?.let { CantTakeIn(it) }
+                    reader?.let { MediaSupport.cantTakeIn(attachment, it.profile, it.name, opensLinks = media.personasOpenLinks) }?.let { CantTakeIn(it) }
                 }
             }
         }

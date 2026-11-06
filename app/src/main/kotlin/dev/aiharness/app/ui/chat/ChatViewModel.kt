@@ -44,6 +44,11 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         .map { marks -> marks.filter { it.kind == dev.aiharness.core.model.MarkKind.PUNCHED }.map { it.attachmentId }.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
+    /** Cuttings the persona has opened: attachment id to whose read stamp is on it. */
+    val reads: StateFlow<Map<String, String>?> = harness.marks.observeAll()
+        .map { marks -> marks.filter { it.kind == dev.aiharness.core.model.MarkKind.READ && it.byPersonaId != null }.associate { it.attachmentId to it.byPersonaId!! } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     val messages: StateFlow<List<ChatMessage>> = harness.conversations.observeMessages(conversationId)
         .map { list -> list.filter { !it.hidden } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

@@ -303,6 +303,8 @@ sealed interface ContentPart {
         val snippet: String? = null,
         /** A link's picture, a song's cover, or a video's poster. */
         val pictureRef: String? = null,
+        /** An official embeddable player for it, from its page (a Bandcamp song plays in one). */
+        val embed: String? = null,
         /** A video's three frames (what a model that can't watch it receives). */
         val frameRefs: List<String> = emptyList(),
         /** A small picture of it for lists and the memory book. */

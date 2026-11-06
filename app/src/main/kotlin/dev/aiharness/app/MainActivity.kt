@@ -53,7 +53,10 @@ class MainActivity : ComponentActivity() {
                     isAppearanceLightNavigationBars = !night
                 }
             }
-            CompositionLocalProvider(LocalStickerSettings provides (settings?.stickers ?: StickerSettings())) { content() }
+            CompositionLocalProvider(
+                LocalStickerSettings provides (settings?.stickers ?: StickerSettings()),
+                dev.aiharness.app.ui.media.LocalMediaSettings provides (settings?.media ?: dev.aiharness.core.model.MediaSettings()),
+            ) { content() }
         }
     }
 

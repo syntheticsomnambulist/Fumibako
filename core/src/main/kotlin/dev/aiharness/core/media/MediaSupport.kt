@@ -4,6 +4,7 @@ import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.ProviderType
+import dev.aiharness.core.model.ToolMode
 
 /** What a model takes in besides text. */
 data class Senses(val pictures: Boolean, val pdfs: Boolean, val audio: Boolean, val video: Boolean) {
@@ -125,8 +126,10 @@ object MediaSupport {
      * The app's line under a frame in your note, on what [name] can't take in with its model, or
      * null when it takes it all in: "Aria can read the label, but can't hear the songs."
      */
-    fun cantTakeIn(a: ContentPart.Attachment, profile: ModelProfile, name: String): String? {
+    fun cantTakeIn(a: ContentPart.Attachment, profile: ModelProfile, name: String, opensLinks: Boolean = false): String? {
         val senses = of(profile)
+        // A persona that can open links reads the page itself (open_link, or Claude's web fetch).
+        if (a.kind == AttachmentKind.LINK && opensLinks && profile.toolMode != ToolMode.NONE) return null
         if (takesWhole(a, profile, senses)) {
             return if (a.kind == AttachmentKind.FILE && isText(a) && (a.sizeBytes ?: 0L) > textChars(profile)) {
                 "$name reads the beginning of it."

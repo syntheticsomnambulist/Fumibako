@@ -11,6 +11,9 @@ import com.anthropic.models.beta.messages.BetaBase64ImageSource
 import com.anthropic.models.beta.messages.BetaCacheControlEphemeral
 import com.anthropic.models.beta.messages.BetaContentBlockParam
 import com.anthropic.models.beta.messages.BetaImageBlockParam
+import dev.aiharness.core.llm.ServerTool
+import com.anthropic.models.beta.messages.BetaWebFetchTool20260209
+import com.anthropic.models.beta.messages.BetaWebFetchTool20250910
 import com.anthropic.models.beta.messages.BetaRequestDocumentBlock
 import com.anthropic.models.beta.messages.BetaMessage
 import com.anthropic.models.beta.messages.BetaMessageParam
@@ -134,7 +137,14 @@ class AnthropicProvider : LlmProvider {
         val text = StringBuilder()
         val reasoning = StringBuilder()
         val calls = mutableListOf<LlmToolCall>()
+        val opened = mutableListOf<String>()
         message.content().forEach { block ->
+            block.serverToolUse().ifPresent { use ->
+                if (use.name().toString().contains("web_fetch")) {
+                    runCatching { HarnessJson.parseToJsonElement(mapper.writeValueAsString(use._input())).jsonObject["url"]?.jsonPrimitive?.contentOrNull }
+                        .getOrNull()?.let(opened::add)
+                }
+            }
             block.text().ifPresent { text.append(it.text()) }
             block.thinking().ifPresent { t -> if (t.thinking().isNotBlank()) reasoning.append(t.thinking()).append('\n') }
             block.toolUse().ifPresent { use ->
@@ -173,6 +183,7 @@ class AnthropicProvider : LlmProvider {
             replay = mapper.writeValueAsString(message.toParam()),
             refusal = refusal,
             modelId = message.model().asString(),
+            opened = opened,
         )
     }
 
@@ -194,6 +205,15 @@ class AnthropicProvider : LlmProvider {
             builder.cacheControl(BetaCacheControlEphemeral.builder().build())
         }
         request.tools.forEach { tool ->
+            // Claude opens links itself, on Anthropic's servers, where the API is Anthropic's own.
+            if (tool.server == ServerTool.WEB_FETCH && isFirstParty(profile)) {
+                if (DYNAMIC_FETCH.containsMatchIn(profile.modelId)) {
+                    builder.addTool(BetaWebFetchTool20260209.builder().maxUses(WEB_FETCH_USES).maxContentTokens(WEB_FETCH_TOKENS).build())
+                } else {
+                    builder.addTool(BetaWebFetchTool20250910.builder().maxUses(WEB_FETCH_USES).maxContentTokens(WEB_FETCH_TOKENS).build())
+                }
+                return@forEach
+            }
             val props = (tool.parameters["properties"] as? JsonObject)?.toPlain() ?: emptyMap<String, Any?>()
             val required = (tool.parameters["required"] as? JsonArray)?.mapNotNull { it.jsonPrimitive.contentOrNull }.orEmpty()
             builder.addTool(
@@ -327,6 +347,11 @@ class AnthropicProvider : LlmProvider {
     }
 
     companion object {
+        /** Models with the dynamic-filtering web fetch; older ones take the basic one. */
+        private val DYNAMIC_FETCH = Regex("claude-(opus-(4-[678]|5)|sonnet-(4-6|5))")
+        private const val WEB_FETCH_USES = 3L
+        private const val WEB_FETCH_TOKENS = 12_000L
+
         const val SERVER_FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
         /** Models that accept `fallbacks: "default"` on the Claude API. */

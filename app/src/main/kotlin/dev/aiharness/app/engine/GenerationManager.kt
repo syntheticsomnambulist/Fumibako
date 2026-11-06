@@ -148,6 +148,8 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
             "memory_update" -> "Updating a memory"
             "memory_forget" -> "Forgetting a memory"
             "generate_image" -> "Generating an image"
+            "open_link" -> "Reading the page"
+            "share_link" -> "Sharing a link"
             else -> "Using $name"
         }
 
@@ -157,6 +159,8 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
             "memory_update" -> "Updated a memory"
             "memory_forget" -> "Forgot a memory"
             "generate_image" -> "Generated an image"
+            "open_link" -> "Read the page"
+            "share_link" -> "Shared a link"
             else -> "Used $name"
         }
     }

@@ -45,8 +45,8 @@ data class ToolOutcome(
     /** Text returned to the model. */
     val content: String,
     val isError: Boolean = false,
-    /** Media shown to the user alongside the tool result (e.g. generated images). */
-    val attachments: List<ContentPart.Image> = emptyList(),
+    /** What goes into the letter alongside the tool result: a drawn picture, a cutting, a ticket. */
+    val attachments: List<ContentPart> = emptyList(),
 )
 
 /**

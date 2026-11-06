@@ -12,6 +12,8 @@ import androidx.media3.session.SessionToken
 import dev.aiharness.app.data.FileBlobStore
 import dev.aiharness.app.ui.media.FrameActions
 import dev.aiharness.app.ui.media.PlayerControls
+import dev.aiharness.core.media.MusicLinks
+import dev.aiharness.core.media.SongSource
 import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.ContentPart
@@ -167,7 +169,10 @@ class Playback(
     }
 
     private fun item(attachment: ContentPart.Attachment, index: Int, track: Track): MediaItem? {
-        val file = FrameActions.fileOf(blobs, track.ref) ?: return null
+        // A file here, or a persona's link to an audio file, streamed.
+        val uri = FrameActions.fileOf(blobs, track.ref)?.let(Uri::fromFile)
+            ?: attachment.url?.takeIf { attachment.kind == AttachmentKind.SONG && MusicLinks.sourceOf(it) == SongSource.AUDIO }?.let(Uri::parse)
+            ?: return null
         val cover = attachment.pictureRef?.let { FrameActions.fileOf(blobs, it) }
         val metadata = MediaMetadata.Builder()
             .setTitle(track.title ?: track.name?.substringBeforeLast('.'))
@@ -175,7 +180,7 @@ class Playback(
             .setAlbumTitle(if (attachment.kind == AttachmentKind.PLAYLIST) attachment.title else attachment.album)
             .apply { cover?.let { setArtworkUri(Uri.fromFile(it)) } }
             .build()
-        return MediaItem.Builder().setMediaId("${attachment.id}#$index").setUri(Uri.fromFile(file)).setMediaMetadata(metadata).build()
+        return MediaItem.Builder().setMediaId("${attachment.id}#$index").setUri(uri).setMediaMetadata(metadata).build()
     }
 
     private suspend fun connect(): MediaController {

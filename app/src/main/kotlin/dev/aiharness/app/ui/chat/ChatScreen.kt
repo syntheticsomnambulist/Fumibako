@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.toArgb
 import dev.aiharness.app.ui.media.PhotoViewer
 import dev.aiharness.app.ui.media.VideoPlayer
 import dev.aiharness.core.model.ContentPart
+import dev.aiharness.app.ui.media.EmbedPlayer
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -127,6 +128,11 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     val recentStickers by vm.recentStickers.collectAsStateWithLifecycle()
     val nowPlaying by container.playback.state.collectAsStateWithLifecycle()
     val punched by vm.punched.collectAsStateWithLifecycle()
+    val reads by vm.reads.collectAsStateWithLifecycle()
+    // Stamps already there when the thread opened don't land again; new ones do.
+    var readBaseline by remember { mutableStateOf<Set<String>?>(null) }
+    LaunchedEffect(reads != null) { if (readBaseline == null) reads?.let { readBaseline = it.keys } }
+    var embedding by remember { mutableStateOf<Embedding?>(null) }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
 
     // Stickers: the tray, the one selected (and its live position while it moves), dragging one in.
@@ -272,13 +278,20 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             FrameTaps(
                 play = { attachment, ink, fromYou -> container.playback.play(attachment, conversationId, ink.toArgb(), fromYou) },
                 watch = { attachment, ink, fromYou -> watching = Watching(attachment, ink, fromYou) },
+                embed = { attachment, embed, ink -> container.playback.pause(); embedding = Embedding(attachment, embed, ink) },
             )
+        }
+        val personaInk = stationery.dayColors.ink(persona?.ink)
+        val stamps = remember(reads, readBaseline, personaInk) {
+            val all = reads.orEmpty()
+            ReadStamps(all.filterValues { it == persona?.id }.mapValues { personaInk }, all.keys - (readBaseline ?: all.keys))
         }
         CompositionLocalProvider(
             LocalInlineStickers provides inlineStickers,
             LocalPersonaReader provides reader,
             LocalFrameTaps provides taps,
             LocalArrivals provides arrivals,
+            LocalReadStamps provides stamps,
             LocalPunched provides punched,
         ) {
             LazyColumn(
@@ -451,6 +464,10 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     viewing?.let { ref ->
         val images = messages.firstOrNull { m -> m.images.any { it.ref == ref } }?.images ?: listOf(ContentPart.Image(ref))
         PhotoViewer(images, images.indexOfFirst { it.ref == ref }.coerceAtLeast(0), onClose = { viewing = null })
+    }
+    // A persona's song from YouTube, SoundCloud or Bandcamp plays in the service's own player.
+    embedding?.let { open ->
+        EmbedPlayer(open.song, open.embed, open.ink, from = personaName, onClose = { embedding = null })
     }
     // A film strip opens the video player, with the letter's other clips.
     watching?.let { open ->
@@ -798,3 +815,6 @@ private fun reader(header: ChatHeader): PersonaReader? = header.persona?.let { p
 
 /** A video being watched: which, in whose ink, and whether you sent it. */
 private data class Watching(val video: ContentPart.Attachment, val ink: androidx.compose.ui.graphics.Color, val fromYou: Boolean)
+
+/** A persona's song playing in its service's embedded player. */
+private data class Embedding(val song: ContentPart.Attachment, val embed: String, val ink: androidx.compose.ui.graphics.Color)

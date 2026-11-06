@@ -18,6 +18,9 @@ import dev.aiharness.core.llm.gemini.GeminiProvider
 import dev.aiharness.core.llm.openai.OpenAiCompatibleProvider
 import dev.aiharness.core.media.LinkPreviews
 import dev.aiharness.core.media.MediaDescriber
+import dev.aiharness.core.tools.LinkReading
+import dev.aiharness.core.tools.OpenLinkTool
+import dev.aiharness.core.tools.ShareLinkTool
 import dev.aiharness.core.memory.EmbedderFactory
 import dev.aiharness.core.memory.MemoryService
 import dev.aiharness.core.model.ActivityEntry
@@ -101,6 +104,7 @@ class Harness(
     val stickerService = StickerService(stickers, settings, clock)
     val stickerMaker = StickerMaker(images, blobs, stickers, stickerCutter, clock)
     val links = LinkPreviews(blobs)
+    val linkReading = LinkReading(conversations, marks, clock)
     val tools = ToolRegistry(
         listOf(
             MemorySaveTool(memory),
@@ -112,6 +116,8 @@ class Harness(
             PlaceStickerTool(stickerService, personas, conversations) { id, kind, conversationId, note -> logActivity(id, kind, conversationId, note = note) },
             PeelStickerTool(stickerService, personas, conversations),
             DrawStickerTool(stickerMaker, personas, stickers),
+            OpenLinkTool(links, linkReading),
+            ShareLinkTool(links),
         ),
     )
     val prompts = PromptAssembler()

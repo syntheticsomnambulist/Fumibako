@@ -9,6 +9,18 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.shadow
+import android.content.Intent
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import dev.aiharness.core.media.MusicLinks
+import dev.aiharness.core.media.SongSource
+import dev.aiharness.core.model.AttachmentKind
+import dev.aiharness.core.model.MediaSettings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -338,5 +350,97 @@ private fun LittleTicket(ink: Color) {
     }
 }
 
-/** Whether a song or playlist has a file here to play. */
-fun ContentPart.Attachment.playable(): Boolean = (ref ?: tracks.firstOrNull()?.ref) != null
+/** Whether a song or playlist plays in the app's player: a file here, or a persona's link to an audio file. */
+fun ContentPart.Attachment.playable(): Boolean =
+    (ref ?: tracks.firstOrNull()?.ref) != null || (kind == AttachmentKind.SONG && MusicLinks.sourceOf(url) == SongSource.AUDIO)
+
+/** Android's "Remove animations", and the Media settings, as the frames see them. */
+val LocalMediaSettings = staticCompositionLocalOf { MediaSettings() }
+
+/**
+ * A song a persona shared from a service with an official embeddable player (YouTube, SoundCloud,
+ * Bandcamp), playing in a sheet over the thread: the ticket, the service's own player, and who it's
+ * from. Embedded players only play while they're showing, so closing the sheet stops it.
+ */
+@Composable
+fun EmbedPlayer(song: ContentPart.Attachment, embed: String, ink: Color, from: String, onClose: () -> Unit) {
+    BackHandler(onBack = onClose)
+    val colors = paper
+    val instant = reducedMotion()
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { shown = true }
+    val shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+    val source = MusicLinks.sourceOf(song.url)
+    Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f))
+                .clickable(remember { MutableInteractionSource() }, indication = null, onClickLabel = "Close the player", onClick = onClose),
+        )
+        AnimatedVisibility(shown, Modifier.align(Alignment.BottomCenter), enter = slideInVertically(tween(if (instant) 0 else 340)) { it }) {
+            Column(
+                Modifier.fillMaxWidth().shadow(12.dp, shape).background(colors.hyoshi, shape)
+                    .clickable(remember { MutableInteractionSource() }, indication = null) {}
+                    .navigationBarsPadding().padding(horizontal = 20.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    ControlButton(Icons.Rounded.KeyboardArrowDown, "Close the player", colors.kasure2, onClose)
+                    Spacer(Modifier.weight(1f))
+                    Text("SONG", style = PaperType.meta, color = colors.kasure2)
+                    Spacer(Modifier.weight(1f))
+                    Spacer(Modifier.size(48.dp))
+                }
+                TicketStub(song, ink, colors.hyoshi, scale = 1f, punched = true)
+                val height = when (source) {
+                    SongSource.YOUTUBE -> null
+                    SongSource.SOUNDCLOUD -> 166.dp
+                    else -> 150.dp
+                }
+                Box(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)).background(Color.Black)
+                        .then(if (height == null) Modifier.aspectRatio(16f / 9f) else Modifier.height(height)),
+                ) { EmbedView(embed, Modifier.fillMaxSize()) }
+                Text(
+                    "From $from, playing from ${source?.label ?: "the web"} while this is open.",
+                    style = PaperType.postscript,
+                    color = colors.usuzumi1,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+/**
+ * The service's own player, in a web view. It loads only the embed (pages it links to open in the
+ * browser), with the app as its origin, which embedded players ask apps to send.
+ */
+@Composable
+private fun EmbedView(embed: String, modifier: Modifier) {
+    val context = LocalContext.current
+    val src = embed.replace("\"", "%22").replace("<", "%3C")
+    val page = """<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+        |<style>html,body{margin:0;height:100%;background:#000}iframe{border:0;width:100%;height:100%}</style></head>
+        |<body><iframe src="$src" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen
+        |referrerpolicy="strict-origin-when-cross-origin"></iframe></body></html>""".trimMargin()
+    AndroidView(
+        factory = { ctx ->
+            WebView(ctx).apply {
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                        if (!request.isForMainFrame) return false
+                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, request.url).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                        return true
+                    }
+                }
+                loadDataWithBaseURL("https://${ctx.packageName}/", page, "text/html", "utf-8", null)
+            }
+        },
+        onRelease = { it.destroy() },
+        modifier = modifier,
+    )
+}
