@@ -63,6 +63,9 @@ planner:
   from 立夏 in early May, autumn from 立秋 in early August, winter from 立冬 in early November),
   so the theme and the planner's season band agree. In the southern hemisphere both would flip
   (see "Local seasons" in [`calendar.md`](calendar.md)).
+- **The look from the writing desk** (to decide for v0.5): sharp corners, ink outlines, cel
+  shading with hard-edged shadows, screentone instead of soft gradients, and 1990s Japanese
+  touches; see "The look" in [`activities.md`](activities.md).
 - **Persona marks** (agreed per persona; see [`calendar.md`](calendar.md)): besides the unread
   mark, a signature seal, a wake mark and a done mark. The signature seal could also sign letters
   or sit by the persona's name.
@@ -137,8 +140,8 @@ Things a persona can do in its heartbeats, beyond what v0.2 has. They run at the
 writing desk, in v0.6 and after ([`activities.md`](activities.md)):
 
 - **Making:** a picture for its sketchbook or for you, a poem or a haiku, its own stickers (v0.3).
-- **Playing, by post:** correspondence chess, shiritori, twenty questions, a riddle left in a
-  letter. The app keeps the board and the model only makes a move. Pen pals can play each other.
+- **Playing, by post:** shiritori first (v0.6; see [`activities.md`](activities.md)), then
+  correspondence chess, twenty questions, a riddle left in a letter. The app keeps the board and the model only makes a move. Pen pals can play each other.
 - **Keeping:** a diary (the persona can seal entries), collections, the memory book.
 - **Going out:** reading a link you shared and writing notes; looking up something it's curious
   about; postcards from an imagined trip.

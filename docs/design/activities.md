@@ -29,7 +29,14 @@ and the persona's heartbeat page.
 - **You can leave things on a persona's desk,** such as a link to read, a riddle or a game
   challenge. It finds them at its next heartbeat, as an activity, and they don't become part of
   your letters.
-- **Each desk has a token limit,** adjustable per persona (defaults to decide).
+- **Each desk has a token limit,** adjustable per persona: 40,000 tokens a day to start, to tune
+  with use. When it's reached the desk closes until the next day, but the persona still sits down
+  to decide whether to write to you.
+- **Two calls are fine:** sitting down, then one call per thing taken up.
+- **The first game is shiritori** (below).
+- **The look:** sharp corners, ink outlines, flat cel-shaded colour with hard-edged shadows,
+  halftone screentone instead of blurred overlays, and a vintage 1990s Japanese feel. No soft
+  gradients or blurred shadows (see *The look* below).
 - **Carried over:** a few activity slots per heartbeat (3 by default); making, playing, going out,
   and writing to you or a pen pal use a slot, keeping and tending memories are free; every
   activity can be switched on or off per persona; expensive ones start off for new personas.
@@ -43,7 +50,7 @@ and the persona's heartbeat page.
      without a reply." With the planner shared, its line too ("Sam is at work until 17:30");
    - what has happened at the desk lately, so it doesn't repeat itself;
    - **the menu:** each activity that's switched on and has something to offer now, with its
-     reason ("Juno's letter is waiting", "Sam moved his knight", "You haven't drawn in a week"),
+     reason ("Juno's letter is waiting", "Sam played 'teapot'", "You haven't drawn in a week"),
      and anything you left on the desk;
    - its slots left, and that writing to you is one of them;
    - what's due for its memories (reflecting, revisiting, settling), with its memory tools, so
@@ -60,7 +67,7 @@ and the persona's heartbeat page.
    "While you were away" lines lead to what was made.
 
 The desk is also where an activity's tools live, so the thread with you keeps a short tool list:
-what a letter needs, and nothing for chess.
+what a letter needs, and nothing for games.
 
 ## Writing to you (proposed)
 
@@ -82,16 +89,16 @@ letter ("At your desk since Sam last wrote: you drew the window cat; Juno's repl
 the persona can bring it up if it likes. It's in the context block, not the system prompt, so the
 prompt cache is unaffected.
 
-## The desk's token limit (proposed)
+## The desk's token limit
 
-- **A daily limit per desk,** counted from the usage providers report (estimated from length where
-  they don't). It replaces the pen pals' shared daily and weekly ceilings.
-- **Shown in the drawer** as today's use against the limit.
-- **When it's reached,** the desk closes until the next day, except that the persona still sits
-  down to decide whether to write to you, so a full desk never silences it. (To confirm.)
-- **Defaults** to decide once the activities' real costs are known: a sitting down is roughly 1,500
-  to 3,000 tokens, an activity 3,000 to 7,000, a letter to you more, depending on how many of your
-  letters it reads.
+- **A daily limit per desk** (agreed), counted from the usage providers report (estimated from
+  length where they don't). It replaces the pen pals' shared daily and weekly ceilings.
+- **40,000 tokens a day by default** (agreed, to tune). A sitting down is roughly 1,500 to 3,000
+  tokens, an activity 3,000 to 7,000, a letter to you more, depending on how many of your letters
+  it reads; a busy heartbeat like the one on the mockup is about 14,000.
+- **When it's reached** (agreed), the desk closes until the next day, except that the persona still
+  sits down to decide whether to write to you, so a full desk never silences it.
+- **Shown in the drawer** as today's use against the limit: a row of twenty blocks that fill in.
 
 ## The desk page (proposed)
 
@@ -118,6 +125,46 @@ replaces the persona's heartbeat page.
 - **At its next heartbeat** it's first on the menu. Doing something with it costs whatever that
   activity costs (reading a link is going out, so a slot). The persona can leave it for later or
   set it aside, and can write to you about it, but it isn't part of your letters.
+
+## Shiritori by post (the first game)
+
+Agreed as the first game. Proposed rules and shape:
+
+- **The game:** each word starts with the last letter of the one before ("teapot", then
+  "tangerine", then a word starting with "e"). No word comes twice. A round ends when one of you
+  passes, and a new one starts with any word.
+- **By post:** one word a turn. The persona plays at most one word a heartbeat, and only on its
+  turn; it's offered on the menu as "Sam played 'teapot'". You play from the slip on its desk.
+- **The app keeps the chain** and checks the first letter and repeats, so the model only has to
+  come up with a word. Its turn gets the last few words, the letter it needs, and one tool
+  (`play_word(word)` or `pass()`); about 2,000 tokens, so it's cheap and works with any model.
+- **Who can play:** you and a persona, and later pen pals with each other.
+- **On the desk:** a slip with a mint band (しりとり), the last two words in each player's ink, and
+  the letter that's next in a box. Opening it shows the whole chain, the linking letters marked,
+  and a field for your word.
+- **Uses a slot** (playing). Its "While you were away" line: "played 'tangerine' in shiritori".
+- **Later:** a kana version (where a word ending in ん loses, as in Japanese) for personas and
+  people who'd like it.
+
+## The look
+
+From the user's notes on the first mockups: lean into the theme, and away from the generic look
+of soft gradients.
+
+- **Sharp corners** everywhere except round things (seals, portraits).
+- **Ink outlines** (2dp, a dark warm brown) on objects, cards and buttons.
+- **Cel shading:** flat fills, with a single hard-edged darker shape for shade and a lighter sliver
+  for a highlight. Objects on the desk cast flat, offset shadows.
+- **Hard drop shadows** (a few dp, no blur) under cards and buttons; a pressed button or a chosen
+  cell moves into its shadow.
+- **Screentone** (halftone dots) behind sheets and for shading, instead of blurred or translucent
+  overlays.
+- **1990s Japanese touches:** small pixel lettering (DotGothic16 in the mockups) for labels, times
+  and counters; section labels on coloured tabs; a dark status strip; four-pointed sparkles for
+  new things; motion in a few steps rather than smooth easing.
+- **Fonts otherwise as the app's** (the book face, the handwriting face and the brush face), all
+  placeholders as before.
+- Whether this look goes beyond the desk is a question for the v0.5 stationery update.
 
 ## What every activity defines (for builders)
 
@@ -146,28 +193,29 @@ activity in its own turn is the new part (pen pals already needed it).
 | Drawing stickers | Its own turn; the stickers go in the sketchbook and on its sheet | Yes |
 | Writing to you, with stickers on your note and a change of clothes | Its own turn | Yes |
 
-v0.6 adds pen pals (the letter tray) and at least one game. The planner's look-ahead (v0.4) runs
+v0.6 adds pen pals (the letter tray) and shiritori. The planner's look-ahead (v0.4) runs
 in the private moment until then, and moves to the desk in v0.6.
 
 ## Mockups
 
 The "Writing desk" design canvas (private claude.ai artifact:
-https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06:
+https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn the same day in the look above:
 
 - **Aria's desk** (interactive): her desk from above with a diary (one entry sealed), a
-  sketchbook, chess by post with you, a letter tray with Juno's letter, the memory book, a cutting
-  she read, and the "From Sam" in-tray. Tap any of them to open it; the sealed diary entry opens,
+  sketchbook, shiritori by post with you, a letter tray with Juno's letter, the memory book, a
+  cutting she read, and the "From Sam" in-tray. Tap any of them to open it; the sealed diary entry opens,
   then closes (seal broken) or reseals. Below, "Lately at the desk", with which lines used a slot.
 - **The drawer** (interactive): what she does (switching one off drops it into the drawer, and
   tapping it there puts it back), things of her own per visit, the desk's daily limit with
-  today's use, sealed things, and when she comes to her desk.
-- **Leaving something on the desk** (interactive): a link, a photo, a riddle, a game or something
-  to draw, with a note; leaving it drops it into her in-tray.
+  today's use as a row of blocks, sealed things, and when she comes to her desk.
+- **Leaving something on the desk** (interactive): a link, a photo, a riddle, a first word for
+  shiritori, or something to draw, with a note; leaving it drops it into her in-tray.
 - **What Aria sees at her desk:** one heartbeat's three calls (sitting down, her sketchbook,
   writing to you), what each is given, roughly what each costs, and the line that reaches your
   thread afterwards.
 
 ## Open
-- **The desk limit:** whether writing to you still happens once the desk is closed for the day,
-  and the defaults.
-- **Which game** comes first.
+
+- **The look beyond the desk:** whether the v0.5 stationery update takes it across the app.
+- **Shiritori's rules:** whether words are checked against a dictionary, and whether either player
+  can challenge a word.
