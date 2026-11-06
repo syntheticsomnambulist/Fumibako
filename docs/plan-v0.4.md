@@ -221,7 +221,9 @@ From the agreed decisions in `calendar.md`:
   labels; they're shorter too. The season bar is off every page (your call, 2026-11-06): a
   solar term's kanji still marks its first day on the week and the month, a day's page still
   names its term and microseason, and letters are still told each new one. The Settings switch
-  is now "The solar terms and microseasons".
+  is now "The solar terms and microseasons". The headers drop the months' translations ("frost
+  month"): the week reads 霜月 2–8, the month 霜月, November 2026. The Stickers button left the
+  header for a tab at the right edge, a little apart under ‹ 今 › (your choice).
 
 ## Noted for later
 

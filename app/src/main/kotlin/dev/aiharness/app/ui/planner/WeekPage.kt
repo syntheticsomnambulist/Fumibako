@@ -138,7 +138,7 @@ fun PlannerScreen(nav: NavController) {
     Box(Modifier.fillMaxSize().background(colors.kami).dotGrid(colors.sumi.copy(alpha = 0.12f))) {
         Column(Modifier.fillMaxSize().stitched(lerp(colors.nijimi2, colors.kami, 0.2f)).statusBarsPadding().padding(bottom = bottom)) {
           if (view == PlannerView.MONTH) {
-            MonthHeader(month) { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisMonth) today else month.atDay(1)).toString())) } }
+            MonthHeader(month)
             MonthPage(
                 month = month, today = today, startsSunday = settings.planner.weekStartsSunday, occurrences = monthOccurrences,
                 holidays = holidays, seasonBand = settings.planner.seasonBand, zone = vm.zone, hemisphere = hemisphere,
@@ -147,7 +147,7 @@ fun PlannerScreen(nav: NavController) {
                 onHolidaysSetup = { nav.navigate(Routes.settings("planner")) },
             )
           } else {
-            WeekHeader(days) { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisWeek) today else days.first()).toString())) } }
+            WeekHeader(days)
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(start = 18.dp, end = 30.dp)) {
                 val col = ((maxWidth - GUTTER) / 7).coerceAtLeast(36.dp)
                 Column(Modifier.fillMaxSize()) {
@@ -240,6 +240,7 @@ fun PlannerScreen(nav: NavController) {
                 onPrevious = { vm.shownDay.value = month.minusMonths(1).atDay(1) },
                 onToday = { vm.shownDay.value = vm.today() },
                 onNext = { vm.shownDay.value = month.plusMonths(1).atDay(1) },
+                onStickers = { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisMonth) today else month.atDay(1)).toString())) } },
             )
         } else {
             NavTabs(
@@ -247,6 +248,7 @@ fun PlannerScreen(nav: NavController) {
                 onPrevious = { vm.shownDay.value = shown.minusWeeks(1); picked = null },
                 onToday = { vm.shownDay.value = vm.today(); picked = null },
                 onNext = { vm.shownDay.value = shown.plusWeeks(1); picked = null },
+                onStickers = { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisWeek) today else days.first()).toString())) } },
             )
         }
         card?.let { draft ->
@@ -279,13 +281,13 @@ private fun grid(size: Float): androidx.compose.ui.unit.TextUnit {
     return (size * minOf(scale, 1.15f) / scale).sp
 }
 
-/** The week's title (the month's number and traditional name, and the days), with the stickers button before the ribbon. */
+/** The week's title: the month's number and traditional name, and the days. */
 @Composable
-private fun WeekHeader(days: List<LocalDate>, onStickers: () -> Unit) {
+private fun WeekHeader(days: List<LocalDate>) {
     val colors = paper
     val first = days.first()
     val last = days.last()
-    val (kanji, meaning) = PlannerDays.months[first.monthValue - 1]
+    val (kanji, _) = PlannerDays.months[first.monthValue - 1]
     val range = if (first.month == last.month) "${first.dayOfMonth}–${last.dayOfMonth}" else "${first.dayOfMonth} ${month(first)} – ${last.dayOfMonth} ${month(last)}"
     Row(
         Modifier.fillMaxWidth().padding(start = 24.dp, end = 108.dp, top = 10.dp, bottom = 2.dp),
@@ -295,17 +297,16 @@ private fun WeekHeader(days: List<LocalDate>, onStickers: () -> Unit) {
         Text("${first.monthValue}", style = TextStyle(fontFamily = HarnessFonts.Display, fontWeight = FontWeight.SemiBold, fontSize = 46.sp, lineHeight = 42.sp), color = colors.sumi)
         Column(Modifier.weight(1f).padding(bottom = 2.dp)) {
             Text(kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 18.sp), color = colors.sumi)
-            Text("$meaning · $range", style = TextStyle(fontFamily = HarnessFonts.Read, fontStyle = FontStyle.Italic, fontSize = 12.5.sp), color = colors.usuzumi1, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(range, style = TextStyle(fontFamily = HarnessFonts.Read, fontStyle = FontStyle.Italic, fontSize = 12.5.sp), color = colors.usuzumi1, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        StickersButton(onStickers)
     }
 }
 
-/** The month's title: its traditional name large, the month and year and what the name means under it. */
+/** The month's title: its traditional name large, the month and year under it. */
 @Composable
-private fun MonthHeader(month: YearMonth, onStickers: () -> Unit) {
+private fun MonthHeader(month: YearMonth) {
     val colors = paper
-    val (kanji, meaning) = PlannerDays.months[month.monthValue - 1]
+    val (kanji, _) = PlannerDays.months[month.monthValue - 1]
     Row(
         Modifier.fillMaxWidth().padding(start = 24.dp, end = 108.dp, top = 10.dp, bottom = 2.dp),
         verticalAlignment = Alignment.Bottom,
@@ -313,12 +314,11 @@ private fun MonthHeader(month: YearMonth, onStickers: () -> Unit) {
         Column(Modifier.weight(1f)) {
             Text(kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 32.sp, lineHeight = 36.sp), color = colors.sumi)
             Text(
-                "${month.month.getDisplayName(DayText.FULL, Locale.US)} ${month.year} · $meaning",
+                "${month.month.getDisplayName(DayText.FULL, Locale.US)} ${month.year}",
                 style = TextStyle(fontFamily = HarnessFonts.Read, fontStyle = FontStyle.Italic, fontSize = 12.5.sp),
                 color = colors.usuzumi1, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
-        StickersButton(onStickers)
     }
 }
 
@@ -327,26 +327,34 @@ private fun MonthHeader(month: YearMonth, onStickers: () -> Unit) {
  * before, today (in your ink while you're on it), and the one after.
  */
 @Composable
-private fun NavTabs(unit: String, here: Boolean, ink: Color, modifier: Modifier, onPrevious: () -> Unit, onToday: () -> Unit, onNext: () -> Unit) {
+private fun NavTabs(unit: String, here: Boolean, ink: Color, modifier: Modifier, onPrevious: () -> Unit, onToday: () -> Unit, onNext: () -> Unit, onStickers: () -> Unit) {
     val word = unit.lowercase()
     Column(modifier, horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
         EdgeTab("‹", "Before", false, ink, spoken = "The $word before", onClick = onPrevious)
         EdgeTab("今", "Today", here, ink, spoken = if (here) "This $word, the $word you're on" else "Back to this $word", onClick = onToday)
         EdgeTab("›", "After", false, ink, spoken = "The $word after", onClick = onNext)
+        // A little apart: the stickers, as a tab with the tray's sheet of them.
+        Box(Modifier.height(9.dp))
+        StickersTab(onStickers)
     }
 }
 
+/** The stickers' tab at the page's edge: the tray's sheet of stickers, and its spoken label. */
 @Composable
-private fun StickersButton(onClick: () -> Unit) {
+private fun StickersTab(onClick: () -> Unit) {
+    val colors = paper
+    val shape = RoundedCornerShape(topStart = 3.dp, bottomStart = 3.dp)
     Box(
         Modifier
-            .heightIn(min = 36.dp)
-            .border(1.dp, paper.nijimi2, dev.aiharness.app.ui.paper.PaperCorner)
-            .background(paper.kami, dev.aiharness.app.ui.paper.PaperCorner)
+            .size(44.dp, 48.dp)
             .clickable(role = Role.Button, onClickLabel = "Stick stickers on the planner", onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 2.dp),
-        contentAlignment = Alignment.Center,
-    ) { StickersMark() }
+            .semantics { contentDescription = "Stickers" },
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        Box(Modifier.size(26.dp, 40.dp).background(colors.hyoshi, shape).border(1.dp, colors.nijimi1, shape), contentAlignment = Alignment.Center) {
+            dev.aiharness.app.ui.chat.TrayDrawing(dev.aiharness.app.ui.chat.TrayItem.STICKERS, Modifier.size(22.dp, 16.5.dp))
+        }
+    }
 }
 
 private fun month(day: LocalDate) = day.month.getDisplayName(DayText.SHORT, Locale.US)
