@@ -221,7 +221,9 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     )
     val selectedSticker = selectedStickerId?.let { id -> shownStickers.values.flatten().firstOrNull { it.id == id } }
 
-    var input by rememberSaveable { mutableStateOf("") }
+    // What you were writing here, kept until it's sent (leaving the letters or the app doesn't lose it).
+    var input by remember(conversationId) { mutableStateOf(vm.draftText) }
+    LaunchedEffect(input) { vm.keepText(input) }
     var selected by remember { mutableStateOf<List<ChatMessage>?>(null) }
     var viewing by remember { mutableStateOf<String?>(null) }
     var watching by remember { mutableStateOf<Watching?>(null) }
@@ -660,11 +662,19 @@ private fun EntryBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         val shape = PaperCorner
+        val fieldStyle = PaperType.preview.copy(fontSize = 15.sp, lineHeight = 22.sp, color = colors.sumi)
+        // The buttons stand as tall as the field holding one line (its line and its 10 dp above and
+        // below), measured in its own type, so they match at any text size.
+        val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val side = remember(fieldStyle, density) {
+            with(density) { measurer.measure("A", fieldStyle).size.height.toDp() } + 20.dp
+        }.coerceAtLeast(42.dp)
         // The + slip opens the tray (stickers now; photos, files and more later). It turns into × while open.
         val turn by animateFloatAsState(if (trayOpen) 45f else 0f, label = "plus")
         Box(
             Modifier
-                .size(42.dp)
+                .size(side)
                 .clip(shape)
                 .background(if (trayOpen) colors.chitsu else colors.kami)
                 .border(1.dp, if (trayOpen) colors.nijimi2 else colors.nijimi1, shape)
@@ -677,7 +687,7 @@ private fun EntryBar(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            textStyle = PaperType.preview.copy(fontSize = 15.sp, lineHeight = 22.sp, color = colors.sumi),
+            textStyle = fieldStyle,
             cursorBrush = SolidColor(youInk),
             maxLines = 6,
             modifier = Modifier
@@ -703,7 +713,7 @@ private fun EntryBar(
         val fill = if (active) youInk else androidx.compose.ui.graphics.lerp(youInk, colors.kami, 0.5f)
         Box(
             Modifier
-                .size(42.dp)
+                .size(side)
                 .clip(PaperCorner)
                 .background(fill)
                 .clickable(enabled = active, onClickLabel = if (busy) "Stop" else "Send") { if (busy) onStop() else onSend() },

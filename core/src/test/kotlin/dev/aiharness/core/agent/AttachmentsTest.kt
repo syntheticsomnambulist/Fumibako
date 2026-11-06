@@ -43,8 +43,13 @@ class AttachmentsTest {
         )
         // Noon UTC is the same day in every zone from UTC-11 to UTC+11.
         val recorded = java.time.Instant.parse("2026-11-03T12:00:00Z").toEpochMilli()
-        val film = ContentPart.Attachment("a4", AttachmentKind.VIDEO, name = "VID_20261103.mp4", title = "Lantern walk", artist = "Sam", lengthMs = 227_000, recordedAt = recorded)
-        assertEquals("[film: Lantern walk by Sam, 3:47, recorded 3 Nov 2026]", film.standIn)
+        val film = ContentPart.Attachment(
+            "a4", AttachmentKind.VIDEO, name = "VID_20261103.mp4", title = "Lantern walk", artist = "Sam", lengthMs = 227_000, recordedAt = recorded,
+            width = 1080, height = 1920, hasSound = true,
+        )
+        assertEquals("[film: Lantern walk by Sam, VID_20261103.mp4, 3:47, portrait, with sound, recorded 3 Nov 2026]", film.standIn)
+        // With no title of its own, its file's name; a picker's number is still a name, and better than nothing.
+        assertEquals("[film: 1000004321.mp4, 0:12, landscape, silent]", ContentPart.Attachment("a5", AttachmentKind.VIDEO, name = "1000004321.mp4", lengthMs = 12_000, width = 1920, height = 1080, hasSound = false).standIn)
     }
 
     @Test

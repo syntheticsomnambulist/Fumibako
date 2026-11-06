@@ -16,8 +16,8 @@ android {
         applicationId = "dev.fumibako.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.3.5.3"
+        versionCode = 11
+        versionName = "0.3.5.4"
     }
 
     signingConfigs {

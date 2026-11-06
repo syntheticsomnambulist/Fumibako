@@ -14,6 +14,15 @@ class FileFactsTest {
     }
 
     @Test
+    fun namesAndShapes() {
+        assertEquals("beach walk", FileFacts.titleFromName("beach walk.mp4"))
+        assertNull(FileFacts.titleFromName("1000004321.mp4"), "a picker's number says nothing")
+        assertEquals(1080 to 1920, FileFacts.shownSize(1920, 1080, 90), "turned on its side")
+        assertEquals(1920 to 1080, FileFacts.shownSize(1920, 1080, 0))
+        assertNull(FileFacts.shownSize(0, 1080, 0))
+    }
+
+    @Test
     fun yearsAndTags() {
         assertEquals(1987, FileFacts.year("1987"))
         assertEquals(2024, FileFacts.year("2024-06-01"))

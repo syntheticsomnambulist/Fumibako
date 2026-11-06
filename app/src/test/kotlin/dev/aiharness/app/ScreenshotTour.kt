@@ -64,6 +64,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -196,6 +198,14 @@ class ScreenshotTour {
             compose.waitUntilAtLeastOneExists(hasContentDescription(label), 10_000)
         }
         shot("${prefix}_02_chat")
+        // The + and send buttons stand as tall as the field holding one line: its text (what the
+        // field's own node covers) and its 10 dp above and below.
+        val density = ApplicationProvider.getApplicationContext<HarnessApp>().resources.displayMetrics.density
+        val field = compose.onNode(hasSetTextAction()).fetchSemanticsNode().size.height + (20 * density).toInt()
+        listOf("Add something", "Send").forEach { label ->
+            val button = compose.onNodeWithContentDescription(label).fetchSemanticsNode().size.height
+            assertTrue(kotlin.math.abs(field - button) <= 1, "$label is $button px tall, the field $field")
+        }
         // Writing a reply: the field grows and the send button stays.
         compose.onNode(hasSetTextAction()).performTextInput("You'll get to pick for yourself :3\nWe've just updated to a new version.")
         assertDrawn(compose.onNodeWithContentDescription("Send"), shot("${prefix}_02b_chat_typing"))

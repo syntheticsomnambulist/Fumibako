@@ -148,6 +148,16 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
         }
     }
 
+    /**
+     * When the phone's gallery says a picked photo or video was taken, for one whose file doesn't
+     * say (the photo picker's own column, in milliseconds); null where there's no such column.
+     */
+    private fun takenAt(uri: Uri): Long? = runCatching {
+        resolver.query(uri, arrayOf("datetaken"), null, null, null)?.use { c ->
+            if (c.moveToFirst() && !c.isNull(0)) c.getLong(0).takeIf { it > 0 } else null
+        }
+    }.getOrNull()
+
     /** A PDF's title and author; a big one is looked through at its start and end only. */
     private fun pdfInfo(file: File, name: String?): PdfInfo.Info? = runCatching {
         val bytes = if (file.length() <= 2L * PdfInfo.LOOK) file.readBytes() else java.io.RandomAccessFile(file, "r").use { f ->
@@ -171,6 +181,11 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
         try {
             retriever.setDataSource(blobs.fileFor(ref)!!.path)
             val length = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
+            val shown = FileFacts.shownSize(
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull(),
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull(),
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)?.toIntOrNull(),
+            )
             val frames = listOf(0.2, 0.5, 0.8).mapNotNull { at ->
                 val us = ((length ?: 0L) * at * 1000).toLong()
                 retriever.getFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)?.let { blobs.put(jpeg(scale(it, 480)), "jpg") }
@@ -179,15 +194,18 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
             val small = if (length != null && length <= Shrinker.LONGEST_VIDEO_MS) smallerCopy(ref, video = true, onProgress) else null
             ContentPart.Attachment(
                 newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size,
-                title = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)) ?: name?.substringBeforeLast('.'),
+                title = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)) ?: FileFacts.titleFromName(name),
                 artist = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST))
                     ?: FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR)),
-                recordedAt = FileFacts.recordedAt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)),
+                recordedAt = FileFacts.recordedAt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)) ?: takenAt(uri),
+                width = shown?.first,
+                height = shown?.second,
+                hasSound = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)?.let { it == "yes" },
                 lengthMs = length, frameRefs = frames, thumbRef = frames.getOrNull(1) ?: frames.firstOrNull(),
                 modelRef = small?.first, modelMimeType = small?.let { "video/mp4" }, modelSizeBytes = small?.second,
             )
         } catch (e: Exception) {
-            ContentPart.Attachment(newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size, title = name?.substringBeforeLast('.'))
+            ContentPart.Attachment(newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size, title = FileFacts.titleFromName(name), recordedAt = takenAt(uri))
         } finally {
             runCatching { retriever.release() }
         }

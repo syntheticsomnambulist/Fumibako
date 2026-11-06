@@ -128,8 +128,22 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         .map { it.imageGen.ready }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    /** Your unsent note here, kept by the app: it stays when you leave the letters, and what's being made ready carries on. */
+    private val draft = container.drafts.of(conversationId)
+
     /** What's waiting to go with your note. */
-    val going = MutableStateFlow<List<Going>>(emptyList())
+    val going: MutableStateFlow<List<Going>> = draft.going
+
+    /** The words of your unsent note, as you left them. */
+    val draftText: String get() = draft.text.value
+
+    /** Keeps what's in the box as the draft. */
+    fun keepText(text: String) {
+        draft.text.value = text
+    }
+
+    /** Work that outlasts this screen: preparing what you picked, a link's cutting, a note on its way. */
+    private val work get() = container.appScope
 
     /**
      * Sends the note with what's waiting, and says whether it went (so the box is only cleared
@@ -138,12 +152,12 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
      * photos, files and videos being prepared hold the note back.
      */
     fun send(text: String): Boolean {
-        if (sending?.isActive == true) return false
+        if (draft.sending?.isActive == true) return false
         linkPause?.cancel()
         noticeLinksNow(text)
         if (going.value.any { it is Going.Preparing && !it.key.startsWith(LINK_KEY) }) return false
         if (text.isBlank() && going.value.isEmpty()) return false
-        sending = viewModelScope.launch {
+        draft.sending = work.launch {
             withTimeoutOrNull(LINK_WAIT_MS) { going.first { list -> list.none { it is Going.Preparing } } }
             // Anything picked while this waited, and still being prepared, stays for the next note.
             val current = going.value.filterNot { it is Going.Preparing && !it.key.startsWith(LINK_KEY) }
@@ -158,7 +172,7 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
             // By what they were waiting under: a cutting that timed out goes plain, in its place.
             val sent = current.map { it.key }.toSet()
             going.update { list -> list.filterNot { it.key in sent } }
-            dismissedLinks.clear()
+            draft.dismissedLinks.clear()
             container.generation.send(conversationId, body, images, attachments)
         }
         return true
@@ -171,7 +185,7 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         val progress: (Float) -> Unit = { p ->
             going.update { list -> list.map { if (it.key == key && it is Going.Preparing) it.copy(progress = p.coerceIn(0f, 1f)) else it } }
         }
-        viewModelScope.launch {
+        this.work.launch {
             val ready = runCatching { work(progress) }.getOrDefault(emptyList())
             going.update { list -> list.flatMap { if (it.key == key) ready else listOf(it) } }
         }
@@ -191,6 +205,11 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         val made = container.media.songs(uris, persona, you, progress)
         if (made?.kind == AttachmentKind.PLAYLIST) onMix(made)
         listOfNotNull(made?.let { Going.Item(it) })
+    }
+
+    init {
+        // A draft brought back may hold links not yet made into cuttings (it was left mid-word).
+        noticeLinksNow(draft.text.value)
     }
 
     /** The tray's song search. */
@@ -219,7 +238,6 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     suspend fun moreTracks(uris: List<android.net.Uri>): List<Track> = container.media.tracks(uris)
 
     private var linkPause: Job? = null
-    private var sending: Job? = null
 
     /**
      * A link written in your note becomes a cutting waiting with the rest, once, when you pause
@@ -238,18 +256,15 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     private fun noticeLinksNow(text: String, finishedOnly: Boolean = false) {
         val known = going.value.mapNotNull { (it as? Going.Item)?.attachment?.url } + going.value.mapNotNull { (it as? Going.Preparing)?.key?.removePrefix(LINK_KEY) }
         val links = LinkPreviews.findLinks(text).filter { url -> !finishedOnly || text.contains("$url ") || text.contains("$url\n") }
-        links.filter { it !in known && it !in dismissedLinks }.forEach { url ->
+        links.filter { it !in known && it !in draft.dismissedLinks }.forEach { url ->
             val key = LINK_KEY + url
             going.update { it + Going.Preparing(key, LinkPreviews.siteOf(url.substringAfter("://").substringBefore('/'))) }
-            viewModelScope.launch {
+            work.launch {
                 val made = madeFrom(url)
                 going.update { list -> list.map { if (it.key == key) Going.Item(made) else it } }
             }
         }
     }
-
-    /** Tickets made from a link's cutting, by the ticket's id: switching back gives the cutting as it was. */
-    private val cuttingsOf = java.util.concurrent.ConcurrentHashMap<String, ContentPart.Attachment>()
 
     /**
      * What a link in your note goes as: a ticket for a music service's song (Spotify, Apple Music,
@@ -265,7 +280,7 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         }
         val cutting = harness.links.cutting(url, fetch = harness.settings.current().media.linkPreviews)
         if (source == null || !MusicLinks.isMusicOnly(url)) return cutting
-        return MusicLinks.ticket(cutting, source).also { cuttingsOf[it.id] = cutting }
+        return MusicLinks.ticket(cutting, source).also { draft.cuttingsOf[it.id] = cutting }
     }
 
     /** Whether [item] can go either as a ticket or as a cutting (a music service's link), and what a tap makes it. */
@@ -284,8 +299,8 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         val a = (item as? Going.Item)?.attachment ?: return
         val source = MusicLinks.sourceOf(a.url) ?: return
         val switched = when (a.kind) {
-            AttachmentKind.LINK -> MusicLinks.ticket(a, source).also { cuttingsOf[it.id] = a }
-            AttachmentKind.SONG -> cuttingsOf.remove(a.id) ?: a.copy(kind = AttachmentKind.LINK)
+            AttachmentKind.LINK -> MusicLinks.ticket(a, source).also { draft.cuttingsOf[it.id] = a }
+            AttachmentKind.SONG -> draft.cuttingsOf.remove(a.id) ?: a.copy(kind = AttachmentKind.LINK)
             else -> return
         }
         replace(Going.Item(switched))
@@ -293,11 +308,9 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
 
     fun replace(item: Going) = going.update { list -> list.map { if (it.key == item.key) item else it } }
 
-    /** Links whose cutting you took out: they stay in the text without coming back as cuttings. */
-    private val dismissedLinks = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
-
     fun remove(item: Going) {
-        ((item as? Going.Item)?.attachment?.url ?: (item as? Going.Preparing)?.key?.takeIf { it.startsWith(LINK_KEY) }?.removePrefix(LINK_KEY))?.let { dismissedLinks += it }
+        // A link taken out stays out, though it's still in the text.
+        ((item as? Going.Item)?.attachment?.url ?: (item as? Going.Preparing)?.key?.takeIf { it.startsWith(LINK_KEY) }?.removePrefix(LINK_KEY))?.let { draft.dismissedLinks += it }
         going.update { list -> list.filterNot { it.key == item.key } }
     }
 
@@ -322,6 +335,7 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     fun refreshContext() = viewModelScope.launch { harness.invalidateContext(conversationId) }
     fun deleteConversation(done: () -> Unit) = viewModelScope.launch {
         harness.conversations.delete(conversationId)
+        container.drafts.discard(conversationId)
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) { done() }
     }
 

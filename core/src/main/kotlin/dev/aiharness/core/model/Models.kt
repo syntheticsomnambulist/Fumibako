@@ -300,6 +300,11 @@ sealed interface ContentPart {
         val lengthMs: Long? = null,
         /** When a video was recorded, from the file itself. */
         val recordedAt: Long? = null,
+        /** A video's size as it shows (turned the right way up), so its shape: portrait or landscape. */
+        val width: Int? = null,
+        val height: Int? = null,
+        /** Whether a video has sound: a model seeing only its frames can't tell. */
+        val hasSound: Boolean? = null,
         /** The file is the song's 30-second preview (picked from a music search); the whole song is at [url]. */
         val previewOnly: Boolean = false,
         /** A playlist's songs, in order. */
@@ -347,7 +352,11 @@ sealed interface ContentPart {
                 ).joinToString(", ")
                 AttachmentKind.VIDEO -> "film: " + listOfNotNull(
                     listOfNotNull(title ?: name ?: "a video", artist?.let { "by $it" }).joinToString(" "),
+                    // Its file's name too, when it has a title of its own.
+                    name?.takeIf { title != null && it.substringBeforeLast('.') != title },
                     lengthMs?.let(::clock),
+                    shape(),
+                    hasSound?.let { if (it) "with sound" else "silent" },
                     recordedAt?.let { "recorded " + RECORDED.format(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault())) },
                 ).joinToString(", ")
                 AttachmentKind.LINK -> "cutting: " + listOfNotNull(title, artist?.let { "by $it" }, lengthMs?.let(::clock), site, url).joinToString(", ")
@@ -358,6 +367,17 @@ sealed interface ContentPart {
             title != null -> "\"$title\"" + (artist?.let { " by $it" } ?: "")
             artist != null -> "by $artist"
             else -> null
+        }
+
+        /** A video's shape: "portrait", "landscape" or "square". */
+        private fun shape(): String? {
+            val w = width?.takeIf { it > 0 } ?: return null
+            val h = height?.takeIf { it > 0 } ?: return null
+            return when {
+                h > w * 1.1 -> "portrait"
+                w > h * 1.1 -> "landscape"
+                else -> "square"
+            }
         }
 
         /** `from Whenever You Need Somebody (1987)`. */

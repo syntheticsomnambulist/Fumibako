@@ -41,6 +41,9 @@ import kotlinx.coroutines.launch
 class AppContainer(private val context: Context) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    /** Your unsent notes, kept until they're sent. */
+    val drafts = dev.aiharness.app.ui.chat.Drafts(java.io.File(context.filesDir, "drafts"), appScope)
+
     private val secrets = KeystoreSecretStore(context)
     val blobStore = FileBlobStore(context)
     val media = dev.aiharness.app.media.MediaImport(context, blobStore)

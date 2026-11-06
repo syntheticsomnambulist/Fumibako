@@ -58,6 +58,32 @@ class StickersTest {
     }
 
     @Test
+    fun aStickerStuckAndPeeledBeforeYourNextNoteIsNotNews() = runTest {
+        val env = TestEnv().apply { seed() }
+        env.stickers.upsertArt(mochi)
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(LlmTurnResult(text = "Morning!"))
+        env.harness.agent.send(conversation.id, "Morning").toList()
+        val herLetter = env.conversations.getMessages(conversation.id).last { it.role == MessageRole.ASSISTANT }
+        val service = env.harness.stickerService
+
+        // You stick one on her letter and one on your draft, then think better of both.
+        env.clock.advanceMinutes(5)
+        val onLetter = assertIs<StickResult.Stuck>(service.stick(conversation.id, StickerTarget.message(herLetter.id), StickerRef.Art(mochi.id), null, 0.8f, 0.6f))
+        val onDraft = assertIs<StickResult.Stuck>(service.stick(conversation.id, StickerTarget.draft(conversation.id), StickerRef.Art(mochi.id), null, 0.9f, 0f))
+        env.clock.advanceMinutes(1)
+        service.peel(onLetter.sticker, null)
+        service.peel(onDraft.sticker, null)
+        env.clock.advanceMinutes(1)
+        env.provider.then(LlmTurnResult(text = "Mm?"))
+        env.harness.agent.send(conversation.id, "Never mind.").toList()
+
+        assertFalse(":mochi:" in lastContext(env), "neither placing reaches the persona")
+        val sent = env.conversations.getMessages(conversation.id).last { it.role == MessageRole.USER }
+        assertTrue(service.on(conversation.id, StickerTarget.message(sent.id)).isEmpty(), "the peeled one didn't go with the note")
+    }
+
+    @Test
     fun thePersonaHearsWhatYouStuckAndPeeledOnce() = runTest {
         val env = TestEnv().apply { seed() }
         env.stickers.upsertArt(wave)

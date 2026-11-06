@@ -333,8 +333,10 @@ private fun RunningFilm(run: Float, modifier: Modifier) {
                     drawRect(Color(0xFFF8F0E9), Offset(x, 13.5f), Size(3f, 2f))
                     drawRect(Color(0xFFF8F0E9), Offset(x, 32.5f), Size(3f, 2f))
                 }
+                // Enough frames to cover the strip at every point of the loop (it shifts up to 45 before
+                // starting over): with fewer, its right end showed bare until the loop came round.
                 val frames = listOf(Color(0xFF3F84AD), Color(0xFFCFE3E2), Color(0xFFE2B66B))
-                for (k in -1 until 5) {
+                for (k in -1 until 7) {
                     drawRect(frames[(k + 3) % 3], Offset(11f + k * 15f - shift % 45f, 17f), Size(13f, 14f))
                 }
             }

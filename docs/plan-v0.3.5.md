@@ -158,6 +158,19 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   stills them. The × on each thing is whole now (the strip clipped its top and side), and a
   "g" keeps its tail. Sending while something is still being readied says so ("Still getting
   a video ready.") instead of doing nothing.
+- **After 0.3.5.3** (your notes):
+  - **Drafts are kept.** What you were writing, and what's waiting to go with it, stays in the
+    box until it's sent: leaving the letters doesn't lose it, a video goes on shrinking, and a
+    small file per conversation keeps it if the app is closed (what was still being readied
+    isn't kept). A note sent after you've left (waiting on a link's cutting) still goes.
+  - **A film says more of itself.** Its file's name as well as its own title, its shape
+    (portrait or landscape) and whether it has sound, which a model seeing only three frames
+    can't tell ("[film: Lantern walk by Sam, VID_20261103.mp4, 3:47, portrait, with sound,
+    recorded 3 Nov 2026]"). A name that's only a number (what a phone's picker may give) isn't
+    taken for a title; the gallery's own date stands in when the file has none.
+  - The running film no longer shows bare strip before its frames come round; the + and send
+    buttons stand exactly as tall as the box at any text size. A sticker stuck and peeled
+    before your next note was already left out of what the persona hears; a test says so now.
 
 ## What v0.3.5 includes
 
