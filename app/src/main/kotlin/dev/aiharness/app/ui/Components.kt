@@ -3,6 +3,7 @@ package dev.aiharness.app.ui
 import androidx.compose.foundation.layout.Arrangement
 import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -140,11 +141,23 @@ fun NumberField(label: String, value: Number?, onChange: (String) -> Unit, modif
     )
 }
 
-/** Lightweight chat formatting: *actions* in italics, **bold**, and `code`. */
-fun formatChatText(text: String, accent: Color): AnnotatedString = buildAnnotatedString {
+/**
+ * Lightweight chat formatting: *actions* in italics, **bold**, and `code`. A `:name:` that is one of
+ * [stickers] becomes an inline sticker (see [STICKER_PREFIX]); an emoji's name becomes the emoji.
+ */
+fun formatChatText(text: String, accent: Color, stickers: Set<String> = emptySet()): AnnotatedString = buildAnnotatedString {
     var i = 0
     while (i < text.length) {
+        val named = if (text[i] == ':') StickerName.matchAt(text, i) else null
         when {
+            named != null && named.groupValues[1] in stickers -> {
+                appendInlineContent(STICKER_PREFIX + named.groupValues[1], named.value)
+                i += named.value.length
+            }
+            named != null && dev.aiharness.core.stickers.Emoji.forName(named.groupValues[1]) != null -> {
+                append(dev.aiharness.core.stickers.Emoji.forName(named.groupValues[1])!!.emoji)
+                i += named.value.length
+            }
             text.startsWith("**", i) -> {
                 val end = text.indexOf("**", i + 2)
                 if (end > i + 2) {
@@ -178,6 +191,12 @@ fun formatChatText(text: String, accent: Color): AnnotatedString = buildAnnotate
         }
     }
 }
+
+/** A `:name:` as written in letters: lowercase letters, digits, dashes and underscores. */
+private val StickerName = Regex(":([a-z0-9][a-z0-9_-]{0,31}):")
+
+/** The inline-content key of a sticker written as `:name:` in a letter. */
+const val STICKER_PREFIX = "sticker:"
 
 /** Navigation must happen on the main thread; use this after suspending work inside a coroutine. */
 suspend fun onMain(block: () -> Unit) = withContext(Dispatchers.Main.immediate) { block() }

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.hasText
@@ -132,6 +133,8 @@ class ScreenshotTour {
         assumeTrue(outDir != null)
         seed(time, season)
         waitFor("Kestrel")
+        // Aria's unread letter wears her sticker for hello.
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Unread"), 10_000)
         shot("${prefix}_01_chats")
 
         click("Aria")
@@ -154,14 +157,24 @@ class ScreenshotTour {
         shot("${prefix}_02d_sticker_on_draft")
         // Selecting your own sticker shows its handle; Aria's says whose it is.
         compose.onNodeWithContentDescription("Close the tray").performClick()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasContentDescription(":gold-star: sticker"))
         compose.onNodeWithContentDescription(":gold-star: sticker").performClick()
         waitFor("Peel off")
         shot("${prefix}_02e_sticker_selected")
         click("Done")
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasContentDescription(":aria-heart: sticker"))
         compose.onNodeWithContentDescription(":aria-heart: sticker").performClick()
         waitFor("Only Aria can peel it off")
         shot("${prefix}_02f_her_sticker")
         click("Done")
+        // Typing a :name: offers the stickers it could be.
+        compose.onNode(hasSetTextAction()).performTextInput(" :ari")
+        waitFor(":aria-hello:")
+        shot("${prefix}_02g_sticker_names")
+        // A sticker written inline in a letter.
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("writing this one down", substring = true))
+        compose.waitUntilAtLeastOneExists(hasContentDescription(":aria-heart:"), 10_000)
+        shot("${prefix}_02h_inline_sticker")
         back()
         back()
 
@@ -501,7 +514,7 @@ class ScreenshotTour {
                 ContentPart.ToolCall("t1", "memory_save", """{"content":"Sam finished the first draft of the thesis"}"""),
             ),
             msg(MessageRole.TOOL, ContentPart.ToolResult("t1", "memory_save", "Saved.")),
-            msg(MessageRole.ASSISTANT, ContentPart.Text("I'm writing this one down. How do you feel?")),
+            msg(MessageRole.ASSISTANT, ContentPart.Text("I'm writing this one down. How do you feel? :aria-heart:")),
             msg(MessageRole.USER, ContentPart.Text("Tired. Happy. Can you show me what you'd look like celebrating?"), origin = MessageOrigin.USER),
             msg(MessageRole.ASSISTANT, ContentPart.Text("*twirls* Like this!"), ContentPart.ToolCall("t2", "generate_image", "{}")),
             msg(MessageRole.TOOL, ContentPart.ToolResult("t2", "generate_image", "Shown."), ContentPart.Image(image, caption = "celebrating")),
@@ -515,7 +528,8 @@ class ScreenshotTour {
         val star = StickerArt(newId(), "gold-star", imageRef = h.blobs.put(stickerShape("star"), "png"), createdAt = now)
         val seal = StickerArt(newId(), "hanamaru", kind = StickerArtKind.STAMP, imageRef = h.blobs.put(stickerShape("ring"), "png"), createdAt = now)
         val hello = StickerArt(newId(), "aria-hello", aria.id, imageRef = h.blobs.put(stickerShape("sun"), "png"), feeling = "hello", createdAt = now + 1)
-        listOf(heart, star, seal, hello).forEach { h.stickers.upsertArt(it) }
+        val proud = StickerArt(newId(), "aria-proud", aria.id, imageRef = h.blobs.put(stickerShape("star"), "png"), feeling = "proud", createdAt = now + 2)
+        listOf(heart, star, seal, hello, proud).forEach { h.stickers.upsertArt(it) }
         val stick = h.stickerService
         stick.stick(conversation.id, StickerTarget.message(letters[4].id), StickerRef.Art(heart.id), aria.id, 0.03f, 0.7f, rotationDeg = -12f)
         stick.stick(conversation.id, StickerTarget.message(letters[5].id), StickerRef.Art(star.id), null, 0.86f, 0.72f, rotationDeg = 14f, scale = 1.1f)
@@ -541,9 +555,9 @@ class ScreenshotTour {
         }
         h.memory.save(aria.id, "Sam is writing a thesis on urban ecology", level = MemoryLevel.MATTERS_DEEPLY, pinned = true, feltMood = "proud")
         h.memory.save(aria.id, "Sam likes to be asked, not told", pinned = true, feltMood = "fond", aboutUserPersonaId = sam.id)
-        h.memory.save(aria.id, "Sam finished the first draft of the thesis after months of late nights. Tired but happy; we talked about sleeping properly before the defence.", kind = MemoryKind.EPISODE, feltMood = "delighted", sourceConversationId = conversation.id, sourceMessageId = letters[1].id)
-        h.memory.save(aria.id, "The defence is in early December", feltMood = "hopeful", aboutUserPersonaId = sam.id)
-        h.memory.save(aria.id, "Ask about the defence date without adding pressure", kind = MemoryKind.REFLECTION, feltMood = "thoughtful", sourceConversationId = conversation.id, sourceMessageId = letters.last().id)
+        h.memory.save(aria.id, "Sam finished the first draft of the thesis after months of late nights. Tired but happy; we talked about sleeping properly before the defense.", kind = MemoryKind.EPISODE, feltMood = "delighted", sourceConversationId = conversation.id, sourceMessageId = letters[1].id)
+        h.memory.save(aria.id, "The defense is in early December", feltMood = "hopeful", aboutUserPersonaId = sam.id)
+        h.memory.save(aria.id, "Ask about the defense date without adding pressure", kind = MemoryKind.REFLECTION, feltMood = "thoughtful", sourceConversationId = conversation.id, sourceMessageId = letters.last().id)
         keep("Sam drinks too much coffee when stressed", daysAgo = 0, edit = {
             it.copy(mood = "amused", moodReason = "It stopped being a worry once Sam started laughing about it too.", moodRevisedAt = now - 3 * day, accessCount = 7)
         }) { h.memory.save(aria.id, "Sam drinks too much coffee when stressed", level = MemoryLevel.IN_PASSING, feltMood = "fond", aboutUserPersonaId = sam.id) }
@@ -556,8 +570,8 @@ class ScreenshotTour {
         keep("Sam's first conference talk went well: nerves before, relief after, and a long walk to come down from it.", daysAgo = 24) {
             h.memory.save(aria.id, "Sam's first conference talk went well: nerves before, relief after, and a long walk to come down from it.", kind = MemoryKind.EPISODE, feltMood = "amazed")
         }
-        keep("Mentioned a favourite bakery near the old flat, the one with the cardamom buns", daysAgo = 75) {
-            h.memory.save(aria.id, "Mentioned a favourite bakery near the old flat, the one with the cardamom buns", level = MemoryLevel.IN_PASSING, feltMood = "fond")
+        keep("Mentioned a favorite bakery near the old flat, the one with the cardamom buns", daysAgo = 75) {
+            h.memory.save(aria.id, "Mentioned a favorite bakery near the old flat, the one with the cardamom buns", level = MemoryLevel.IN_PASSING, feltMood = "fond")
         }
         h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.REFLECTED, now - 6 * 3_600_000L))
         h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.RESTED, now - 8 * 3_600_000L, note = "quiet hours"))

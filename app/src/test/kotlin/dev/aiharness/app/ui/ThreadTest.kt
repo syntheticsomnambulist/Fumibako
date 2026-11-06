@@ -77,4 +77,24 @@ class ThreadTest {
         )
         assertEquals(listOf("Day", "Note", "Letter", "Day", "Note"), rows.map { it::class.simpleName })
     }
+
+    @Test
+    fun stickerToolsLeavePostscriptsInYourTerms() {
+        val messages = listOf(
+            msg(MessageRole.USER, ContentPart.Text("I finished!"), origin = MessageOrigin.USER),
+            msg(MessageRole.ASSISTANT, ContentPart.ToolCall("s1", "place_sticker", "{}"), ContentPart.ToolCall("s2", "draw_sticker", "{}")),
+            msg(
+                MessageRole.TOOL,
+                ContentPart.ToolResult("s1", "place_sticker", "Stuck :aria-heart: on their note (top left)."),
+                ContentPart.ToolResult("s2", "draw_sticker", "Drew :aria-proud: and put it on your sheet. You can stick it now."),
+            ),
+            msg(MessageRole.ASSISTANT, ContentPart.Text("You did it!")),
+        )
+        val letter = buildThread(messages, ZoneOffset.UTC).filterIsInstance<ThreadRow.Letter>().single()
+        assertEquals(
+            listOf("Stuck" to ":aria-heart: on your note (top left)", "Drew a new sticker:" to ":aria-proud:"),
+            letter.postscripts.map { it.label to it.text },
+        )
+    }
 }
+

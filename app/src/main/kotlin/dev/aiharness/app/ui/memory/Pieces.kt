@@ -22,6 +22,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.graphicsLayer
+import dev.aiharness.app.ui.theme.stationery
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
@@ -58,6 +63,13 @@ import dev.aiharness.app.ui.paper.TapeSide
 import dev.aiharness.app.ui.paper.drawTape
 import dev.aiharness.app.ui.paper.paperCard
 import dev.aiharness.app.ui.paper.washiStrip
+import dev.aiharness.app.ui.LocalAppContainer
+import dev.aiharness.app.ui.stickers.StickerBaker
+import dev.aiharness.app.ui.stickers.StickerPicture
+import dev.aiharness.core.memory.FeelingFamily
+import dev.aiharness.core.memory.FeelingWords
+import dev.aiharness.core.model.StickerArt
+import dev.aiharness.core.model.StickerRef
 import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.core.memory.Feeling
@@ -164,12 +176,34 @@ class TornEdges(private val tooth: Dp = 7.dp, private val depth: Dp = 3.dp) : Sh
 
 private val Torn = TornEdges()
 
-/** The page's stamp, for strong feelings only. */
+/** The persona's own stickers, which stand in for its feeling stamps when one stands for that feeling. */
+val LocalFeelingStickers = staticCompositionLocalOf<List<StickerArt>> { emptyList() }
+
+/** The persona's sticker for [word] (or, failing that, for another feeling of its [family]), if it has one. */
+@Composable
+fun feelingSticker(word: String?, family: FeelingFamily?): StickerArt? {
+    val sheet = LocalFeelingStickers.current.filter { it.feeling != null }
+    val learned = LocalAppContainer.current.harness.settings.settings.collectAsStateWithLifecycle(null).value?.learnedFeelings.orEmpty()
+    return sheet.firstOrNull { it.feeling.equals(word, ignoreCase = true) }
+        ?: family?.let { f -> sheet.firstOrNull { FeelingWords.lookup(it.feeling!!, learned)?.family == f } }
+}
+
+/** The page's stamp, for strong feelings only: the persona's own sticker for the feeling, or the rubber stamp. */
 @Composable
 private fun PageStamp(page: BookPage, ink: Color, modifier: Modifier = Modifier) {
     val feeling = page.feeling
     if (feeling.stamped && feeling != null) {
-        FeelingStamp(feeling.family, ink, page.memory.id, modifier, alpha = agedAlpha(page.age), word = page.memory.currentMood)
+        val sticker = feelingSticker(page.memory.currentMood, feeling.family)
+        if (sticker != null) {
+            StickerPicture(
+                StickerRef.Art(sticker.id),
+                stationery.dayColors.ink("sora"),
+                modifier.size((38 * StickerBaker.BOX).dp).graphicsLayer { rotationZ = seededTilt(page.memory.id, 12f); alpha = agedAlpha(page.age) },
+                name = page.memory.currentMood ?: sticker.feeling,
+            )
+        } else {
+            FeelingStamp(feeling.family, ink, page.memory.id, modifier, alpha = agedAlpha(page.age), word = page.memory.currentMood)
+        }
     }
 }
 

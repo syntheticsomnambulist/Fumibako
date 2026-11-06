@@ -82,6 +82,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.focus.onFocusChanged
@@ -194,51 +195,57 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             nav = nav,
         )
 
-        LazyColumn(
-            state = listState,
-            reverseLayout = true,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
-        ) {
-            if (writing != null && writingInto == null) {
-                item(key = "writing") { LetterSheet(null, persona, writing, onLongPress = {}, onImage = { viewing = it }) }
-            }
-            items(rows.asReversed(), key = { it.key }) { row ->
-                when (row) {
-                    is ThreadRow.Day -> DayHeading(row.date)
-                    is ThreadRow.Note -> NoteSlip(
-                        row.message,
-                        header.userPersona,
-                        onLongPress = { selected = listOf(row.message) },
-                        onImage = { viewing = it },
-                        stickers = shownStickers[row.message.id].orEmpty(),
-                        persona = persona,
-                        stickerName = stickerName,
-                        handling = handling,
-                    )
-                    is ThreadRow.Letter -> LetterSheet(
-                        row,
-                        persona,
-                        writing.takeIf { row === writingInto },
-                        onLongPress = { selected = row.messages },
-                        onImage = { viewing = it },
-                        stickers = row.messages.flatMap { shownStickers[it.id].orEmpty() },
-                        user = header.userPersona,
-                        stickerName = stickerName,
-                        handling = handling,
-                    )
+        val inlineStickers = remember(stickerArt, persona?.id) {
+            stickerArt.values.filter { it.ownerPersonaId == null || it.ownerPersonaId == persona?.id }.associateBy { it.name }
+        }
+        CompositionLocalProvider(LocalInlineStickers provides inlineStickers) {
+            LazyColumn(
+                state = listState,
+                reverseLayout = true,
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
+            ) {
+                if (writing != null && writingInto == null) {
+                    item(key = "writing") { LetterSheet(null, persona, writing, onLongPress = {}, onImage = { viewing = it }) }
                 }
-                // A row that scrolls away can't be dropped on.
-                if (row !is ThreadRow.Day) {
-                    val id = when (row) {
-                        is ThreadRow.Note -> row.message.id
-                        is ThreadRow.Letter -> row.messages.first().id
-                        else -> ""
+                items(rows.asReversed(), key = { it.key }) { row ->
+                    when (row) {
+                        is ThreadRow.Day -> DayHeading(row.date)
+                        is ThreadRow.Note -> NoteSlip(
+                            row.message,
+                            header.userPersona,
+                            onLongPress = { selected = listOf(row.message) },
+                            onImage = { viewing = it },
+                            stickers = shownStickers[row.message.id].orEmpty(),
+                            persona = persona,
+                            stickerName = stickerName,
+                            handling = handling,
+                        )
+                        is ThreadRow.Letter -> LetterSheet(
+                            row,
+                            persona,
+                            writing.takeIf { row === writingInto },
+                            onLongPress = { selected = row.messages },
+                            onImage = { viewing = it },
+                            stickers = row.messages.flatMap { shownStickers[it.id].orEmpty() },
+                            user = header.userPersona,
+                            stickerName = stickerName,
+                            handling = handling,
+                        )
                     }
-                    DisposableEffect(id) { onDispose { papers.remove(id) } }
+                    // A row that scrolls away can't be dropped on.
+                    if (row !is ThreadRow.Day) {
+                        val id = when (row) {
+                            is ThreadRow.Note -> row.message.id
+                            is ThreadRow.Letter -> row.messages.first().id
+                            else -> ""
+                        }
+                        DisposableEffect(id) { onDispose { papers.remove(id) } }
+                    }
                 }
             }
+
         }
 
         generation.error?.let { error ->
@@ -265,6 +272,15 @@ fun ChatScreen(nav: NavController, conversationId: String) {
 
         val youInk = header.userPersona?.ink?.let { stationery.ink(it) } ?: stationery.you
         val sheet = stationery
+        // Half-typed :name: — offer the stickers it could be.
+        partialStickerName(input)?.let { partial ->
+            val matches = stickerSuggestions(partial, inlineStickers.values)
+            if (matches.isNotEmpty()) {
+                StickerSuggestions(partial, matches, sheet.dayColors.ink(header.userPersona?.ink ?: "sora")) { name ->
+                    input = input.dropLast(partial.length + 1) + ":$name: "
+                }
+            }
+        }
         EntryBar(
             value = input,
             onValueChange = { input = it },

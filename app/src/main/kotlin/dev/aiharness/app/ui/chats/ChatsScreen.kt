@@ -73,6 +73,10 @@ import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.ActivityKind
 import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.Persona
+import dev.aiharness.app.ui.stickers.StickerBaker
+import dev.aiharness.app.ui.stickers.StickerPicture
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.stickers.StickerService
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
@@ -368,7 +372,19 @@ private fun LetterCard(conversation: Conversation, persona: Persona?, modifier: 
             }
         }
         if (unread) {
-            UnreadSeal(persona?.ink, Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp).rotate(10f))
+            val harness = LocalAppContainer.current.harness
+            val art by remember { harness.stickers.observeArt() }.collectAsStateWithLifecycle(emptyList())
+            val mark = persona?.let { p -> StickerService.unreadMark(p, art.filter { it.ownerPersonaId == p.id }) }
+            if (mark != null) {
+                StickerPicture(
+                    StickerRef.Art(mark.id),
+                    s.dayColors.ink(persona.ink),
+                    Modifier.align(Alignment.TopEnd).offset(x = 20.dp, y = (-22).dp).size((40 * StickerBaker.BOX).dp).rotate(10f),
+                    name = "Unread",
+                )
+            } else {
+                UnreadSeal(persona?.ink, Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp).rotate(10f))
+            }
         }
     }
 }

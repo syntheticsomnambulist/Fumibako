@@ -37,6 +37,12 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.aiharness.app.ui.paper.PaperCorner
@@ -195,3 +201,66 @@ private fun TrayCell(
         Text(":$name:", style = PaperType.meta.copy(fontSize = 9.5.sp, letterSpacing = 0.sp), color = paper.kasure2, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
+
+/** What you've typed after a colon, when it could be a sticker's name: `ari` in "Night :ari". */
+fun partialStickerName(text: String): String? = Regex(":([a-z0-9_-]{2,31})$").find(text)?.groupValues?.get(1)
+
+/**
+ * Stickers whose names fit [partial]: the persona's own and the shared ones first, then emoji;
+ * names starting with it before names containing it.
+ */
+fun stickerSuggestions(partial: String, art: Collection<StickerArt>, limit: Int = 8): List<Pair<String, StickerRef>> {
+    val p = partial.lowercase()
+    val pictures = art.map { it.name to (StickerRef.Art(it.id) as StickerRef) }
+    val emoji = Emoji.all.map { it.name to (StickerRef.Emoji(it.emoji, it.name) as StickerRef) }
+    fun pick(from: List<Pair<String, StickerRef>>) = from.filter { it.first.startsWith(p) } + from.filter { !it.first.startsWith(p) && p in it.first }
+    return (pick(pictures) + pick(emoji)).distinctBy { it.first }.take(limit)
+}
+
+/** Chips above the composer for the stickers a half-typed `:name` could be; tapping one finishes it. */
+@Composable
+fun StickerSuggestions(partial: String, matches: List<Pair<String, StickerRef>>, ink: Color, onPick: (String) -> Unit) {
+    val colors = paper
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(colors.kami)
+            .drawBehind { drawLine(colors.nijimi0, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        matches.forEach { (name, ref) ->
+            Row(
+                Modifier
+                    .clip(PaperCorner)
+                    .background(colors.hyoshi)
+                    .border(1.dp, colors.nijimi1, PaperCorner)
+                    .clickable(onClickLabel = "Write :$name:") { onPick(name) }
+                    .padding(start = 4.dp, end = 9.dp, top = 3.dp, bottom = 3.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                StickerPicture(ref, ink, Modifier.size((24 * StickerBaker.BOX).dp))
+                val at = name.indexOf(partial)
+                Text(
+                    buildAnnotatedString {
+                        append(":")
+                        if (at >= 0) {
+                            append(name.substring(0, at))
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = ink)) { append(partial) }
+                            append(name.substring(at + partial.length))
+                        } else {
+                            append(name)
+                        }
+                        append(":")
+                    },
+                    style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp),
+                    color = colors.usuzumi1,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+

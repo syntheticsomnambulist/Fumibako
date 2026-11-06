@@ -136,6 +136,13 @@ private fun postscriptsOf(messages: List<ChatMessage>): List<Postscript> {
                 if (outfit.isNullOrEmpty() || outfit.equals("default", ignoreCase = true)) Postscript("Changed back into the usual clothes.", null)
                 else Postscript("Changed into:", outfit)
             }
+            "place_sticker" -> Postscript(
+                "Stuck",
+                result.content.removePrefix("Stuck ").removeSuffix(".")
+                    .replace(" on their note", " on your note").replace(" on your letter", " on an earlier letter"),
+            )
+            "peel_sticker" -> Postscript("Peeled", result.content.removePrefix("Peeled ").removeSuffix("."))
+            "draw_sticker" -> Postscript("Drew a new sticker:", Regex(":[a-z0-9_-]+:").find(result.content)?.value)
             "memory_search", "generate_image" -> null
             else -> Postscript("Used ${result.name}.", null)
         }
@@ -147,5 +154,8 @@ private fun toolVerb(name: String) = when (name) {
     "memory_update" -> "update a memory"
     "memory_forget" -> "let a memory go"
     "change_outfit" -> "change clothes"
+    "place_sticker" -> "stick a sticker"
+    "peel_sticker" -> "peel a sticker off"
+    "draw_sticker" -> "draw a sticker"
     else -> "use $name"
 }

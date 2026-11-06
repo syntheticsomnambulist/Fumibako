@@ -22,7 +22,7 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   The ruled fields now keep only their baselines. (Under Robolectric, any dialog with a text
   field on a phone-sized screen never goes idle, a stock one included, so the screenshot tour
   shoots the picture dialog on the small default screen.)
-- **Step 4, stickers: in progress.** Ten boards on the "Fumibako stickers" design canvas (private
+- **Step 4, stickers: done.** Ten boards on the "Fumibako stickers" design canvas (private
   claude.ai artifact: https://claude.ai/artifact/PA4VQXGG1rWc375566n4de): stickers on letters, the
   tray's sticker page, moving and peeling, typing a `:name:`, a persona sticking one (with a P.S.),
   what the persona reads and its tools, a persona's sheet, the shared library, the unread mark and
@@ -34,6 +34,16 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   since its last turn (`[Sam stuck :tada: on your Fri 00:14 letter]`), and its stickers named in
   its instructions; stickers on your draft going with the note; a sticker for a heartbeat letter
   that wasn't sent going with it.
+  **In the app:** stickers on letters and notes with a die-cut outline baked once (blur and
+  threshold), lamplight at night; the + tray (Recent, the persona's own, Shared, Emoji), tap onto
+  your draft or hold and drag onto a letter; moving, pinching and twisting your own, peeling with a
+  slip that says whose a sticker is; a persona's sticker page (its sheet, drawing a new one from how
+  it looks, its switches) and `draw_sticker`, with a heartbeat activity that takes one slot however
+  many it draws; the shared library (from a photo, cut out by ML Kit, or drawn); Settings,
+  Stickers, and Lamplight on Look; `:name:` stickers inline in letters with suggestions as you
+  type; the persona's hello sticker as its unread mark; its stickers standing in for feeling
+  stamps in the memory book; P.S. lines for sticking and drawing. Emoji newer than Unicode 13 are
+  left out of the tray, since older phones draw them as boxes.
   **Storage is in:** the database is at version 3 through its first migration, which adds a
   `stickers` table (what's stuck where, by whom; peeled ones stay until the persona has heard) and
   a `sticker_art` table (persona sheets and the shared library). The migration is tested from a

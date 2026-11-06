@@ -3,6 +3,7 @@ package dev.aiharness.app.ui.memory
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.graphics.TransformOrigin
@@ -242,92 +243,95 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
     val since = all.minOfOrNull { it.createdAt }
     val scopedUsers = users.filter { u -> all.any { it.aboutUserPersonaId == u.id } }
 
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item("bar") {
-            BookBar(
-                title = "$name's memory book",
-                meta = listOfNotNull(if (kept == 1) "1 memory" else "$kept memories", since?.let { "since ${longDate(dayOf(it, zone))}" }).joinToString(" · "),
-                searching = searching,
-                onBack = { nav.popBackStack() },
-                onSearch = {
-                    searching = !searching
-                    if (!searching) query = ""
-                },
-                onAdd = if (canEdit) ({ nav.navigate(Routes.memoryCard(personaId, Routes.NEW)) }) else null,
-            )
-        }
-        if (searching) {
-            item("search") { IndexCardField("Search $name's memories", query, { query = it }, ink = ink, style = PaperType.prose, singleLine = true, placeholder = "A word, a name, a feeling") }
-        }
-        item("tabs") { BookTabs(tab, ink, persona?.tapePattern ?: TapePattern.DOTS) { tab = it } }
-        item("filters") {
-            Row(Modifier.fillMaxWidth().padding(top = 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterTag(
-                    "Felt: ${felt?.label ?: "any"}",
-                    options = listOf<Pair<FeelingFamily?, String>>(null to "Any feeling") + FeelingFamily.entries.map { it to it.label },
-                    onPick = { felt = it },
+    val sheet by remember(personaId) { harness.stickers.observeArt() }.collectAsStateWithLifecycle(emptyList())
+    CompositionLocalProvider(LocalFeelingStickers provides sheet.filter { it.ownerPersonaId == personaId }) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            item("bar") {
+                BookBar(
+                    title = "$name's memory book",
+                    meta = listOfNotNull(if (kept == 1) "1 memory" else "$kept memories", since?.let { "since ${longDate(dayOf(it, zone))}" }).joinToString(" · "),
+                    searching = searching,
+                    onBack = { nav.popBackStack() },
+                    onSearch = {
+                        searching = !searching
+                        if (!searching) query = ""
+                    },
+                    onAdd = if (canEdit) ({ nav.navigate(Routes.memoryCard(personaId, Routes.NEW)) }) else null,
                 )
-                if (scopedUsers.isNotEmpty()) {
+            }
+            if (searching) {
+                item("search") { IndexCardField("Search $name's memories", query, { query = it }, ink = ink, style = PaperType.prose, singleLine = true, placeholder = "A word, a name, a feeling") }
+            }
+            item("tabs") { BookTabs(tab, ink, persona?.tapePattern ?: TapePattern.DOTS) { tab = it } }
+            item("filters") {
+                Row(Modifier.fillMaxWidth().padding(top = 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FilterTag(
-                        "About: ${users.firstOrNull { it.id == about }?.name ?: "anyone"}",
-                        options = listOf<Pair<String?, String>>(null to "Anyone") + scopedUsers.map { it.id to it.name },
-                        onPick = { about = it },
+                        "Felt: ${felt?.label ?: "any"}",
+                        options = listOf<Pair<FeelingFamily?, String>>(null to "Any feeling") + FeelingFamily.entries.map { it to it.label },
+                        onPick = { felt = it },
                     )
+                    if (scopedUsers.isNotEmpty()) {
+                        FilterTag(
+                            "About: ${users.firstOrNull { it.id == about }?.name ?: "anyone"}",
+                            options = listOf<Pair<String?, String>>(null to "Anyone") + scopedUsers.map { it.id to it.name },
+                            onPick = { about = it },
+                        )
+                    }
+                    Box(Modifier.weight(1f))
+                    Text("NEWEST FIRST", style = PaperType.meta, color = paper.kasure2)
                 }
-                Box(Modifier.weight(1f))
-                Text("NEWEST FIRST", style = PaperType.meta, color = paper.kasure2)
             }
-        }
-        if (always.isNotEmpty()) {
-            item("always") { AlwaysInMind(always, ink) { nav.navigate(Routes.memoryCard(personaId, it)) } }
-        }
-        if (all.isEmpty()) {
-            item("empty") {
-                TornNote("Nothing kept yet. Memories gather here as you write to each other.", null, color = paper.usuzumi1) {}
+            if (always.isNotEmpty()) {
+                item("always") { AlwaysInMind(always, ink) { nav.navigate(Routes.memoryCard(personaId, it)) } }
             }
-        } else if (always.isEmpty() && days.isEmpty()) {
-            item("none") { Text("Nothing here matches.", style = PaperType.prose.copy(fontStyle = FontStyle.Italic), color = paper.usuzumi0) }
-        }
-        months.forEach { (month, monthDays) ->
-            val open = filtering || month == newest || month in openMonths
-            if (month != newest && !filtering) {
-                item("env-$month") {
-                    val count = monthDays.sumOf { days[it]?.size ?: 0 }
-                    val letterCount = letters.lettersPerMonth[month] ?: 0
-                    MonthEnvelope(
-                        monthName(month),
-                        listOfNotNull(if (count == 1) "1 memory" else "$count memories", letterCount.takeIf { it > 0 }?.let { if (it == 1) "1 letter" else "$it letters" }).joinToString(" · "),
-                        open = open,
-                        ink = ink,
-                    ) {
-                        if (month in openMonths) {
-                            openMonths.remove(month)
-                        } else {
-                            openMonths.add(month)
-                            openedAt[month] = System.currentTimeMillis()
+            if (all.isEmpty()) {
+                item("empty") {
+                    TornNote("Nothing kept yet. Memories gather here as you write to each other.", null, color = paper.usuzumi1) {}
+                }
+            } else if (always.isEmpty() && days.isEmpty()) {
+                item("none") { Text("Nothing here matches.", style = PaperType.prose.copy(fontStyle = FontStyle.Italic), color = paper.usuzumi0) }
+            }
+            months.forEach { (month, monthDays) ->
+                val open = filtering || month == newest || month in openMonths
+                if (month != newest && !filtering) {
+                    item("env-$month") {
+                        val count = monthDays.sumOf { days[it]?.size ?: 0 }
+                        val letterCount = letters.lettersPerMonth[month] ?: 0
+                        MonthEnvelope(
+                            monthName(month),
+                            listOfNotNull(if (count == 1) "1 memory" else "$count memories", letterCount.takeIf { it > 0 }?.let { if (it == 1) "1 letter" else "$it letters" }).joinToString(" · "),
+                            open = open,
+                            ink = ink,
+                        ) {
+                            if (month in openMonths) {
+                                openMonths.remove(month)
+                            } else {
+                                openMonths.add(month)
+                                openedAt[month] = System.currentTimeMillis()
+                            }
                         }
                     }
                 }
-            }
-            if (open) {
-                items(monthDays, key = { "day-$it" }) { day ->
-                    val order = monthDays.indexOf(day)
-                    val spilling = openedAt[month]?.let { System.currentTimeMillis() - it < 1_500 } == true
-                    BookDay(
-                        modifier = Modifier.spillOut(spilling, order, day.toString()),
-                        day = day,
-                        pages = days[day].orEmpty().sortedBy { it.memory.createdAt },
-                        letters = letters,
-                        name = name,
-                        ink = ink,
-                        tape = tape,
-                        onOpen = { nav.navigate(Routes.memoryCard(personaId, it)) },
-                        onLetter = { nav.navigate(Routes.chat(it)) },
-                    )
+                if (open) {
+                    items(monthDays, key = { "day-$it" }) { day ->
+                        val order = monthDays.indexOf(day)
+                        val spilling = openedAt[month]?.let { System.currentTimeMillis() - it < 1_500 } == true
+                        BookDay(
+                            modifier = Modifier.spillOut(spilling, order, day.toString()),
+                            day = day,
+                            pages = days[day].orEmpty().sortedBy { it.memory.createdAt },
+                            letters = letters,
+                            name = name,
+                            ink = ink,
+                            tape = tape,
+                            onOpen = { nav.navigate(Routes.memoryCard(personaId, it)) },
+                            onLetter = { nav.navigate(Routes.chat(it)) },
+                        )
+                    }
                 }
             }
         }

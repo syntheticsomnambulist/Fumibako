@@ -30,9 +30,17 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.aiharness.app.ui.BlobImage
+import dev.aiharness.app.ui.STICKER_PREFIX
+import dev.aiharness.app.ui.stickers.StickerPicture
 import dev.aiharness.app.ui.formatChatText
 import dev.aiharness.app.ui.paper.MoodWord
 import dev.aiharness.app.ui.paper.PortraitDot
@@ -129,7 +137,7 @@ fun LetterSheet(
 
             letter?.blocks?.forEach { block ->
                 when (block) {
-                    is LetterBlock.Words -> Text(formatChatText(block.text, ink), style = PaperType.letterBody, color = paper.sumi)
+                    is LetterBlock.Words -> StickerText(block.text, ink, PaperType.letterBody, paper.sumi)
                     is LetterBlock.Picture -> BlobImage(
                         block.image.ref,
                         Modifier
@@ -144,7 +152,7 @@ fun LetterSheet(
             }
             if (writing != null) {
                 val text = dev.aiharness.core.model.MoodTags.stripStreaming(writing.text)
-                if (text.isNotBlank()) Text(formatChatText(text, ink), style = PaperType.letterBody, color = paper.sumi)
+                if (text.isNotBlank()) StickerText(text, ink, PaperType.letterBody, paper.sumi)
                 Text(writing.status.ifBlank { "writing…" }, style = PaperType.postscript, color = paper.kasure2)
             }
             letter?.errors?.forEach { Text(it, style = PaperType.postscript, color = s.ink("beni")) }
@@ -238,7 +246,7 @@ fun NoteSlip(
                     color = you,
                 )
                 if (message.displayText.isNotBlank()) {
-                    Text(formatChatText(message.displayText, you), style = PaperType.noteBody, color = paper.usuzumi1)
+                    StickerText(message.displayText, you, PaperType.noteBody, paper.usuzumi1)
                 }
                 message.images.forEach { image ->
                     BlobImage(image.ref, Modifier.widthIn(max = 220.dp).heightIn(max = 260.dp).clip(RoundedCornerShape(2.dp)).clickable { onImage(image.ref) })
@@ -246,6 +254,27 @@ fun NoteSlip(
             }
         }
     }
+}
+
+/** Stickers that can be written inline as `:name:` here (the persona's own and the shared ones), by name. */
+val LocalInlineStickers = staticCompositionLocalOf<Map<String, StickerArt>> { emptyMap() }
+
+/** Letter text with its `:name:` stickers drawn inline at the text's height. */
+@Composable
+fun StickerText(text: String, accent: Color, style: androidx.compose.ui.text.TextStyle, color: Color) {
+    val stickers = LocalInlineStickers.current
+    val formatted = formatChatText(text, accent, stickers.keys)
+    val used = stickers.filterKeys { formatted.text.isNotEmpty() && text.contains(":$it:") }
+    Text(
+        formatted,
+        style = style,
+        color = color,
+        inlineContent = used.mapKeys { STICKER_PREFIX + it.key }.mapValues { (_, art) ->
+            InlineTextContent(Placeholder(1.45.em, 1.45.em, PlaceholderVerticalAlign.TextCenter)) {
+                StickerPicture(StickerRef.Art(art.id), stationery.dayColors.ink("sora"), Modifier.fillMaxSize(), name = ":${art.name}:")
+            }
+        },
+    )
 }
 
 /** A sticker's `:name:`, for reading aloud and labels. */
