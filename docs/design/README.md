@@ -156,7 +156,9 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
 
 The mockup uses Cormorant Garamond (display), Literata (letter text), LINE Seed JP (UI) and
 Yuji Syuku (kanji). **These are placeholders: the current choice isn't loved, and we'll circle back
-to fonts later.** The font audit is under way in v0.5: see *The font audit* in
+to fonts later.** The v0.5 font audit has since chosen Zen Old Mincho (names), Literata
+(letters, yours too), Zen Kaku Gothic New (interface), a handwriting face per persona (Yomogi by
+default), Yuji Syuku (seals) and Old Standard TT (cuttings): see *The font audit* in
 [`v0.5.md`](v0.5.md).
 
 ## Next
