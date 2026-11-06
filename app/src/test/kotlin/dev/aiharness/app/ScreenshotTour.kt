@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.hasText
@@ -28,6 +29,10 @@ import dev.aiharness.core.model.ActivityKind
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.DayNightMode
 import dev.aiharness.core.model.Season
+import dev.aiharness.core.model.StickerArt
+import dev.aiharness.core.model.StickerArtKind
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.model.StickerTarget
 import dev.aiharness.core.model.TapePattern
 import dev.aiharness.core.model.ThemeSettings
 import dev.aiharness.core.model.TimeOfDay
@@ -131,6 +136,10 @@ class ScreenshotTour {
 
         click("Aria")
         waitFor("actually sleep")
+        // Stickers bake in the background; wait until the ones on screen are drawn.
+        listOf(":aria-heart: sticker", ":sleeping: sticker", ":gold-star: sticker").forEach { label ->
+            compose.waitUntilAtLeastOneExists(hasContentDescription(label), 10_000)
+        }
         shot("${prefix}_02_chat")
         // Writing a reply: the field grows and the send button stays.
         compose.onNode(hasSetTextAction()).performTextInput("You'll get to pick for yourself :3\nWe've just updated to a new version.")
@@ -329,6 +338,50 @@ class ScreenshotTour {
         compose.waitForIdle()
     }
 
+    /** A sticker's picture on a clear background: a heart, a star, or an inked ring for a stamp. */
+    private fun stickerShape(kind: String): ByteArray {
+        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        when (kind) {
+            "heart" -> {
+                paint.color = 0xFFD80638.toInt()
+                val path = android.graphics.Path().apply {
+                    moveTo(100f, 178f)
+                    cubicTo(20f, 120f, 10f, 60f, 55f, 42f)
+                    cubicTo(80f, 32f, 96f, 48f, 100f, 62f)
+                    cubicTo(104f, 48f, 120f, 32f, 145f, 42f)
+                    cubicTo(190f, 60f, 180f, 120f, 100f, 178f)
+                    close()
+                }
+                canvas.drawPath(path, paint)
+                paint.color = 0x66FFFFFF
+                canvas.drawCircle(64f, 70f, 12f, paint)
+            }
+            "star" -> {
+                paint.color = 0xFFE3940B.toInt()
+                val path = android.graphics.Path()
+                for (i in 0 until 10) {
+                    val r = if (i % 2 == 0) 92f else 38f
+                    val a = Math.toRadians(-90.0 + i * 36.0)
+                    val x = 100f + r * Math.cos(a).toFloat()
+                    val y = 104f + r * Math.sin(a).toFloat()
+                    if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                }
+                path.close()
+                canvas.drawPath(path, paint)
+            }
+            else -> {
+                paint.color = 0xFFC43C32.toInt()
+                paint.style = Paint.Style.STROKE
+                paint.strokeWidth = 10f
+                canvas.drawCircle(100f, 100f, 80f, paint)
+                canvas.drawCircle(100f, 100f, 40f, paint)
+            }
+        }
+        return ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+    }
+
     private fun placeholderImage(): ByteArray {
         val bitmap = Bitmap.createBitmap(416, 608, Bitmap.Config.ARGB_8888)
         val paint = Paint().apply {
@@ -400,6 +453,17 @@ class ScreenshotTour {
         )
         letters.forEach { h.conversations.appendMessage(it) }
         h.refreshPreview(conversation.id)
+
+        // Stickers: Aria's heart on Sam's note, Sam's star and a stamp on her letters, an emoji on the last one.
+        val heart = StickerArt(newId(), "aria-heart", aria.id, imageRef = h.blobs.put(stickerShape("heart"), "png"), feeling = "fond", createdAt = now)
+        val star = StickerArt(newId(), "gold-star", imageRef = h.blobs.put(stickerShape("star"), "png"), createdAt = now)
+        val seal = StickerArt(newId(), "hanamaru", kind = StickerArtKind.STAMP, imageRef = h.blobs.put(stickerShape("ring"), "png"), createdAt = now)
+        listOf(heart, star, seal).forEach { h.stickers.upsertArt(it) }
+        val stick = h.stickerService
+        stick.stick(conversation.id, StickerTarget.message(letters[4].id), StickerRef.Art(heart.id), aria.id, 0.03f, 0.7f, rotationDeg = -12f)
+        stick.stick(conversation.id, StickerTarget.message(letters[5].id), StickerRef.Art(star.id), null, 0.86f, 0.72f, rotationDeg = 14f, scale = 1.1f)
+        stick.stick(conversation.id, StickerTarget.message(letters[1].id), StickerRef.Art(seal.id), null, 0.88f, 0.3f, rotationDeg = -8f)
+        stick.stick(conversation.id, StickerTarget.message(letters[7].id), StickerRef.Emoji("😴", "sleeping"), null, 0.9f, 0.7f, rotationDeg = 10f)
         h.updateConversation(conversation.id) {
             it.copy(updatedAt = now + 1, mood = "fond", lastAgentMessageAt = t, lastReadAt = now - 4 * 3_600_000L)
         }

@@ -79,6 +79,7 @@ import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
 import dev.aiharness.core.model.ChatMessage
+import dev.aiharness.core.model.Sticker
 import kotlinx.coroutines.launch
 
 @Composable
@@ -89,6 +90,9 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     val header by vm.header.collectAsStateWithLifecycle()
     val generation by vm.generation.collectAsStateWithLifecycle()
     val imageReady by vm.imageGenReady.collectAsStateWithLifecycle()
+    val stickers by vm.stickers.collectAsStateWithLifecycle()
+    val stickerArt by vm.stickerArt.collectAsStateWithLifecycle()
+    val stickerName: (Sticker) -> String = { stickerLabel(it, stickerArt) }
 
     var input by rememberSaveable { mutableStateOf("") }
     var selected by remember { mutableStateOf<List<ChatMessage>?>(null) }
@@ -138,13 +142,24 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             items(rows.asReversed(), key = { it.key }) { row ->
                 when (row) {
                     is ThreadRow.Day -> DayHeading(row.date)
-                    is ThreadRow.Note -> NoteSlip(row.message, header.userPersona, onLongPress = { selected = listOf(row.message) }, onImage = { viewing = it })
+                    is ThreadRow.Note -> NoteSlip(
+                        row.message,
+                        header.userPersona,
+                        onLongPress = { selected = listOf(row.message) },
+                        onImage = { viewing = it },
+                        stickers = stickers[row.message.id].orEmpty(),
+                        persona = persona,
+                        stickerName = stickerName,
+                    )
                     is ThreadRow.Letter -> LetterSheet(
                         row,
                         persona,
                         writing.takeIf { row === writingInto },
                         onLongPress = { selected = row.messages },
                         onImage = { viewing = it },
+                        stickers = row.messages.flatMap { stickers[it.id].orEmpty() },
+                        user = header.userPersona,
+                        stickerName = stickerName,
                     )
                 }
             }

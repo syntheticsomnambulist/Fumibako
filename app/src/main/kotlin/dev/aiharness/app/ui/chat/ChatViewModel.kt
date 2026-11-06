@@ -10,6 +10,8 @@ import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.MoodTags
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.Sticker
+import dev.aiharness.core.model.StickerArt
 import dev.aiharness.core.model.UserPersona
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -56,6 +58,16 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatHeader())
 
     val generation: StateFlow<GenerationState> = container.generation.state(conversationId)
+
+    /** Stickers still stuck in this conversation, by what they're on (a message id, or this conversation's id for the draft). */
+    val stickers: StateFlow<Map<String, List<Sticker>>> = harness.stickers.observeForConversation(conversationId)
+        .map { list -> list.filterNot { it.isPeeled }.groupBy { it.target.id } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** Sticker pictures by id, for their `:name:`s. */
+    val stickerArt: StateFlow<Map<String, StickerArt>> = harness.stickers.observeArt()
+        .map { list -> list.associateBy { it.id } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     val imageGenReady: StateFlow<Boolean> = harness.settings.settings
         .map { it.imageGen.ready }

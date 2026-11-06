@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import dev.aiharness.core.model.FrameStyle
+import dev.aiharness.core.model.Lamplight
 import dev.aiharness.core.model.TapePattern
 import dev.aiharness.core.model.ThemeSettings
 import dev.aiharness.core.theme.ThemeChoice
@@ -46,6 +47,9 @@ data class Stationery(
     val you: Color,
     val youPattern: TapePattern,
     val inkSignature: Boolean,
+    /** The outline setting as chosen: a hex colour, or paper or ink (see [ThemeSettings.outlineColor]). */
+    val outlineSetting: String = "#FFFFFF",
+    val lamplight: Lamplight = Lamplight.DIM_ALL,
 ) {
     val isNight: Boolean get() = colors.isNight
 
@@ -69,6 +73,8 @@ data class Stationery(
                 you = colors.ink(youInk ?: "sora"),
                 youPattern = youPattern,
                 inkSignature = settings.inkSignature,
+                outlineSetting = settings.outlineColor,
+                lamplight = settings.lamplight,
             )
         }
 
