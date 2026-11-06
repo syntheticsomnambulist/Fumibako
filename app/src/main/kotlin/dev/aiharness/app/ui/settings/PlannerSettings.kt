@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.navigation.NavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.Routes
 import dev.aiharness.app.ui.SwitchRow
@@ -59,6 +60,23 @@ internal fun SettingsCards.plannerPage(nav: NavController, s: AppSettings, updat
             maxLines = 2,
         )
     }
+    card {
+        CardTitle("During busy times")
+        PaperChoice(dev.aiharness.core.model.DuringBusy.entries.map { it to it.label }, p.duringBusy, { v -> planner { it.copy(duringBusy = v) } }, maxLines = 2)
+        Hint(
+            when (p.duringBusy) {
+                dev.aiharness.core.model.DuringBusy.HOLD -> "While your planner says you're busy (work, sleep, a busy plan or phone event), a persona's letter arrives quietly; when you're free, one notification says who wrote."
+                dev.aiharness.core.model.DuringBusy.NOTIFY -> "Letters notify as they come, busy or not."
+                dev.aiharness.core.model.DuringBusy.SILENT -> "While you're busy, letters arrive with no notification at all; they're in your letters when you look."
+            },
+        )
+        Hint("A persona's notification also has \"Busy for now\" (an hour, till tonight, till tomorrow), which adds a busy plan without opening the app.")
+        SwitchRow(
+            "Use my sleep as quiet hours", p.sleepQuietHours, { v -> planner { it.copy(sleepQuietHours = v) } },
+            subtitle = "Heartbeats don't write while your typical week has you asleep, as well as in their own quiet hours.",
+        )
+    }
+    card { WhoSees(s, update) }
     card {
         CardTitle("Seasons and special days")
         SwitchRow(
@@ -247,4 +265,30 @@ private fun PhoneCalendarsCard(s: AppSettings, update: Update) {
         Hint("To stop the app reading your calendars at all, turn off its Calendar permission in your phone's settings.")
     }
     problem?.let { Text(it, style = PaperType.postscript, color = paper.usuzumi1) }
+}
+
+/**
+ * Who sees your planner: each persona's "Sees my planner", and each of your personas' "Shares my
+ * planner" (your default persona shares by default; the others, which may be fictional, don't).
+ */
+@Composable
+private fun WhoSees(s: AppSettings, update: Update) {
+    val harness = LocalAppContainer.current.harness
+    val scope = rememberCoroutineScope()
+    val personas by androidx.compose.runtime.remember { harness.personas.observeAll() }.collectAsStateWithLifecycle(emptyList())
+    val yous by androidx.compose.runtime.remember { harness.userPersonas.observeAll() }.collectAsStateWithLifecycle(emptyList())
+    CardTitle("Who sees your planner")
+    Hint("A persona sees the planner of whichever persona of yours it's writing to, when that one shares it and the persona's own switch is on.")
+    Text("YOUR PERSONAS", style = PaperType.meta, color = paper.kasure2)
+    yous.forEach { u ->
+        SwitchRow(
+            "${u.name} shares their planner", u.sharesPlanner(s),
+            { v -> scope.launch { harness.userPersonas.upsert(u.copy(sharesPlanner = v, updatedAt = System.currentTimeMillis())) } },
+            subtitle = if (u.id == s.activeUserPersonaId) "Your default persona" else null,
+        )
+    }
+    Text("PERSONAS", style = PaperType.meta, color = paper.kasure2)
+    personas.forEach { p ->
+        SwitchRow("${p.name} sees it", p.seesPlanner, { v -> scope.launch { harness.personas.upsert(p.copy(seesPlanner = v, updatedAt = System.currentTimeMillis())) } })
+    }
 }

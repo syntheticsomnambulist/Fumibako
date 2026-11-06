@@ -130,7 +130,9 @@ class HeartbeatEngine(private val h: Harness) {
             }
             // Slots can already be gone: an activity may act on its own before the moment (in prepare).
             val promised = runCatching { h.planner.dueReminders(persona.id) }.getOrDefault(emptyList()).isNotEmpty()
-            val blocked = blockedReason(rhythm, beat.history, promised) ?: if (beat.slotsLeft == 0) "no activities left this time" else null
+            val you = setup.userPersona
+            val asleep = setup.settings.planner.sleepQuietHours && you != null && runCatching { h.planner.asleepNow(you.id) }.getOrDefault(false)
+            val blocked = blockedReason(rhythm, beat.history, promised, asleep) ?: if (beat.slotsLeft == 0) "no activities left this time" else null
             if (blocked != null && invitations.isEmpty()) {
                 h.logActivity(persona.id, ActivityKind.RESTED, initial.id, note = blocked)
                 return HeartbeatOutcome.Skipped(persona.id, blocked)
@@ -265,9 +267,11 @@ class HeartbeatEngine(private val h: Harness) {
     }
 
     /** Why the persona can't write now, or null. [promised]: a reminder it set itself is due, so a recent letter doesn't hold it back. */
-    internal fun blockedReason(rhythm: HeartbeatRhythm, history: List<ChatMessage>, promised: Boolean = false): String? {
+    internal fun blockedReason(rhythm: HeartbeatRhythm, history: List<ChatMessage>, promised: Boolean = false, asleep: Boolean = false): String? {
         val now = h.clock.nowMillis()
         if (inQuietHours(rhythm, now)) return "quiet hours"
+        // Your typical week's sleep, when it's set to be the quiet hours too.
+        if (asleep) return "quiet hours (asleep)"
         val lastVisible = history.lastOrNull { !it.hidden } ?: return "empty conversation"
         if (!promised && now - lastVisible.createdAt < rhythm.minSilenceMinutes * 60_000L) return "conversation is recent"
         val dayAgo = now - 86_400_000L

@@ -55,5 +55,9 @@
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>
         </service>
+        <!-- "Busy for now" on a persona's notification. -->
+        <receiver
+            android:name=".heartbeat.BusyForNowReceiver"
+            android:exported="false" />
     </application>
 </manifest>

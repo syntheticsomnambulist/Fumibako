@@ -226,4 +226,32 @@ class PersonasPlannerTest {
         env.harness.agent.send(conversation.id, "Again").toList()
         assertTrue("stuck :star: on Saturday" !in lastNote(env))
     }
+
+    @Test
+    fun yourSleepCanBeTheQuietHours() = runTest {
+        val env = TestEnv().apply { seed() }
+        env.plannerEntries.upsert(PlannerEntry("s1", env.user.id, null, EntryKind.ROUTINE, "Sleep", weekly = dev.aiharness.core.model.Weekly((1..7).toList(), 23 * 60, 7 * 60), routine = dev.aiharness.core.model.RoutineKind.SLEEP, createdAt = 0, updatedAt = 0))
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(LlmTurnResult(text = "Hi"))
+        env.harness.agent.send(conversation.id, "Hi").toList()
+        env.clock.millis = at(28, 23, 30)
+        assertTrue(env.harness.planner.asleepNow(env.user.id))
+        // No quiet hours of the heartbeat's own.
+        env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(quietHoursStart = null, quietHoursEnd = null))) }
+
+        // Off (the default): asleep or not, the heartbeat's own quiet hours decide.
+        env.provider.then(LlmTurnResult(text = "Still up?"))
+        assertIs<HeartbeatOutcome.Sent>(env.harness.heartbeat.run(force = true).single())
+
+        // On: your sleep is quiet hours, so it doesn't write.
+        env.settingsRepo.update { it.copy(planner = it.planner.copy(sleepQuietHours = true)) }
+        env.clock.advanceMinutes(5)
+        env.provider.then { request ->
+            val note = (request.messages.last() as LlmMessage.User).parts.filterIsInstance<LlmPart.Text>().joinToString { it.text }
+            assertContains(note, "You won't write to Sam this time (quiet hours (asleep))")
+            LlmTurnResult(text = HeartbeatEngine.SILENT)
+        }
+        val outcome = env.harness.heartbeat.run(force = true).single()
+        assertTrue(outcome !is HeartbeatOutcome.Sent, "asleep, it doesn't write: $outcome")
+    }
 }

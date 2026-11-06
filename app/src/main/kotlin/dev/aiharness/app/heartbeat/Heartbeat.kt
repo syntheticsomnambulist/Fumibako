@@ -39,7 +39,10 @@ class HeartbeatWorker(context: Context, params: WorkerParameters) : CoroutineWor
             force = inputData.getBoolean(KEY_FORCE, false),
             onlyPersonaId = inputData.getString(KEY_PERSONA),
         )
-        outcomes.filterIsInstance<HeartbeatOutcome.Sent>().forEach { container.notifier.notifyMessage(it) }
+        // Notified now, or held while your planner says you're busy (Settings, Planner, During busy times).
+        outcomes.filterIsInstance<HeartbeatOutcome.Sent>().forEach { BusyTimes.deliver(applicationContext, container.harness, container.notifier, it) }
+        // Letters held through a busy stretch that's over (should their own job not have come).
+        BusyTimes.release(applicationContext, container.harness, container.notifier)
         return Result.success()
     }
 }
@@ -125,6 +128,7 @@ class Notifier(private val context: Context) {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val text = outcome.message.displayText
+        val id = outcome.conversation.id.hashCode()
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(outcome.persona.name)
@@ -132,8 +136,56 @@ class Notifier(private val context: Context) {
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(pending)
             .setAutoCancel(true)
+            // "Busy for now": a busy plan in your planner without opening the app.
+            .addAction(0, "Busy for an hour", busyIntent(id, BusyTimes.HOUR))
+            .addAction(0, "Till tonight", busyIntent(id, BusyTimes.TONIGHT))
+            .addAction(0, "Till tomorrow", busyIntent(id, BusyTimes.TOMORROW))
             .build()
-        NotificationManagerCompat.from(context).notify(outcome.conversation.id.hashCode(), notification)
+        NotificationManagerCompat.from(context).notify(id, notification)
+    }
+
+    private fun busyIntent(notification: Int, length: String): PendingIntent = PendingIntent.getBroadcast(
+        context,
+        (notification.toString() + length).hashCode(),
+        Intent(context, BusyForNowReceiver::class.java).setAction(BusyTimes.ACTION_BUSY)
+            .putExtra(BusyTimes.EXTRA_LENGTH, length).putExtra(BusyTimes.EXTRA_NOTIFICATION, notification),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
+    /** After "Busy for now": the notification keeps its letter, loses its actions, and says so. */
+    fun markedBusy(notification: Int, length: String) {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        val shown = manager.activeNotifications.firstOrNull { it.id == notification }?.notification ?: return
+        val words = when (length) {
+            BusyTimes.HOUR -> "Busy for an hour, in your planner"
+            BusyTimes.TONIGHT -> "Busy till tonight, in your planner"
+            else -> "Busy till tomorrow, in your planner"
+        }
+        val rebuilt = android.app.Notification.Builder.recoverBuilder(context, shown).setActions().setSubText(words).build()
+        manager.notify(notification, rebuilt)
+    }
+
+    /** At the end of a busy stretch: "Aria wrote while you were at work". */
+    fun notifyHeld(held: HeldLetter) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(MainActivity.EXTRA_CONVERSATION_ID, held.conversationId)
+        }
+        val pending = PendingIntent.getActivity(context, held.conversationId.hashCode(), intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val text = "${held.personaName} wrote ${if (held.letters == 1) "" else "${held.letters} letters "}while you were ${held.doing}"
+        val notification = NotificationCompat.Builder(context, CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(held.personaName)
+            .setContentText(text)
+            .setContentIntent(pending)
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(context).notify(held.conversationId.hashCode(), notification)
     }
 
     private companion object {

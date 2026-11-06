@@ -309,8 +309,16 @@ class Planner(
         return "$name is ${doing(entry)} until ${time(until)}. A letter written now will be read after that."
     }
 
+    /** Whether your typical week has [plannerId]'s persona asleep right now. */
+    suspend fun asleepNow(plannerId: String): Boolean {
+        val now = clock.nowMillis()
+        val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone)
+        return occurrences(entries.forPlanner(plannerId), today, today)
+            .any { it.entry.routine == RoutineKind.SLEEP && it.entry.state != EntryState.CANCELLED && (it.start ?: Long.MAX_VALUE) <= now && (it.end ?: 0) > now }
+    }
+
     /** "at work", "asleep", or the entry's own title ("at the dentist" is up to how you wrote it). */
-    private fun doing(entry: PlannerEntry): String = when (entry.routine) {
+    fun doing(entry: PlannerEntry): String = when (entry.routine) {
         RoutineKind.WORK -> "at work"
         RoutineKind.SLEEP -> "asleep"
         else -> if (entry.title.isBlank()) "busy" else "busy (${entry.title})"

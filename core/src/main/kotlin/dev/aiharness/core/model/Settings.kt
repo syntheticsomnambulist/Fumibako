@@ -309,7 +309,19 @@ data class PlannerSettings(
     val bookmark: String? = null,
     val holidays: HolidaySettings = HolidaySettings(),
     val phone: PhoneCalendarSettings = PhoneCalendarSettings(),
+    /** What a persona's letter does while your planner says you're busy. */
+    val duringBusy: DuringBusy = DuringBusy.HOLD,
+    /** Your typical week's sleep is the heartbeat's quiet hours too (so they're set in one place). */
+    val sleepQuietHours: Boolean = false,
 )
+
+/** A persona's letter during a busy stretch: its notification waits for the end, comes anyway, or doesn't come. */
+@Serializable
+enum class DuringBusy(val label: String) {
+    HOLD("Hold notifications"),
+    NOTIFY("Notify anyway"),
+    SILENT("Don't notify"),
+}
 
 /**
  * The phone's calendars in your default persona's planner (docs/design/calendar.md, "Phone
