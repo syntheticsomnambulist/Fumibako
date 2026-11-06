@@ -95,6 +95,7 @@ private data class Picked(val entryId: String, val day: LocalDate, val moving: B
  * week printed faintly, your plans in highlighter. Tap a plan for its stamps (済 done, 延 move,
  * 止 cancel, its card); tap an empty part of a day to open it. Below, the week's untimed plans.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlannerScreen(nav: NavController) {
     val container = LocalAppContainer.current
@@ -185,19 +186,37 @@ fun PlannerScreen(nav: NavController) {
             }
           }
         }
-        // The ribbon (栞) in your ink hangs from the page's top edge, below the phone's status bar:
-        // a bookmark, for now just to look at (the side tabs go back to today).
+        // The ribbon (栞) in your ink, from the page's top edge below the phone's status bar: a
+        // bookmark. It hangs on the page it marks, and only its end shows elsewhere; a tap goes back
+        // to that page, a long press moves it to the one shown.
+        val marked = vm.bookmark(settings)
+        val here = if (view == PlannerView.MONTH) YearMonth.from(marked) == month else marked in days
+        val markedWeek = PlannerDays.weekOf(marked, settings.planner.weekStartsSunday).first()
+        val markedWords = if (view == PlannerView.MONTH) "${marked.month.getDisplayName(DayText.FULL, Locale.US)} ${marked.year}"
+        else "the week of ${markedWeek.dayOfMonth} ${markedWeek.month.getDisplayName(DayText.FULL, Locale.US)}"
+        val toast = LocalContext.current
+        val ribbonLength by androidx.compose.animation.core.animateDpAsState(if (here) 60.dp else 22.dp, label = "ribbon")
         Box(
             Modifier
                 .align(Alignment.TopEnd)
                 .statusBarsPadding()
                 .padding(end = 58.dp)
-                .size(44.dp, 64.dp),
+                .size(44.dp, 64.dp)
+                .combinedClickable(
+                    onClickLabel = if (here) null else "Go to your bookmark",
+                    onLongClickLabel = "Put the bookmark here",
+                    onLongClick = {
+                        val day = if (view == PlannerView.MONTH) (if (thisMonth) today else month.atDay(1)) else if (thisWeek) today else days.first()
+                        vm.moveBookmark(day)
+                        android.widget.Toast.makeText(toast, if (view == PlannerView.MONTH) "Bookmark moved to ${month.month.getDisplayName(DayText.FULL, Locale.US)}" else "Bookmark moved to this week", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                ) { if (!here) { vm.shownDay.value = marked; picked = null } }
+                .semantics { contentDescription = if (here) "Your bookmark, on this page" else "Your bookmark, on $markedWords" },
             contentAlignment = Alignment.TopCenter,
         ) {
             Box(
                 Modifier
-                    .size(30.dp, 60.dp)
+                    .size(30.dp, ribbonLength)
                     .shadow(2.dp, RibbonShape)
                     .clip(RibbonShape)
                     .background(ink)

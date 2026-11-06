@@ -28,6 +28,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -477,10 +478,18 @@ class ScreenshotTour {
         compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
         compose.waitForIdle()
         shot("${prefix}_24_planner_week")
-        // To the week after, and back by the Today tab.
+        // The bookmark: put on the week after, which it then goes back to from this week; and put back.
         compose.onNodeWithContentDescription("The week after").performClick()
         compose.waitForIdle()
+        compose.onNode(hasContentDescription("Your bookmark", substring = true)).performTouchInput { longClick() }
+        compose.waitForIdle()
         compose.onNodeWithContentDescription("Back to this week").performClick()
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Your bookmark, on the week of", substring = true), 10_000)
+        compose.onNode(hasContentDescription("Your bookmark, on the week of", substring = true)).performClick()
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Your bookmark, on this page"), 10_000)
+        compose.onNodeWithContentDescription("Back to this week").performClick()
+        compose.onNode(hasContentDescription("Your bookmark", substring = true)).performTouchInput { longClick() }
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Your bookmark, on this page"), 10_000)
         compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
         // Stickers: the tray, and one tapped onto today.
         compose.onNode(hasClickActionLabel("Stick stickers on the planner")).performClick()

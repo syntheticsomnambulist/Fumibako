@@ -305,6 +305,8 @@ data class PlannerSettings(
     val foldSleep: Boolean = true,
     /** The season band: the solar terms and microseasons on the planner's pages, and a line to personas as each begins. */
     val seasonBand: Boolean = true,
+    /** The day the ribbon (栞) marks, ISO; null marks today. A long press moves it to the page shown; a tap goes back to it. */
+    val bookmark: String? = null,
     val holidays: HolidaySettings = HolidaySettings(),
 )
 

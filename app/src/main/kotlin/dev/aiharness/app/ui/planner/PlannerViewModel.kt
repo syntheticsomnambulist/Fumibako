@@ -65,6 +65,14 @@ class PlannerViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch { h.holidays.refresh() }
     }
 
+    /** The day the ribbon marks (today until it's moved). */
+    fun bookmark(s: AppSettings): LocalDate = s.planner.bookmark?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: today()
+
+    /** Moves the ribbon to [day]'s page; to today's, it follows today again. */
+    fun moveBookmark(day: LocalDate) = viewModelScope.launch {
+        h.settings.update { it.copy(planner = it.planner.copy(bookmark = day.takeIf { d -> d != today() }?.toString())) }
+    }
+
     /** Your side of the equator, for the seasons. */
     fun hemisphere(s: AppSettings): Hemisphere = ThemeClock.hemisphere(s.theme, zone)
 
