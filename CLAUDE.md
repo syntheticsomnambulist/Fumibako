@@ -24,6 +24,7 @@
   - Plans and progress: [`docs/plan-v0.4.md`](docs/plan-v0.4.md) (current),
     [`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md),
     [`docs/plan-v0.1.md`](docs/plan-v0.1.md).
+  - The desktop version (alongside v0.5, proposed): [`docs/plan-desktop.md`](docs/plan-desktop.md).
   - Testers' guide: [`docs/testers.md`](docs/testers.md).
   - Design decisions: [`docs/design/README.md`](docs/design/README.md).
   - Architecture: [`README.md`](README.md).
