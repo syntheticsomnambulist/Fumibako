@@ -173,6 +173,27 @@ class StickersTest {
     }
 
     @Test
+    fun aPlannersDayHoldsTwiceALettersStickersAndTheyArentNewsToAPersona() = runTest {
+        val env = TestEnv().apply { seed() }
+        val service = env.harness.stickerService
+        val planner = StickerTarget.plannerConversation(env.user.id)
+        val day = StickerTarget.day(env.user.id, "2026-05-28")
+        val star = StickerRef.Emoji("⭐", "star")
+        val since = env.clock.nowMillis()
+        env.clock.advanceMinutes(1)
+        repeat(12) { assertIs<StickResult.Stuck>(service.stick(planner, day, star, null, 0.5f, 0.5f)) }
+        assertIs<StickResult.Refused>(service.stick(planner, day, star, null, 0.5f, 0.5f))
+        // A plan holds what a letter does.
+        val plan = StickerTarget.entry("e1")
+        repeat(6) { assertIs<StickResult.Stuck>(service.stick(planner, plan, star, null, 0.5f, 0.5f)) }
+        assertIs<StickResult.Refused>(service.stick(planner, plan, star, null, 0.5f, 0.5f))
+        assertEquals(18, service.on(planner, day).size + service.on(planner, plan).size)
+
+        // Kept with the planner, so no letter hears of them (a persona's side of this is step 4).
+        assertEquals(emptyList(), service.notesSince(planner, since, emptyList(), null, "Sam"))
+    }
+
+    @Test
     fun withStickingOffThereAreNoStickerTools() = runTest {
         val env = TestEnv().apply { seed() }
         env.personas.upsert(env.persona.copy(stickers = PersonaStickers(sticks = false)))

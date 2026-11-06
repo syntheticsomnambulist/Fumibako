@@ -98,6 +98,19 @@ From the agreed decisions in `calendar.md`:
   part of your typical week). Your typical week has its own page: work, sleep or something else,
   which days, from and to, busy. Settings, Look has a clock: the phone's, 12-hour or 24-hour.
   The grid's small type grows with large text only as far as words still fit a column.
+- **After 0.4.0-preview.1 (your notes from the phone):** the ribbon sat under the status bar,
+  where a tap didn't reach it; it hangs below it now, with a bigger place to tap. The arrows are
+  paper buttons under the title instead: "‹ Week before", "Today" (pressed while you're on this
+  week) and "Week after ›". Type keeps off the ruled lines where it can: an hour's label sits
+  just under its line, plans have paper under their highlighter (so no line runs through a
+  title), WORK has a paper chip, the line for now runs under plans, the all-day row is taller,
+  and the day page's times stay on one line. **Stickers on the planner,** from step 4 for your
+  side: a Stickers button on the week (onto today, or the week's first day) and on a day's page
+  opens the tray (recent, shared, emoji); a tap sticks one onto that day, a hold and drag onto
+  any day or plan. Tap one to move, turn, resize or peel it, as on a letter. They're kept with
+  the planner, not a letter, and a day holds twice a letter's stickers; a plan's go when it's
+  deleted, and a planner's when that persona of yours is. A persona's stickers on days and plans
+  are still step 4.
 
 ## Noted for later
 

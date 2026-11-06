@@ -214,7 +214,14 @@ class RoomPlannerRepository(private val dao: HarnessDao) : dev.aiharness.core.st
     override suspend fun forPlanner(plannerId: String) = dao.plannerEntries(plannerId).map { s.decode(it.json) }
     override suspend fun get(id: String) = dao.plannerEntry(id)?.let { s.decode(it.json) }
     override suspend fun upsert(entry: dev.aiharness.core.model.PlannerEntry) = dao.upsertPlannerEntry(entity(entry))
-    override suspend fun delete(id: String) = dao.deletePlannerEntry(id)
-    override suspend fun deletePlanner(plannerId: String) = dao.deletePlanner(plannerId)
+    // A plan's stickers go with it, and a planner's with the planner.
+    override suspend fun delete(id: String) {
+        dao.deleteStickersOnEntry(id)
+        dao.deletePlannerEntry(id)
+    }
+    override suspend fun deletePlanner(plannerId: String) {
+        dao.deleteStickersFor(dev.aiharness.core.model.StickerTarget.plannerConversation(plannerId))
+        dao.deletePlanner(plannerId)
+    }
     override suspend fun deleteWrittenBy(personaId: String) = dao.deletePlannerEntriesBy(personaId)
 }

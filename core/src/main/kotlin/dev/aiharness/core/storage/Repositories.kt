@@ -125,9 +125,10 @@ interface PlannerRepository {
     suspend fun forPlanner(plannerId: String): List<PlannerEntry>
     suspend fun get(id: String): PlannerEntry?
     suspend fun upsert(entry: PlannerEntry)
+    /** An entry, and the stickers on it. */
     suspend fun delete(id: String)
 
-    /** One of your personas is gone: its planner goes with it. */
+    /** One of your personas is gone: its planner goes with it, stickers and all. */
     suspend fun deletePlanner(plannerId: String)
 
     /** A persona is gone: what it wrote in your planners goes too. */

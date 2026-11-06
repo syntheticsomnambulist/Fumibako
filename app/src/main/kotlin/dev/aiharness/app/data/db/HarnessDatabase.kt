@@ -165,6 +165,7 @@ interface HarnessDao {
     @Query("DELETE FROM stickers WHERE peeledAt IS NOT NULL AND updatedAt < :time") suspend fun deletePeeledStickersBefore(time: Long)
     @Query("DELETE FROM stickers WHERE conversationId = :conversationId") suspend fun deleteStickersFor(conversationId: String)
     @Query("DELETE FROM stickers WHERE targetKind = 'MESSAGE' AND targetId IN (:messageIds)") suspend fun deleteStickersOn(messageIds: List<String>)
+    @Query("DELETE FROM stickers WHERE targetKind = 'ENTRY' AND targetId = :entryId") suspend fun deleteStickersOnEntry(entryId: String)
 
     // Sticker sheets and the shared library
     @Query("SELECT * FROM sticker_art ORDER BY rowid") fun observeStickerArt(): Flow<List<StickerArtEntity>>

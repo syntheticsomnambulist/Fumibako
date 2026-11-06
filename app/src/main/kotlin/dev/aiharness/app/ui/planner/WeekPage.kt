@@ -72,6 +72,7 @@ import dev.aiharness.core.model.EntryKind
 import dev.aiharness.core.model.EntryState
 import dev.aiharness.core.model.PlannerEntry
 import dev.aiharness.core.model.RoutineKind
+import dev.aiharness.core.model.StickerTarget
 import dev.aiharness.core.planner.Occurrence
 import java.time.LocalDate
 import java.time.format.TextStyle as DayText
@@ -114,9 +115,20 @@ fun PlannerScreen(nav: NavController) {
         scroll.scrollTo(with(density) { (layout.y(now).dp - 90.dp).coerceAtLeast(0.dp).roundToPx() })
     }
 
+    val you by vm.you.collectAsStateWithLifecycle()
+    val thisWeek = today in days
+    PlannerStickerHost(you?.id, you) { stickers, bottom ->
     Box(Modifier.fillMaxSize().background(colors.kami).dotGrid(colors.sumi.copy(alpha = 0.12f))) {
-        Column(Modifier.fillMaxSize().stitched(lerp(colors.nijimi2, colors.kami, 0.2f)).statusBarsPadding()) {
-            WeekHeader(days, onPrevious = { vm.shownDay.value = shown.minusWeeks(1); picked = null }, onNext = { vm.shownDay.value = shown.plusWeeks(1); picked = null })
+        Column(Modifier.fillMaxSize().stitched(lerp(colors.nijimi2, colors.kami, 0.2f)).statusBarsPadding().padding(bottom = bottom)) {
+            WeekHeader(days)
+            WeekTools(
+                thisWeek = thisWeek,
+                ink = ink,
+                onPrevious = { vm.shownDay.value = shown.minusWeeks(1); picked = null },
+                onToday = { vm.shownDay.value = vm.today(); picked = null },
+                onNext = { vm.shownDay.value = shown.plusWeeks(1); picked = null },
+                onStickers = { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisWeek) today else days.first()).toString())) } },
+            )
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(start = 18.dp, end = 6.dp)) {
                 val col = ((maxWidth - GUTTER) / 7).coerceAtLeast(36.dp)
                 Column(Modifier.fillMaxSize()) {
@@ -127,6 +139,7 @@ fun PlannerScreen(nav: NavController) {
                         WeekGrid(
                             days = days, occurrences = occurrences, entries = entries, layout = layout, col = col, today = today,
                             now = vm.now(), zone = vm.zone, clock = clock, ink = ink, picked = picked,
+                            plannerId = you?.id, stickers = stickers,
                             onPick = { picked = if (picked?.entryId == it.entryId && !it.moving) null else it },
                             onClose = { picked = null },
                             onStamp = { e, state -> vm.stamp(e, state); picked = null },
@@ -146,26 +159,33 @@ fun PlannerScreen(nav: NavController) {
                 }
             }
         }
-        // The ribbon (栞) in your ink goes back to today.
+        // The ribbon (栞) in your ink hangs from the page's top edge, below the phone's status bar
+        // (where a tap isn't the app's), and goes back to today.
         Box(
             Modifier
                 .align(Alignment.TopEnd)
-                .padding(end = 64.dp)
-                .offset(y = (-8).dp)
-                .size(30.dp, 72.dp)
-                .shadow(2.dp, RibbonShape)
-                .clip(RibbonShape)
-                .background(ink)
-                .drawBehind {
-                    var x = 0f
-                    while (x < size.width) {
-                        drawLine(Color.White.copy(alpha = 0.07f), Offset(x, 0f), Offset(x, size.height), 1.dp.toPx())
-                        x += 3.dp.toPx()
-                    }
-                }
+                .statusBarsPadding()
+                .padding(end = 58.dp)
+                .size(44.dp, 64.dp)
                 .clickable(role = Role.Button, onClickLabel = "Back to today") { vm.shownDay.value = vm.today(); picked = null }
                 .semantics { contentDescription = "Back to today" },
-        )
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Box(
+                Modifier
+                    .size(30.dp, 60.dp)
+                    .shadow(2.dp, RibbonShape)
+                    .clip(RibbonShape)
+                    .background(ink)
+                    .drawBehind {
+                        var x = 0f
+                        while (x < size.width) {
+                            drawLine(Color.White.copy(alpha = 0.07f), Offset(x, 0f), Offset(x, size.height), 1.dp.toPx())
+                            x += 3.dp.toPx()
+                        }
+                    },
+            )
+        }
         IndexTab(Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 6.dp), ink)
         card?.let { draft ->
             PlanCard(
@@ -176,6 +196,7 @@ fun PlannerScreen(nav: NavController) {
                 blank = { kind -> vm.blank(kind) },
             )
         }
+    }
     }
 }
 
@@ -194,14 +215,14 @@ private fun grid(size: Float): androidx.compose.ui.unit.TextUnit {
 }
 
 @Composable
-private fun WeekHeader(days: List<LocalDate>, onPrevious: () -> Unit, onNext: () -> Unit) {
+private fun WeekHeader(days: List<LocalDate>) {
     val colors = paper
     val first = days.first()
     val last = days.last()
     val (kanji, meaning) = PlannerDays.months[first.monthValue - 1]
     val range = if (first.month == last.month) "${first.dayOfMonth}–${last.dayOfMonth}" else "${first.dayOfMonth} ${month(first)} – ${last.dayOfMonth} ${month(last)}"
     Row(
-        Modifier.fillMaxWidth().padding(start = 24.dp, end = 100.dp, top = 10.dp, bottom = 4.dp),
+        Modifier.fillMaxWidth().padding(start = 24.dp, end = 110.dp, top = 10.dp, bottom = 2.dp),
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -210,16 +231,55 @@ private fun WeekHeader(days: List<LocalDate>, onPrevious: () -> Unit, onNext: ()
             Text(kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 18.sp), color = colors.sumi)
             Text("$meaning · $range", style = TextStyle(fontFamily = HarnessFonts.Read, fontStyle = FontStyle.Italic, fontSize = 12.5.sp), color = colors.usuzumi1, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Spacer(Modifier.weight(1f))
-        WeekArrow("‹", "The week before", onPrevious)
-        WeekArrow("›", "The week after", onNext)
+    }
+}
+
+/**
+ * Going between weeks, and the stickers: clear paper buttons under the title. With large text the
+ * stickers button goes onto a line of its own, still at the right, rather than being squeezed.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun WeekTools(thisWeek: Boolean, ink: Color, onPrevious: () -> Unit, onToday: () -> Unit, onNext: () -> Unit, onStickers: () -> Unit) {
+    androidx.compose.foundation.layout.FlowRow(
+        Modifier.fillMaxWidth().padding(start = 18.dp, end = 10.dp, top = 4.dp, bottom = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        ToolButton("‹  Week before", "The week before", onClick = onPrevious)
+        ToolButton("Today", if (thisWeek) "This week, the week you're on" else "Back to this week", on = thisWeek, ink = ink, onClick = onToday)
+        ToolButton("Week after  ›", "The week after", onClick = onNext)
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { StickersButton(onStickers) }
     }
 }
 
 @Composable
-private fun WeekArrow(glyph: String, label: String, onClick: () -> Unit) {
-    Box(Modifier.size(36.dp, 44.dp).clickable(role = Role.Button, onClickLabel = label, onClick = onClick).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
-        Text(glyph, style = TextStyle(fontFamily = HarnessFonts.Display, fontSize = 26.sp), color = paper.usuzumi1)
+private fun StickersButton(onClick: () -> Unit) {
+    Box(
+        Modifier
+            .heightIn(min = 36.dp)
+            .border(1.dp, paper.nijimi2, dev.aiharness.app.ui.paper.PaperCorner)
+            .background(paper.kami, dev.aiharness.app.ui.paper.PaperCorner)
+            .clickable(role = Role.Button, onClickLabel = "Stick stickers on the planner", onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center,
+    ) { StickersMark() }
+}
+
+@Composable
+private fun ToolButton(label: String, spoken: String, on: Boolean = false, ink: Color = paper.sumi, onClick: () -> Unit) {
+    val colors = paper
+    Box(
+        Modifier
+            .heightIn(min = 36.dp)
+            .border(1.dp, if (on) ink else colors.nijimi2, dev.aiharness.app.ui.paper.PaperCorner)
+            .background(if (on) lerp(colors.kami, ink, 0.12f) else colors.kami, dev.aiharness.app.ui.paper.PaperCorner)
+            .clickable(role = Role.Button, onClickLabel = spoken, onClick = onClick)
+            .semantics { contentDescription = spoken }
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, style = TextStyle(fontFamily = HarnessFonts.Ui, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, fontSize = 12.5.sp), color = colors.sumi, maxLines = 1, softWrap = false)
     }
 }
 
@@ -281,8 +341,8 @@ private fun dayName(day: LocalDate) = "${day.dayOfWeek.getDisplayName(DayText.FU
 private fun AllDayRow(days: List<LocalDate>, occurrences: List<Occurrence>, col: Dp, ink: Color, onOpen: (Occurrence) -> Unit) {
     val colors = paper
     val allDay = occurrences.filter { it.entry.allDay && it.entry.kind == EntryKind.PLAN }
-    Box(Modifier.fillMaxWidth().heightIn(min = 22.dp).drawBehind { drawLine(colors.nijimi1, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }) {
-        Text("all day", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(8.5f)), color = colors.kasure2, modifier = Modifier.width(GUTTER - 2.dp).padding(top = 6.dp), textAlign = TextAlign.End)
+    Box(Modifier.fillMaxWidth().heightIn(min = 32.dp).padding(bottom = 4.dp).drawBehind { drawLine(colors.nijimi1, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }) {
+        Text("all day", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(8.5f), lineHeight = grid(10f)), color = colors.kasure2, modifier = Modifier.width(GUTTER - 2.dp).padding(top = 4.dp), textAlign = TextAlign.End, maxLines = 2)
         days.forEachIndexed { i, day ->
             Column(Modifier.offset(x = GUTTER + col * i + 2.dp).width(col - 4.dp).padding(vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 allDay.filter { it.day == day }.forEach { o ->
@@ -315,6 +375,8 @@ private fun WeekGrid(
     clock: ClockFormat,
     ink: Color,
     picked: Picked?,
+    plannerId: String?,
+    stickers: PlannerStickers,
     onPick: (Picked) -> Unit,
     onClose: () -> Unit,
     onStamp: (PlannerEntry, EntryState) -> Unit,
@@ -367,7 +429,8 @@ private fun WeekGrid(
                 textAlign = TextAlign.End,
                 maxLines = 1,
                 softWrap = false,
-                modifier = Modifier.offset(y = y(h * 60) - 6.dp).width(GUTTER - 4.dp),
+                // Just under its line, so the line doesn't run through it.
+                modifier = Modifier.offset(y = y(h * 60) + 1.dp).width(GUTTER - 4.dp),
             )
         }
         // The labels of your typical week's bands, on their first day.
@@ -378,7 +441,8 @@ private fun WeekGrid(
                 style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(7.5f), letterSpacing = 0.1.em),
                 color = colors.usuzumi1,
                 maxLines = 1,
-                modifier = Modifier.offset(x = GUTTER + col * i + 5.dp, y = y(minute(o.start!!, o.day)) + 3.dp),
+                modifier = Modifier.offset(x = GUTTER + col * i + 4.dp, y = y(minute(o.start!!, o.day)) + 3.dp)
+                    .background(colors.kami.copy(alpha = 0.85f)).padding(horizontal = 1.dp),
             )
         }
         // Folded sleep: a thin band for each stretch; tap it to open the hours.
@@ -405,6 +469,13 @@ private fun WeekGrid(
                 color = sleepInk,
                 modifier = Modifier.align(Alignment.TopEnd).clickable(role = Role.Button, onClickLabel = "Fold your sleep hours") { onFold() }.padding(6.dp),
             )
+        }
+
+        // Now, on today's column (under the plans, so it doesn't run through their words).
+        days.indexOf(today).takeIf { it >= 0 }?.let { i ->
+            val at = y(minute(now, today))
+            Box(Modifier.offset(x = GUTTER + col * i, y = at).size(col, 1.5.dp).background(ink))
+            Box(Modifier.offset(x = GUTTER + col * i - 3.dp, y = at - 3.dp).size(7.dp).background(ink, CircleShape))
         }
 
         // Ghosts where plans were moved from.
@@ -436,11 +507,13 @@ private fun WeekGrid(
             val width = (col - 4.dp) / of
             val e = o.entry
             val stamp = stampOf(e.state)
+            stickers.On(StickerTarget.entry(e.id), Modifier.offset(x = GUTTER + col * i + 2.dp + width * lane, y = top).size(width, bottom - top)) {
             Box(
                 Modifier
-                    .offset(x = GUTTER + col * i + 2.dp + width * lane, y = top)
-                    .size(width, bottom - top)
+                    .fillMaxSize()
                     .clip(Highlighter)
+                    // Paper under the highlighter, so the page's lines don't run through the words.
+                    .background(colors.kami)
                     .background(ink.copy(alpha = if (e.state == EntryState.CANCELLED) 0.14f else 0.3f))
                     .combinedClickable(onClickLabel = "Stamps for ${e.title}", onLongClick = { onOpen(o) }) { onPick(Picked(e.id, o.day)) }
                     .semantics { contentDescription = planLabel(e, o, clock, zone) },
@@ -457,16 +530,20 @@ private fun WeekGrid(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            }
             if (stamp != null) {
                 Stamp(stamp, ink, Modifier.offset(x = GUTTER + col * i + width * (lane + 1) - 20.dp, y = maxOf(bottom - 21.dp, top)), fresh = e.updatedAt > now - 1_500)
             }
         }
 
-        // Now, on today's column.
-        days.indexOf(today).takeIf { it >= 0 }?.let { i ->
-            val at = y(minute(now, today))
-            Box(Modifier.offset(x = GUTTER + col * i, y = at).size(col, 1.5.dp).background(ink))
-            Box(Modifier.offset(x = GUTTER + col * i - 3.dp, y = at - 3.dp).size(7.dp).background(ink, CircleShape))
+
+        // What's stuck on each day, over its plans.
+        if (plannerId != null) {
+            days.forEachIndexed { i, day ->
+                stickers.On(StickerTarget.day(plannerId, day.toString()), Modifier.offset(x = GUTTER + col * i).size(col, height)) {
+                    Spacer(Modifier.fillMaxSize())
+                }
+            }
         }
 
         // A plan's stamps, or the days to move it to.
@@ -655,3 +732,18 @@ fun names(list: List<String>): String = when (list.size) {
 /** Box.matchParentSize, for the grid's layers. */
 @Composable
 private fun Modifier.matchParentSizeCompat(): Modifier = this.fillMaxSize()
+
+/** The tray's sheet of stickers, with its name under it, so the button says what it's for. */
+@Composable
+internal fun StickersMark() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        dev.aiharness.app.ui.chat.TrayDrawing(dev.aiharness.app.ui.chat.TrayItem.STICKERS, Modifier.size(28.dp, 21.dp))
+        Text(
+            "Stickers",
+            style = PaperType.meta.copy(fontSize = 10.sp, lineHeight = 11.sp, letterSpacing = 0.sp),
+            color = paper.usuzumi1,
+            maxLines = 1,
+            softWrap = false,
+        )
+    }
+}

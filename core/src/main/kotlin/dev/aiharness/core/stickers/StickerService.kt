@@ -100,7 +100,8 @@ class StickerService(
         rotationDeg: Float = 0f,
         scale: Float = 1f,
     ): StickResult {
-        val limit = settings.current().stickers.maxPerLetter
+        // A planner's day can be covered: it takes twice what a letter does.
+        val limit = settings.current().stickers.maxPerLetter * if (target.kind == StickerTargetKind.DAY) 2 else 1
         if (on(conversationId, target).size >= limit) {
             return StickResult.Refused("That one already has $limit stickers, as many as fit.")
         }
@@ -187,7 +188,8 @@ class StickerService(
                     val thing = m.attachments.firstOrNull { it.id == s.target.id }?.let { frameName(it.kind) } ?: "photo"
                     place(m.id, byId, currentMessageId, userName)?.let { "the $thing in $it" }
                 }
-                StickerTargetKind.DRAFT -> null
+                // The planner's stickers are kept under the planner, not a letter (what a persona hears of them comes with step 4).
+                StickerTargetKind.DRAFT, StickerTargetKind.DAY, StickerTargetKind.ENTRY -> null
             } ?: return@mapNotNull null
             val stuckNow = s.byPersonaId == null && s.createdAt > since
             val peeledNow = s.isPeeled && s.peeledByPersonaId == null && (s.peeledAt ?: 0L) > since

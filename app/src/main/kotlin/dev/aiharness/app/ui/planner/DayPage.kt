@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -168,15 +169,19 @@ fun PlannerDayScreen(nav: NavController, date: String) {
     val colors = paper
     val ink = stationery.you
     val today = vm.today()
+    val you by vm.you.collectAsStateWithLifecycle()
+    val dayTarget = you?.let { dev.aiharness.core.model.StickerTarget.day(it.id, day.toString()) }
+    PlannerStickerHost(you?.id, you) { stickers, bottom ->
     Box(Modifier.fillMaxSize().background(colors.kami)) {
-        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+        Column(Modifier.fillMaxSize().statusBarsPadding().padding(bottom = bottom)) {
             Row(
                 Modifier.fillMaxWidth().drawBehind { drawLine(colors.nijimi0, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx()) }
                     .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to the week", tint = colors.usuzumi0) }
-                Column {
+                // The title takes what's left, so the stickers button always keeps its place.
+                Column(Modifier.weight(1f)) {
                     Text(
                         "${day.dayOfWeek.getDisplayName(DayText.FULL, Locale.US)} ${day.dayOfMonth} ${day.month.getDisplayName(DayText.FULL, Locale.US)}",
                         style = PaperType.letterName.copy(fontSize = 24.sp, lineHeight = 26.sp),
@@ -185,9 +190,20 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                     val who = if (seenBy.isEmpty()) "ONLY YOU SEE YOUR PLANNER" else "${names(seenBy.map { it.name }).uppercase()} CAN SEE YOUR PLANNER"
                     Text((if (day == today) "TODAY · " else "") + who, style = PaperType.meta, color = ink)
                 }
+                if (dayTarget != null) {
+                    Box(
+                        Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).clickable(role = Role.Button, onClickLabel = "Stick stickers on this day") { stickers.openTray(dayTarget) },
+                        contentAlignment = Alignment.Center,
+                    ) { StickersMark() }
+                }
             }
+            // The day's stickers go over everything on it.
+            val page: @Composable (@Composable () -> Unit) -> Unit = { inner ->
+                if (dayTarget != null) stickers.On(dayTarget, Modifier.weight(1f).fillMaxWidth()) { inner() } else Box(Modifier.weight(1f)) { inner() }
+            }
+            page {
             Column(
-                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 14.dp),
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 val timed = occurrences.filter { it.start != null }.sortedBy { it.start }
@@ -196,6 +212,7 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                 untimed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { card = PlanDraft.of(o.entry, day, vm.zone) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
                 if (occurrences.isEmpty()) Text("Nothing planned yet.", style = PaperType.postscript, color = colors.usuzumi1)
                 PaperButton("+ Add a plan", modifier = Modifier.padding(top = 6.dp)) { card = PlanDraft.new(day) }
+            }
             }
         }
         card?.let { draft ->
@@ -207,6 +224,7 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                 blank = { kind -> vm.blank(kind) },
             )
         }
+    }
     }
 }
 
@@ -230,7 +248,7 @@ private fun DayRow(o: Occurrence, day: LocalDate, clock: ClockFormat, zone: Zone
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Box(Modifier.width(4.dp).heightIn(min = 18.dp).then(if (busy) Modifier.hatched(colors.kasure2) else Modifier))
-            Text(start ?: "", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp), color = colors.usuzumi1, modifier = Modifier.width(56.dp))
+            Text(start ?: "", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp), color = colors.usuzumi1, modifier = Modifier.width(72.dp), maxLines = 1, softWrap = false)
             Text(
                 listOfNotNull(what.uppercase() + (end?.let { " UNTIL $it" } ?: ""), "YOUR TYPICAL WEEK".takeIf { !busy }, "BUSY".takeIf { busy }).joinToString(" · "),
                 style = PaperType.meta.copy(fontSize = 10.5.sp),
@@ -248,7 +266,7 @@ private fun DayRow(o: Occurrence, day: LocalDate, clock: ClockFormat, zone: Zone
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Box(Modifier.width(4.dp).heightIn(min = 18.dp).then(if (busy) Modifier.hatched(colors.kasure2) else Modifier))
-        Text(start ?: if (e.allDay) "all day" else "any time", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp), color = colors.usuzumi1, modifier = Modifier.width(56.dp))
+        Text(start ?: if (e.allDay) "all day" else "any time", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp), color = colors.usuzumi1, modifier = Modifier.width(72.dp), maxLines = 1, softWrap = false)
         Column(Modifier.weight(1f)) {
             Text(
                 (if (start != null) "○ " else "• ") + e.title.ifBlank { "A plan" } + (end?.let { ", until $it" } ?: ""),

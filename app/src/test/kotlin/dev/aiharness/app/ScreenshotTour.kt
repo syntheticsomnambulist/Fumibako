@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -462,6 +463,20 @@ class ScreenshotTour {
         compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
         compose.waitForIdle()
         shot("${prefix}_24_planner_week")
+        // To the week after, and back to today by the ribbon.
+        compose.onNodeWithContentDescription("The week after").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Back to today").performClick()
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
+        // Stickers: the tray, and one tapped onto today.
+        compose.onNode(hasClickActionLabel("Stick stickers on the planner")).performClick()
+        waitFor("Hold and drag")
+        compose.waitUntilAtLeastOneExists(hasContentDescription(":blush:"), 10_000)
+        compose.onAllNodesWithContentDescription(":blush:").onFirst().performClick()
+        compose.waitUntilAtLeastOneExists(hasContentDescription(":blush: sticker"), 10_000)
+        shot("${prefix}_24a_planner_stickers")
+        compose.onAllNodesWithText("Close").onFirst().performClick()
+        compose.waitForIdle()
         // A plan's stamps, then the days to move it to.
         compose.onNodeWithContentDescription("Dinner with Jo", substring = true).performClick()
         waitFor("Done")
@@ -471,10 +486,10 @@ class ScreenshotTour {
         shot("${prefix}_24c_planner_move")
         compose.onNode(hasClickActionLabel("Put the stamps away")).performClick()
         // The sleep hours open, and fold again.
-        compose.onAllNodes(hasClickActionLabel("Unfold your sleep hours")).onFirst().performClick()
+        compose.onAllNodes(hasClickActionLabel("Unfold your sleep hours")).onFirst().performScrollTo().performClick()
         compose.waitForIdle()
         shot("${prefix}_24d_planner_unfolded")
-        compose.onNode(hasClickActionLabel("Fold your sleep hours")).performClick()
+        compose.onAllNodes(hasClickActionLabel("Fold your sleep hours")).onFirst().performScrollTo().performClick()
         // The メモ area, and a plan's card.
         compose.onNodeWithText("Your typical week").performScrollTo()
         shot("${prefix}_24e_planner_memo")
@@ -490,6 +505,9 @@ class ScreenshotTour {
         val friday = java.time.LocalDate.now().with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).plusDays(4)
         compose.onAllNodes(hasClickActionLabel("Open ${friday.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.US)} ${friday.dayOfMonth}", substring = true)).onFirst().performClick()
         waitFor("Add a plan")
+        // Its stickers button keeps its place beside a long title ("Add a plan" is on the week too,
+        // so this is also the wait for the day page to have come in).
+        compose.waitUntil(10_000) { runCatching { compose.onNode(hasClickActionLabel("Stick stickers on this day")).assertIsDisplayed() }.isSuccess }
         shot("${prefix}_24h_planner_day")
         back()
     }

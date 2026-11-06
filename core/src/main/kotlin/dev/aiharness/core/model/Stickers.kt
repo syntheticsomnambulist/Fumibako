@@ -22,11 +22,20 @@ data class StickerTarget(val kind: StickerTargetKind, val id: String) {
          * shows wherever that cassette does, in the letter or kept in the memory book.
          */
         fun attachment(id: String) = StickerTarget(StickerTargetKind.ATTACHMENT, id)
+
+        /** A day in one of your personas' planners ("2026-11-06"). */
+        fun day(plannerId: String, day: String) = StickerTarget(StickerTargetKind.DAY, "$plannerId/$day")
+
+        /** An entry in a planner: a sticker on a plan goes with it when it moves to another day. */
+        fun entry(id: String) = StickerTarget(StickerTargetKind.ENTRY, id)
+
+        /** The "conversation" a planner's stickers are kept under, so a planner's limits and listing work as a letter's do. */
+        fun plannerConversation(plannerId: String) = "planner:$plannerId"
     }
 }
 
 @Serializable
-enum class StickerTargetKind { MESSAGE, DRAFT, ATTACHMENT }
+enum class StickerTargetKind { MESSAGE, DRAFT, ATTACHMENT, DAY, ENTRY }
 
 /** What's stuck: an emoji, or a picture from a sticker sheet or the shared library. */
 @Serializable

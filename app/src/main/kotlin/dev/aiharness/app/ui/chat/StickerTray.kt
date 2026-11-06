@@ -114,7 +114,8 @@ fun StickerTray(
                     modifier = Modifier.clip(PaperCorner).clickable(onClickLabel = backHint) { back() }.padding(horizontal = 4.dp, vertical = 6.dp),
                 )
             }
-            listOf(TrayPage.RECENT to "Recent", TrayPage.PERSONA to "$personaName's", TrayPage.SHARED to "Shared", TrayPage.EMOJI to "Emoji").forEach { (p, label) ->
+            // Without a persona (the planner) there's no persona's sheet to show.
+            listOfNotNull(TrayPage.RECENT to "Recent", (TrayPage.PERSONA to "$personaName's").takeIf { personaId != null }, TrayPage.SHARED to "Shared", TrayPage.EMOJI to "Emoji").forEach { (p, label) ->
                 val on = page == p
                 Box(
                     Modifier
