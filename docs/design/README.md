@@ -69,6 +69,21 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
   message doesn't rewrite history, so context epochs stay append-only (see the main README).
   Sketch: `Sticker(id, messageId, ref, placedBy, x, y, rotationDeg, scale, createdAt)`, with `x`/`y`
   as fractions of the message box.
+- **Mockups (2026-11-06):** the "Fumibako stickers" design canvas (private claude.ai artifact:
+  https://claude.ai/artifact/PA4VQXGG1rWc375566n4de). Decided with them:
+  - **Cutting out:** photos you add are cut out on the phone with ML Kit's subject segmentation;
+    persona stickers are drawn on a plain white background and cut out by filling from the edges.
+  - **Stamps are inked** onto the paper (no outline, multiplied into it by day), and **tape is
+    plain tape**. Everything else gets the die-cut outline.
+  - **Drawing stickers in a heartbeat takes one activity slot,** however many it draws.
+  - **Defaults:** stickers land at medium size (52dp), and a letter holds at most six, yours and the
+    persona's together.
+  - **Unread mark:** the persona's sticker for "hello" by default, changeable on its sticker page;
+    a persona with no stickers keeps the 新 seal.
+  - **Lamplight:** at night stickers are dimmed and warmed like the media frames, unless the setting
+    is "Leave everything as it is".
+  - **Personas place stickers by name at one of nine spots** (top left to bottom right), with a
+    small random nudge and tilt. A P.S. says where a sticker went when it's on your note.
 
 ## Letters list and persona screens (draft, see `screen-studies.html`)
 

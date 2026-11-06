@@ -18,6 +18,7 @@ data class AppSettings(
     /** Ask personas to end replies with a `[mood: ...]` tag (shown beside their name). */
     val moodTags: Boolean = true,
     val theme: ThemeSettings = ThemeSettings(),
+    val stickers: StickerSettings = StickerSettings(),
     /** Mood words the built-in list didn't know, sorted once by a model and remembered. */
     val learnedFeelings: Map<String, Feeling> = emptyMap(),
 ) {
@@ -207,9 +208,45 @@ data class ThemeSettings(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val locationLabel: String? = null,
-    /** Die-cut outline colour for stickers (v0.2), also the default polaroid frame colour. */
+    /**
+     * Die-cut outline colour for stickers, also the default polaroid frame colour: a hex colour, or
+     * [OUTLINE_PAPER] or [OUTLINE_INK] (the ink of whoever stuck it).
+     */
     val outlineColor: String = "#FFFFFF",
     val polaroidFrame: FrameStyle = FrameStyle.MATCH_OUTLINE,
     /** Brush-stroke signature under letters written while the user was away. */
     val inkSignature: Boolean = false,
+    /** How things on the desk (stickers, and later photos and other media) look at night. */
+    val lamplight: Lamplight = Lamplight.DIM_ALL,
+) {
+    companion object {
+        const val OUTLINE_PAPER = "paper"
+        const val OUTLINE_INK = "ink"
+    }
+}
+
+/**
+ * At night, stickers and media keep their day colours, lit as if by a desk lamp: dimmed a little
+ * and warmed (see the design session's `media.md`).
+ */
+@Serializable
+enum class Lamplight(val label: String) {
+    DIM_ALL("Dim and warm everything"),
+    KEEP_PHOTOS("Leave photos as they are"),
+    NONE("Leave everything as it is"),
+}
+
+@Serializable
+enum class StickerSize(val label: String, val dp: Int) { SMALL("Small", 40), MEDIUM("Medium", 52), LARGE("Large", 66) }
+
+@Serializable
+enum class OutlineWidth(val label: String, val dp: Float) { THIN("Thin", 1.5f), USUAL("Usual", 2.5f), THICK("Thick", 3.5f) }
+
+@Serializable
+data class StickerSettings(
+    /** How big a new sticker lands; it can be resized after. */
+    val size: StickerSize = StickerSize.MEDIUM,
+    val outlineWidth: OutlineWidth = OutlineWidth.USUAL,
+    /** The most stickers on one letter or note, yours and the persona's together. */
+    val maxPerLetter: Int = 6,
 )

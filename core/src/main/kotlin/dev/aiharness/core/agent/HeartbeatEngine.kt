@@ -58,6 +58,7 @@ class HeartbeatEngine(private val h: Harness) {
         if (settings.heartbeat.mode != HeartbeatMode.PROACTIVE) return emptyList()
         val now = h.clock.nowMillis()
         runCatching { h.activity.deleteBefore(now - ACTIVITY_RETENTION_MILLIS) }
+        runCatching { h.stickerService.tidy() }
         val outcomes = mutableListOf<HeartbeatOutcome>()
         val conversations = h.conversations.getAll().filter { !it.archived }
         h.personas.getAll().filter { it.heartbeatEnabled && (onlyPersonaId == null || it.id == onlyPersonaId) }.forEach { persona ->
@@ -139,7 +140,7 @@ class HeartbeatEngine(private val h: Harness) {
         val userName = beat.userName
         val lastUserMessage = history.lastOrNull { it.role == MessageRole.USER && it.origin == MessageOrigin.USER }
         val unanswered = unansweredProactive(history)
-        val hasMemoryTools = "memory_save" in h.tools.available(setup.settings).map { it.spec.name }
+        val hasMemoryTools = "memory_save" in h.tools.available(setup.settings, persona).map { it.spec.name }
         val note = buildString {
             append("<heartbeat>\n")
             append("This is a private heartbeat moment, not a message from $userName.")
@@ -183,6 +184,7 @@ class HeartbeatEngine(private val h: Harness) {
             history = history,
             query = history.takeLast(6).joinToString(" ") { it.text }.takeLast(800),
             epoch = setup.conversation.context,
+            conversationId = conversationId,
         )
         val heartbeatMessage = ChatMessage(
             id = newId(),
@@ -220,6 +222,9 @@ class HeartbeatEngine(private val h: Harness) {
         activities.forEach { activity -> guarded(activity, "after") { activity.after(beat, moment) } }
 
         if (!wrote) {
+            // A sticker for a letter that wasn't sent goes with it.
+            val unsent = buffered.map { it.id }.toSet()
+            h.stickers.forConversation(conversationId).filter { it.target.id in unsent }.forEach { h.stickers.delete(it.id) }
             h.logActivity(persona.id, ActivityKind.STAYED_QUIET, conversationId, tags = beat.invited)
             return HeartbeatOutcome.Silent(persona.id, conversationId)
         }

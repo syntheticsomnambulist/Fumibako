@@ -1,0 +1,131 @@
+package dev.aiharness.core.tools
+
+import dev.aiharness.core.llm.ToolSpec
+import dev.aiharness.core.model.ActivityKind
+import dev.aiharness.core.model.AppSettings
+import dev.aiharness.core.model.ChatMessage
+import dev.aiharness.core.model.MessageOrigin
+import dev.aiharness.core.model.MessageRole
+import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.StickerTarget
+import dev.aiharness.core.stickers.StickResult
+import dev.aiharness.core.stickers.StickerService
+import dev.aiharness.core.stickers.StickerShelf
+import dev.aiharness.core.stickers.StickerSpot
+import dev.aiharness.core.storage.ConversationRepository
+import dev.aiharness.core.storage.PersonaRepository
+import kotlinx.serialization.json.JsonObject
+
+private const val ON_HELP =
+    "Where: \"this letter\" (the one you're writing now, the default), \"their note\" (the latest note you're answering), " +
+        "\"your last letter\", or a time as the app writes it, like \"Fri 00:13 note\" or \"Fri 00:14 letter\"."
+
+private class Target(val id: String, val role: MessageRole)
+
+private fun ChatMessage.asTarget() = Target(id, role)
+
+/** Finds the letter or note a persona means by [on] (see [ON_HELP]); null when there's no such thing. */
+private fun findTarget(on: String?, history: List<ChatMessage>, context: ToolContext, service: StickerService): Target? {
+    val visible = history.filter { !it.hidden && !it.excludedFromContext && it.role != MessageRole.TOOL }
+    val what = on?.trim()?.lowercase().orEmpty()
+    return when {
+        what.isEmpty() || what == "this letter" || what == "this" || what == "my letter" ->
+            context.messageId?.let { Target(it, MessageRole.ASSISTANT) }
+        what.contains("note") && !what.any { it.isDigit() } ->
+            visible.lastOrNull { it.role == MessageRole.USER && it.origin == MessageOrigin.USER }?.asTarget()
+        what.contains("last letter") || what.contains("previous letter") ->
+            visible.lastOrNull { it.role == MessageRole.ASSISTANT && it.id != context.messageId }?.asTarget()
+        else -> {
+            // A time as the app writes it, maybe with "note" or "letter" to say whose.
+            val role = when {
+                what.endsWith("note") -> MessageRole.USER
+                what.endsWith("letter") -> MessageRole.ASSISTANT
+                else -> null
+            }
+            val time = what.removeSuffix("note").removeSuffix("letter").removePrefix("your ").removePrefix("their ").trim()
+            visible.lastOrNull { (role == null || it.role == role) && service.label(it.createdAt).lowercase() == time }?.asTarget()
+        }
+    }
+}
+
+private fun names(shelf: StickerShelf): String = buildString {
+    if (shelf.own.isNotEmpty()) append("Yours: ").append(shelf.own.joinToString(" ") { ":${it.name}:" }).append(". ")
+    if (shelf.shared.isNotEmpty()) append("Shared: ").append(shelf.shared.joinToString(" ") { ":${it.name}:" }).append(". ")
+    append("Or any emoji, by name like :tada: or as the emoji itself.")
+}
+
+/** Lets a persona stick a sticker on your note or its own letter, by name. */
+class PlaceStickerTool(
+    private val service: StickerService,
+    private val personas: PersonaRepository,
+    private val conversations: ConversationRepository,
+    private val log: suspend (personaId: String, kind: ActivityKind, conversationId: String, note: String) -> Unit,
+) : AgentTool {
+    override val spec = ToolSpec(
+        name = "place_sticker",
+        description = "Stick a sticker on the paper, the way someone decorates a letter: on the note you're answering or on " +
+            "your own letter. It's seen as a sticker, not as words. Use one when the moment calls for it, not every time.",
+        parameters = schema {
+            string("sticker", "Which: one of your stickers or a shared one by name, like :name:, or any emoji.", required = true)
+            string("on", ON_HELP)
+            string("spot", "Where on the paper (default top right).", enum = StickerSpot.entries.map { it.label })
+        },
+    )
+
+    override fun isAvailableFor(settings: AppSettings, persona: Persona) = persona.stickers.sticks
+
+    override suspend fun execute(args: JsonObject, context: ToolContext): ToolOutcome {
+        val persona = personas.get(context.persona.id) ?: context.persona
+        val asked = args.requireString("sticker")
+        val shelf = service.shelf(persona.id)
+        val ref = service.resolve(shelf, asked) ?: return ToolOutcome("There's no sticker called $asked. ${names(shelf)}", isError = true)
+        val spotText = args.string("spot")
+        val spot = if (spotText == null) StickerSpot.TOP_RIGHT else StickerSpot.parse(spotText)
+            ?: return ToolOutcome("Spot must be one of: ${StickerSpot.entries.joinToString { it.label }}.", isError = true)
+        val history = conversations.getMessages(context.conversation.id)
+        val target = findTarget(args.string("on"), history, context, service)
+            ?: return ToolOutcome("I couldn't find that letter or note. $ON_HELP", isError = true)
+        return when (val result = service.stickAt(context.conversation.id, StickerTarget.message(target.id), ref, persona.id, spot)) {
+            is StickResult.Refused -> ToolOutcome(result.reason, isError = true)
+            is StickResult.Stuck -> {
+                val name = service.nameOf(ref)
+                val where = if (target.id == context.messageId) "this letter" else if (target.role == MessageRole.USER) "their note" else "your letter"
+                if (context.background && target.role == MessageRole.USER) log(persona.id, ActivityKind.STUCK_STICKER, context.conversation.id, name)
+                ToolOutcome("Stuck $name on $where (${spot.label}).")
+            }
+        }
+    }
+}
+
+/** Lets a persona peel a sticker off: its own always, yours only if you've allowed it. */
+class PeelStickerTool(
+    private val service: StickerService,
+    private val personas: PersonaRepository,
+    private val conversations: ConversationRepository,
+) : AgentTool {
+    override val spec = ToolSpec(
+        name = "peel_sticker",
+        description = "Peel a sticker off a letter or note. You can always peel off your own; the other person's only if they've allowed it.",
+        parameters = schema {
+            string("sticker", "Which, by name like :name: or as the emoji.", required = true)
+            string("on", ON_HELP)
+        },
+    )
+
+    override fun isAvailableFor(settings: AppSettings, persona: Persona) = persona.stickers.sticks
+
+    override suspend fun execute(args: JsonObject, context: ToolContext): ToolOutcome {
+        val persona = personas.get(context.persona.id) ?: context.persona
+        val asked = args.requireString("sticker")
+        val ref = service.resolve(persona.id, asked) ?: return ToolOutcome("There's no sticker called $asked.", isError = true)
+        val history = conversations.getMessages(context.conversation.id)
+        val target = findTarget(args.string("on"), history, context, service)
+            ?: return ToolOutcome("I couldn't find that letter or note. $ON_HELP", isError = true)
+        val matching = service.on(context.conversation.id, StickerTarget.message(target.id)).filter { it.ref == ref }
+        if (matching.isEmpty()) return ToolOutcome("There's no ${service.nameOf(ref)} on that one.", isError = true)
+        val peelable = matching.lastOrNull { service.personaMayPeel(it, persona.id, persona.stickers.canPeelYours) }
+            ?: return ToolOutcome("That one isn't yours to peel off.", isError = true)
+        service.peel(peelable, persona.id)
+        return ToolOutcome("Peeled ${service.nameOf(ref)} off.")
+    }
+}

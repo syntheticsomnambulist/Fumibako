@@ -51,6 +51,9 @@ interface AgentTool {
     /** Whether the tool is offered under the current settings. */
     fun isAvailable(settings: AppSettings): Boolean = true
 
+    /** Whether it's offered to this persona (its own switches); by default, whenever [isAvailable]. */
+    fun isAvailableFor(settings: AppSettings, persona: Persona): Boolean = isAvailable(settings)
+
     suspend fun execute(args: JsonObject, context: ToolContext): ToolOutcome
 }
 
@@ -61,13 +64,15 @@ class ToolRegistry(tools: List<AgentTool> = emptyList()) {
         tools[tool.spec.name] = tool
     }
 
-    /** Available tools, sorted by name for a stable request prefix. */
-    fun available(settings: AppSettings): List<AgentTool> =
-        tools.values.filter { it.isAvailable(settings) }.sortedBy { it.spec.name }
+    /** Available tools, sorted by name for a stable request prefix; with a [persona], its own switches count too. */
+    fun available(settings: AppSettings, persona: Persona? = null): List<AgentTool> =
+        tools.values.filter { it.isAvailable(settings) && (persona == null || it.isAvailableFor(settings, persona)) }.sortedBy { it.spec.name }
 
     suspend fun execute(call: LlmToolCall, context: ToolContext): ToolOutcome {
         val tool = tools[call.name] ?: return ToolOutcome("Unknown tool '${call.name}'.", isError = true)
-        if (!tool.isAvailable(context.settings)) return ToolOutcome("Tool '${call.name}' is disabled.", isError = true)
+        if (!tool.isAvailable(context.settings) || !tool.isAvailableFor(context.settings, context.persona)) {
+            return ToolOutcome("Tool '${call.name}' is disabled.", isError = true)
+        }
         val args = try {
             HarnessJson.parseToJsonElement(call.argumentsJson.ifBlank { "{}" }).jsonObject
         } catch (e: Exception) {

@@ -1,5 +1,6 @@
 package dev.aiharness.core.agent
 
+import dev.aiharness.core.stickers.StickerShelf
 import dev.aiharness.core.llm.LlmMessage
 import dev.aiharness.core.llm.LlmPart
 import dev.aiharness.core.llm.LlmToolCall
@@ -38,6 +39,8 @@ data class ContextInput(
     val settings: AppSettings,
     val profile: ModelProfile,
     val tools: List<ToolSpec>,
+    /** The stickers the persona can use, when it can stick them (named in a new epoch's system prompt). */
+    val stickers: StickerShelf? = null,
     /** Full conversation history in order, including the newest user turn. */
     val history: List<ChatMessage>,
     /** Compaction only happens at the start of a turn, never between tool rounds. */
@@ -121,6 +124,7 @@ class ContextBuilder(
                     coreMemories = if (input.settings.memory.enabled) memory.core(input.persona.id, input.userPersona?.id) else emptyList(),
                     summary = summary,
                     toolNames = input.tools.map { it.name }.toSet(),
+                    stickers = input.stickers,
                 ),
                 configFingerprint = configFp,
                 toolFingerprint = toolFp,

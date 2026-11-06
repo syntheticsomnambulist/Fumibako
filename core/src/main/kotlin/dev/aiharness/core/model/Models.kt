@@ -121,14 +121,31 @@ data class Persona(
     /** Signature ink: one of the madoromi accent ink names (see `docs/design`). */
     val ink: String = "sakura",
     val tapePattern: TapePattern = TapePattern.DOTS,
-    /** What an unread letter from this persona wears; null is the default seal. Stickers come in v0.2. */
+    /**
+     * What an unread letter from this persona wears: the id of one of its stickers, or null for its
+     * "hello" sticker (the seal when it has none).
+     */
     val unreadMark: String? = null,
+    val stickers: PersonaStickers = PersonaStickers(),
     val createdAt: Long,
     val updatedAt: Long,
 ) {
     /** What the persona is wearing: the outfit it changed into, or its usual one. */
     val currentOutfit: String get() = outfit ?: defaultOutfit
 }
+
+/** How a persona uses stickers. Peeling is each side's own by default. */
+@Serializable
+data class PersonaStickers(
+    /** Draws new stickers for its sheet now and then in a heartbeat (one activity, however many it draws). */
+    val draws: Boolean = true,
+    /** Sticks stickers on your notes and its own letters. */
+    val sticks: Boolean = true,
+    /** You can peel off its stickers. */
+    val youCanPeel: Boolean = false,
+    /** It can peel off yours. */
+    val canPeelYours: Boolean = false,
+)
 
 /** Who the user is presenting as. Swappable per conversation. */
 @Serializable

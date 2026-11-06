@@ -36,6 +36,8 @@ import dev.aiharness.core.storage.ModelProfileRepository
 import dev.aiharness.core.storage.PersonaRepository
 import dev.aiharness.core.storage.SecretStore
 import dev.aiharness.core.storage.SettingsRepository
+import dev.aiharness.core.storage.StickerRepository
+import dev.aiharness.core.stickers.StickerService
 import dev.aiharness.core.storage.UserPersonaRepository
 import dev.aiharness.core.tools.AgentTool
 import dev.aiharness.core.tools.ChangeOutfitTool
@@ -44,6 +46,8 @@ import dev.aiharness.core.tools.MemoryForgetTool
 import dev.aiharness.core.tools.MemorySaveTool
 import dev.aiharness.core.tools.MemorySearchTool
 import dev.aiharness.core.tools.MemoryUpdateTool
+import dev.aiharness.core.tools.PeelStickerTool
+import dev.aiharness.core.tools.PlaceStickerTool
 import dev.aiharness.core.tools.ToolRegistry
 import dev.aiharness.core.util.Clock
 import dev.aiharness.core.util.SystemClock
@@ -76,6 +80,7 @@ class Harness(
     val settings: SettingsRepository,
     val blobs: BlobStore,
     val activity: ActivityRepository,
+    val stickers: StickerRepository,
     val clock: Clock = SystemClock,
     val providers: ProviderRegistry = defaultProviders(),
     imageGenerator: ImageGenerator = HostImageGenerator(),
@@ -84,6 +89,7 @@ class Harness(
 ) {
     val memory = MemoryService(memories, settings, embedderFactory ?: EmbedderFactory.default(::apiKey), clock, log)
     val images = ImageService(imageGenerator, blobs, ::apiKey)
+    val stickerService = StickerService(stickers, settings, clock)
     val tools = ToolRegistry(
         listOf(
             MemorySaveTool(memory),
@@ -92,10 +98,12 @@ class Harness(
             MemoryForgetTool(memory),
             GenerateImageTool(images, personas),
             ChangeOutfitTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
+            PlaceStickerTool(stickerService, personas, conversations) { id, kind, conversationId, note -> logActivity(id, kind, conversationId, note = note) },
+            PeelStickerTool(stickerService, personas, conversations),
         ),
     )
     val prompts = PromptAssembler()
-    val turnContext = TurnContextBuilder(memory, clock)
+    val turnContext = TurnContextBuilder(memory, clock, stickerService)
     val contextBuilder = ContextBuilder(prompts, memory, blobs, clock, log)
     val summarizer = LlmSummarizer(this)
     val locks = ConversationLocks()

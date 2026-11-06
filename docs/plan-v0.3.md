@@ -22,14 +22,18 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   The ruled fields now keep only their baselines. (Under Robolectric, any dialog with a text
   field on a phone-sized screen never goes idle, a stock one included, so the screenshot tour
   shoots the picture dialog on the small default screen.)
-- **Step 4, stickers: mockups done, five questions open.** Ten boards on the "Fumibako stickers"
-  design canvas (private claude.ai artifact: https://claude.ai/artifact/PA4VQXGG1rWc375566n4de):
-  stickers on letters, the tray's sticker page, moving and peeling, typing a `:name:`, a persona
-  sticking one (with a P.S.), what the persona reads and its tools, a persona's sheet, the shared
-  library, the unread mark and memory book, and settings. Open: cutting photos out (ML Kit, or
-  plain backgrounds only), whether stamps and tape go without the white outline, whether drawing a
-  sticker in a heartbeat takes an activity slot, the defaults (medium size, six on a letter), and
-  which sticker is the unread mark.
+- **Step 4, stickers: in progress.** Ten boards on the "Fumibako stickers" design canvas (private
+  claude.ai artifact: https://claude.ai/artifact/PA4VQXGG1rWc375566n4de): stickers on letters, the
+  tray's sticker page, moving and peeling, typing a `:name:`, a persona sticking one (with a P.S.),
+  what the persona reads and its tools, a persona's sheet, the shared library, the unread mark and
+  memory book, and settings. The decisions taken with them are in
+  [design/README.md](design/README.md#stickers).
+  **The engine is in:** sticker settings (size, outline width, six on a letter) and lamplight;
+  each persona's switches (draws, sticks, and who may peel whose); emoji names; `place_sticker`
+  and `peel_sticker`, by name at one of nine spots; the persona told what you stuck or peeled
+  since its last turn (`[Sam stuck :tada: on your Fri 00:14 letter]`), and its stickers named in
+  its instructions; stickers on your draft going with the note; a sticker for a heartbeat letter
+  that wasn't sent going with it.
   **Storage is in:** the database is at version 3 through its first migration, which adds a
   `stickers` table (what's stuck where, by whom; peeled ones stay until the persona has heard) and
   a `sticker_art` table (persona sheets and the shared library). The migration is tested from a
@@ -74,6 +78,8 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
 ### Also
 
 13. **Stationery icons** for the letter's top bar (persona, writing as, picture, menu).
+14. **Pronouns for personas** (in step 5): he, she, they, it, none (the name is used instead), or
+    your own. Told to the model and used in the app's text about the persona.
 
 ## Storage
 
@@ -94,7 +100,7 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
 3. **Picture dialog:** choose the profile and which parts to include.
 4. **Stickers:** design pass first (mockups for placement, the sticker tray and the pack page),
    then the table, the overlay, the tools and the outline.
-5. **Top bar icons, polish, tests, an APK.**
+5. **Top bar icons, pronouns, polish, tests, an APK.**
 
 ## After v0.3
 
@@ -104,6 +110,4 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   stand-ins and short descriptions for later epochs. The design is the design session's
   `media.md`, with mockups on its "Media frames" canvas.
 - **v0.4: the planner** (the design session's `calendar.md`).
-- **Not scheduled:** letters between personas (pen pals); **pronouns for personas**, kept on the
-  persona, told to the model and used in the app's own text about it. Until then that text uses
-  the persona's name.
+- **Not scheduled:** letters between personas (pen pals).

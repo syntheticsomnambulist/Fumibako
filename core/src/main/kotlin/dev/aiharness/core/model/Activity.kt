@@ -38,6 +38,9 @@ enum class ActivityKind {
 
     /** Changed what it's wearing ([ActivityEntry.note]: the outfit, empty for its usual clothes). */
     CHANGED_OUTFIT,
+
+    /** Stuck a sticker on your note while you were away ([ActivityEntry.note]: its `:name:`). */
+    STUCK_STICKER,
     ;
 
     /** Kinds that mark a heartbeat having happened. */

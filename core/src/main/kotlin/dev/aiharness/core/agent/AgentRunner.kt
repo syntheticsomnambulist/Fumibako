@@ -72,6 +72,9 @@ class AgentRunner(private val h: Harness) {
             val setup = resolveOrFail(conversationId) { send(it) } ?: return@withLock
             val history = h.conversations.getMessages(conversationId)
             val now = h.clock.nowMillis()
+            val messageId = newId()
+            // Stickers on the draft go with the note, and the persona hears about them with it.
+            h.stickerService.sendDraft(conversationId, messageId)
             val turnContext = h.turnContext.build(
                 persona = setup.persona,
                 userPersona = setup.userPersona,
@@ -79,9 +82,11 @@ class AgentRunner(private val h: Harness) {
                 history = history,
                 query = text,
                 epoch = setup.conversation.context,
+                conversationId = conversationId,
+                currentMessageId = messageId,
             )
             val userMessage = ChatMessage(
-                id = newId(),
+                id = messageId,
                 conversationId = conversationId,
                 role = MessageRole.USER,
                 parts = buildList {
@@ -163,7 +168,8 @@ class AgentRunner(private val h: Harness) {
         val transcript = baseHistory.toMutableList()
         val produced = mutableListOf<ChatMessage>()
         val provider = h.providers.forProfile(setup.profile)
-        val specs = if (setup.profile.toolMode == ToolMode.NONE) emptyList() else h.tools.available(setup.settings).map { it.spec }
+        val specs = if (setup.profile.toolMode == ToolMode.NONE) emptyList() else h.tools.available(setup.settings, setup.persona).map { it.spec }
+        val stickerShelf = if (specs.any { it.name == "place_sticker" }) h.stickerService.shelf(setup.persona.id) else null
         var finalText = ""
 
         for (round in 0 until setup.settings.maxToolRounds.coerceAtLeast(1)) {
@@ -175,6 +181,7 @@ class AgentRunner(private val h: Harness) {
                     settings = setup.settings,
                     profile = setup.profile,
                     tools = specs,
+                    stickers = stickerShelf,
                     history = transcript,
                     allowCompaction = allowCompaction && round == 0,
                     summarize = { request -> h.summarizer.summarize(setup.profile, setup.settings, request) },

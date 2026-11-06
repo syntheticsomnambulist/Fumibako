@@ -1,0 +1,174 @@
+package dev.aiharness.core.agent
+
+import dev.aiharness.core.TestEnv
+import dev.aiharness.core.llm.LlmMessage
+import dev.aiharness.core.llm.LlmPart
+import dev.aiharness.core.llm.LlmToolCall
+import dev.aiharness.core.llm.LlmTurnResult
+import dev.aiharness.core.llm.StopReason
+import dev.aiharness.core.model.ActivityKind
+import dev.aiharness.core.model.MessageRole
+import dev.aiharness.core.model.PersonaStickers
+import dev.aiharness.core.model.StickerArt
+import dev.aiharness.core.model.StickerRef
+import dev.aiharness.core.model.StickerTarget
+import dev.aiharness.core.stickers.StickResult
+import dev.aiharness.core.stickers.StickerSpot
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
+import org.junit.Test
+import kotlin.test.assertContains
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+class StickersTest {
+    private fun toolTurn(id: String, name: String, args: String) =
+        LlmTurnResult(text = "", toolCalls = listOf(LlmToolCall(id, name, args)), stopReason = StopReason.TOOL_USE)
+
+    private fun lastContext(env: TestEnv): String =
+        (env.provider.requests.last().messages.last() as LlmMessage.User).parts.filterIsInstance<LlmPart.Text>().joinToString("\n") { it.text }
+
+    private val wave = StickerArt("a1", "mira-wave", ownerPersonaId = "p1", imageRef = "mem:wave.png", feeling = "hello", createdAt = 1)
+    private val mochi = StickerArt("a2", "mochi", imageRef = "mem:mochi.png", createdAt = 2)
+
+    @Test
+    fun namesResolveToTheirOwnThenSharedThenEmoji() = runTest {
+        val env = TestEnv().apply { seed() }
+        env.stickers.upsertArt(wave)
+        env.stickers.upsertArt(mochi)
+        env.stickers.upsertArt(StickerArt("a3", "mira-wave", imageRef = "mem:shared-wave.png", createdAt = 3))
+        val service = env.harness.stickerService
+
+        assertEquals(StickerRef.Art("a1"), service.resolve("p1", ":mira-wave:"), "its own comes before a shared one")
+        assertEquals(StickerRef.Art("a2"), service.resolve("p1", "mochi"))
+        assertEquals(StickerRef.Emoji("🎉", "tada"), service.resolve("p1", ":tada:"))
+        assertEquals(StickerRef.Emoji("❤️", "heart"), service.resolve("p1", "❤"), "with or without the variation selector")
+        assertEquals(StickerRef.Emoji("🫎", "emoji"), service.resolve("p1", "🫎"), "an emoji with no name still sticks")
+        assertNull(service.resolve("p1", ":nothing-called-this:"))
+        assertEquals(":tada:", service.nameOf(StickerRef.Emoji("🎉", "tada")))
+        assertEquals(":mochi:", service.nameOf(StickerRef.Art("a2")))
+    }
+
+    @Test
+    fun thePersonaHearsWhatYouStuckAndPeeledOnce() = runTest {
+        val env = TestEnv().apply { seed() }
+        env.stickers.upsertArt(wave)
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(toolTurn("c1", "place_sticker", """{"sticker":":mira-wave:","on":"their note","spot":"top left"}"""))
+        env.provider.then(LlmTurnResult(text = "Morning!"))
+        env.harness.agent.send(conversation.id, "Morning").toList()
+        val messages = env.conversations.getMessages(conversation.id)
+        val myNote = messages.first { it.role == MessageRole.USER }
+        val herLetter = messages.last { it.role == MessageRole.ASSISTANT }
+        val service = env.harness.stickerService
+
+        // Mira's sticker landed on the note, near the top left, a little crooked.
+        val hers = service.on(conversation.id, StickerTarget.message(myNote.id)).single()
+        assertEquals("p1", hers.byPersonaId)
+        assertTrue(hers.x in 0.04f..0.12f && hers.y in 0.08f..0.16f, "at ${hers.x}, ${hers.y}")
+        assertTrue(hers.rotationDeg in -14f..14f)
+
+        // You stick one on her letter and one on your draft, and peel hers off your note.
+        env.clock.advanceMinutes(5)
+        service.stick(conversation.id, StickerTarget.message(herLetter.id), StickerRef.Emoji("🎉", "tada"), null, 0.8f, 0.6f)
+        service.stick(conversation.id, StickerTarget.draft(conversation.id), StickerRef.Emoji("🍵", "tea"), null, 0.9f, 0f)
+        service.peel(hers, null)
+        env.clock.advanceMinutes(1)
+        env.provider.then(LlmTurnResult(text = "Ha!"))
+        env.harness.agent.send(conversation.id, "Tea?").toList()
+
+        val context = lastContext(env)
+        assertContains(context, "[Sam stuck :tada: on your Thu 10:00 letter]")
+        assertContains(context, "[Sam stuck :tea: on this note]")
+        assertContains(context, "[Sam peeled your :mira-wave: off Sam's Thu 10:00 note]")
+        val sent = env.conversations.getMessages(conversation.id).last { it.role == MessageRole.USER }
+        assertEquals(listOf("tea"), service.on(conversation.id, StickerTarget.message(sent.id)).map { (it.ref as StickerRef.Emoji).name })
+        assertTrue(service.on(conversation.id, StickerTarget.draft(conversation.id)).isEmpty(), "the draft's stickers went with the note")
+
+        // Told once: the next turn has nothing new.
+        env.clock.advanceMinutes(1)
+        env.provider.then(LlmTurnResult(text = "Yes."))
+        env.harness.agent.send(conversation.id, "Still there?").toList()
+        assertFalse("stuck" in lastContext(env) || "peeled" in lastContext(env))
+    }
+
+    @Test
+    fun theSystemPromptNamesItsStickersAndNewOnesArriveInContext() = runTest {
+        val env = TestEnv().apply { seed() }
+        env.stickers.upsertArt(wave)
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(LlmTurnResult(text = "Hi"))
+        env.harness.agent.send(conversation.id, "Hello").toList()
+        val system = env.provider.requests.last().system
+        assertContains(system, "## Stickers")
+        assertContains(system, "Your stickers: :mira-wave: (hello)")
+
+        env.clock.advanceMinutes(10)
+        env.stickers.upsertArt(mochi.copy(createdAt = env.clock.millis))
+        env.clock.advanceMinutes(1)
+        env.provider.then(LlmTurnResult(text = "Cute"))
+        env.harness.agent.send(conversation.id, "Look").toList()
+        assertContains(lastContext(env), "New stickers you can use: :mochi:.")
+    }
+
+    @Test
+    fun aLetterHoldsSixAndPeelingFollowsTheSettings() = runTest {
+        val env = TestEnv().apply { seed() }
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(LlmTurnResult(text = "Hi"))
+        env.harness.agent.send(conversation.id, "Hello").toList()
+        val note = env.conversations.getMessages(conversation.id).first { it.role == MessageRole.USER }
+        val service = env.harness.stickerService
+        val target = StickerTarget.message(note.id)
+        env.clock.advanceMinutes(5)
+        repeat(6) { assertIs<StickResult.Stuck>(service.stickAt(conversation.id, target, StickerRef.Emoji("⭐", "star"), null, StickerSpot.MIDDLE)) }
+        assertIs<StickResult.Refused>(service.stickAt(conversation.id, target, StickerRef.Emoji("⭐", "star"), null, StickerSpot.MIDDLE))
+
+        // Mira can't peel yours by default, then can once you allow it.
+        env.provider.then(toolTurn("c1", "peel_sticker", """{"sticker":":star:","on":"Thu 10:00 note"}"""))
+        env.provider.then(LlmTurnResult(text = "Oops"))
+        env.harness.agent.send(conversation.id, "Stars!").toList()
+        assertEquals(6, service.on(conversation.id, target).size)
+        assertContains(env.conversations.getMessages(conversation.id).flatMap { it.toolResults }.last().content, "isn't yours")
+
+        env.personas.upsert(env.persona.copy(stickers = PersonaStickers(canPeelYours = true)))
+        env.provider.then(toolTurn("c2", "peel_sticker", """{"sticker":"⭐","on":"Thu 10:00 note"}"""))
+        env.provider.then(LlmTurnResult(text = "There"))
+        env.harness.agent.send(conversation.id, "Go on").toList()
+        assertEquals(5, service.on(conversation.id, target).size)
+    }
+
+    @Test
+    fun withStickingOffThereAreNoStickerTools() = runTest {
+        val env = TestEnv().apply { seed() }
+        env.personas.upsert(env.persona.copy(stickers = PersonaStickers(sticks = false)))
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(LlmTurnResult(text = "Hi"))
+        env.harness.agent.send(conversation.id, "Hello").toList()
+        val request = env.provider.requests.last()
+        assertFalse(request.tools.any { it.name == "place_sticker" || it.name == "peel_sticker" })
+        assertFalse("## Stickers" in request.system)
+    }
+
+    @Test
+    fun aStickerForALetterThatWasntSentGoesWithItButOneOnYourNoteStays() = runTest {
+        val env = TestEnv().apply { seed() }
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(LlmTurnResult(text = "Good luck!"))
+        env.harness.agent.send(conversation.id, "Exam tomorrow").toList()
+        env.clock.advanceMinutes(180)
+        env.provider.then(toolTurn("c1", "place_sticker", """{"sticker":":crossed_fingers:","on":"their note","spot":"bottom right"}"""))
+        env.provider.then(toolTurn("c2", "place_sticker", """{"sticker":":sparkles:"}"""))
+        env.provider.then(LlmTurnResult(text = HeartbeatEngine.SILENT))
+
+        assertIs<HeartbeatOutcome.Silent>(env.harness.heartbeat.run().single())
+
+        val left = env.stickers.forConversation(conversation.id)
+        assertEquals(listOf("crossed_fingers"), left.map { (it.ref as StickerRef.Emoji).name })
+        val logged = env.activity.forPersona(env.persona.id, 0).single { it.kind == ActivityKind.STUCK_STICKER }
+        assertEquals(":crossed_fingers:", logged.note)
+    }
+}

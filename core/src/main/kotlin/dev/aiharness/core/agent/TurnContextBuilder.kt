@@ -10,6 +10,7 @@ import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.stickers.StickerService
 import dev.aiharness.core.tools.feelingNote
 import dev.aiharness.core.util.Clock
 import dev.aiharness.core.util.humanizeDuration
@@ -17,13 +18,14 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 /**
- * Builds the `<context>` block attached to a user turn: current time, elapsed time, and memories
- * recalled for this moment. It is computed once when the turn is sent and stored on the message, so
- * replays are byte-identical.
+ * Builds the `<context>` block attached to a user turn: current time, elapsed time, memories
+ * recalled for this moment, and stickers stuck or peeled since the persona's last turn. It is
+ * computed once when the turn is sent and stored on the message, so replays are byte-identical.
  */
 class TurnContextBuilder(
     private val memory: MemoryService,
     private val clock: Clock,
+    private val stickers: StickerService? = null,
 ) {
     private val timeFormat = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy, HH:mm")
     private val dateFormat = DateTimeFormatter.ofPattern("d MMM yyyy")
@@ -35,6 +37,9 @@ class TurnContextBuilder(
         history: List<ChatMessage>,
         query: String,
         epoch: ContextState?,
+        conversationId: String? = null,
+        /** The note this context goes with, when it's a note being sent ("this note" in sticker notes). */
+        currentMessageId: String? = null,
     ): String? {
         val lines = mutableListOf<String>()
         val now = clock.nowMillis()
@@ -52,6 +57,17 @@ class TurnContextBuilder(
 
         // Out of its usual clothes: it should know, for how it describes itself and its pictures.
         persona.outfit?.takeIf { it.isNotBlank() }?.let { lines += "You're wearing: $it (not your usual clothes)." }
+
+        if (stickers != null && conversationId != null) {
+            val lastTurn = history.lastOrNull { it.role == MessageRole.ASSISTANT }?.createdAt ?: 0L
+            val userName = userPersona?.name?.takeIf { it.isNotBlank() } ?: "The user"
+            lines += stickers.notesSince(conversationId, lastTurn, history, currentMessageId, userName)
+            if (persona.stickers.sticks) {
+                // Stickers added since this epoch's system prompt named them.
+                val fresh = stickers.newSince(persona.id, maxOf(epoch?.startedAt ?: Long.MAX_VALUE, lastTurn))
+                if (fresh.isNotEmpty()) lines += "New stickers you can use: " + fresh.joinToString(", ") { ":${it.name}:" + (it.feeling?.let { f -> " ($f)" } ?: "") } + "."
+            }
+        }
 
         if (settings.memory.enabled) {
             val core = memory.core(persona.id, userPersona?.id)

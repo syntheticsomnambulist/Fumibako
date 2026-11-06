@@ -5,6 +5,7 @@ import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.stickers.StickerShelf
 
 /**
  * Builds the system prompt for a context epoch. Output depends only on its inputs (no clock), so the
@@ -19,6 +20,7 @@ class PromptAssembler {
         coreMemories: List<MemoryEntry>,
         summary: String?,
         toolNames: Set<String>,
+        stickers: StickerShelf? = null,
     ): String {
         val userName = userPersona?.name?.takeIf { it.isNotBlank() } ?: "the user"
         val sections = mutableListOf<String>()
@@ -80,6 +82,23 @@ class PromptAssembler {
             }
             if ("generate_image" in toolNames) {
                 append(" You can show images with generate_image when it fits the moment or $userName asks.")
+            }
+        }
+
+        if ("place_sticker" in toolNames) {
+            sections += buildString {
+                append("## Stickers\n")
+                append("You can stick stickers on $userName's notes and on your own letters with place_sticker, and peel your own off ")
+                append("with peel_sticker. In your letters you can also write a sticker inline as :name:, like an emoji. ")
+                append("They're for play and feeling: use one when the moment calls for it, not every time.")
+                if (stickers != null && !stickers.isEmpty) {
+                    if (stickers.own.isNotEmpty()) {
+                        append("\n\nYour stickers: ")
+                        append(stickers.own.joinToString(", ") { art -> ":${art.name}:" + (art.feeling?.let { " ($it)" } ?: "") })
+                    }
+                    if (stickers.shared.isNotEmpty()) append("\nShared stickers: ").append(stickers.shared.joinToString(", ") { ":${it.name}:" })
+                }
+                append("\nAny emoji works too, by name like :tada: or as the emoji itself.")
             }
         }
 

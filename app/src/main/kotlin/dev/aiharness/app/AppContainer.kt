@@ -11,6 +11,7 @@ import dev.aiharness.app.data.RoomCredentialRepository
 import dev.aiharness.app.data.RoomMemoryRepository
 import dev.aiharness.app.data.RoomModelProfileRepository
 import dev.aiharness.app.data.RoomPersonaRepository
+import dev.aiharness.app.data.RoomStickerRepository
 import dev.aiharness.app.data.RoomUserPersonaRepository
 import dev.aiharness.app.data.db.HarnessDatabase
 import dev.aiharness.app.engine.GenerationManager
@@ -49,6 +50,7 @@ class AppContainer(private val context: Context) {
         settings = DataStoreSettingsRepository(context),
         blobs = blobStore,
         activity = RoomActivityRepository(database.dao()),
+        stickers = RoomStickerRepository(database.dao()),
         log = { Log.d("Harness", it) },
     )
 
