@@ -179,7 +179,7 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                     .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to the week", tint = colors.usuzumi0) }
+                IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to the planner", tint = colors.usuzumi0) }
                 // The title takes what's left, so the stickers button always keeps its place.
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -189,6 +189,22 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                     )
                     val who = if (seenBy.isEmpty()) "ONLY YOU SEE YOUR PLANNER" else "${names(seenBy.map { it.name }).uppercase()} CAN SEE YOUR PLANNER"
                     Text((if (day == today) "TODAY · " else "") + who, style = PaperType.meta, color = ink)
+                    // A public holiday, in red like a Sunday; the solar term and microseason the day is in.
+                    val red = dayInk(java.time.DayOfWeek.SUNDAY, colors.sumi, stationery.isNight)
+                    dev.aiharness.core.planner.Holidays.on(settings.planner.holidays, day).forEach { h ->
+                        Text(h.name.uppercase() + " · PUBLIC HOLIDAY", style = PaperType.meta, color = red)
+                    }
+                    if (settings.planner.seasonBand) {
+                        val micro = remember(day, settings.theme) { dev.aiharness.core.seasons.Seasons.microOn(day, vm.zone, vm.hemisphere(settings)) }
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 3.dp)) {
+                            SeasonMotif(micro.index / 3, Modifier.size(13.dp))
+                            Text(
+                                "  ${micro.term.kanji} ${micro.term.english} · ${micro.kanji} ${micro.english}",
+                                style = PaperType.noteBody.copy(fontSize = 12.5.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                                color = colors.usuzumi1,
+                            )
+                        }
+                    }
                 }
                 if (dayTarget != null) {
                     Box(

@@ -410,6 +410,8 @@ class ScreenshotTour {
 
         // Lamplight on the Look page.
         click("Look")
+        scrollTo("THE THEME'S SEASONS FOLLOW")
+        shot("${prefix}_17a_settings_look_seasons")
         scrollTo("Lamplight at night")
         shot("${prefix}_17_settings_look_lamplight")
         back()
@@ -422,6 +424,16 @@ class ScreenshotTour {
         compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("Haptic ticks"))
         compose.waitForIdle()
         shot("${prefix}_18b_settings_media_more")
+        back()
+
+        // 十 Planner: the week page, the seasons, public holidays.
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasClickActionLabel("Open Planner"))
+        compose.onNode(hasClickActionLabel("Open Planner")).performClick()
+        waitFor("THE WEEK STARTS ON")
+        shot("${prefix}_18c_settings_planner")
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("Change"))
+        compose.waitForIdle()
+        shot("${prefix}_18d_settings_planner_holidays")
         back()
 
         // An image profile.
@@ -519,6 +531,17 @@ class ScreenshotTour {
         compose.waitUntil(10_000) { runCatching { compose.onNode(hasClickActionLabel("Stick stickers on this day")).assertIsDisplayed() }.isSuccess }
         shot("${prefix}_24h_planner_day")
         back()
+        // The season band in full, then the month page, and back to the week.
+        compose.onNode(hasClickActionLabel("The season in full")).performClick()
+        compose.waitForIdle()
+        shot("${prefix}_24i_season_band")
+        compose.onNode(hasClickActionLabel("Fold the season away")).performClick()
+        compose.onNode(hasClickActionLabel("Open the Month page")).performClick()
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Month, the page you're on"), 10_000)
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Founders' Day", substring = true), 10_000)
+        shot("${prefix}_24j_planner_month")
+        compose.onNode(hasClickActionLabel("Open the Week page")).performClick()
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Week, the page you're on"), 10_000)
     }
 
     private fun hasClickActionLabel(label: String, substring: Boolean = false) = androidx.compose.ui.test.SemanticsMatcher("has click label $label") { node ->
@@ -925,5 +948,12 @@ class ScreenshotTour {
         plan("Buy sencha") { it.copy(day = week[4].toString()) }
         plan("Return the library books") { it.copy(day = week[2].toString(), state = dev.aiharness.core.model.EntryState.DONE) }
         plan("Jo's birthday") { it.copy(day = week[5].toString(), allDay = true) }
+        // Public holidays, as if already fetched (the tour stays offline): a made-up one on this week's Wednesday.
+        fun fetched(y: Int) = dev.aiharness.core.model.HolidayYear(
+            "US", y, now, listOfNotNull(dev.aiharness.core.model.Holiday(week[2].toString(), "Founders' Day").takeIf { week[2].year == y }),
+        )
+        h.settings.update { s ->
+            s.copy(planner = s.planner.copy(holidays = dev.aiharness.core.model.HolidaySettings(show = true, country = "US", region = "US-MA", years = listOf(fetched(today.year), fetched(today.year + 1)))))
+        }
     }
 }

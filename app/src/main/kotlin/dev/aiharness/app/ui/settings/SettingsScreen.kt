@@ -63,7 +63,8 @@ enum class SettingsSection(val key: String, val kanji: String, val title: String
     YOU("you", "七", "You"),
     PROMPTING("prompting", "八", "Prompting"),
     MEDIA("media", "九", "Media"),
-    ABOUT("about", "十", "About"),
+    PLANNER("planner", "十", "Planner"),
+    ABOUT("about", "十一", "About"),
     ;
 
     companion object {
@@ -118,7 +119,8 @@ private fun ContentsLine(section: SettingsSection, summary: String, onClick: () 
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(section.kanji, style = PaperType.seasonKanji.copy(fontFamily = HarnessFonts.Brush, fontSize = 15.sp), color = colors.kasure2, modifier = Modifier.width(18.dp))
+        // Wide enough for 十一.
+        Text(section.kanji, style = PaperType.seasonKanji.copy(fontFamily = HarnessFonts.Brush, fontSize = 15.sp), color = colors.kasure2, maxLines = 1, softWrap = false, modifier = Modifier.width(30.dp))
         Text(section.title, style = PaperType.entryTitle, color = colors.sumi)
         Box(
             Modifier
@@ -150,6 +152,10 @@ private fun summary(section: SettingsSection, s: AppSettings, profileCount: Int,
     SettingsSection.YOU -> writingAs?.let { "Writing as $it" } ?: "Your personas"
     SettingsSection.PROMPTING -> if (s.baseInstructions == AppSettings.DEFAULT_BASE_INSTRUCTIONS) "Default" else "Your own"
     SettingsSection.MEDIA -> "Links ${if (s.media.linksInApp) "in the app" else "in your browser"} · pictures ${if (s.media.fullSizePictures) "full size" else "smaller"}"
+    SettingsSection.PLANNER -> listOfNotNull(
+        "Weeks from ${if (s.planner.weekStartsSunday) "Sun" else "Mon"}",
+        s.planner.holidays.takeIf { it.show }?.country?.let { "$it holidays" },
+    ).joinToString(" · ")
     SettingsSection.ABOUT -> listOfNotNull(version?.let { "v$it" }, "licenses").joinToString(" · ")
 }
 
@@ -180,6 +186,7 @@ fun SettingsSectionScreen(nav: NavController, key: String) {
             SettingsSection.MODELS -> modelsPage(nav, s, update)
             SettingsSection.PROMPTING -> promptingPage(s, update)
             SettingsSection.MEDIA -> mediaPage(s, update)
+            SettingsSection.PLANNER -> plannerPage(nav, s, update)
             SettingsSection.ABOUT -> aboutPage()
             SettingsSection.YOU -> Unit
         }

@@ -78,6 +78,12 @@ import dev.aiharness.core.planner.Occurrence
 import java.time.LocalDate
 import java.time.format.TextStyle as DayText
 import java.util.Locale
+import dev.aiharness.core.model.Hemisphere
+import dev.aiharness.core.model.HolidaySettings
+import dev.aiharness.core.planner.Holidays
+import dev.aiharness.core.seasons.SolarTerm
+import dev.aiharness.core.seasons.Seasons
+import java.time.YearMonth
 
 /** What's picked on the week page: an entry's stamps, or the days to move it to. */
 private data class Picked(val entryId: String, val day: LocalDate, val moving: Boolean = false)
@@ -117,25 +123,51 @@ fun PlannerScreen(nav: NavController) {
     }
 
     val you by vm.you.collectAsStateWithLifecycle()
+    val view by vm.view.collectAsStateWithLifecycle()
+    val personas by vm.personas.collectAsStateWithLifecycle()
     val thisWeek = today in days
+    val month = YearMonth.from(shown)
+    val thisMonth = month == YearMonth.from(today)
+    val monthDays = remember(month, settings.planner.weekStartsSunday) { MonthDays.of(month, settings.planner.weekStartsSunday) }
+    val monthOccurrences = remember(entries, monthDays) { vm.occurrences(entries, monthDays.first(), monthDays.last()) }
+    val hemisphere = vm.hemisphere(settings)
+    val holidays = settings.planner.holidays
     PlannerStickerHost(you?.id, you) { stickers, bottom ->
     Box(Modifier.fillMaxSize().background(colors.kami).dotGrid(colors.sumi.copy(alpha = 0.12f))) {
         Column(Modifier.fillMaxSize().stitched(lerp(colors.nijimi2, colors.kami, 0.2f)).statusBarsPadding().padding(bottom = bottom)) {
-            WeekHeader(days)
-            WeekTools(
-                thisWeek = thisWeek,
-                ink = ink,
+          if (view == PlannerView.MONTH) {
+            MonthHeader(month) { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisMonth) today else month.atDay(1)).toString())) } }
+            PageTools(
+                unit = "Month", here = thisMonth, ink = ink,
+                onPrevious = { vm.shownDay.value = month.minusMonths(1).atDay(1) },
+                onToday = { vm.shownDay.value = vm.today() },
+                onNext = { vm.shownDay.value = month.plusMonths(1).atDay(1) },
+            )
+            MonthPage(
+                month = month, today = today, startsSunday = settings.planner.weekStartsSunday, occurrences = monthOccurrences,
+                holidays = holidays, seasonBand = settings.planner.seasonBand, zone = vm.zone, hemisphere = hemisphere,
+                personas = personas, plannerId = you?.id, stickers = stickers,
+                onDay = { day -> nav.navigate(Routes.plannerDay(day.toString())) },
+                onHolidaysSetup = { nav.navigate(Routes.settings("planner")) },
+            )
+          } else {
+            WeekHeader(days) { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisWeek) today else days.first()).toString())) } }
+            PageTools(
+                unit = "Week", here = thisWeek, ink = ink,
                 onPrevious = { vm.shownDay.value = shown.minusWeeks(1); picked = null },
                 onToday = { vm.shownDay.value = vm.today(); picked = null },
                 onNext = { vm.shownDay.value = shown.plusWeeks(1); picked = null },
-                onStickers = { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisWeek) today else days.first()).toString())) } },
             )
+            if (settings.planner.seasonBand) SeasonBand(if (thisWeek) today else days.first(), vm.zone, hemisphere)
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(start = 18.dp, end = 6.dp)) {
                 val col = ((maxWidth - GUTTER) / 7).coerceAtLeast(36.dp)
                 Column(Modifier.fillMaxSize()) {
                     // The days and the all-day row stay put while the hours scroll.
-                    DayHeads(days, today, col) { day -> nav.navigate(Routes.plannerDay(day.toString())) }
-                    AllDayRow(days, occurrences, col, ink) { o -> card = PlanDraft.of(o.entry, o.day) }
+                    DayHeads(days, today, col, holidays) { day -> nav.navigate(Routes.plannerDay(day.toString())) }
+                    AllDayRow(
+                        days, occurrences, col, ink, holidays,
+                        termOf = if (settings.planner.seasonBand) remember(days, hemisphere) { Seasons.termsBeginning(days.first(), days.last(), vm.zone, hemisphere).toMap() } else emptyMap(),
+                    ) { o -> card = PlanDraft.of(o.entry, o.day) }
                     Column(Modifier.weight(1f).verticalScroll(scroll).padding(bottom = 24.dp)) {
                         WeekGrid(
                             days = days, occurrences = occurrences, entries = entries, layout = layout, col = col, today = today,
@@ -159,6 +191,7 @@ fun PlannerScreen(nav: NavController) {
                     }
                 }
             }
+          }
         }
         // The ribbon (栞) in your ink hangs from the page's top edge, below the phone's status bar
         // (where a tap isn't the app's), and goes back to today.
@@ -187,7 +220,16 @@ fun PlannerScreen(nav: NavController) {
                     },
             )
         }
-        IndexTab(Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 6.dp), ink)
+        IndexTabs(
+            view, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 6.dp),
+            onWeek = { vm.view.value = PlannerView.WEEK },
+            onMonth = { vm.view.value = PlannerView.MONTH; picked = null },
+        )
+        if (view == PlannerView.MONTH) {
+            MonthTabs(month, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 132.dp)) { m ->
+                vm.shownDay.value = if (m == YearMonth.from(today)) today else m.atDay(1)
+            }
+        }
         card?.let { draft ->
             PlanCard(
                 draft = draft, clock = clock, zone = vm.zone, ink = ink, seenBy = seenBy.map { it.name },
@@ -218,42 +260,117 @@ private fun grid(size: Float): androidx.compose.ui.unit.TextUnit {
     return (size * minOf(scale, 1.15f) / scale).sp
 }
 
+/** The week's title (the month's number and traditional name, and the days), with the stickers button before the ribbon. */
 @Composable
-private fun WeekHeader(days: List<LocalDate>) {
+private fun WeekHeader(days: List<LocalDate>, onStickers: () -> Unit) {
     val colors = paper
     val first = days.first()
     val last = days.last()
     val (kanji, meaning) = PlannerDays.months[first.monthValue - 1]
     val range = if (first.month == last.month) "${first.dayOfMonth}–${last.dayOfMonth}" else "${first.dayOfMonth} ${month(first)} – ${last.dayOfMonth} ${month(last)}"
     Row(
-        Modifier.fillMaxWidth().padding(start = 24.dp, end = 110.dp, top = 10.dp, bottom = 2.dp),
+        Modifier.fillMaxWidth().padding(start = 24.dp, end = 108.dp, top = 10.dp, bottom = 2.dp),
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text("${first.monthValue}", style = TextStyle(fontFamily = HarnessFonts.Display, fontWeight = FontWeight.SemiBold, fontSize = 46.sp, lineHeight = 42.sp), color = colors.sumi)
-        Column(Modifier.padding(bottom = 2.dp)) {
+        Column(Modifier.weight(1f).padding(bottom = 2.dp)) {
             Text(kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 18.sp), color = colors.sumi)
             Text("$meaning · $range", style = TextStyle(fontFamily = HarnessFonts.Read, fontStyle = FontStyle.Italic, fontSize = 12.5.sp), color = colors.usuzumi1, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        StickersButton(onStickers)
+    }
+}
+
+/** The month's title: its traditional name large, the month and year and what the name means under it. */
+@Composable
+private fun MonthHeader(month: YearMonth, onStickers: () -> Unit) {
+    val colors = paper
+    val (kanji, meaning) = PlannerDays.months[month.monthValue - 1]
+    Row(
+        Modifier.fillMaxWidth().padding(start = 24.dp, end = 108.dp, top = 10.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 32.sp, lineHeight = 36.sp), color = colors.sumi)
+            Text(
+                "${month.month.getDisplayName(DayText.FULL, Locale.US)} ${month.year} · $meaning",
+                style = TextStyle(fontFamily = HarnessFonts.Read, fontStyle = FontStyle.Italic, fontSize = 12.5.sp),
+                color = colors.usuzumi1, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+        }
+        StickersButton(onStickers)
+    }
+}
+
+/**
+ * The season band, one thin line: this microseason and the next solar term, each with its motif
+ * ("楓蔦黄 Maples and ivy turn yellow | 立冬 winter begins, 7th"). A tap opens both in full.
+ */
+@Composable
+private fun SeasonBand(day: LocalDate, zone: java.time.ZoneId, hemisphere: Hemisphere) {
+    val colors = paper
+    val red = dayInk(java.time.DayOfWeek.SUNDAY, colors.sumi, stationery.isNight)
+    val season = remember(day, hemisphere) { Seasons.on(day, zone, hemisphere) }
+    var open by rememberSaveable { mutableStateOf(false) }
+    val micro = season.micro
+    val next = season.next
+    val nextOn = season.nextFirst.let { if (it.month == day.month) ordinal(it.dayOfMonth) else "${it.dayOfMonth} ${month(it)}" }
+    val first = season.microFirst
+    val last = season.microLast
+    val days = if (first.month == last.month) "${first.dayOfMonth} to ${last.dayOfMonth} ${first.month.getDisplayName(DayText.FULL, Locale.US)}"
+    else "${first.dayOfMonth} ${first.month.getDisplayName(DayText.FULL, Locale.US)} to ${last.dayOfMonth} ${last.month.getDisplayName(DayText.FULL, Locale.US)}"
+    val small = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 9.5.sp, lineHeight = 11.sp)
+    val brush = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 11.5.sp, lineHeight = 13.sp)
+    Column(
+        Modifier
+            .padding(start = 24.dp, end = 36.dp, top = 4.dp)
+            .fillMaxWidth()
+            .heightIn(min = 26.dp)
+            .background(colors.hyoshi)
+            .drawBehind { drawLine(red, Offset(0f, 0f), Offset(0f, size.height), 2.5.dp.toPx()) }
+            .clickable(onClickLabel = if (open) "Fold the season away" else "The season in full") { open = !open }
+            .semantics { contentDescription = "Season: ${micro.english.lowercase()} (${micro.kanji}); next, ${next.english.lowercase()} on the ${ordinal(season.nextFirst.dayOfMonth)}" }
+            .padding(start = 8.dp, end = 6.dp, top = 5.dp, bottom = 5.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            SeasonMotif(micro.index / 3, Modifier.size(14.dp))
+            Text(micro.kanji, style = brush, color = colors.sumi, maxLines = 1, softWrap = false)
+            Text(micro.english, style = small, color = colors.sumi, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+            Box(Modifier.padding(horizontal = 2.dp).size(1.dp, 13.dp).background(colors.nijimi2))
+            SeasonMotif(next.index, Modifier.size(14.dp))
+            Text(next.kanji, style = brush, color = colors.sumi, maxLines = 1, softWrap = false)
+            Text("${next.english.lowercase()}, $nextOn", style = small, color = colors.sumi, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+        }
+        if (open) {
+            val term = season.term
+            Text(
+                "${term.kanji} ${micro.partKanji} ${micro.kanji}: ${term.english}, the ${micro.part} microseason: ${micro.english.replaceFirstChar { it.lowercase() }}. $days. " +
+                    "Then ${next.kanji}, ${next.english.lowercase()}, from ${season.nextFirst.dayOfMonth} ${season.nextFirst.month.getDisplayName(DayText.FULL, Locale.US)}.",
+                style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = 12.5.sp, lineHeight = 17.sp),
+                color = colors.sumi,
+                modifier = Modifier.padding(top = 4.dp),
+            )
         }
     }
 }
 
 /**
- * Going between weeks, and the stickers: clear paper buttons under the title. With large text the
- * stickers button goes onto a line of its own, still at the right, rather than being squeezed.
+ * Going between weeks (or months): clear paper buttons under the title, clear of the index tabs.
+ * With large text they wrap rather than being squeezed.
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun WeekTools(thisWeek: Boolean, ink: Color, onPrevious: () -> Unit, onToday: () -> Unit, onNext: () -> Unit, onStickers: () -> Unit) {
+private fun PageTools(unit: String, here: Boolean, ink: Color, onPrevious: () -> Unit, onToday: () -> Unit, onNext: () -> Unit) {
+    val word = unit.lowercase()
     androidx.compose.foundation.layout.FlowRow(
-        Modifier.fillMaxWidth().padding(start = 18.dp, end = 10.dp, top = 4.dp, bottom = 2.dp),
+        Modifier.fillMaxWidth().padding(start = 18.dp, end = 34.dp, top = 4.dp, bottom = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        ToolButton("‹  Week before", "The week before", onClick = onPrevious)
-        ToolButton("Today", if (thisWeek) "This week, the week you're on" else "Back to this week", on = thisWeek, ink = ink, onClick = onToday)
-        ToolButton("Week after  ›", "The week after", onClick = onNext)
-        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { StickersButton(onStickers) }
+        ToolButton("‹  $unit before", "The $word before", onClick = onPrevious)
+        ToolButton("Today", if (here) "This $word, the $word you're on" else "Back to this $word", on = here, ink = ink, onClick = onToday)
+        ToolButton("$unit after  ›", "The $word after", onClick = onNext)
     }
 }
 
@@ -289,32 +406,91 @@ private fun ToolButton(label: String, spoken: String, on: Boolean = false, ink: 
 
 private fun month(day: LocalDate) = day.month.getDisplayName(DayText.SHORT, Locale.US)
 
-/** The week's index tab at the page's right edge (週 Week; 月 Month joins it with the month page). */
+/** The index tabs at the page's right edge: 週 Week and 月 Month, the open one in your ink. */
 @Composable
-private fun IndexTab(modifier: Modifier, ink: Color) {
-    Column(
-        modifier
-            .size(26.dp, 56.dp)
-            .shadow(1.dp, RoundedCornerShape(topStart = 3.dp, bottomStart = 3.dp))
-            .background(ink, RoundedCornerShape(topStart = 3.dp, bottomStart = 3.dp))
-            .semantics { contentDescription = "Week, the page you're on" },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        val on = paper.onInk(ink)
-        Text("週", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 12.5.sp, lineHeight = 13.sp), color = on)
-        Text("Week", style = TextStyle(fontFamily = HarnessFonts.Ui, fontWeight = FontWeight.Bold, fontSize = 7.5.sp), color = on, modifier = Modifier.padding(top = 3.dp).sideways())
+private fun IndexTabs(view: PlannerView, ink: Color, modifier: Modifier, onWeek: () -> Unit, onMonth: () -> Unit) {
+    Column(modifier, horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        EdgeTab("週", "Week", view == PlannerView.WEEK, ink, onWeek)
+        EdgeTab("月", "Month", view == PlannerView.MONTH, ink, onMonth)
     }
 }
 
+/** One index tab: open, it's in [ink] and a little proud of the others. */
 @Composable
-private fun DayHeads(days: List<LocalDate>, today: LocalDate, col: Dp, onDay: (LocalDate) -> Unit) {
+private fun EdgeTab(kanji: String, word: String, open: Boolean, ink: Color, onClick: () -> Unit) {
+    val colors = paper
+    val shape = RoundedCornerShape(topStart = 3.dp, bottomStart = 3.dp)
+    val on = if (open) colors.onInk(ink) else colors.sumi
+    // 48dp to tap, though the tab is narrower.
+    Box(
+        Modifier
+            .size(44.dp, 56.dp)
+            .clickable(role = Role.Tab, onClickLabel = if (open) null else "Open the $word page", onClick = onClick)
+            .semantics { contentDescription = if (open) "$word, the page you're on" else word },
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        Column(
+            Modifier
+                .size(if (open) 26.dp else 22.dp, 52.dp)
+                .then(if (open) Modifier.shadow(1.dp, shape).background(ink, shape) else Modifier.background(colors.hyoshi, shape).border(1.dp, colors.nijimi1, shape)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 12.5.sp, lineHeight = 13.sp), color = on)
+            // Sideways in a narrow tab, so it grows with large text only as far as it fits.
+            Text(word, style = TextStyle(fontFamily = HarnessFonts.Ui, fontWeight = if (open) FontWeight.Bold else FontWeight.Normal, fontSize = grid(7.5f)), color = on, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 3.dp).sideways())
+        }
+    }
+}
+
+/** On the month page, the months either side and this one as kanji tabs below the index tabs (十月, 十一月, 十二月). */
+@Composable
+private fun MonthTabs(month: YearMonth, ink: Color, modifier: Modifier, onMonth: (YearMonth) -> Unit) {
+    val colors = paper
+    val shape = RoundedCornerShape(topStart = 3.dp, bottomStart = 3.dp)
+    Column(modifier, horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        listOf(month.minusMonths(1), month, month.plusMonths(1)).forEach { m ->
+            val open = m == month
+            val name = m.month.getDisplayName(DayText.FULL, Locale.US)
+            Box(
+                Modifier
+                    .width(44.dp)
+                    .clickable(role = Role.Tab, onClickLabel = if (open) null else "Open $name") { onMonth(m) }
+                    .semantics { contentDescription = if (open) "$name, the month you're on" else name },
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Column(
+                    Modifier
+                        .width(if (open) 26.dp else 22.dp)
+                        .then(if (open) Modifier.shadow(1.dp, shape).background(ink, shape) else Modifier.background(colors.hyoshi, shape).border(1.dp, colors.nijimi1, shape))
+                        .padding(vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    kanjiMonth(m.monthValue).forEach { c ->
+                        Text("$c", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = if (open) 12.5.sp else 11.5.sp, lineHeight = 14.sp), color = if (open) colors.onInk(ink) else colors.sumi)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** 十一月: a month in kanji numerals. */
+private fun kanjiMonth(n: Int): String {
+    val digits = "〇一二三四五六七八九"
+    return (if (n >= 10) "十" + (if (n > 10) digits[n - 10].toString() else "") else digits[n].toString()) + "月"
+}
+
+@Composable
+private fun DayHeads(days: List<LocalDate>, today: LocalDate, col: Dp, holidays: HolidaySettings, onDay: (LocalDate) -> Unit) {
     val colors = paper
     val night = stationery.isNight
     val ink = stationery.you
     Box(Modifier.height(44.dp).fillMaxWidth()) {
         days.forEachIndexed { i, day ->
-            val dayColor = dayInk(day.dayOfWeek, colors.sumi, night)
+            // A public holiday's date is red, like a Sunday's.
+            val holiday = Holidays.on(holidays, day).isNotEmpty()
+            val dayColor = if (holiday) dayInk(java.time.DayOfWeek.SUNDAY, colors.sumi, night) else dayInk(day.dayOfWeek, colors.sumi, night)
             Column(
                 Modifier
                     .offset(x = GUTTER + col * i)
@@ -339,16 +515,32 @@ private fun DayHeads(days: List<LocalDate>, today: LocalDate, col: Dp, onDay: (L
     }
 }
 
-private fun dayName(day: LocalDate) = "${day.dayOfWeek.getDisplayName(DayText.FULL, Locale.US)} ${day.dayOfMonth} ${day.month.getDisplayName(DayText.FULL, Locale.US)}"
+internal fun dayName(day: LocalDate) = "${day.dayOfWeek.getDisplayName(DayText.FULL, Locale.US)} ${day.dayOfMonth} ${day.month.getDisplayName(DayText.FULL, Locale.US)}"
 
 @Composable
-private fun AllDayRow(days: List<LocalDate>, occurrences: List<Occurrence>, col: Dp, ink: Color, onOpen: (Occurrence) -> Unit) {
+private fun AllDayRow(
+    days: List<LocalDate>,
+    occurrences: List<Occurrence>,
+    col: Dp,
+    ink: Color,
+    holidays: HolidaySettings,
+    termOf: Map<LocalDate, SolarTerm>,
+    onOpen: (Occurrence) -> Unit,
+) {
     val colors = paper
+    val red = dayInk(java.time.DayOfWeek.SUNDAY, colors.sumi, stationery.isNight)
     val allDay = occurrences.filter { it.entry.allDay && it.entry.kind == EntryKind.PLAN }
     Box(Modifier.fillMaxWidth().heightIn(min = 32.dp).padding(bottom = 4.dp).drawBehind { drawLine(colors.nijimi1, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }) {
         Text("all day", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(8.5f), lineHeight = grid(10f)), color = colors.kasure2, modifier = Modifier.width(GUTTER - 2.dp).padding(top = 4.dp), textAlign = TextAlign.End, maxLines = 2)
         days.forEachIndexed { i, day ->
             Column(Modifier.offset(x = GUTTER + col * i + 2.dp).width(col - 4.dp).padding(vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                // A solar term's first day, in small red kanji; a public holiday's name.
+                termOf[day]?.let { t ->
+                    Text(t.kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = grid(9f), lineHeight = grid(10f)), color = red, maxLines = 1, modifier = Modifier.semantics { contentDescription = "${t.english} (${t.kanji})" })
+                }
+                Holidays.on(holidays, day).forEach { h ->
+                    Text(h.name, style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(7.5f), lineHeight = grid(8.5f)), color = red, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
                 allDay.filter { it.day == day }.forEach { o ->
                     Text(
                         o.entry.title.ifBlank { "Plan" },

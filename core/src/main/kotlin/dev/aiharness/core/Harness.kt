@@ -108,6 +108,7 @@ class Harness(
     val stickerMaker = StickerMaker(images, blobs, stickers, stickerCutter, clock)
     val links = LinkPreviews(blobs, log = log)
     val music = MusicSearch(blobs, log = log)
+    val holidays = dev.aiharness.core.planner.Holidays(settings, clock, log = log)
     val linkReading = LinkReading(conversations, marks, clock)
     val keepsakeFinder = KeepsakeFinder(conversations, clock)
     val tools = ToolRegistry(

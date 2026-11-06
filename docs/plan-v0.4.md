@@ -117,7 +117,7 @@ From the agreed decisions in `calendar.md`:
   above and below itself (40dp at least), so a near miss no longer opens its day. Any of your
   stickers, on letters and the planner, can be held and dragged to move it without selecting it
   (a tap still selects it, to peel, turn or resize).
-- **Step 3, the month and the seasons: under way.** The season engine is done: the 24 solar terms
+- **Step 3, the month and the seasons: done.** The season engine: the 24 solar terms
   and 72 microseasons are worked out on the phone from the sun's position (no network, no data
   file), in the phone's own time zone (so the December solstice is the 22nd in Tokyo and the 21st
   in New York), and turned half a year round south of the equator. Your side of the equator comes
@@ -128,8 +128,35 @@ From the agreed decisions in `calendar.md`:
   you choose whose (only the country and year are sent; this year's and next year's lists are
   kept, and fetched again after three months): public ones only, nationwide or your region's. A
   persona that sees your planner is told of the week's ("Thursday is a public holiday:
-  Thanksgiving."). Still to come in step 3: the month page, the season band on the pages,
-  holidays on the pages, and the settings for them.
+  Thanksgiving.").
+
+  On the pages: the 週 Week and 月 Month index tabs at the right edge switch between the week and
+  the **month page**, which has the month's traditional name (霜月, "November 2026 · frost
+  month"), the same buttons ("Month before", "Today", "Month after") and kanji month tabs (十月,
+  十一月, 十二月). Its band names the month's solar terms ("7日 立冬 winter begins | 22日 小雪 light
+  snow"); each day shows its date (Saturday blue, Sunday and holidays red, today ringed), a term's
+  name on its first day, a holiday's name or its first plan, ink dots for who wrote there (yours
+  now; personas' with step 4), 済 when everything on it is stamped, and its stickers (smaller
+  than on the week). A legend says what the marks mean, and "Show public holidays" leads to their
+  setup until there are some. The week has the **season band**: this microseason and the next
+  term, each with a motif (plum, cherry, hydrangea, morning glory, the moon over pampas grass,
+  maple, camellia, the snow ring), opening in full with a tap ("霜降 末候 楓蔦黄: Frost falls, the
+  last microseason: maples and ivy turn yellow. 2 to 6 November."). A holiday's date is red on
+  the week, with its name in the all-day row, where a term's first day has its kanji too; a
+  day's page says its holiday, term and microseason. The week's Stickers button moved up beside
+  the title, clear of the index tabs.
+
+  **Settings, 十 Planner** (About moves to 十一) came forward from step 6 to hold these: your
+  typical week, the week page (fold my sleep hours, the week starts on Monday or Sunday, the
+  clock), seasons and special days (the band, your side of the equator), and public holidays
+  (whose: a country, suggested from the phone's region, and a region where they differ;
+  "Change"). Look has **Seasons**: what the theme's seasons follow, and your side of the equator.
+  Busy times, quiet hours and phone calendars join the Planner page in their steps.
+
+  Chosen along the way (say if you'd rather otherwise): terms and microseasons fall on the day
+  they begin in your own time zone, not Japan's (so in the US a term can begin a day earlier
+  than a Japanese diary shows); public holidays stay off until you choose whose, since turning
+  them on sends a request to Nager.Date.
 
 ## Noted for later
 

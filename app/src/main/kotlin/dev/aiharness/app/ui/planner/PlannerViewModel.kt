@@ -6,10 +6,12 @@ import dev.aiharness.app.AppContainer
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.EntryKind
 import dev.aiharness.core.model.EntryState
+import dev.aiharness.core.model.Hemisphere
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.PlannerEntry
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.planner.Occurrence
+import dev.aiharness.core.theme.ThemeClock
 import dev.aiharness.core.util.newId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,8 +51,22 @@ class PlannerViewModel(private val container: AppContainer) : ViewModel() {
         if (u == null || !u.sharesPlanner(s)) emptyList() else personas.filter { it.seesPlanner }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    /** A day in the week shown. */
+    /** A day in the week (or month) shown. */
     val shownDay = MutableStateFlow(today())
+
+    /** The week page or the month page (the 週 and 月 index tabs). */
+    val view = MutableStateFlow(PlannerView.WEEK)
+
+    /** Every persona, for the marks of who wrote where. */
+    val personas: StateFlow<List<Persona>> = h.personas.observeAll().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    init {
+        // Public holidays, when they're shown: fetched once a year, so usually nothing to do.
+        viewModelScope.launch { h.holidays.refresh() }
+    }
+
+    /** Your side of the equator, for the seasons. */
+    fun hemisphere(s: AppSettings): Hemisphere = ThemeClock.hemisphere(s.theme, zone)
 
     fun today(): LocalDate = LocalDate.ofInstant(java.time.Instant.ofEpochMilli(h.clock.nowMillis()), zone)
     fun now(): Long = h.clock.nowMillis()
@@ -76,8 +92,8 @@ class PlannerViewModel(private val container: AppContainer) : ViewModel() {
     fun stamp(entry: PlannerEntry, state: EntryState) = save(entry.copy(state = if (entry.state == state) EntryState.OPEN else state))
 
     /**
-     * Moves [entry] to [day], keeping its time. A ghost stays on the day it came from (only the
-     * first: moving it on again keeps where it started); moving it back there takes the ghost away.
+     * Moves [entry] to [day], keeping its time; it carries its 延 there. It remembers the day it
+     * started on (moving it on again keeps that), and moving it back there makes it a plan again.
      */
     fun move(entry: PlannerEntry, from: LocalDate, day: LocalDate) {
         if (day == from) return
@@ -95,3 +111,5 @@ class PlannerViewModel(private val container: AppContainer) : ViewModel() {
         )
     }
 }
+
+enum class PlannerView { WEEK, MONTH }
