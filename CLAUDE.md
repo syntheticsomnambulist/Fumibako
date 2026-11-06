@@ -28,6 +28,8 @@
   - Design decisions: [`docs/design/README.md`](docs/design/README.md).
   - Architecture: [`README.md`](README.md).
 - **Checks:**
-  - Before pushing, run `./gradlew :core:test :app:testDebugUnitTest`.
+  - Before pushing a change to code, run `./gradlew :core:test :app:testDebugUnitTest`. A change
+    that only touches docs (Markdown files, such as this one, `README.md` and `docs/`) can be pushed
+    without it. Comments in source files still count as code.
   - For a UI change, also run the screenshot tour:
     `HARNESS_SCREENSHOTS_DIR=<dir> ./gradlew :app:testDebugUnitTest --tests '*ScreenshotTour*'`.
