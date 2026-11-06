@@ -229,9 +229,10 @@ from. The rest of the app is right as it is; the desk should match it.
   and 70%). Wire, ruled lines and seals can be thin lines; nothing gets a dark outline.
 - **Minimal shading:** at most one deeper tint for a spine or an edge. No gradients.
 - **The app's own soft shadow** (its 2dp elevation), under objects and cards alike. Chosen on
-  6 November after a side-by-side in the v0.5 pass (see [`v0.5.md`](v0.5.md)): it replaces the
-  hard-edged 2dp offset the desk mockups were drawn with, which they'll lose when next redrawn.
-  The heavier blurred shadow of the first desk mockups stays dropped.
+  6 November after a side-by-side in the v0.5 pass (see [`v0.5.md`](v0.5.md)): it replaced the
+  hard-edged 2dp offset the desk mockups were first drawn with (redrawn the same day), a touch
+  deeper for things on the desk pad and in the drawer. The heavier blurred shadow of the first
+  desk mockups stays dropped.
 - **Shapes, not boxes:** fewer plain rectangles. Tape with zigzag torn ends; sticky tabs and
   keepsakes poking out of books; a dog-eared page; an arched window in the sketchbook; die-cut
   stickers on their sheet; a scalloped postage stamp and a postmark; a luggage tag; an index tab
@@ -250,8 +251,10 @@ from. The rest of the app is right as it is; the desk should match it.
 - **Tried and dropped:** thick dark outlines (too much like icons), a pixel font (too much like a
   video game), heavier offset shadows, hard offset shadows of any weight, index-tab labels on
   cards, screentone, a wooden desk, heavy blurred shadows, and translucent tape.
-- **Fonts** stay the app's (display, reading, label, brush, handwriting and newsprint faces) until
-  the font audit planned for v0.5.
+- **Fonts** are the ones chosen in the v0.5 font audit: Zen Old Mincho for names, Literata for
+  letters, Zen Kaku Gothic New for labels, Yuji Syuku for seals, and the persona's own hand
+  (Yomogi by default) for her diary, sketchbook titles and anything she writes by hand. No
+  italics: the desk's explanations are upright interface text.
 - Whether anything from this reaches the rest of the app is a question for the v0.5 stationery
   update.
 
@@ -312,4 +315,5 @@ https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn
 
 - **Your desk:** what's on it and where it lives in the app, and how much of it comes in v0.6.
 
-- **The look beyond the desk:** whether the v0.5 stationery update takes it across the app.
+- **The look beyond the desk:** mostly settled in v0.5 (soft shadows, the chosen faces, tapes in
+  two shades, all across the app); drawn objects in the desk's style elsewhere are still to come.
