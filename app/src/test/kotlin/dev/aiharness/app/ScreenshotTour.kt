@@ -562,6 +562,8 @@ class ScreenshotTour {
     }
 
     private fun top() {
+        // Just back from a card, the list may still be on its way in.
+        compose.waitUntilAtLeastOneExists(hasScrollToIndexAction(), 10_000)
         compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToIndex(0)
         compose.waitForIdle()
     }
