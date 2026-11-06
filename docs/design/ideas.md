@@ -7,7 +7,8 @@ when we work through them.
 
 - **v0.3** (being built): pictures, then stickers. See `docs/plan-v0.3.md` on the build branch.
 - **v0.3.5: media**, in [`media.md`](media.md); media in the memory book, in
-  [`keepsakes.md`](keepsakes.md) (with media or right after, to decide).
+  [`keepsakes.md`](keepsakes.md) (with media or right after, to decide). The build branch's plan
+  also brings several pronoun sets per persona (e.g. she/they) in v0.3.5.
 - **v0.4: the planner**, in [`calendar.md`](calendar.md).
 - **After stickers, not scheduled:** letters between personas, in [`pen-pals.md`](pen-pals.md).
 - **Not designed yet:** a scrapbook of your own (see [`keepsakes.md`](keepsakes.md)).

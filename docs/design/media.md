@@ -85,7 +85,7 @@ placement.
   strip to 82%.
 - **Long-press** any frame for Save to phone and Share (and Copy link on a cutting).
 - **Stickers go on frames too** (the mixtape first of all), anchored to the attachment so they stay
-  with it. In the memory book, see [`keepsakes.md`](keepsakes.md).
+  with it, including when it's kept in the memory book (see [`keepsakes.md`](keepsakes.md)).
 
 ## Tapping and motion ("Tapping photos and files", "Tapping music and video", "Links, read stamps and arrivals")
 

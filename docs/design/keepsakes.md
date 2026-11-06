@@ -27,6 +27,9 @@ and no clipping belongs to a particular memory.
   change to a persona's memories.
 - **Stickers go on media too:** on frames in letters and notes (the mixtape first of all), and on
   keepsakes in the book.
+- **Stickers stay stuck** (decided 2026-11-06, relayed from the build session): a sticker belongs
+  to the attachment it's on, so media kept as a keepsake keeps its stickers, and one stuck on
+  either the letter's frame or the book's keepsake shows on both.
 
 ## How each object looks in the book
 
@@ -70,9 +73,9 @@ the persona what it pasted in.
   thumbnail ref. Memories are JSON rows, so this needs no migration.
 - The day's picture (today's first-picture-of-the-day polaroid) stays only for days where no
   memory has a keepsake.
-- **Sticker anchors** need an attachment as a target kind, and a keepsake as another. Proposed:
-  stickers stay where they were placed. One stuck on the cassette in a letter stays on the
-  letter's cassette; the J-card in the book is its own piece of paper.
+- **Sticker anchors** need an attachment as a target kind. A keepsake shows its attachment's
+  stickers, placed at the same spot relative to the object (the cassette's stickers sit on its
+  J-card), so a keepsake needs no target kind of its own.
 
 ## Later: a scrapbook of your own
 
@@ -82,6 +85,4 @@ scrapbook, with stickers. Not designed yet.
 ## Open
 
 - **When:** with media in v0.3.5, or right after it?
-- **Stickers across copies:** should a sticker on the letter's ticket also show on the same ticket
-  kept in the book? (Proposed above: no.)
 - **Your scrapbook:** what it holds and where it lives.
