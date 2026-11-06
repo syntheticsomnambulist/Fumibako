@@ -212,3 +212,10 @@ stays and installed data is kept on update; only the heartbeat timings reset onc
    writing to you. Reflecting, revisiting, tidying and upkeep are free. The persona sees what is
    due and how many slots it has left, and chooses; the engine enforces the count. The setting
    lives on the rhythm, so a persona with its own heartbeat can change it too.
+
+## Noted for later (from testing v0.2)
+
+- **Pictures** (self, outfit and style prompts; more image hosts): agreed for the start of v0.3,
+  see [design/pictures.md](design/pictures.md).
+- **The letter's top bar icons** (persona, writing as, picture, menu) are stock Material icons;
+  they should become stationery ones.
