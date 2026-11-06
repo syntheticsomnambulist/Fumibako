@@ -2,7 +2,7 @@
 
 Started 2026-11-06, after v0.3.5. The design is the design session's `docs/design/calendar.md`
 (on its branch, `ccr-09dbf6b8-2c3jno`), with two passes of mockups on its "Planner" design canvas
-(private claude.ai artifact: https://claude.ai/artifact/641ZZiMG4rVyRHyP1PDszb). The roadmap is
+(private claude.ai artifact, which only the repository's owner can open: https://claude.ai/artifact/641ZZiMG4rVyRHyP1PDszb). The roadmap is
 in its `docs/design/ideas.md`.
 
 ## Your answers on what was still open (2026-11-06)

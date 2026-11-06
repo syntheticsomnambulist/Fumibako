@@ -52,6 +52,8 @@ carry their own licences, and whatever you pick must sit alongside them:
   variables. Run GitHub's secret scanning once the repository is public to confirm.
 - **Session links:** commit messages carry `Claude-Session:` links. They only open for your
   account, but they'll be visible.
+- **Design links:** the docs link design canvases published as private claude.ai artifacts. They
+  say so where they appear, since they only open for your account.
 
 ## 4. Later, before distributing to other people
 

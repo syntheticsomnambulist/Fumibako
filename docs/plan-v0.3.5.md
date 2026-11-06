@@ -2,7 +2,7 @@
 
 Started 2026-11-06, after v0.3.1. The design is the design session's `docs/design/media.md` and
 `docs/design/keepsakes.md` (on its branch, `ccr-09dbf6b8-2c3jno`), with mockups and prototypes on
-its "Media frames" design canvas (private claude.ai artifact:
+its "Media frames" design canvas (private claude.ai artifact, which only the repository's owner can open:
 https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
 
 ## Progress

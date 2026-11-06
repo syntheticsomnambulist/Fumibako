@@ -23,7 +23,7 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   field on a phone-sized screen never goes idle, a stock one included, so the screenshot tour
   shoots the picture dialog on the small default screen.)
 - **Step 4, stickers: done.** Ten boards on the "Fumibako stickers" design canvas (private
-  claude.ai artifact: https://claude.ai/artifact/PA4VQXGG1rWc375566n4de): stickers on letters, the
+  claude.ai artifact, which only the repository's owner can open: https://claude.ai/artifact/PA4VQXGG1rWc375566n4de): stickers on letters, the
   tray's sticker page, moving and peeling, typing a `:name:`, a persona sticking one (with a P.S.),
   what the persona reads and its tools, a persona's sheet, the shared library, the unread mark and
   memory book, and settings. The decisions taken with them are in

@@ -2,7 +2,7 @@
 
 Working notes for the app's visual design. Open `letter-studies.html` (chat) and `screen-studies.html`
 (letters list and persona screens) in a browser to see the mockups these notes describe; both are
-also published as private claude.ai artifacts.
+also published as private claude.ai artifacts, which only the repository's owner can open.
 
 **Built in v0.1:** the madoromi theme (with fixed-hours, sunrise/sunset and static modes), inks and
 tape patterns, letters and notes, mood words, the letters list with the unread seal and "While you
@@ -69,7 +69,7 @@ redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui
   message doesn't rewrite history, so context epochs stay append-only (see the main README).
   Sketch: `Sticker(id, messageId, ref, placedBy, x, y, rotationDeg, scale, createdAt)`, with `x`/`y`
   as fractions of the message box.
-- **Mockups (2026-11-06):** the "Fumibako stickers" design canvas (private claude.ai artifact:
+- **Mockups (2026-11-06):** the "Fumibako stickers" design canvas (private claude.ai artifact, which only the repository's owner can open:
   https://claude.ai/artifact/PA4VQXGG1rWc375566n4de). Decided with them:
   - **Cutting out:** photos you add are cut out on the phone with ML Kit's subject segmentation;
     persona stickers are drawn on a plain white background and cut out by filling from the edges.
