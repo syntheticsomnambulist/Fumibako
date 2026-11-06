@@ -62,6 +62,9 @@ object Routes {
     const val KEYS = "keys"
     const val SHARED_STICKERS = "stickers/shared"
     const val USER_PERSONAS = "user_personas"
+    const val PLANNER = "planner"
+    const val TYPICAL_WEEK = "planner/week"
+    fun plannerDay(date: String) = "planner/day/$date"
     fun chat(id: String) = "chat/$id"
     fun personaPage(id: String) = "page/$id"
     fun personaHeartbeat(id: String) = "page/$id/heartbeat"
@@ -80,6 +83,7 @@ private data class Tab(val route: String, val label: String, val kanji: String)
 private val tabs = listOf(
     Tab(Routes.CHATS, "Letters", "文"),
     Tab(Routes.PERSONAS, "Personas", "人"),
+    Tab(Routes.PLANNER, "Planner", "帳"),
     Tab(Routes.SETTINGS, "Settings", "設"),
 )
 
@@ -112,6 +116,9 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
             composable("page/{id}") { entry -> PersonaPageScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("memory/{id}") { entry -> MemoryBookScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable("memory/{id}/{memory}") { entry -> MemoryCardScreen(nav, entry.arguments?.getString("id").orEmpty(), entry.arguments?.getString("memory").orEmpty()) }
+            composable(Routes.PLANNER) { dev.aiharness.app.ui.planner.PlannerScreen(nav) }
+            composable("planner/day/{date}") { entry -> dev.aiharness.app.ui.planner.PlannerDayScreen(nav, entry.arguments?.getString("date").orEmpty()) }
+            composable(Routes.TYPICAL_WEEK) { dev.aiharness.app.ui.planner.TypicalWeekScreen(nav) }
             composable(Routes.SETTINGS) { SettingsScreen(nav) }
             composable("settings/{section}") { entry -> SettingsSectionScreen(nav, entry.arguments?.getString("section").orEmpty()) }
             composable("model/{id}") { entry -> ModelEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
@@ -138,11 +145,13 @@ private fun TapeNavBar(currentRoute: String?, onSelect: (String) -> Unit) {
     ) {
         tabs.forEach { tab ->
             val on = currentRoute == tab.route
+            // Four tabs share the bar equally, so a longer label ("Settings") doesn't wrap in large text.
             Column(
                 Modifier
+                    .weight(1f)
                     .clip(dev.aiharness.app.ui.paper.PaperCorner)
                     .selectable(selected = on, role = Role.Tab, onClick = { onSelect(tab.route) })
-                    .padding(horizontal = 14.dp, vertical = 2.dp),
+                    .padding(horizontal = 2.dp, vertical = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {

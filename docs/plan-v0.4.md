@@ -78,6 +78,24 @@ From the agreed decisions in `calendar.md`:
   asleep until 07:00. A letter written now will be read after that."), with busy stretches that
   run into one another taken as one. Deleting one of your personas takes its planner with it;
   deleting a persona takes what it wrote. Nothing shows in the app yet: that's step 2.
+- **Step 2, the 帳 tab: done** (bar the week's first day, which comes with Settings, Planner in
+  step 6). 帳 Planner sits between 人 Personas and 設 Settings; the four tabs share the bar
+  equally. The week is a バーチカル page on dot-grid paper, stitched down the left, with the
+  ribbon in your ink (back to today) and a 週 Week index tab; the month's traditional name heads
+  it (霜月, "frost month · 2–8"), with arrows to the weeks either side. The days (kanji, Saturday
+  blue, Sunday red, today ringed) and the all-day row stay put while every hour scrolls below;
+  it opens at the current hour. The hours you're asleep on every day shown fold to a thin band
+  ("12:00 am–7:00 am asleep"; a night shift's fold sits mid-column), and a tap opens them. Your
+  typical week is printed faintly (WORK), your plans are highlighter in your ink, two at once
+  share their day, and a line marks now. A plan's tap brings its stamps: 済 Done, 延 Move (the
+  seven days lined up with the columns; a ghost stays where it was, with 延 and the day it went
+  to), 止 Cancel, and its card; stamped, they lift. Below the grid, メモ: the week's plans with no
+  time, which stamp done with a tap. A day's page lists everything on it in time order; "Add a
+  plan" (or one tapped) opens a plan's card, sliding up: what, the day, at a time, any time or
+  all day, from and to (the phone's time picker), where, busy, and every week (which makes it
+  part of your typical week). Your typical week has its own page: work, sleep or something else,
+  which days, from and to, busy. Settings, Look has a clock: the phone's, 12-hour or 24-hour.
+  The grid's small type grows with large text only as far as words still fit a column.
 
 ## Noted for later
 

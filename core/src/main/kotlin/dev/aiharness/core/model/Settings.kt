@@ -20,6 +20,7 @@ data class AppSettings(
     val theme: ThemeSettings = ThemeSettings(),
     val stickers: StickerSettings = StickerSettings(),
     val media: MediaSettings = MediaSettings(),
+    val planner: PlannerSettings = PlannerSettings(),
     /** Mood words the built-in list didn't know, sorted once by a model and remembered. */
     val learnedFeelings: Map<String, Feeling> = emptyMap(),
 ) {
@@ -201,6 +202,8 @@ enum class FrameStyle { MATCH_OUTLINE, PAPER }
 @Serializable
 data class ThemeSettings(
     val dayNight: DayNightMode = DayNightMode.FIXED_HOURS,
+    /** How times are written across the app: as the phone has it, or always 12- or 24-hour. */
+    val clock: ClockStyle = ClockStyle.PHONE,
     /** Minutes after local midnight. */
     val dayStartMinute: Int = 6 * 60,
     val dayEndMinute: Int = 18 * 60,
@@ -270,6 +273,19 @@ data class MediaSettings(
     /** The longest side pictures you send are scaled to. */
     val pictureSide: Int get() = if (fullSizePictures) 4096 else 1280
 }
+
+/** How times are written: as the phone has it, or always on a 12- or 24-hour clock. */
+@Serializable
+enum class ClockStyle { PHONE, H12, H24 }
+
+/** The planner's page (docs/design/calendar.md on the design branch). */
+@Serializable
+data class PlannerSettings(
+    /** The week page starts on Sunday instead of Monday. */
+    val weekStartsSunday: Boolean = false,
+    /** Hours you're asleep on every day of the week shown fold to a thin band (tap it to open them). */
+    val foldSleep: Boolean = true,
+)
 
 /** Where a song opens to be heard whole: the service its link is from, or always one app. */
 @Serializable

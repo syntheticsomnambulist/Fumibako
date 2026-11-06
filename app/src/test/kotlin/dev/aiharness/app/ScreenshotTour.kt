@@ -376,6 +376,7 @@ class ScreenshotTour {
         back()
 
         memoryTour(prefix)
+        plannerTour(prefix)
 
         click("Settings")
         waitFor("CONTENTS")
@@ -451,6 +452,51 @@ class ScreenshotTour {
         shot("${prefix}_32_keys")
         back()
         back()
+    }
+
+    /** 帳 Planner: the week with Sam's typical week and plans, a plan's stamps, moving one, a day, a plan's card, the typical week. */
+    private fun plannerTour(prefix: String) {
+        click("Planner")
+        waitFor("Notes this week")
+        // Its plans come in from the database a moment later.
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
+        compose.waitForIdle()
+        shot("${prefix}_24_planner_week")
+        // A plan's stamps, then the days to move it to.
+        compose.onNodeWithContentDescription("Dinner with Jo", substring = true).performClick()
+        waitFor("Done")
+        shot("${prefix}_24b_planner_stamps")
+        compose.onNodeWithContentDescription("Move it to another day").performClick()
+        waitFor("MOVE TO")
+        shot("${prefix}_24c_planner_move")
+        compose.onNode(hasClickActionLabel("Put the stamps away")).performClick()
+        // The sleep hours open, and fold again.
+        compose.onAllNodes(hasClickActionLabel("Unfold your sleep hours")).onFirst().performClick()
+        compose.waitForIdle()
+        shot("${prefix}_24d_planner_unfolded")
+        compose.onNode(hasClickActionLabel("Fold your sleep hours")).performClick()
+        // The メモ area, and a plan's card.
+        compose.onNodeWithText("Your typical week").performScrollTo()
+        shot("${prefix}_24e_planner_memo")
+        click("+ Add a plan")
+        waitFor("At a time")
+        shot("${prefix}_24f_plan_card")
+        compose.onNodeWithText("Cancel").performClick()
+        click("Your typical week")
+        waitFor("comes round each week")
+        shot("${prefix}_24g_typical_week")
+        back()
+        // A day.
+        val friday = java.time.LocalDate.now().with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).plusDays(4)
+        compose.onAllNodes(hasClickActionLabel("Open ${friday.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.US)} ${friday.dayOfMonth}", substring = true)).onFirst().performClick()
+        waitFor("Add a plan")
+        shot("${prefix}_24h_planner_day")
+        back()
+    }
+
+    private fun hasClickActionLabel(label: String, substring: Boolean = false) = androidx.compose.ui.test.SemanticsMatcher("has click label $label") { node ->
+        val l = node.config.getOrElseNullable(androidx.compose.ui.semantics.SemanticsActions.OnClick) { null }?.label ?: return@SemanticsMatcher false
+        if (substring) label in l else l == label
     }
 
     private fun memoryTour(prefix: String) {
@@ -834,5 +880,23 @@ class ScreenshotTour {
         }
         h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.REFLECTED, now - 6 * 3_600_000L))
         h.activity.add(ActivityEntry(newId(), aria.id, ActivityKind.RESTED, now - 8 * 3_600_000L, note = "quiet hours"))
+
+        // Sam's planner: a typical week, and a few plans this week (one done, one moved, one with no time).
+        val zone = java.time.ZoneId.systemDefault()
+        val today = java.time.LocalDate.now(zone)
+        fun at(day: java.time.LocalDate, hour: Int, minute: Int = 0) = day.atTime(hour, minute).atZone(zone).toInstant().toEpochMilli()
+        suspend fun plan(title: String, kind: dev.aiharness.core.model.EntryKind = dev.aiharness.core.model.EntryKind.PLAN, build: (dev.aiharness.core.model.PlannerEntry) -> dev.aiharness.core.model.PlannerEntry) =
+            h.plannerEntries.upsert(build(dev.aiharness.core.model.PlannerEntry(newId(), sam.id, null, kind, title, createdAt = now - 86_400_000L, updatedAt = now - 86_400_000L)))
+        plan("Work", dev.aiharness.core.model.EntryKind.ROUTINE) { it.copy(routine = dev.aiharness.core.model.RoutineKind.WORK, weekly = dev.aiharness.core.model.Weekly(listOf(1, 2, 3, 4, 5), 9 * 60, 17 * 60 + 30), busy = true) }
+        plan("Sleep", dev.aiharness.core.model.EntryKind.ROUTINE) { it.copy(routine = dev.aiharness.core.model.RoutineKind.SLEEP, weekly = dev.aiharness.core.model.Weekly((1..7).toList(), 23 * 60, 7 * 60), busy = true) }
+        val week = (0L until 7L).map { today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).plusDays(it) }
+        plan("Dinner with Jo") { it.copy(start = at(week[4], 19), end = at(week[4], 21), place = "Kettle & Leaf") }
+        plan("Dentist") { it.copy(start = at(week[1], 8), end = at(week[1], 8, 45), busy = true, state = dev.aiharness.core.model.EntryState.DONE) }
+        plan("Pottery") { it.copy(start = at(week[3], 19), end = at(week[3], 21), movedFrom = week[0].toString()) }
+        plan("Call Grandma") { it.copy(start = at(week[6], 18), end = at(week[6], 19)) }
+        plan("Interview") { it.copy(start = at(week[2], 15), end = at(week[2], 16), busy = true) }
+        plan("Buy sencha") { it.copy(day = week[4].toString()) }
+        plan("Return the library books") { it.copy(day = week[2].toString(), state = dev.aiharness.core.model.EntryState.DONE) }
+        plan("Jo's birthday") { it.copy(day = week[5].toString(), allDay = true) }
     }
 }

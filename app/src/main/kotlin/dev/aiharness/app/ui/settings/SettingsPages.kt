@@ -79,6 +79,15 @@ internal fun Hint(text: String) {
 internal fun SettingsCards.lookPage(s: AppSettings, update: Update) {
     card { LookDayNight(s, update) }
     card { LookPaper(s, update) }
+    card {
+        CardTitle("Clock")
+        PaperChoice(
+            listOf(dev.aiharness.core.model.ClockStyle.PHONE to "Phone's setting", dev.aiharness.core.model.ClockStyle.H12 to "12-hour", dev.aiharness.core.model.ClockStyle.H24 to "24-hour"),
+            s.theme.clock,
+            { v -> update { it.copy(theme = it.theme.copy(clock = v)) } },
+        )
+        Text("How times are written in the planner: \"4:00 pm\" or \"16:00\".", style = PaperType.postscript, color = paper.usuzumi1)
+    }
 }
 
 // --- 二 Heartbeat ------------------------------------------------------------------------------
