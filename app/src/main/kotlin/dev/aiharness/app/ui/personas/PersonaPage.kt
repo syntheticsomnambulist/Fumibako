@@ -296,7 +296,7 @@ private fun LazyListScope.viewCards(p: Persona, nav: NavController, mode: Heartb
         val kept = memories.filter { !it.isReplaced }
         PageCard(p, layouts[1], "memory") {
             CardTitle("Memory book", note = if (kept.size == 1) "1 memory" else "${kept.size} memories", trailing = { InkLink("See all", stationery.ink(p.ink)) { nav.navigate(Routes.memory(p.id)) } })
-            MemoryBookPreview(kept, stationery.ink(p.ink))
+            MemoryBookPreview(kept, stationery.ink(p.ink)) { id -> nav.navigate(Routes.memoryCard(p.id, id)) }
         }
     }
     item {
@@ -418,7 +418,7 @@ private fun PageCard(p: Persona, layout: TapeLayout, key: String, content: @Comp
 
 /** Always-in-mind memories taped down, then the latest episodes and reflections. */
 @Composable
-private fun MemoryBookPreview(memories: List<MemoryEntry>, ink: Color) {
+private fun MemoryBookPreview(memories: List<MemoryEntry>, ink: Color, onOpen: (String) -> Unit) {
     if (memories.isEmpty()) {
         Text("Nothing yet. Memories gather here as you talk.", style = PaperType.prose.copy(fontStyle = FontStyle.Italic), color = paper.usuzumi0)
         return
@@ -431,20 +431,21 @@ private fun MemoryBookPreview(memories: List<MemoryEntry>, ink: Color) {
         emptyList()
     }
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        core.forEach { Slip(it, ink, label = "Always in mind", taped = true) }
-        recent.forEach { Slip(it, ink, label = letterTime(it.createdAt)) }
-        facts.forEach { Slip(it, ink, label = null) }
+        core.forEach { Slip(it, ink, label = "Always in mind", taped = true) { onOpen(it.id) } }
+        recent.forEach { Slip(it, ink, label = letterTime(it.createdAt)) { onOpen(it.id) } }
+        facts.forEach { Slip(it, ink, label = null) { onOpen(it.id) } }
     }
 }
 
 @Composable
-private fun Slip(memory: MemoryEntry, ink: Color, label: String?, taped: Boolean = false) {
+private fun Slip(memory: MemoryEntry, ink: Color, label: String?, taped: Boolean = false, onClick: () -> Unit) {
     val colors = paper
     Column(
         Modifier
             .then(if (taped) Modifier.cornerTape(Tape(ink, TapePattern.PLAIN), length = 30.dp, thickness = 11.dp, angleDegrees = -32f, reach = 7.dp, lift = 1.dp) else Modifier)
             .fillMaxWidth()
             .background(colors.hyoshi, PaperCorner)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = "Open this memory", onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 7.dp),
     ) {
         label?.let { Text(it.uppercase(), style = PaperType.meta, color = colors.kasure2) }

@@ -50,7 +50,6 @@ import dev.aiharness.app.ui.personas.YouGalleryScreen
 import dev.aiharness.app.ui.personas.YouPageScreen
 import dev.aiharness.app.ui.settings.SettingsSectionScreen
 import dev.aiharness.app.ui.settings.ModelEditScreen
-import dev.aiharness.app.ui.settings.ModelsScreen
 import dev.aiharness.app.ui.settings.SettingsScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -58,7 +57,8 @@ object Routes {
     const val CHATS = "chats"
     const val PERSONAS = "personas"
     const val SETTINGS = "settings"
-    const val MODELS = "models"
+    /** Model profiles are listed in Settings, Models and keys. */
+    val MODELS = settings("models")
     const val KEYS = "keys"
     const val USER_PERSONAS = "user_personas"
     fun chat(id: String) = "chat/$id"
@@ -110,7 +110,6 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
             composable("memory/{id}/{memory}") { entry -> MemoryCardScreen(nav, entry.arguments?.getString("id").orEmpty(), entry.arguments?.getString("memory").orEmpty()) }
             composable(Routes.SETTINGS) { SettingsScreen(nav) }
             composable("settings/{section}") { entry -> SettingsSectionScreen(nav, entry.arguments?.getString("section").orEmpty()) }
-            composable(Routes.MODELS) { ModelsScreen(nav) }
             composable("model/{id}") { entry -> ModelEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.KEYS) { KeysScreen(nav) }
             composable(Routes.USER_PERSONAS) { YouGalleryScreen(nav) }

@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -110,15 +109,16 @@ fun LookPaper(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) {
             }
         }
         var custom by remember(theme.outlineColor) { mutableStateOf(theme.outlineColor) }
-        OutlinedTextField(
+        dev.aiharness.app.ui.paper.IndexCardField(
+            "Hex",
             custom,
             { v ->
                 custom = v
                 if (parseHex(v) != null) updateTheme { it.copy(outlineColor = v.trim().uppercase().let { h -> if (h.startsWith("#")) h else "#$h" }) }
             },
-            label = { Text("Hex") },
+            Modifier.weight(1f),
             singleLine = true,
-            modifier = Modifier.weight(1f),
+            style = PaperType.noteBody,
         )
     }
     Text("Polaroid frames", style = PaperType.label, color = paper.kasure2)
@@ -174,14 +174,14 @@ private fun SunLocation(theme: ThemeSettings, updateTheme: ((ThemeSettings) -> T
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         var latText by remember(lat) { mutableStateOf(lat?.toString().orEmpty()) }
         var lonText by remember(lon) { mutableStateOf(lon?.toString().orEmpty()) }
-        OutlinedTextField(latText, { v ->
+        dev.aiharness.app.ui.paper.IndexCardField("Latitude", latText, { v ->
             latText = v
             v.toDoubleOrNull()?.takeIf { it in -90.0..90.0 }?.let { x -> updateTheme { it.copy(latitude = x, locationLabel = null) } }
-        }, label = { Text("Latitude") }, singleLine = true, modifier = Modifier.weight(1f))
-        OutlinedTextField(lonText, { v ->
+        }, Modifier.weight(1f), singleLine = true, style = PaperType.noteBody)
+        dev.aiharness.app.ui.paper.IndexCardField("Longitude", lonText, { v ->
             lonText = v
             v.toDoubleOrNull()?.takeIf { it in -180.0..180.0 }?.let { x -> updateTheme { it.copy(longitude = x, locationLabel = null) } }
-        }, label = { Text("Longitude") }, singleLine = true, modifier = Modifier.weight(1f))
+        }, Modifier.weight(1f), singleLine = true, style = PaperType.noteBody)
     }
     problem?.let { Text(it, style = PaperType.noteBody.copy(fontSize = 13.sp), color = paper.usuzumi1) }
 }

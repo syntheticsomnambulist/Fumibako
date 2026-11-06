@@ -68,7 +68,7 @@ import dev.aiharness.core.model.HeartbeatRhythm
 private typealias Update = ((AppSettings) -> AppSettings) -> Unit
 
 @Composable
-private fun Hint(text: String) {
+internal fun Hint(text: String) {
     Text(text, style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 18.sp), color = paper.usuzumi0)
 }
 
@@ -373,22 +373,7 @@ private fun Keys(nav: NavController) {
     val colors = paper
     CardTitle("Keys", trailing = { InkLink("Manage keys") { nav.navigate(Routes.KEYS) } })
     if (credentials.isEmpty()) Hint("No keys yet. Add one to start writing.")
-    credentials.forEach { key ->
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .border(1.dp, colors.nijimi1, RoundedCornerShape(topStart = 2.dp, bottomStart = 2.dp, topEnd = 12.dp, bottomEnd = 12.dp))
-                .background(colors.kami, RoundedCornerShape(topStart = 2.dp, bottomStart = 2.dp, topEnd = 12.dp, bottomEnd = 12.dp))
-                .padding(start = 10.dp, end = 12.dp, top = 9.dp, bottom = 9.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            // The punched hole of a luggage-style key tag.
-            Box(Modifier.size(9.dp).background(colors.hyoshi, CircleShape).border(1.dp, colors.nijimi2, CircleShape))
-            Text(key.label, style = PaperType.entryTitle.copy(fontSize = 17.sp), color = colors.sumi, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(key.kind.name.lowercase().replace('_', ' '), style = PaperType.meta, color = colors.kasure2)
-        }
-    }
+    credentials.forEach { key -> KeyTag(key) { nav.navigate(Routes.KEYS) } }
     Hint("Keys are encrypted on this phone and only sent to the service they belong to.")
 }
 

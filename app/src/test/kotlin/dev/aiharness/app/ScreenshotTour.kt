@@ -146,6 +146,24 @@ class ScreenshotTour {
             shot("${prefix}_1${i}_settings_${section.substringBefore(' ').lowercase()}")
             back()
         }
+
+        // A model profile, a new one's presets, and the keys.
+        click("Models and keys")
+        waitFor("Model profiles")
+        click("Claude Opus 5.5")
+        waitFor("Provider and key")
+        shot("${prefix}_30_model_profile")
+        back()
+        click("+ New model profile")
+        waitFor("Start from")
+        shot("${prefix}_31_new_model_profile")
+        back()
+        scrollTo("Manage keys")
+        click("Manage keys")
+        waitFor("Your keys")
+        shot("${prefix}_32_keys")
+        back()
+        back()
     }
 
     private fun memoryTour(prefix: String) {
@@ -158,7 +176,14 @@ class ScreenshotTour {
         scrollTo("Sam drinks too much coffee")
         shot("${prefix}_20b_memory_book_today")
         scrollTo("October", exact = true)
+        // The envelope opening, and its notes spilling out.
+        compose.mainClock.autoAdvance = false
         click("October")
+        compose.mainClock.advanceTimeBy(260)
+        shot("${prefix}_20c_envelope_opening")
+        compose.mainClock.advanceTimeBy(700)
+        shot("${prefix}_20c_envelope_spilling")
+        compose.mainClock.autoAdvance = true
         scrollTo("Had a cold")
         shot("${prefix}_20c_memory_book_october")
         scrollTo("August", exact = true)

@@ -47,6 +47,15 @@ Stickers (including per-persona unread marks and emotion stickers) move to v0.3.
     from one definition (`BurnShape`) that the unit tests check.
   - Not yet: a memory the persona lets go on its own doesn't burn in front of you; the
     heartbeat log counts it ("let a memory go").
+- **Step 7, polish: done.**
+  - The memory book's tabs are pieces of washi tape folded over the page edge, one ink each
+    (yours for About you); the chosen one stands up further and shows its pattern.
+  - Envelopes open: the flap folds up and back, a few notes peek out, and the month's days slide
+    out of the envelope one after another.
+  - The model profile and keys screens are stationery pages now; a new model profile starts from
+    a preset (it opened a blank page before). "Manage models" goes to Settings, Models and keys.
+  - Memory slips on the persona page open their memory; the last old-style text fields are gone.
+  - Version 0.2.0.
 
 ## What v0.2 includes
 
@@ -158,17 +167,29 @@ Each step ends with its tests green and a push.
 7. **Polish and test pass:** screenshot tours (day, night, large text) for every new screen, the
    smoke test, a release build, and an APK to your phone with a checklist.
 
-The database version is bumped once for the schema changes; per the pre-1.0 rule, installed data
-is wiped on update.
+No table changed in v0.2 (rows are JSON, and new fields have defaults), so the database version
+stays and installed data is kept on update; only the heartbeat timings reset once (step 2).
 
 ## Testing
 
 - **Automated:** unit tests for levels and parsing, salience, fading, dormant and replaced,
   revision limits, the word list, per-persona scheduling and each heartbeat activity; Robolectric
   tests for the new screens; screenshot tours.
-- **On your phone:** a checklist like v0.1's, plus: memories keep their feelings and show "felt
-  then, feels now"; the memory book collage looks right with real letters; burning and undo; a
-  persona with its own heartbeat; editing memories off and on.
+- **On your phone (v0.2.0):**
+  1. Install over v0.1; letters, personas and memories are still there.
+  2. Persona page: Edit, change the look and words, Done; back while editing asks before
+     discarding. Change the picture from the polaroid.
+  3. A persona's heartbeat page: switch to its own rhythm, change it, "Run one now", and see the
+     result under Recent heartbeats.
+  4. Settings: each contents line opens its page; steppers take a typed number; Activities per
+     heartbeat is in the Rhythm card.
+  5. Your personas: add one, write a letter as it, make it the default.
+  6. Memory book with real letters: tabs, the feeling filter, search; days look right; open and
+     close an earlier month's envelope (only once a month has passed).
+  7. A memory's card: read-only at first; turn on "Let me edit memories" (Settings, Memory), then
+     Edit, change the feeling, Done; Forget, watch it burn, Undo.
+  8. A heartbeat that writes: the letter arrives and the log says so.
+  9. Models and keys: add a profile from a preset, Fetch models, Send a test message; add a key.
 
 ## Risks
 

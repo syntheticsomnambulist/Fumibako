@@ -39,7 +39,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -361,7 +360,7 @@ private fun MessageActions(group: List<ChatMessage>, vm: ChatViewModel, onDismis
         title = { Text(if (editing) "Edit" else if (isLetter) "This letter" else "Your note", style = PaperType.entryTitle) },
         text = {
             if (editing) {
-                OutlinedTextField(value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth())
+                dev.aiharness.app.ui.paper.IndexCardField(if (isLetter) "The letter" else "Your note", text, { text = it }, style = PaperType.prose, minLines = 3)
             } else {
                 Column {
                     TextButton(onClick = {
@@ -398,13 +397,7 @@ private fun ImageDialog(personaName: String, onDismiss: () -> Unit, onGenerate: 
         title = { Text("Draw a picture", style = PaperType.entryTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = prompt,
-                    onValueChange = { prompt = it },
-                    label = { Text("Tags / description") },
-                    placeholder = { Text("smiling, sitting in a cafe, rainy window") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                dev.aiharness.app.ui.paper.IndexCardField("Tags or a description", prompt, { prompt = it }, style = PaperType.noteBody, minLines = 2, placeholder = "smiling, sitting in a cafe, rainy window")
                 SwitchRow("Include $personaName's appearance", includePersona, { includePersona = it })
                 PaperChoice(options.map { it to it.replaceFirstChar { c -> c.uppercase() } }, orientation, { orientation = it })
             }

@@ -49,6 +49,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -81,6 +82,7 @@ fun IndexCardField(
     singleLine: Boolean = false,
     minLines: Int = 1,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val colors = paper
     var focused by remember { mutableStateOf(false) }
@@ -110,6 +112,7 @@ fun IndexCardField(
             singleLine = singleLine,
             minLines = if (singleLine) 1 else minLines,
             keyboardOptions = keyboardOptions,
+            visualTransformation = visualTransformation,
             onTextLayout = { layout = it },
             modifier = Modifier
                 .fillMaxWidth()

@@ -1,5 +1,16 @@
 package dev.aiharness.app.ui.memory
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import dev.aiharness.app.ui.paper.drawTape
+import dev.aiharness.app.ui.theme.onInk
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -182,6 +193,8 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
     var searching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     val openMonths = remember { mutableStateListOf<YearMonth>() }
+    // When each envelope was opened, so its notes spill out once (not again on scrolling back).
+    val openedAt = remember { mutableStateMapOf<YearMonth, Long>() }
 
     val persona = personas.firstOrNull { it.id == personaId }
     val name = persona?.name ?: "…"
@@ -250,7 +263,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
         if (searching) {
             item("search") { IndexCardField("Search $name's memories", query, { query = it }, ink = ink, style = PaperType.prose, singleLine = true, placeholder = "A word, a name, a feeling") }
         }
-        item("tabs") { BookTabs(tab, ink) { tab = it } }
+        item("tabs") { BookTabs(tab, ink, persona?.tapePattern ?: TapePattern.DOTS) { tab = it } }
         item("filters") {
             Row(Modifier.fillMaxWidth().padding(top = 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 FilterTag(
@@ -290,12 +303,22 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
                         listOfNotNull(if (count == 1) "1 memory" else "$count memories", letterCount.takeIf { it > 0 }?.let { if (it == 1) "1 letter" else "$it letters" }).joinToString(" · "),
                         open = open,
                         ink = ink,
-                    ) { if (month in openMonths) openMonths.remove(month) else openMonths.add(month) }
+                    ) {
+                        if (month in openMonths) {
+                            openMonths.remove(month)
+                        } else {
+                            openMonths.add(month)
+                            openedAt[month] = System.currentTimeMillis()
+                        }
+                    }
                 }
             }
             if (open) {
                 items(monthDays, key = { "day-$it" }) { day ->
+                    val order = monthDays.indexOf(day)
+                    val spilling = openedAt[month]?.let { System.currentTimeMillis() - it < 1_500 } == true
                     BookDay(
+                        modifier = Modifier.spillOut(spilling, order, day.toString()),
                         day = day,
                         pages = days[day].orEmpty().sortedBy { it.memory.createdAt },
                         letters = letters,
@@ -324,36 +347,52 @@ private fun BookBar(title: String, meta: String, searching: Boolean, onBack: () 
     }
 }
 
-/** Index tabs along the top of the book. */
+/**
+ * The book's tabs: short pieces of washi tape folded over the top edge of the page, one ink each
+ * (the persona's for All, yours for About you). The chosen one sticks up further, in full colour.
+ */
 @Composable
-private fun BookTabs(selected: BookTab, ink: Color, onSelect: (BookTab) -> Unit) {
+private fun BookTabs(selected: BookTab, ink: Color, pattern: TapePattern, onSelect: (BookTab) -> Unit) {
     val colors = paper
+    val s = stationery
+    val tapes = mapOf(
+        BookTab.ALL to Tape(ink, pattern),
+        BookTab.ALWAYS to Tape(s.ink("yamabuki"), TapePattern.PLAIN),
+        BookTab.ABOUT_YOU to Tape(s.you, s.youPattern),
+        BookTab.HAPPENED to Tape(s.ink("wakaba"), TapePattern.STRIPES),
+        BookTab.THOUGHTS to Tape(s.ink("fuji"), TapePattern.DOTS),
+    )
     Row(
         Modifier
             .fillMaxWidth()
             .drawBehind { drawLine(colors.nijimi1, Offset(0f, size.height - 0.5.dp.toPx()), Offset(size.width, size.height - 0.5.dp.toPx()), 1.dp.toPx()) }
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.Bottom,
     ) {
         BookTab.entries.forEach { t ->
             val on = t == selected
-            val edge = if (on) colors.nijimi1 else colors.nijimi0
+            val tape = tapes.getValue(t)
+            val lift by animateDpAsState(if (on) 9.dp else 3.dp, label = "tab lift")
+            // Only the chosen tab shows its pattern; the others are plain, paler tape, so every label reads.
+            val shown = if (on) tape else Tape(lerp(tape.ink, colors.kami, 0.5f), TapePattern.PLAIN, shadow = false)
             Text(
                 t.label,
                 style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 16.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal),
-                color = if (on) colors.sumi else colors.usuzumi1,
+                color = colors.onInk(shown.ink),
                 maxLines = 1,
                 modifier = Modifier
-                    .background(if (on) colors.kami else colors.chitsu)
+                    .graphicsLayer {
+                        rotationZ = seededTilt(t.name, 2.2f)
+                        transformOrigin = TransformOrigin(0.5f, 1f)
+                    }
                     .drawBehind {
-                        val w = 1.dp.toPx()
-                        drawLine(edge, Offset(0f, size.height), Offset(0f, 0f), w)
-                        drawLine(edge, Offset(0f, 0f), Offset(size.width, 0f), w)
-                        drawLine(edge, Offset(size.width, 0f), Offset(size.width, size.height), w)
-                        if (on) drawLine(ink, Offset(0f, 1.dp.toPx()), Offset(size.width, 1.dp.toPx()), 2.dp.toPx())
+                        // Folded over the edge: the tape runs a little past the page line.
+                        drawTape(Offset(size.width / 2, size.height + 3.dp.toPx()), Offset(size.width / 2, 0f), size.width, shown, tooth = 2.dp.toPx())
                     }
                     .clickable(role = Role.Tab, onClickLabel = t.label) { onSelect(t) }
-                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                    .padding(start = 11.dp, end = 11.dp, top = lift, bottom = 6.dp),
             )
         }
     }
@@ -418,6 +457,7 @@ private fun AlwaysInMind(pages: List<BookPage>, ink: Color, onOpen: (String) -> 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun BookDay(
+    modifier: Modifier = Modifier,
     day: LocalDate,
     pages: List<BookPage>,
     letters: LetterIndex,
@@ -432,7 +472,7 @@ private fun BookDay(
     val picture = letters.pictures[day]?.firstOrNull()
     val quoted = sources.firstNotNullOfOrNull { m -> quoteFrom(m.displayText)?.let { it to m } }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = modifier.padding(top = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             DateStamp(shortDate(day), ink, tilt = seededTilt(day.toString(), 3f))
             Text(day.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault()), style = PaperType.dayDivider.copy(fontSize = 18.sp), color = paper.usuzumi0)
@@ -470,6 +510,30 @@ private fun BookDay(
                 rest.forEach { piece(it) }
             }
         }
+    }
+}
+
+/**
+ * A day from an envelope that was just opened: it slides down out of the envelope, turning as it
+ * falls into place, a moment after the one before it.
+ */
+@Composable
+private fun Modifier.spillOut(spilling: Boolean, order: Int, seed: String): Modifier {
+    val progress = remember { Animatable(if (spilling) 0f else 1f) }
+    LaunchedEffect(Unit) {
+        if (progress.value < 1f) {
+            delay(320L + order * 110L)
+            progress.animateTo(1f, spring(dampingRatio = 0.72f, stiffness = 220f))
+        }
+    }
+    val turn = seededTilt(seed, 12f)
+    return graphicsLayer {
+        val a = progress.value
+        translationY = (1 - a) * -(70.dp.toPx() + order * 24.dp.toPx())
+        rotationZ = (1 - a) * turn
+        scaleX = 0.86f + 0.14f * a
+        scaleY = 0.86f + 0.14f * a
+        alpha = a.coerceIn(0f, 1f)
     }
 }
 

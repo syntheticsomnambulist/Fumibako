@@ -1,5 +1,7 @@
 package dev.aiharness.app.ui.memory
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,6 +35,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextLayoutResult
@@ -364,24 +367,71 @@ fun DateStamp(text: String, ink: Color, modifier: Modifier = Modifier, tilt: Flo
     )
 }
 
-/** An earlier month, tucked into an envelope (only its V flap shows). */
+/**
+ * An earlier month, tucked into an envelope. Closed, only its V flap shows; opening it folds the
+ * flap up and back, and a few notes peek out of the top.
+ */
 @Composable
 fun MonthEnvelope(month: String, summary: String, open: Boolean, ink: Color, onClick: () -> Unit) {
     val colors = paper
-    val fold = colors.nijimi2
+    val progress by animateFloatAsState(if (open) 1f else 0f, tween(520), label = "envelope")
+    // The open flap stands above the envelope, so room is made for it as it rises.
+    val raised = ((progress - 0.5f) * 2).coerceIn(0f, 1f)
+    val flapDepth = 58.dp
+    val body = 92.dp
     Box(
         Modifier
             .fillMaxWidth()
-            .height(92.dp)
-            .paperCard()
-            .drawBehind {
-                val tip = Offset(size.width / 2, 58.dp.toPx())
-                val w = 1.dp.toPx()
-                drawLine(fold, Offset(0f, 0f), tip, w)
-                drawLine(fold, Offset(size.width, 0f), tip, w)
-            }
+            .height(body + flapDepth * raised)
             .clickable(role = Role.Button, onClickLabel = if (open) "Close $month" else "Open $month", onClick = onClick),
     ) {
+        androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
+            val top = flapDepth.toPx() * raised
+            val w = size.width
+            val depth = flapDepth.toPx()
+            val corner = androidx.compose.ui.geometry.CornerRadius(3.dp.toPx())
+            val line = 1.dp.toPx()
+            val inside = lerp(colors.kami, colors.hyoshi, 0.55f)
+            // 1. The open flap, seen from inside, behind everything.
+            if (progress > 0.5f) {
+                val flap = Path().apply {
+                    moveTo(0f, top)
+                    lineTo(w / 2, top - depth * raised)
+                    lineTo(w, top)
+                    close()
+                }
+                drawPath(flap, inside)
+                drawPath(flap, colors.nijimi1, style = Stroke(line))
+            }
+            // 2. Notes peeking out of the opening.
+            if (progress > 0.6f) {
+                val rise = 24.dp.toPx() * ((progress - 0.6f) / 0.4f)
+                listOf(Triple(0.12f, 0.30f, -4f), Triple(0.40f, 0.28f, 2.5f), Triple(0.64f, 0.26f, -1.5f)).forEachIndexed { i, (x, width, tilt) ->
+                    val left = w * x
+                    val noteTop = top - rise * (1f - i * 0.18f)
+                    rotate(tilt, pivot = Offset(left + w * width / 2, top)) {
+                        drawRect(lerp(colors.kami, Color.White, if (colors.isNight) 0.04f else 0.5f), Offset(left, noteTop), Size(w * width, top + 30.dp.toPx() - noteTop))
+                        drawRect(colors.nijimi1, Offset(left, noteTop), Size(w * width, top + 30.dp.toPx() - noteTop), style = Stroke(line))
+                        repeat(2) { r ->
+                            val y = noteTop + (9 + r * 7).dp.toPx()
+                            drawLine(colors.nijimi1, Offset(left + 7.dp.toPx(), y), Offset(left + w * width * (0.8f - r * 0.25f), y), line)
+                        }
+                    }
+                }
+            }
+            // 3. The envelope itself.
+            drawRoundRect(Color.Black.copy(alpha = if (colors.isNight) 0.35f else 0.12f), Offset(0f, top + 2.dp.toPx()), Size(w, body.toPx()), corner)
+            drawRoundRect(colors.kami, Offset(0f, top), Size(w, body.toPx()), corner)
+            drawRoundRect(colors.nijimi0, Offset(0f, top), Size(w, body.toPx()), corner, style = Stroke(line))
+            // 4. The closed flap on the front, folding up as it opens.
+            if (progress <= 0.5f) {
+                val tip = Offset(w / 2, top + depth * (1 - progress * 2))
+                drawLine(colors.nijimi2, Offset(0f, top), tip, line)
+                drawLine(colors.nijimi2, Offset(w, top), tip, line)
+            } else {
+                drawLine(colors.nijimi2, Offset(0f, top), Offset(w, top), line)
+            }
+        }
         Row(Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(month, style = PaperType.entryTitle.copy(fontSize = 20.sp), color = colors.sumi)
             Text(summary.uppercase(), style = PaperType.meta, color = colors.kasure2, modifier = Modifier.padding(bottom = 3.dp))
