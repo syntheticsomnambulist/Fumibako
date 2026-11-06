@@ -199,7 +199,8 @@ interface HarnessDao {
         ActivityEntity::class, StickerEntity::class, StickerArtEntity::class, MarkEntity::class,
         PlannerEntryEntity::class,
     ],
-    // A schema change bumps the version and adds a step to MIGRATIONS (keeping the last three);
+    // A schema change bumps the version and adds a step to MIGRATIONS (keeping the last three, and
+    // any a tester's phone still needs: see MIGRATIONS);
     // field changes on domain models need neither, since rows are JSON. Schemas are exported to
     // app/schemas for the migration tests.
     version = 5,
@@ -210,10 +211,12 @@ abstract class HarnessDatabase : RoomDatabase() {
 
     companion object {
         /**
-         * One step per schema change, oldest first. Only the last three are kept: a phone on an
-         * older database has no path forward and starts fresh (the fallback below), so the app
-         * never carries more than three old layouts. When adding a step, drop the oldest one and its
-         * test, and its exported schema once no test uses it.
+         * One step per schema change, oldest first. The last three are kept: a phone on an older
+         * database has no path forward and starts fresh (the fallback below). But a step a tester's
+         * phone still needs is never dropped, even past three: friends were last given v0.2.2
+         * (database version 2), so every step from 2→3 stays until they have the next tester build
+         * (see CLAUDE.md). When a step can go, drop its test too, and its exported schema once no
+         * test uses it.
          */
         val MIGRATIONS: Array<Migration> = arrayOf(Migration2To3, Migration3To4, Migration4To5)
 
