@@ -109,6 +109,8 @@ data class Persona(
     val outfit: String? = null,
     /** Artist and style tags for its pictures; null uses the default in Settings, Pictures. */
     val stylePrompt: String? = null,
+    /** The image profile its pictures are drawn with; null uses the default. */
+    val imageProfileId: String? = null,
     val avatarRef: String? = null,
     val defaultModelProfileId: String? = null,
     val heartbeatEnabled: Boolean = true,

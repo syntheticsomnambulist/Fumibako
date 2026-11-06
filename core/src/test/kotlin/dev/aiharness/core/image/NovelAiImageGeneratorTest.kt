@@ -1,6 +1,5 @@
 package dev.aiharness.core.image
 
-import dev.aiharness.core.model.ImageGenSettings
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -92,10 +91,9 @@ class NovelAiImageGeneratorTest {
 
     @Test
     fun orientationSizes() {
-        val settings = ImageGenSettings(width = 832, height = 1216)
-        assertEquals(1216 to 832, ImageService.sizeFor(settings, "landscape"))
-        assertEquals(832 to 1216, ImageService.sizeFor(settings, "portrait"))
-        val (w, h) = ImageService.sizeFor(settings, "square")
+        assertEquals(1216 to 832, ImageService.sizeFor(832, 1216, "landscape"))
+        assertEquals(832 to 1216, ImageService.sizeFor(832, 1216, "portrait"))
+        val (w, h) = ImageService.sizeFor(832, 1216, "square")
         assertEquals(w, h)
         assertEquals(0, w % 64)
     }

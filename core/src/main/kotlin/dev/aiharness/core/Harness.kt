@@ -9,7 +9,7 @@ import dev.aiharness.core.agent.TurnContextBuilder
 import dev.aiharness.core.agent.TurnSetup
 import dev.aiharness.core.image.ImageGenerator
 import dev.aiharness.core.image.ImageService
-import dev.aiharness.core.image.NovelAiImageGenerator
+import dev.aiharness.core.image.HostImageGenerator
 import dev.aiharness.core.llm.LlmException
 import dev.aiharness.core.llm.LlmProvider
 import dev.aiharness.core.llm.ProviderRegistry
@@ -78,7 +78,7 @@ class Harness(
     val activity: ActivityRepository,
     val clock: Clock = SystemClock,
     val providers: ProviderRegistry = defaultProviders(),
-    imageGenerator: ImageGenerator = NovelAiImageGenerator(),
+    imageGenerator: ImageGenerator = HostImageGenerator(),
     embedderFactory: EmbedderFactory? = null,
     val log: (String) -> Unit = {},
 ) {

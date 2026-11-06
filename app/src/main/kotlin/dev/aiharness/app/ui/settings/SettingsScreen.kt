@@ -141,7 +141,7 @@ private fun summary(section: SettingsSection, s: AppSettings, profileCount: Int,
         HeartbeatMode.OFF -> "Off"
     }
     SettingsSection.MEMORY -> if (!s.memory.enabled) "Off" else "On · editing ${if (s.memory.userCanEdit) "on" else "off"}"
-    SettingsSection.PICTURES -> if (s.imageGen.enabled && s.imageGen.credentialId != null) "NovelAI" else "Not set up"
+    SettingsSection.PICTURES -> if (!s.imageGen.enabled) "Off" else s.imageGen.profileFor(null)?.takeIf { s.imageGen.ready }?.name ?: "Not set up"
     SettingsSection.MODELS -> if (profileCount == 1) "1 model" else "$profileCount models"
     SettingsSection.YOU -> writingAs?.let { "Writing as $it" } ?: "Your personas"
     SettingsSection.PROMPTING -> if (s.baseInstructions == AppSettings.DEFAULT_BASE_INSTRUCTIONS) "Default" else "Your own"
@@ -170,7 +170,7 @@ fun SettingsSectionScreen(nav: NavController, key: String) {
             SettingsSection.LOOK -> lookPage(s, update)
             SettingsSection.HEARTBEAT -> heartbeatPage(nav, s, update)
             SettingsSection.MEMORY -> memoryPage(s, update)
-            SettingsSection.PICTURES -> picturesPage(s, update)
+            SettingsSection.PICTURES -> picturesPage(nav, s, update)
             SettingsSection.MODELS -> modelsPage(nav, s, update)
             SettingsSection.PROMPTING -> promptingPage(s, update)
             SettingsSection.ABOUT -> aboutPage()

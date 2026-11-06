@@ -111,21 +111,69 @@ data class ImageGenSettings(
     val enabled: Boolean = true,
     /** Lets personas call the `generate_image` tool themselves. */
     val agentToolEnabled: Boolean = true,
+    /** Where pictures are drawn; kept here rather than in the database (see plan-v0.3.md). */
+    val profiles: List<ImageProfile> = emptyList(),
+    /** The profile pictures use unless a persona has its own; null means the first one. */
+    val defaultProfileId: String? = null,
+    /** Artist and style tags every persona draws in, unless it has its own. */
+    val defaultStyle: String = "",
+) {
+    /** The profile for a persona's pictures: its own, the default, or the first. */
+    fun profileFor(personaProfileId: String?): ImageProfile? =
+        profiles.firstOrNull { it.id == personaProfileId } ?: profiles.firstOrNull { it.id == defaultProfileId } ?: profiles.firstOrNull()
+
+    /** Whether any picture can be drawn at all. */
+    val ready: Boolean get() = enabled && profiles.any { it.isUsable }
+}
+
+/** Where a picture is drawn. */
+@Serializable
+enum class ImageHost(val label: String, val needsKey: Boolean, val needsServer: Boolean) {
+    NOVELAI("NovelAI", needsKey = true, needsServer = false),
+    STABLE_DIFFUSION("Forge or Automatic1111", needsKey = false, needsServer = true),
+    COMFYUI("ComfyUI", needsKey = false, needsServer = true),
+    OPENAI("OpenAI", needsKey = true, needsServer = false),
+    GOOGLE("Google", needsKey = true, needsServer = false),
+    ;
+
+    /** Tag models take comma-separated tags; the others work from sentences. */
+    val takesTags: Boolean get() = this == NOVELAI || this == STABLE_DIFFUSION || this == COMFYUI
+}
+
+/**
+ * One way of drawing pictures: a host, its key or server, the model, the size, and the options
+ * that host has. Fields a host doesn't use are ignored.
+ */
+@Serializable
+data class ImageProfile(
+    val id: String,
+    val name: String,
+    val host: ImageHost = ImageHost.NOVELAI,
     val credentialId: String? = null,
-    val model: String = "nai-diffusion-4-5-full",
+    /** A local server's address (Forge, Automatic1111, ComfyUI), or another endpoint for a hosted one. */
+    val baseUrl: String? = null,
+    /** NovelAI, OpenAI or Google model id; the checkpoint for Stable Diffusion and ComfyUI. */
+    val model: String = "",
     val width: Int = 832,
     val height: Int = 1216,
     val steps: Int = 23,
     val scale: Double = 5.0,
     val sampler: String = "k_euler_ancestral",
+    /** NovelAI's noise schedule; ComfyUI's and Forge's scheduler. */
     val noiseSchedule: String = "karras",
+    /** NovelAI: add its quality tags. */
     val qualityToggle: Boolean = true,
-    /** UC preset name: heavy, light, human, none. */
+    /** NovelAI's undesired content preset: heavy, light, human, none. */
     val ucPreset: String = "heavy",
     val negativePrompt: String = "",
-    /** Artist and style tags every persona draws in, unless it has its own. */
-    val defaultStyle: String = "",
-)
+    /** OpenAI: auto, low, medium or high. */
+    val quality: String = "auto",
+    /** ComfyUI: a workflow in its API format, with %prompt% and friends; null uses the default one. */
+    val workflow: String? = null,
+) {
+    /** Has what its host needs to draw. */
+    val isUsable: Boolean get() = (!host.needsKey || credentialId != null) && (!host.needsServer || !baseUrl.isNullOrBlank())
+}
 
 @Serializable
 enum class Season { HARU, NATSU, AKI, FUYU }

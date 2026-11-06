@@ -215,7 +215,7 @@ class GenerateImageTool(private val images: ImageService, private val personas: 
     )
 
     override fun isAvailable(settings: AppSettings) =
-        settings.imageGen.enabled && settings.imageGen.agentToolEnabled && settings.imageGen.credentialId != null
+        settings.imageGen.agentToolEnabled && settings.imageGen.ready
 
     override suspend fun execute(args: JsonObject, context: ToolContext): ToolOutcome {
         val prompt = args.requireString("prompt")

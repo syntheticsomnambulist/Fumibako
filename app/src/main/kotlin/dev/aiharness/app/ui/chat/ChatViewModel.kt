@@ -58,7 +58,7 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     val generation: StateFlow<GenerationState> = container.generation.state(conversationId)
 
     val imageGenReady: StateFlow<Boolean> = harness.settings.settings
-        .map { it.imageGen.enabled && it.imageGen.credentialId != null }
+        .map { it.imageGen.ready }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     fun send(text: String) {

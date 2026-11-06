@@ -1,7 +1,9 @@
 package dev.aiharness.core.agent
 
 import dev.aiharness.core.TestEnv
+import dev.aiharness.core.image.ImageProfiles
 import dev.aiharness.core.image.PicturePrompt
+import dev.aiharness.core.model.ImageHost
 import dev.aiharness.core.llm.LlmMessage
 import dev.aiharness.core.llm.LlmPart
 import dev.aiharness.core.llm.LlmToolCall
@@ -90,7 +92,7 @@ class PicturesTest {
         val env = TestEnv().apply { seed() }
         env.credentials.upsert(Credential("nai", "NovelAI", CredentialKind.NOVELAI))
         env.secrets.put(SecretStore.credentialKey("nai"), "key")
-        env.settingsRepo.update { it.copy(imageGen = it.imageGen.copy(credentialId = "nai", defaultStyle = "watercolor")) }
+        env.settingsRepo.update { it.copy(imageGen = it.imageGen.copy(profiles = listOf(ImageProfiles.preset(ImageHost.NOVELAI, "pic").copy(credentialId = "nai")), defaultStyle = "watercolor")) }
         env.personas.upsert(env.persona.copy(selfPrompt = base.selfPrompt, defaultOutfit = base.defaultOutfit))
         val conversation = env.harness.createConversation(env.persona.id)
         env.provider.then(toolTurn("c1", "change_outfit", """{"outfit":"yellow raincoat"}"""))

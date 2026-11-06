@@ -289,45 +289,50 @@ private fun RecallByMeaning(s: AppSettings, update: Update) {
 
 // --- 四 Pictures --------------------------------------------------------------------------------
 
-internal fun SettingsCards.picturesPage(s: AppSettings, update: Update) {
+internal fun SettingsCards.picturesPage(nav: NavController, s: AppSettings, update: Update) {
     val img = s.imageGen
     fun image(transform: (dev.aiharness.core.model.ImageGenSettings) -> dev.aiharness.core.model.ImageGenSettings) = update { it.copy(imageGen = transform(it.imageGen)) }
     card {
-        SwitchRow("Pictures", img.enabled, { v -> image { it.copy(enabled = v) } }, subtitle = "Drawn by NovelAI.")
-        if (img.enabled) PicturesKey(img.credentialId) { id -> image { it.copy(credentialId = id) } }
+        SwitchRow("Pictures", img.enabled, { v -> image { it.copy(enabled = v) } }, subtitle = "Drawn by NovelAI, your own Stable Diffusion, OpenAI or Google.")
         if (img.enabled) SwitchRow("Personas can send pictures", img.agentToolEnabled, { v -> image { it.copy(agentToolEnabled = v) } }, subtitle = "They can draw one when it fits the moment.")
     }
     if (!img.enabled) return
+    card { ImageProfileList(nav, img) { id -> image { it.copy(defaultProfileId = id) } } }
     card {
         CardTitle("Style")
         IndexCardField("Drawing style", img.defaultStyle, { v -> image { it.copy(defaultStyle = v) } }, style = PaperType.noteBody, minLines = 2, placeholder = "watercolor, soft lighting, by (an artist)")
         Hint("Artist and style tags every persona draws in, unless its page gives it its own.")
     }
-    card {
-        CardTitle("Drawing")
-        PaperSelect("Model", NovelAiImageGenerator.MODELS, img.model, { it }, { v -> v?.let { m -> image { it.copy(model = m) } } })
-        val sizes = listOf(832 to 1216, 1216 to 832, 1024 to 1024, 512 to 768)
-        PaperSelect("Size", sizes, img.width to img.height, { "${it.first} × ${it.second}" }, { v -> v?.let { (w, h) -> image { it.copy(width = w, height = h) } } })
-        StepperRow("Steps", img.steps, { n -> image { it.copy(steps = n) } }, 1..50)
-        StepperRow("Guidance", (img.scale * 10).toInt(), { n -> image { it.copy(scale = n / 10.0) } }, 0..100, step = 5, describe = { "%.1f".format(it / 10.0) })
-        PaperSelect("Sampler", NovelAiImageGenerator.SAMPLERS, img.sampler, { it }, { v -> v?.let { x -> image { it.copy(sampler = x) } } })
-        PaperSelect("Noise schedule", NovelAiImageGenerator.NOISE_SCHEDULES, img.noiseSchedule, { it }, { v -> v?.let { x -> image { it.copy(noiseSchedule = x) } } })
-    }
-    card {
-        CardTitle("Tags")
-        SwitchRow("Add quality tags", img.qualityToggle, { v -> image { it.copy(qualityToggle = v) } })
-        PaperSelect("Undesired content preset", NovelAiImageGenerator.UC_PRESETS, img.ucPreset, { it }, { v -> v?.let { x -> image { it.copy(ucPreset = x) } } })
-        IndexCardField("Extra things to avoid", img.negativePrompt, { v -> image { it.copy(negativePrompt = v) } }, style = PaperType.noteBody, minLines = 2)
-        Hint("Opus subscribers draw for free at up to 1024×1024 and 28 steps; larger pictures cost Anlas.")
-    }
 }
 
 @Composable
-private fun PicturesKey(selectedId: String?, onSelect: (String?) -> Unit) {
-    val harness = LocalAppContainer.current.harness
-    val credentials by remember { harness.credentials.observeAll() }.collectAsStateWithLifecycle(emptyList())
-    val keys = credentials.filter { it.kind == CredentialKind.NOVELAI }
-    PaperSelect("NovelAI key", keys, keys.firstOrNull { it.id == selectedId }, { it.label }, { onSelect(it?.id) }, noneLabel = "Not set (add one under Models and keys)")
+private fun ImageProfileList(nav: NavController, img: dev.aiharness.core.model.ImageGenSettings, onDefault: (String?) -> Unit) {
+    val colors = paper
+    val default = img.profileFor(null)
+    CardTitle("Image profiles")
+    if (img.profiles.isEmpty()) Hint("None yet. Add one to start drawing.")
+    img.profiles.forEach { profile ->
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .clip(PaperCorner)
+                .background(colors.hyoshi, PaperCorner)
+                .clickable(role = Role.Button, onClickLabel = "Edit ${profile.name}") { nav.navigate(Routes.imageProfile(profile.id)) }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(profile.name, style = PaperType.entryTitle.copy(fontSize = 18.sp), color = colors.sumi, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (profile.id == default?.id) Stamp("Default", stationery.you)
+            }
+            val detail = listOfNotNull(profile.host.label, profile.model.takeIf { it.isNotBlank() }, if (!profile.isUsable) "not set up" else null)
+            Text(detail.joinToString(" · ").uppercase(), style = PaperType.meta.copy(letterSpacing = 0.04.sp), color = colors.kasure2, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+    DashedButton("+ New image profile") { nav.navigate(Routes.imageProfile(Routes.NEW)) }
+    if (img.profiles.size > 1) {
+        PaperSelect("Default for pictures", img.profiles, default, { it.name }, { p -> onDefault(p?.id) })
+    }
 }
 
 // --- 五 Models and keys -------------------------------------------------------------------------

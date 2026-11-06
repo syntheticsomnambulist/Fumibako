@@ -123,7 +123,7 @@ class TestEnv(
 class RecordingImageGenerator : dev.aiharness.core.image.ImageGenerator {
     val requests = mutableListOf<dev.aiharness.core.image.ImageRequest>()
 
-    override suspend fun generate(request: dev.aiharness.core.image.ImageRequest, apiKey: String): List<dev.aiharness.core.image.GeneratedImage> {
+    override suspend fun generate(request: dev.aiharness.core.image.ImageRequest, apiKey: String?): List<dev.aiharness.core.image.GeneratedImage> {
         requests += request
         return listOf(dev.aiharness.core.image.GeneratedImage(byteArrayOf(1, 2, 3), "image/png", 1))
     }

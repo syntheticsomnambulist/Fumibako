@@ -178,12 +178,23 @@ class ScreenshotTour {
             "Heartbeat" to "Time only",
             "Memory" to "Long-term memory",
             "Models and keys" to "Model profiles",
+            "Pictures" to "Image profiles",
         ).forEachIndexed { i, (section, marker) ->
             click(section)
             waitFor(marker)
             shot("${prefix}_1${i}_settings_${section.substringBefore(' ').lowercase()}")
             back()
         }
+
+        // An image profile.
+        click("Pictures")
+        waitFor("Image profiles")
+        waitFor("Sketchbook")
+        click("Sketchbook")
+        waitFor("Where")
+        shot("${prefix}_33_image_profile")
+        back()
+        back()
 
         // A model profile, a new one's presets, and the keys.
         click("Models and keys")
@@ -321,8 +332,13 @@ class ScreenshotTour {
         h.userPersonas.upsert(sam)
         val profile = ModelProfile(id = newId(), name = "Claude Opus 5.5", provider = ProviderType.ANTHROPIC, modelId = "claude-opus-5-5")
         h.profiles.upsert(profile)
+        h.credentials.upsert(dev.aiharness.core.model.Credential("nai", "NovelAI", dev.aiharness.core.model.CredentialKind.NOVELAI))
         h.settings.update {
             it.copy(
+                imageGen = it.imageGen.copy(
+                    profiles = listOf(dev.aiharness.core.image.ImageProfiles.preset(dev.aiharness.core.model.ImageHost.NOVELAI, "pic").copy(name = "Sketchbook", credentialId = "nai")),
+                    defaultStyle = "watercolor, soft lighting",
+                ),
                 activeUserPersonaId = sam.id,
                 defaultModelProfileId = profile.id,
                 theme = ThemeSettings(dayNight = DayNightMode.STATIC, staticSeason = season, staticTime = time),

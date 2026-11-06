@@ -239,7 +239,7 @@ private fun Hero(p: Persona, mood: String?, editing: Boolean, model: String?, on
                     null
                 },
             )
-            val canDraw = settings?.imageGen?.credentialId != null && p.selfPrompt.isNotBlank()
+            val canDraw = settings?.imageGen?.ready == true && p.selfPrompt.isNotBlank()
             PictureMenu(
                 open = menu,
                 onDismiss = { menu = false },
@@ -254,9 +254,10 @@ private fun Hero(p: Persona, mood: String?, editing: Boolean, model: String?, on
                         scope.launch {
                             try {
                                 val image = harness.images.generate(
-                                    settings = harness.settings.current().imageGen.copy(width = 1024, height = 1024),
+                                    settings = harness.settings.current().imageGen,
                                     prompt = "portrait, upper body, looking at viewer, simple background",
                                     persona = p,
+                                    orientation = "square",
                                 )
                                 onChange(p.copy(avatarRef = image.ref))
                             } catch (e: Exception) {
@@ -407,6 +408,12 @@ private fun LazyListScope.editCards(
             Text("$named can change clothes too; the change lasts until the next one.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
             IndexCardField("Drawing style", p.stylePrompt.orEmpty(), { v -> onChange(p.copy(stylePrompt = v)) }, ink = ink, style = PaperType.noteBody, placeholder = "Blank: the style in Settings, Pictures")
             Text("Artist and style tags for $named's pictures.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
+            val harness = LocalAppContainer.current.harness
+            val appSettings by remember { harness.settings.settings }.collectAsStateWithLifecycle(null)
+            val imageProfiles = appSettings?.imageGen?.profiles.orEmpty()
+            if (imageProfiles.size > 1) {
+                PaperSelect("Draws with", imageProfiles, imageProfiles.firstOrNull { it.id == p.imageProfileId }, { it.name }, { v -> onChange(p.copy(imageProfileId = v?.id)) }, noneLabel = "The default image profile")
+            }
         }
     }
     item {

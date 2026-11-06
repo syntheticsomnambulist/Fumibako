@@ -9,6 +9,14 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   Pictures; `change_outfit` for the persona, logged and shown as a P.S.; the persona is told what
   it's wearing while it's out of its usual clothes; pictures are built from the three parts
   (`PicturePrompt`, tags or sentences), and its style applies even when it isn't in the picture.
+- **Step 2, image profiles and hosts: done.** Image profiles in the settings (a default, and a
+  persona can choose another on its "In pictures" card); a page per profile that starts from a
+  host and shows the options that host has, with "Draw a test picture". Hosts: NovelAI, Forge or
+  Automatic1111 (`/sdapi/v1/txt2img`), ComfyUI (a default workflow or your own, with
+  placeholders), OpenAI (`/v1/images/generations`) and Google (Gemini `generateContent`, Imagen
+  `predict`), each with request tests against a mock server. The model ids offered for OpenAI
+  and Google are a starting list; any id can be typed. Old NovelAI settings don't carry over:
+  add an image profile.
 
 ## What v0.3 includes
 

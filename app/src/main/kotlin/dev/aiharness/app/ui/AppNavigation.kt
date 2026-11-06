@@ -69,6 +69,7 @@ object Routes {
     fun memory(personaId: String) = "memory/$personaId"
     fun memoryCard(personaId: String, memoryId: String) = "memory/$personaId/$memoryId"
     fun model(id: String) = "model/$id"
+    fun imageProfile(id: String) = "image/$id"
     const val NEW = "new"
 }
 
@@ -112,6 +113,7 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
             composable("settings/{section}") { entry -> SettingsSectionScreen(nav, entry.arguments?.getString("section").orEmpty()) }
             composable("model/{id}") { entry -> ModelEditScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.KEYS) { KeysScreen(nav) }
+            composable("image/{id}") { entry -> dev.aiharness.app.ui.settings.ImageProfileScreen(nav, entry.arguments?.getString("id").orEmpty()) }
             composable(Routes.USER_PERSONAS) { YouGalleryScreen(nav) }
         }
     }
