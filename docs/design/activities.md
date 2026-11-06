@@ -177,16 +177,27 @@ games box itself is proposed):
 
 ## The look
 
-Settled over three rounds of mockups: draw the desk the way the app already looks, in madoromi
-(https://madoromi.moonwit.ch/), the palette the app's colours come from.
+Worked out over four rounds of mockups (and still being tuned): draw the desk the way the app
+already looks, in madoromi (https://madoromi.moonwit.ch/), the palette the app's colours come
+from. The rest of the app is right as it is; the desk should match it.
 
 - **The desk is the app's desk:** madoromi's `hyoshi` ("the desk under the paper") is the page,
-  with a desk mat in `chitsu`, the deepest surface. No wood.
+  with a desk pad in `chitsu`, the deepest surface, and darker corner pieces. No wood.
 - **Objects are lineless or thinly lined:** flat shapes in ink tints, each an ink mixed into the
   paper colour the way the app already mixes them (`lerp(kami, ink, t)`, at about 12, 25, 40, 55
   and 70%). Wire, ruled lines and seals can be thin lines; nothing gets a dark outline.
-- **Minimal shading:** at most one deeper tint for a spine or an edge, and the app's small soft
-  shadow under each object, as under its paper cards. No gradients.
+- **Minimal shading:** at most one deeper tint for a spine or an edge. No gradients.
+- **A very gentle, hard-edged shadow:** a 2dp offset with no blur, in the surface colour taken a
+  tenth of the way towards `sumi`, under objects and cards alike. Not the soft blurred shadow.
+- **Shapes, not boxes:** fewer plain rectangles. Tape with zigzag torn ends; sticky tabs and
+  keepsakes poking out of books; a dog-eared page; an arched window in the sketchbook; die-cut
+  stickers on their sheet; a scalloped postage stamp and a postmark; a luggage tag; an index tab
+  rising from the in-tray; a paperclip; a cup pull on the drawer.
+- **Depth:** trays and the drawer are drawn as boxes seen from above, with a darker back wall,
+  side walls, a floor and a front lip. The drawer's front has a card-catalogue label holder
+  (引出) and a cup pull.
+- **Tape is opaque,** as in the app: a solid tint of the owner's ink with its pattern in the
+  paper colour.
 - **Everything else is the app's existing stationery:** `kami` cards with a hairline `nijimi0`
   border; section headings with an ink underline; boxed-cell choices, the chosen cell shaded and
   underlined in ink; tick boxes; text in `sumi` and `usuzumi`; washi tape in the persona's ink and
@@ -194,8 +205,8 @@ Settled over three rounds of mockups: draw the desk the way the app already look
 - **New stationery pieces that fit:** the "last visit" line on the persona's washi tape, and the
   daily limit as a radio-exercise stamp card.
 - **Tried and dropped:** thick dark outlines (too much like icons), a pixel font (too much like a
-  video game), hard paper-coloured offset shadows, index-tab labels, screentone, and a wooden
-  desk.
+  video game), heavier offset shadows, index-tab labels on cards, screentone, a wooden desk, soft
+  blurred shadows, and translucent tape.
 - **Fonts** stay the app's (display, reading, label, brush, handwriting and newsprint faces) until
   the font audit planned for v0.5.
 - Whether anything from this reaches the rest of the app is a question for the v0.5 stationery
@@ -234,14 +245,15 @@ in the private moment until then, and moves to the desk in v0.6.
 ## Mockups
 
 The "Writing desk" design canvas (private claude.ai artifact:
-https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn three times the same day, ending in the look above:
+https://claude.ai/artifact/834NiGLU9vt32k1Wxc9eH4), drawn 2026-11-06 and redrawn four times the same day, ending in the look above:
 
 - **Aria's desk** (interactive): her desk from above with a diary (one entry sealed), a
   sketchbook, the games box (shiritori with you, with a challenge you can make and withdraw), a
   letter tray with Juno's letter, the memory book, a cutting she read, and the "From Sam"
-  in-tray. Tap any of them to open it; the sealed diary entry opens, then closes (seal broken) or
-  reseals. The "last visit" line is on washi tape. Below, "Lately at the desk", with which lines
-  used a slot.
+  in-tray, plus her sticker sheet and a pencil, on a desk pad. Tap any of them to open it; the
+  sealed diary entry opens, then closes (seal broken) or reseals. The "last visit" line is on
+  washi tape. Under the desk, the drawer front leads to the drawer. Below, "Lately at the desk",
+  with which lines used a slot.
 - **The drawer** (interactive): what she does, each with a tick and Slot | Free, ¥¥ on the
   expensive ones (switching one off drops it into the drawer, and tapping it there takes it
   out); the Games section; slots per visit; the daily limit as a stamp card; sealed things; and
