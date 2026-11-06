@@ -28,6 +28,8 @@ Updated 2026-11-06, with the user's rough plan to v0.7.
 - **v0.7: the outdoor update:** seasons, and what it means for a persona to live in a place of its
   own (often fictional) with its own weather; weather events for personas (below). It will feed
   back into the "going out" activities.
+- **v0.95: the settings, redesigned top-down** (the user, 2026-11-06): persona settings (where
+  "What she does" moves in v0.6) and the app's Settings, as menus, before 1.0.
 - **Not designed or scheduled:** a desk of your own with your scrapbooks and trinkets (see
   [`activities.md`](activities.md)), a Discord bridge, and the rest of this page.
 
