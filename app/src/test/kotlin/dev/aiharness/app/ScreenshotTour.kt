@@ -214,6 +214,17 @@ class ScreenshotTour {
         shot("${prefix}_02p_player_song")
         compose.onAllNodesWithContentDescription("Shrink the player").onFirst().performClick()
         compose.runOnIdle { app.playback.preview(null) }
+        // The photo viewer, from the stack, and the video player (its file isn't there: the middle frame stands in).
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("from the walk", substring = true))
+        click("2 photos")
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Photo 1 of 2"), 10_000)
+        shot("${prefix}_02q_photo_viewer")
+        compose.onNodeWithContentDescription("Close").performClick()
+        click("0:42")
+        waitFor("From Sam")
+        compose.waitUntilAtLeastOneExists(hasContentDescription("A frame from the video"), 10_000)
+        shot("${prefix}_02r_video_player")
+        compose.onNodeWithContentDescription("Close").performClick()
         // A sticker written inline in a letter.
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("writing this one down", substring = true))
         compose.waitUntilAtLeastOneExists(hasContentDescription(":aria-heart:"), 10_000)
@@ -595,7 +606,7 @@ class ScreenshotTour {
                 ContentPart.Text("And these, from the walk."),
                 ContentPart.Image(picture2), ContentPart.Image(image),
                 ContentPart.Attachment("song1", AttachmentKind.SONG, title = "October Walk", artist = "Hana Sato", lengthMs = 222_000),
-                ContentPart.Attachment("film1", AttachmentKind.VIDEO, title = "the river", lengthMs = 42_000, frameRefs = listOf(image, picture2, image)),
+                ContentPart.Attachment("film1", AttachmentKind.VIDEO, ref = "file:not-here.mp4", mimeType = "video/mp4", title = "the river", lengthMs = 42_000, frameRefs = listOf(image, picture2, image)),
                 origin = MessageOrigin.USER,
             ),
         )

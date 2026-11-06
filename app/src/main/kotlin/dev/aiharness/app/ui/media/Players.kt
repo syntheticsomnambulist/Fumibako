@@ -209,22 +209,28 @@ fun FullPlayer(now: NowPlaying, controls: PlayerControls, knows: String?, onClos
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Scrubber(now: NowPlaying, ink: Color, controls: PlayerControls) {
-    val colors = paper
+    InkScrubber(now.positionMs, now.length, ink, onSeek = controls::seekTo)
+}
+
+/**
+ * A scrubber for a song or a video: a thin line in the sender's [ink] with a small round thumb,
+ * the time gone and the time left beneath.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun InkScrubber(positionMs: Long, lengthMs: Long, ink: Color, onSeek: (Long) -> Unit, rest: Color = paper.nijimi2, times: Color = paper.kasure2) {
     var dragging by remember { mutableStateOf<Float?>(null) }
-    val length = now.length.coerceAtLeast(1)
-    val at = dragging ?: (now.positionMs.toFloat() / length).coerceIn(0f, 1f)
+    val length = lengthMs.coerceAtLeast(1)
+    val at = dragging ?: (positionMs.toFloat() / length).coerceIn(0f, 1f)
     Column(Modifier.fillMaxWidth()) {
-        // A thin line in the sender's ink with a small round thumb, rather than the stock slider.
         Slider(
             value = at,
             onValueChange = { dragging = it },
-            onValueChangeFinished = { dragging?.let { controls.seekTo((it * length).toLong()) }; dragging = null },
+            onValueChangeFinished = { dragging?.let { onSeek((it * length).toLong()) }; dragging = null },
             thumb = { Box(Modifier.size(14.dp).shadow(1.dp, CircleShape).background(ink, CircleShape)) },
             track = {
-                val rest = colors.nijimi2
                 Canvas(Modifier.fillMaxWidth().height(14.dp)) {
                     val y = size.height / 2
                     val stroke = 3.dp.toPx()
@@ -234,9 +240,9 @@ private fun Scrubber(now: NowPlaying, ink: Color, controls: PlayerControls) {
             },
         )
         Row(Modifier.fillMaxWidth()) {
-            Text(clock((at * length).toLong()), style = PaperType.meta, color = colors.kasure2)
+            Text(clock((at * length).toLong()), style = PaperType.meta, color = times)
             Spacer(Modifier.weight(1f))
-            Text("−" + clock(((1 - at) * length).toLong()), style = PaperType.meta, color = colors.kasure2)
+            Text("−" + clock(((1 - at) * length).toLong()), style = PaperType.meta, color = times)
         }
     }
 }

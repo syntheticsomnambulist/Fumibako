@@ -49,9 +49,20 @@ import kotlinx.coroutines.withContext
 
 val LocalAppContainer = staticCompositionLocalOf<AppContainer> { error("AppContainer not provided") }
 
-/** Loads an image blob (generated image or avatar), downsampled to roughly [maxSize] px. */
+/**
+ * Loads an image blob (generated image or avatar), downsampled to roughly [maxSize] px. Until it's
+ * loaded, [placeholder] fills its place (the theme's surface by default); once it is, it carries
+ * [description].
+ */
 @Composable
-fun BlobImage(ref: String, modifier: Modifier = Modifier, contentScale: ContentScale = ContentScale.Crop, maxSize: Int = 1280) {
+fun BlobImage(
+    ref: String,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Crop,
+    maxSize: Int = 1280,
+    placeholder: Color? = null,
+    description: String? = null,
+) {
     val container = LocalAppContainer.current
     val bitmap by produceState<ImageBitmap?>(null, ref, maxSize) {
         value = withContext(Dispatchers.IO) {
@@ -65,9 +76,9 @@ fun BlobImage(ref: String, modifier: Modifier = Modifier, contentScale: ContentS
     }
     val image = bitmap
     if (image != null) {
-        Image(image, contentDescription = null, modifier = modifier, contentScale = contentScale)
+        Image(image, contentDescription = description, modifier = modifier, contentScale = contentScale)
     } else {
-        Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant))
+        Box(modifier.background(placeholder ?: MaterialTheme.colorScheme.surfaceVariant))
     }
 }
 

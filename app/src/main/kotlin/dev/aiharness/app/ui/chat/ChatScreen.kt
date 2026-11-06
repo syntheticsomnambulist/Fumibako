@@ -51,13 +51,15 @@ import dev.aiharness.app.ui.media.MiniPlayer
 import dev.aiharness.app.ui.media.FullPlayer
 import dev.aiharness.core.media.MediaSupport
 import androidx.compose.ui.graphics.toArgb
+import dev.aiharness.app.ui.media.PhotoViewer
+import dev.aiharness.app.ui.media.VideoPlayer
+import dev.aiharness.core.model.ContentPart
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.font.FontStyle
@@ -69,7 +71,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import dev.aiharness.app.engine.GenerationManager
-import dev.aiharness.app.ui.BlobImage
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.Routes
 import dev.aiharness.app.ui.SwitchRow
@@ -213,6 +214,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     var input by rememberSaveable { mutableStateOf("") }
     var selected by remember { mutableStateOf<List<ChatMessage>?>(null) }
     var viewing by remember { mutableStateOf<String?>(null) }
+    var watching by remember { mutableStateOf<Watching?>(null) }
     var imageDialog by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -251,7 +253,10 @@ fun ChatScreen(nav: NavController, conversationId: String) {
         }
         val reader = header.persona?.let { persona -> header.profile?.let { PersonaReader(persona.name, it) } }
         val taps = remember(conversationId) {
-            FrameTaps(play = { attachment, ink, fromYou -> container.playback.play(attachment, conversationId, ink.toArgb(), fromYou) })
+            FrameTaps(
+                play = { attachment, ink, fromYou -> container.playback.play(attachment, conversationId, ink.toArgb(), fromYou) },
+                watch = { attachment, ink, fromYou -> watching = Watching(attachment, ink, fromYou) },
+            )
         }
         CompositionLocalProvider(
             LocalInlineStickers provides inlineStickers,
@@ -424,6 +429,26 @@ fun ChatScreen(nav: NavController, conversationId: String) {
         )
     }
     LaunchedEffect(playing == null) { if (playing == null) playerOpen = false }
+
+    // A photo opens the viewer, with the rest of its letter's or note's photos to swipe through.
+    viewing?.let { ref ->
+        val images = messages.firstOrNull { m -> m.images.any { it.ref == ref } }?.images ?: listOf(ContentPart.Image(ref))
+        PhotoViewer(images, images.indexOfFirst { it.ref == ref }.coerceAtLeast(0), onClose = { viewing = null })
+    }
+    // A film strip opens the video player, with the letter's other clips.
+    watching?.let { open ->
+        val clips = messages.firstOrNull { m -> m.attachments.any { it.id == open.video.id } }
+            ?.attachments?.filter { it.kind == dev.aiharness.core.model.AttachmentKind.VIDEO && it.ref != null } ?: listOf(open.video)
+        VideoPlayer(
+            clips,
+            clips.indexOfFirst { it.id == open.video.id }.coerceAtLeast(0),
+            from = if (open.fromYou) header.userPersona?.name ?: "you" else personaName,
+            ink = open.ink,
+            line = { video -> if (open.fromYou) reader(header)?.let { MediaSupport.cantTakeIn(video, it.profile, it.name) } else null },
+            onOpen = { container.playback.pause() },
+            onClose = { watching = null },
+        )
+    }
     }
 
     editingMix?.let { mix ->
@@ -446,11 +471,6 @@ fun ChatScreen(nav: NavController, conversationId: String) {
         )
     }
     selected?.let { group -> MessageActions(group, vm, onDismiss = { selected = null }) }
-    viewing?.let { ref ->
-        Dialog(onDismissRequest = { viewing = null }) {
-            BlobImage(ref, Modifier.fillMaxWidth().clickable { viewing = null }, contentScale = ContentScale.Fit, maxSize = 2048)
-        }
-    }
     if (imageDialog) {
         ImageDialog(personaName, persona?.imageProfileId, header.userPersona, onDismiss = { imageDialog = false }) { prompt, parts, orientation, profileId ->
             imageDialog = false
@@ -758,3 +778,6 @@ private fun StickerSlip(text: String, peel: (() -> Unit)? = null, putBack: (() -
 }
 
 private fun reader(header: ChatHeader): PersonaReader? = header.persona?.let { persona -> header.profile?.let { PersonaReader(persona.name, it) } }
+
+/** A video being watched: which, in whose ink, and whether you sent it. */
+private data class Watching(val video: ContentPart.Attachment, val ink: androidx.compose.ui.graphics.Color, val fromYou: Boolean)

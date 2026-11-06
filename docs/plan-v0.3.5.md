@@ -51,8 +51,12 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   winding through the playlist, a scrubber, shuffle, previous, play/pause, next, repeat and the
   J-card track list; or the ticket with back and forward 10 seconds, repeat and what the persona
   knows of the song. A ticket is punched the first time it plays: a mark kept in a new `marks`
-  table (database version 4), apart from the letter. Still to come: video, the photo viewer, and
-  the motion.
+  table (database version 4), apart from the letter. A photo opens the viewer, over a dark ground
+  with the rest of its letter's photos to swipe through, pinch or double-tap to look closer, Share
+  and Save. A film strip opens the video player (its own Media3 player; the music pauses): tap
+  the picture for back 10 seconds, play/pause and forward 10 seconds; below, mute, the scrubber,
+  full screen (landscape), the title, who it's from, what the persona sees of it, and the letter's
+  other clips. Still to come: the motion.
 
 ## What v0.3.5 includes
 
