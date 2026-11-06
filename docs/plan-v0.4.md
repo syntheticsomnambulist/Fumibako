@@ -225,6 +225,46 @@ From the agreed decisions in `calendar.md`:
   month"): the week reads 霜月 2–8, the month 霜月, November 2026. The Stickers button left the
   header for a tab at the right edge, a little apart under ‹ 今 › (your choice).
 
+- **Step 5, phone calendars: done.**
+  - **Read-only:** through `CalendarContract`, with one permission and no sign-in. Read live
+    (repeats come expanded) and never copied.
+  - **Detail levels,** in Settings, Planner, Phone calendars: each calendar is hidden (the
+    default), busy only, titles, or titles and places. The planner shows that much, and that's
+    what a persona that sees it is told.
+  - **Whose planner:** only your default persona's has them.
+  - **On the pages:** events are drawn in pencil, graphite and read-only. You can stamp one
+    done or not going; the stamps are kept in the settings for three months, since nothing is
+    written back. A tap opens it in the phone's calendar app.
+  - **Busy:** busy and tentative events keep you busy.
+  - **Holidays:** a shown holiday calendar's days are your public holidays, in place of
+    Nager.Date's.
+- **Step 6, busy times: done.**
+  - **During busy times** (Settings, Planner): while you're busy (work, sleep, a busy plan or
+    phone event), a persona's heartbeat letter arrives quietly. When the stretch ends, one
+    notification per persona says it wrote ("Aria wrote while you were at work"). The choices
+    are hold (the default), notify anyway, and don't notify.
+  - **Busy for now:** a persona's notification has "Busy for an hour", "Till tonight" and "Till
+    tomorrow" (until you wake). Each adds a busy plan without opening the app.
+  - **Use my sleep as quiet hours:** heartbeats don't write while your typical week has you
+    asleep.
+  - **Who sees your planner:** each persona's switch, and each of your personas' sharing, are
+    on the Planner page.
+  - **Not built:** an all-day busy entry doesn't hold notifications (only timed busy stretches
+    do).
+
+- **Step 7, polish, tests and the APK: done; v0.4.0** (version code 22).
+  - **Docs:** the testers' guide has the planner (what to try, and what it sends where); the
+    README has it in the features, the map and the heartbeat.
+  - **Tests:** 222 unit tests, and the four screenshot tours, which visit:
+    - the week (with the bookmark, stickers, stamps, a persona's slips, pencil events and a
+      suggestion added);
+    - the month;
+    - a day;
+    - the Planner settings with phone calendars;
+    - a persona's marks.
+  - **Fixed along the way:** a lazy-list crash at first launch, seen twice in the tours; three
+    runs since were clean.
+
 ## Noted for later
 
 - **Explaining the utility model in setup:** what it's for, with examples, so you know you can

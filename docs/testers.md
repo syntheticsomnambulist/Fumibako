@@ -52,6 +52,12 @@ be turned off in Settings, Media. Searching for a song sends your search words t
 and so does opening a song in Apple Music when the link is from elsewhere. There are no accounts,
 ads or analytics.
 
+The planner stays on your phone too. A persona that sees your planner is told what's on in each
+letter (so it goes to that persona's model provider), at the detail you chose for each phone
+calendar; attendees and event notes never go. Public holidays, once you choose whose, are
+fetched from Nager.Date: only the country and the year are sent, about once a season. Your
+phone's calendars are read, never changed or copied.
+
 ## Things to try
 
 - Write a few letters, then look at the persona's **memory book** (Personas, a persona, Memories).
@@ -84,6 +90,17 @@ ads or analytics.
   on it. The book's Keepsakes tab shows just those.
 - **Settings, Media** has where links open, which app songs open in, picture size, playback and
   motion switches.
+- **The planner (帳):** a week of all 24 hours, your sleep folded to a band. Add a plan, and set
+  your typical week (work, sleep). Tap a plan for its stamps: 済 done, 延 move, 止 cancel. The
+  tabs at the right edge go to the month (月), the week or month before (‹), today (今) and
+  after (›), and the stickers. Hold the ribbon to put the bookmark on the page you're on; tap it
+  to come back. Settings, Planner has your phone's calendars, public holidays, the solar terms,
+  who sees your planner, and what happens to letters while you're busy (they can wait until
+  you're free). A persona's notification has "Busy for now".
+- **What personas do with it:** in letters and heartbeats, a persona that sees your planner
+  knows what's on, and can leave notes, suggest plans (add them, or "Not this time"), set
+  itself reminders (it wakes then to write), mark itself away, stick stickers, and write a haiku
+  when a new season begins. Its marks are on its Stickers page.
 
 ## If something goes wrong
 

@@ -20,6 +20,7 @@ tested without a device and reused elsewhere.
 | Pictures from NovelAI, Stable Diffusion (Forge, Automatic1111, ComfyUI), OpenAI or Google, through image profiles (persona can call it as a tool, or you can request one) | `core/image` |
 | Photos, files, songs, playlists, videos and links in letters, framed as stationery, with players and an in-app browser; each model receives what it can take in; personas open links you share (Claude's web fetch, or the app's fetcher) and share links and songs back | `core/media`, `core/tools/LinkTools.kt`, `app/media`, `app/ui/media` |
 | Stickers: emoji, each persona's own sheet (drawn from its looks), and a shared library (from photos, cut out on the phone); placed by you or by personas through tools, inline `:name:` in letters | `core/stickers`, `core/tools/StickerTools.kt`, `app/ui/stickers` |
+| The 帳 planner: a vertical week, a month, a day; your typical week, stamps (done, moved, cancelled), stickers, a movable bookmark; solar terms and microseasons worked out on the phone; public holidays (Nager.Date, or a phone holiday calendar); the phone's calendars read live at a detail level you choose; personas see what you share and write in it themselves (notes, suggestions, reminders that wake them, time away, season haiku); notifications held while you're busy | `core/planner`, `core/seasons`, `core/agent/PlannerActivities.kt`, `app/ui/planner`, `app/heartbeat/BusyTimes.kt` |
 | API keys encrypted with the Android Keystore | `app/data/PlatformStores.kt` |
 
 ## Getting started
@@ -63,10 +64,12 @@ core/                         Plain Kotlin/JVM library: no Android dependencies
   image/                      Image profiles and hosts (NovelAI, Stable Diffusion, ComfyUI, OpenAI, Google), picture prompts
   stickers/                   StickerService (names, placing, peeling, notes to the persona), StickerMaker, emoji names
   media/                      What each model takes in, the parts it receives, descriptions, link previews
+  planner/                    Planner (entries, busy, what a persona is told), its tools, holidays, phone calendars
+  seasons/                    The 24 solar terms and 72 microseasons from the sun's position
 app/                          Android shell
   data/                       Room (JSON-document rows, migrations kept for three versions), Keystore secrets, DataStore settings, file blobs
   engine/GenerationManager    Runs turns in an app-wide scope so replies survive leaving the screen
-  heartbeat/                  WorkManager worker, scheduler, notifications
+  heartbeat/                  WorkManager worker, scheduler, notifications, reminders' wakeups, busy times
   ui/                         Compose screens
 ```
 
@@ -127,7 +130,10 @@ Pick a mode in **Settings → Heartbeat**:
   quiet moments are discarded from the history, but what it did with its memories stays.
   Meaningful actions in the persona's own voice (writing to you, for now) share a few slots per
   heartbeat, 3 by default (**Activities per heartbeat**); the persona is told how many it has and
-  chooses, and the engine counts them. Reflecting and tending memories are free. Every
+  chooses, and the engine counts them. Reflecting and tending memories are free. With the planner
+  shared, a persona also looks at your week ahead (free) and may write a haiku on a new
+  season's first day (one slot); a reminder it set itself wakes it at its time (a one-off job),
+  and while it's away, in its own words, heartbeats leave it be. Every
   wakeup is logged for "While you were away" and the persona's page. New activities are how the
   persona's "home" will grow.
 - **Time-aware**: no background work; each turn includes the current time and elapsed time.
@@ -198,7 +204,8 @@ HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests 
 The visual direction (madoromi ink colours, letter-style messages, washi tape, stickers) is written
 up in [`docs/design/`](docs/design/README.md), with interactive mockups; v0.1 builds all of it except
 stickers. Fonts are bundled placeholders (SIL OFL, see `app/src/main/assets/licenses/fonts.txt`). Plans:
-[`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md).
+[`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md),
+[`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.4.md`](docs/plan-v0.4.md) (the planner).
 
 ## Known limitations / next steps
 
