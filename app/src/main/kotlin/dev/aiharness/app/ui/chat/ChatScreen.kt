@@ -352,7 +352,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
         }
     }
     if (imageDialog) {
-        ImageDialog(personaName, persona?.imageProfileId, onDismiss = { imageDialog = false }) { prompt, parts, orientation, profileId ->
+        ImageDialog(personaName, persona?.imageProfileId, header.userPersona, onDismiss = { imageDialog = false }) { prompt, parts, orientation, profileId ->
             imageDialog = false
             vm.generateImage(prompt, parts, orientation, profileId)
         }
@@ -594,6 +594,7 @@ private fun MessageActions(group: List<ChatMessage>, vm: ChatViewModel, onDismis
 private fun ImageDialog(
     personaName: String,
     personaProfileId: String?,
+    you: dev.aiharness.core.model.UserPersona?,
     onDismiss: () -> Unit,
     onGenerate: (String, dev.aiharness.core.image.PicturePrompt.Parts, String, String?) -> Unit,
 ) {
@@ -606,6 +607,9 @@ private fun ImageDialog(
     var looks by remember { mutableStateOf(true) }
     var clothes by remember { mutableStateOf(true) }
     var style by remember { mutableStateOf(true) }
+    var withYou by remember { mutableStateOf(false) }
+    // You can be in it once your page says how you look or what you wear.
+    val youCanBeIn = you != null && (you.selfPrompt.isNotBlank() || you.outfit.isNotBlank())
     var orientation by remember { mutableStateOf("portrait") }
     val options = listOf("portrait", "landscape", "square")
     AlertDialog(
@@ -617,6 +621,7 @@ private fun ImageDialog(
                 SwitchRow("How $personaName looks", looks, { looks = it })
                 SwitchRow("What $personaName is wearing", clothes, { clothes = it })
                 SwitchRow("$personaName's drawing style", style, { style = it })
+                if (youCanBeIn) SwitchRow("${you!!.name} in it too", withYou, { withYou = it }, subtitle = "How you look and what you wear, from your page.")
                 PaperChoice(options.map { it to it.replaceFirstChar { c -> c.uppercase() } }, orientation, { orientation = it })
                 if (profiles.size > 1) {
                     dev.aiharness.app.ui.paper.PaperSelect("Draw with", profiles, chosen, { it.name }, { profile = it })
@@ -625,7 +630,7 @@ private fun ImageDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onGenerate(prompt, dev.aiharness.core.image.PicturePrompt.Parts(self = looks, outfit = clothes, style = style), orientation, chosen?.id) },
+                onClick = { onGenerate(prompt, dev.aiharness.core.image.PicturePrompt.Parts(self = looks, outfit = clothes, style = style, you = withYou && youCanBeIn), orientation, chosen?.id) },
                 enabled = prompt.isNotBlank(),
             ) { Text("Draw") }
         },

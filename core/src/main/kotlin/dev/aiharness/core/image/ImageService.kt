@@ -2,10 +2,14 @@ package dev.aiharness.core.image
 
 import dev.aiharness.core.llm.LlmException
 import dev.aiharness.core.model.ContentPart
+import dev.aiharness.core.model.Credential
+import dev.aiharness.core.model.CredentialKind
+import dev.aiharness.core.util.newId
 import dev.aiharness.core.model.ImageGenSettings
 import dev.aiharness.core.model.ImageHost
 import dev.aiharness.core.model.ImageProfile
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.storage.BlobStore
 
 /**
@@ -25,6 +29,8 @@ class ImageService(
         persona: Persona? = null,
         parts: PicturePrompt.Parts = PicturePrompt.Parts(),
         profile: ImageProfile? = null,
+        /** You, when [parts] has you in the picture. */
+        you: UserPersona? = null,
     ): ContentPart.Image {
         val chosen = profile ?: settings.profileFor(persona?.imageProfileId)
             ?: throw LlmException("Add an image profile in Settings, Pictures, to draw pictures")
@@ -32,7 +38,7 @@ class ImageService(
         if (chosen.host.needsKey && key == null) throw LlmException("The image profile \"${chosen.name}\" has no key")
         val (width, height) = sizeFor(chosen.width, chosen.height, orientation)
         val form = if (chosen.host.takesTags) PicturePrompt.Form.TAGS else PicturePrompt.Form.SENTENCES
-        val fullPrompt = PicturePrompt.build(prompt, persona, settings.defaultStyle, parts, form)
+        val fullPrompt = PicturePrompt.build(prompt, persona, settings.defaultStyle, parts, form, you)
         val images = generator.generate(
             ImageRequest(
                 prompt = fullPrompt,
@@ -80,6 +86,27 @@ class ImageService(
 
 /** Starting points for a new image profile, one per host. */
 object ImageProfiles {
+    /**
+     * When you add a key that draws pictures (NovelAI's), pictures turn on with it: a profile using
+     * the key, the default if there isn't one, and the persona's picture tool on. Returns null when
+     * there's nothing to do: the key isn't for pictures, or pictures are already set up.
+     */
+    fun turnOnWith(settings: ImageGenSettings, credential: Credential): ImageGenSettings? {
+        val host = when (credential.kind) {
+            CredentialKind.NOVELAI -> ImageHost.NOVELAI
+            else -> return null
+        }
+        if (settings.ready) return null
+        val existing = settings.profiles.firstOrNull { it.credentialId == credential.id }
+        val profile = existing ?: preset(host, newId()).copy(name = host.label, credentialId = credential.id)
+        return settings.copy(
+            enabled = true,
+            agentToolEnabled = true,
+            profiles = if (existing != null) settings.profiles else settings.profiles + profile,
+            defaultProfileId = settings.defaultProfileId?.takeIf { id -> settings.profiles.any { it.id == id && it.isUsable } } ?: profile.id,
+        )
+    }
+
     fun defaultModel(host: ImageHost): String = when (host) {
         ImageHost.NOVELAI -> "nai-diffusion-4-5-full"
         ImageHost.OPENAI -> OpenAiImageGenerator.DEFAULT_MODEL

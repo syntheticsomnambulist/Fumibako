@@ -48,6 +48,7 @@ import dev.aiharness.app.ui.personas.PageBar
 import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.core.image.ImageProfiles
 import dev.aiharness.core.model.Credential
 import dev.aiharness.core.model.CredentialKind
 import dev.aiharness.core.storage.SecretStore
@@ -172,6 +173,10 @@ fun KeysScreen(nav: NavController) {
                         scope.launch {
                             harness.credentials.upsert(credential)
                             if (secret.isNotBlank()) harness.secrets.put(SecretStore.credentialKey(credential.id), secret.trim())
+                            // A key that draws pictures turns pictures on with it.
+                            if (secret.isNotBlank()) {
+                                harness.settings.update { s -> ImageProfiles.turnOnWith(s.imageGen, credential)?.let { s.copy(imageGen = it) } ?: s }
+                            }
                         }
                         close()
                     },

@@ -59,6 +59,7 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
                 val conversation = harness.conversations.get(conversationId) ?: return@launch
                 val persona = harness.personas.get(conversation.personaId)
                 val settings = harness.settings.current()
+                val you = (conversation.userPersonaId ?: settings.activeUserPersonaId)?.let { harness.userPersonas.get(it) }
                 val image = harness.images.generate(
                     settings = settings.imageGen,
                     prompt = prompt,
@@ -66,6 +67,7 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
                     persona = persona,
                     parts = parts,
                     profile = settings.imageGen.profiles.firstOrNull { it.id == profileId },
+                    you = you,
                 )
                 harness.conversations.appendMessage(
                     ChatMessage(

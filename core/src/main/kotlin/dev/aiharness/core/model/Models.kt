@@ -156,6 +156,10 @@ data class UserPersona(
     val name: String,
     val description: String = "",
     val avatarRef: String? = null,
+    /** How you look in pictures (body and traits that don't change), as image tags. */
+    val selfPrompt: String = "",
+    /** What you wear in pictures, as image tags. */
+    val outfit: String = "",
     val ink: String = "sora",
     val tapePattern: TapePattern = TapePattern.STRIPES,
     val createdAt: Long,

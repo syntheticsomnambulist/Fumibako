@@ -144,6 +144,8 @@ fun YouPageScreen(nav: NavController, userId: String) {
     var original by remember { mutableStateOf<UserPersona?>(null) }
     var confirmDelete by remember { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
+    var drawing by remember { mutableStateOf(false) }
+    var problem by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(isNew) {
         if (isNew && draft == null) {
@@ -228,10 +230,40 @@ fun YouPageScreen(nav: NavController, userId: String) {
                             null
                         },
                     )
-                    PictureMenu(open = menu, onDismiss = { menu = false }, onPicked = { ref -> draft = u.copy(avatarRef = ref) }, onRemove = u.avatarRef?.let { { draft = u.copy(avatarRef = null) } })
+                    val canDraw = settings?.imageGen?.ready == true && (u.selfPrompt.isNotBlank() || u.outfit.isNotBlank())
+                    PictureMenu(
+                        open = menu,
+                        onDismiss = { menu = false },
+                        onPicked = { ref -> draft = u.copy(avatarRef = ref) },
+                        onRemove = u.avatarRef?.let { { draft = u.copy(avatarRef = null) } },
+                        onDraw = if (!canDraw) null else {
+                            {
+                                drawing = true
+                                problem = null
+                                scope.launch {
+                                    try {
+                                        val image = harness.images.generate(
+                                            settings = harness.settings.current().imageGen,
+                                            prompt = "portrait, upper body, looking at viewer, simple background",
+                                            orientation = "square",
+                                            parts = dev.aiharness.core.image.PicturePrompt.Parts.STYLE_ONLY.copy(you = true),
+                                            you = u,
+                                        )
+                                        draft = (draft ?: u).copy(avatarRef = image.ref)
+                                    } catch (e: Exception) {
+                                        problem = e.message
+                                    } finally {
+                                        drawing = false
+                                    }
+                                }
+                            }
+                        },
+                        drawBusy = drawing,
+                    )
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (editing) {
+                        problem?.let { Text(it, style = PaperType.noteBody.copy(fontSize = 12.sp), color = stationery.ink("beni")) }
                         IndexCardField("Name", u.name, { v -> draft = u.copy(name = v) }, ink = ink, style = PaperType.heroName.copy(fontSize = 28.sp, lineHeight = 36.sp), singleLine = true, placeholder = "Your name here")
                     } else {
                         Text(u.name, style = PaperType.heroName, color = paper.sumi)
@@ -258,6 +290,18 @@ fun YouPageScreen(nav: NavController, userId: String) {
                 TapedCard(layouts[1], tape, tilt = cardTilt("${u.id}-about")) {
                     CardTitle("About you")
                     IndexCardField("Shared with the personas you write to", u.description, { v -> draft = u.copy(description = v) }, ink = ink, style = PaperType.prose, minLines = 3)
+                }
+            }
+            item {
+                TapedCard(layouts[2], tape, tilt = cardTilt("${u.id}-pictures")) {
+                    CardTitle("In pictures")
+                    IndexCardField("How you look", u.selfPrompt, { v -> draft = u.copy(selfPrompt = v) }, ink = ink, style = PaperType.noteBody, minLines = 2, placeholder = "1boy, messy brown hair, glasses")
+                    IndexCardField("What you wear", u.outfit, { v -> draft = u.copy(outfit = v) }, ink = ink, style = PaperType.noteBody, placeholder = "green raincoat, scarf")
+                    Text(
+                        "As image tags. With these, a picture in a letter can have you in it with the persona, and you can draw your own portrait (tap the picture).",
+                        style = PaperType.noteBody.copy(fontSize = 12.sp),
+                        color = paper.usuzumi0,
+                    )
                 }
             }
             if (!isNew && (users?.size ?: 0) > 1) {

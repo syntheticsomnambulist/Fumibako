@@ -20,6 +20,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class PicturesTest {
     private val base = TestEnv().persona.copy(selfPrompt = "1girl, silver hair, green eyes", defaultOutfit = "cream sweater")
@@ -50,6 +51,54 @@ class PicturesTest {
             "Drawn in the style of watercolor. Mira: 1girl, silver hair, green eyes. Wearing cream sweater. Reading in a cafe.",
             PicturePrompt.build("reading in a cafe", base, "watercolor", form = PicturePrompt.Form.SENTENCES),
         )
+    }
+
+    @Test
+    fun youCanBeInThePictureToo() {
+        val sam = dev.aiharness.core.model.UserPersona("u1", "Sam", selfPrompt = "1boy, messy brown hair", outfit = "green raincoat", createdAt = 1, updatedAt = 1)
+        val together = PicturePrompt.Parts(you = true)
+        assertEquals(
+            "1girl, silver hair, green eyes, cream sweater, 1boy, messy brown hair, green raincoat, walking in the rain, watercolor",
+            PicturePrompt.build("walking in the rain", base, "watercolor", together, you = sam),
+        )
+        assertEquals(
+            "Drawn in the style of watercolor. Mira: 1girl, silver hair, green eyes. Wearing cream sweater. With Sam: 1boy, messy brown hair. Wearing green raincoat. Walking in the rain.",
+            PicturePrompt.build("walking in the rain", base, "watercolor", together, PicturePrompt.Form.SENTENCES, you = sam),
+        )
+        // Your own portrait: you, in the default style, without the persona.
+        assertEquals(
+            "1boy, messy brown hair, green raincoat, portrait, watercolor",
+            PicturePrompt.build("portrait", null, "watercolor", PicturePrompt.Parts.STYLE_ONLY.copy(you = true), you = sam),
+        )
+        assertEquals("Sam: 1boy, messy brown hair. Wearing green raincoat. Portrait.", PicturePrompt.build("portrait", null, "", PicturePrompt.Parts.STYLE_ONLY.copy(you = true), PicturePrompt.Form.SENTENCES, you = sam))
+    }
+
+    @Test
+    fun aPersonaCanDrawYouInItsPicture() = runTest {
+        val env = TestEnv().apply { seed() }
+        env.credentials.upsert(Credential("nai", "NovelAI", CredentialKind.NOVELAI))
+        env.secrets.put(SecretStore.credentialKey("nai"), "key")
+        env.settingsRepo.update { it.copy(imageGen = it.imageGen.copy(profiles = listOf(ImageProfiles.preset(ImageHost.NOVELAI, "pic").copy(credentialId = "nai")), defaultStyle = "watercolor")) }
+        env.personas.upsert(env.persona.copy(selfPrompt = base.selfPrompt, defaultOutfit = base.defaultOutfit))
+        env.userPersonas.upsert(env.user.copy(selfPrompt = "1boy, messy brown hair", outfit = "green raincoat"))
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.provider.then(toolTurn("c1", "generate_image", """{"prompt":"holding hands, sunset","include_self":true,"include_user":true}"""))
+        env.provider.then(LlmTurnResult(text = "Us!"))
+        env.harness.agent.send(conversation.id, "Draw us together?").toList()
+        assertEquals("1girl, silver hair, green eyes, cream sweater, 1boy, messy brown hair, green raincoat, holding hands, sunset, watercolor", env.images.requests.single().prompt)
+    }
+
+    @Test
+    fun aNovelAiKeyTurnsPicturesOnUnlessTheyAreSetUp() {
+        val nai = Credential("nai", "NovelAI", CredentialKind.NOVELAI)
+        val off = dev.aiharness.core.model.ImageGenSettings(enabled = false, agentToolEnabled = false)
+        val on = ImageProfiles.turnOnWith(off, nai)!!
+        assertTrue(on.enabled && on.agentToolEnabled && on.ready)
+        assertEquals(ImageHost.NOVELAI, on.profiles.single().host)
+        assertEquals("nai", on.profiles.single().credentialId)
+        assertEquals(on.profiles.single().id, on.defaultProfileId)
+        assertNull(ImageProfiles.turnOnWith(on, nai), "already set up: left alone")
+        assertNull(ImageProfiles.turnOnWith(off, Credential("a", "Anthropic", CredentialKind.ANTHROPIC)), "not a picture key")
     }
 
     private fun toolTurn(id: String, name: String, args: String) =

@@ -211,6 +211,7 @@ class GenerateImageTool(private val images: ImageService, private val personas: 
             string("negative_prompt", "Things to avoid in the image (optional).")
             string("orientation", "Image shape.", enum = listOf("portrait", "landscape", "square"))
             boolean("include_self", "True if you appear in the image; how you look and what you're wearing are added automatically.")
+            boolean("include_user", "True if the person you're writing to appears in the image (with you, or alone); how they look is added automatically.")
         },
     )
 
@@ -220,6 +221,7 @@ class GenerateImageTool(private val images: ImageService, private val personas: 
     override suspend fun execute(args: JsonObject, context: ToolContext): ToolOutcome {
         val prompt = args.requireString("prompt")
         val includeSelf = args.bool("include_self") == true
+        val includeUser = args.bool("include_user") == true
         // Read fresh: the persona may have changed clothes earlier in this turn.
         val persona = personas.get(context.persona.id) ?: context.persona
         val image = images.generate(
@@ -229,7 +231,8 @@ class GenerateImageTool(private val images: ImageService, private val personas: 
             orientation = args.string("orientation"),
             // Its drawing style applies whether or not it's in the picture.
             persona = persona,
-            parts = if (includeSelf) PicturePrompt.Parts() else PicturePrompt.Parts.STYLE_ONLY,
+            parts = (if (includeSelf) PicturePrompt.Parts() else PicturePrompt.Parts.STYLE_ONLY).copy(you = includeUser),
+            you = context.userPersona,
         )
         return ToolOutcome(
             content = "The image was generated and shown to ${context.userPersona?.name ?: "the user"}.",
