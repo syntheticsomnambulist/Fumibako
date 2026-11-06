@@ -484,7 +484,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
         FullPlayer(
             playing,
             container.playback,
-            knows = if (playing.fromYou && !playing.isPlaylist) reader(header)?.let { MediaSupport.cantTakeIn(playing.attachment, it.profile, it.name) } else null,
+            knows = if (playing.fromYou) reader(header)?.let { MediaSupport.cantTakeIn(playing.attachment, it.profile, it.name) } else null,
             onClose = { playerOpen = false },
         )
     }

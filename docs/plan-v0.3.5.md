@@ -183,6 +183,13 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
     can't be read as that still goes as a tag.
   - Only a model that hears a searched song is told it's hearing "its 30-second preview"; to
     others the ticket reads as the song.
+- **After 0.3.5.5** (your answer): a mix is heard by a persona that hears music, song by
+  song: its label, then each song's place and name before its sound ("2. Alien Blues by
+  Vundabar:"), in order while they fit the request and the third of the context one thing may
+  take; what doesn't fit is said not to be sent this time. A mix of searched songs says it's
+  their 30-second previews ("Aria hears their 30-second previews."). Mixes get a description
+  like songs, written by a model that hears them, so a persona that can't hear (with a
+  utility model that can) reads how the mix sounds, and later epochs carry that instead.
 
 ## What v0.3.5 includes
 

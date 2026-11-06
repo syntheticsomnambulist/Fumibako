@@ -5,6 +5,7 @@ import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.ProviderType
 import dev.aiharness.core.model.ToolMode
+import dev.aiharness.core.model.Track
 
 /** What a model takes in besides text. */
 data class Senses(val pictures: Boolean, val pdfs: Boolean, val audio: Boolean, val video: Boolean) {
@@ -92,10 +93,18 @@ object MediaSupport {
         a.kind == AttachmentKind.FILE && isPdf(a) -> (a.pages ?: 10) * if (profile.provider == ProviderType.GEMINI) 300 else 2_000
         a.kind == AttachmentKind.FILE && isText(a) -> ((a.sizeBytes ?: 4_000L) / CHARS_PER_TOKEN).toInt()
         a.kind == AttachmentKind.SONG -> ((if (a.previewOnly) PREVIEW_MS else a.lengthMs ?: 240_000L) / 1000 * 32).toInt()
+        a.kind == AttachmentKind.PLAYLIST -> hearableTracks(a).sumOf { trackTokens(a.tracks[it]) }
         // Gemini 3 and later watch video at about 70 tokens a frame by default (100 a second with sound); older ones at about 290.
         a.kind == AttachmentKind.VIDEO -> ((a.lengthMs ?: 60_000L) / 1000 * if (modernGemini(profile)) 100 else 300).toInt()
         else -> 0
     }
+
+    /** A mix's songs a model that hears could be sent (those with their file, in a kind it knows), by their places. */
+    fun hearableTracks(a: ContentPart.Attachment): List<Int> =
+        a.tracks.indices.filter { i -> a.tracks[i].ref != null && geminiAudioType(a.tracks[i].mimeType) != null }
+
+    /** About what one of a mix's songs costs heard: its preview's thirty seconds, or its length. */
+    fun trackTokens(t: Track): Int = ((if (t.previewOnly) PREVIEW_MS else t.lengthMs ?: 240_000L) / 1000 * 32).toInt()
 
     /** Gemini 3 or later, by its model id. */
     fun modernGemini(profile: ModelProfile): Boolean {
@@ -121,7 +130,9 @@ object MediaSupport {
             }
             AttachmentKind.SONG -> senses.audio && ref != null && geminiAudioType(sentType(a)) != null && fits
             AttachmentKind.VIDEO -> senses.video && ref != null && geminiVideoType(sentType(a)) != null && fits
-            AttachmentKind.PLAYLIST, AttachmentKind.LINK -> false
+            // A mix goes song by song, as many as fit (MediaParts): it's taken whole if one would.
+            AttachmentKind.PLAYLIST -> senses.audio && hearableTracks(a).any { trackTokens(a.tracks[it]) <= tokenCap(profile) }
+            AttachmentKind.LINK -> false
         }
     }
 
@@ -147,6 +158,7 @@ object MediaSupport {
             return when {
                 a.kind == AttachmentKind.FILE && isText(a) && (a.sizeBytes ?: 0L) > textChars(profile) -> "$name reads the beginning of it."
                 a.kind == AttachmentKind.SONG && a.previewOnly -> "$name hears its 30-second preview."
+                a.kind == AttachmentKind.PLAYLIST && a.tracks.isNotEmpty() && a.tracks.all { it.previewOnly } -> "$name hears their 30-second previews."
                 else -> null
             }
         }

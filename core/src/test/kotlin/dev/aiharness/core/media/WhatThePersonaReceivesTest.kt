@@ -73,6 +73,65 @@ class WhatThePersonaReceivesTest {
         assertEquals(listOf("audio/mp3", "video/mp4"), media.map { it.mimeType })
     }
 
+    /** A mix of three searched songs (each its 30-second preview), or of phone songs at full length. */
+    private suspend fun TestEnv.mix(previews: Boolean = true) = ContentPart.Attachment(
+        "mix1", AttachmentKind.PLAYLIST, title = "A mix for Mira", subtitle = "for Mira, from Sam",
+        tracks = listOf("Harness Your Hopes" to "Pavement", "Alien Blues" to "Vundabar", "Alrighty Aphrodite" to "Peach Pit").map { (title, artist) ->
+            dev.aiharness.core.model.Track(
+                ref = harness.blobs.put(ByteArray(1_000) { 6 }, "m4a"), mimeType = "audio/mp4", title = title, artist = artist,
+                lengthMs = 222_000, previewOnly = previews,
+            )
+        },
+        lengthMs = 666_000,
+    )
+
+    @Test
+    fun geminiHearsAMixSongBySong() = runTest {
+        val env = env(ProviderType.GEMINI, modelId = "gemini-3-flash")
+        val conversation = env.harness.createConversation(env.persona.id)
+        val mix = env.mix()
+        env.harness.agent.send(conversation.id, "", attachments = listOf(mix)).toList()
+
+        val note = env.personaRequests().last().lastNote()
+        assertEquals(List(3) { "audio/m4a" }, note.filterIsInstance<LlmPart.Media>().map { it.mimeType })
+        assertContains(note.texts(), "(its songs, as 30-second previews:)")
+        assertContains(note.texts(), "2. Alien Blues by Vundabar:")
+        assertEquals("Mira hears their 30-second previews.", MediaSupport.cantTakeIn(mix, env.profiles.get(env.profile.id)!!, "Mira"))
+    }
+
+    @Test
+    fun aLongMixSendsTheSongsThatFit() = runTest {
+        // A context of 48,000 tokens lets one thing take 16,000: two songs of 3:42 at 32 a second, not three.
+        val env = env(ProviderType.GEMINI, modelId = "gemini-3-flash")
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.harness.agent.send(conversation.id, "", attachments = listOf(env.mix(previews = false))).toList()
+
+        val note = env.personaRequests().last().lastNote()
+        assertEquals(2, note.filterIsInstance<LlmPart.Media>().size)
+        assertContains(note.texts(), "(The rest of the mix isn't sent this time.)")
+        assertFalse("3. Alrighty Aphrodite" in note.texts())
+    }
+
+    @Test
+    fun aModelThatCantHearIsToldHowAMixSoundsByOneThatCan() = runTest {
+        // Gemma (through Gemini's API) sees pictures but doesn't hear; the utility model does.
+        val env = env(ProviderType.GEMINI, modelId = "gemma-3-27b")
+        val ears = ModelProfile(id = "u", name = "Utility", provider = ProviderType.GEMINI, modelId = "gemini-3-flash")
+        env.profiles.upsert(ears)
+        env.settingsRepo.update { it.copy(utilityModelProfileId = ears.id) }
+        val conversation = env.harness.createConversation(env.persona.id)
+        val mix = env.mix()
+        assertEquals("Mira can read the label, but can't hear the songs.", MediaSupport.cantTakeIn(mix, env.profiles.get(env.profile.id)!!, "Mira"))
+        env.harness.agent.send(conversation.id, "For the drive.", attachments = listOf(mix)).toList()
+
+        val described = env.provider.requests.single { it.system == MediaDescriber.SYSTEM }
+        assertEquals("gemini-3-flash", described.profile.modelId)
+        assertEquals(3, described.lastNote().filterIsInstance<LlmPart.Media>().size, "the utility model heard the songs")
+        val note = env.personaRequests().last().lastNote()
+        assertTrue(note.none { it is LlmPart.Media })
+        assertContains(note.texts(), "[cassette: A mix for Mira, for Mira, from Sam, 3 songs, Harness Your Hopes by Pavement; Alien Blues by Vundabar; Alrighty Aphrodite by Peach Pit] A tabby cat asleep on a sill.")
+    }
+
     @Test
     fun aTextOnlyModelReadsStandInsAndTextFiles() = runTest {
         val env = env(ProviderType.OPENAI_COMPATIBLE)

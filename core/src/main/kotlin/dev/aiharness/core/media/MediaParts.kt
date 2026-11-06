@@ -46,6 +46,15 @@ class MediaParts(private val blobs: BlobStore) {
             }
             for (a in message.attachments) {
                 if (described(a.describedAt, message.createdAt, epochStartedAt)) continue
+                if (a.kind == AttachmentKind.PLAYLIST) {
+                    if (!MediaSupport.takesWhole(a, profile, senses)) continue
+                    val songs = mixToSend(a, profile, room)
+                    if (songs.any { it.isNotEmpty() }) {
+                        room -= songs.sumOf { it.size }
+                        chosen[a.id] = Way.WHOLE to songs
+                    }
+                    continue
+                }
                 if (MediaSupport.takesWhole(a, profile, senses)) {
                     val bytes = MediaSupport.sentRef(a)?.let { blobs.get(it) }
                     if (bytes != null && (MediaSupport.isText(a) || bytes.size <= room)) {
@@ -76,10 +85,33 @@ class MediaParts(private val blobs: BlobStore) {
         message.attachments.forEach { a -> addAll(attachmentParts(a, plan.way(a.id), plan.bytes(a.id), described(a.describedAt, message.createdAt, epochStartedAt), profile)) }
     }
 
+    /**
+     * The songs of mix [a] to send whole, by their places (empty for one not sent): in order, as
+     * long as they fit [room] and, together, the most one thing may take of the context.
+     */
+    suspend fun mixToSend(a: ContentPart.Attachment, profile: ModelProfile, room: Long): List<ByteArray> {
+        val cap = MediaSupport.tokenCap(profile)
+        val hearable = MediaSupport.hearableTracks(a).toSet()
+        var left = room
+        var tokens = 0
+        return a.tracks.mapIndexed { i, t ->
+            val bytes = if (i in hearable) t.ref?.let { blobs.get(it) } else null
+            val cost = MediaSupport.trackTokens(t)
+            if (bytes == null || bytes.size > left || tokens + cost > cap) {
+                NOT_SENT
+            } else {
+                left -= bytes.size
+                tokens += cost
+                bytes
+            }
+        }
+    }
+
     /** One attachment as parts: its description, itself, its pictures or its stand-in. */
     fun attachmentParts(a: ContentPart.Attachment, way: Way?, bytes: List<ByteArray>, describedNow: Boolean, profile: ModelProfile): List<LlmPart> = when {
         describedNow -> listOf(LlmPart.Text("${a.standIn} ${a.description}"))
         way == Way.WHOLE && MediaSupport.isText(a) -> listOf(LlmPart.Text(textFile(a, bytes.first(), MediaSupport.textChars(profile))))
+        way == Way.WHOLE && a.kind == AttachmentKind.PLAYLIST -> mixParts(a, bytes)
         // A song from a music search is sent as its preview; only a model hearing it is told so
         // (one that can't hear it has no use for a preview it isn't sent).
         way == Way.WHOLE && a.kind == AttachmentKind.SONG && a.previewOnly ->
@@ -90,6 +122,23 @@ class MediaParts(private val blobs: BlobStore) {
         else -> listOf(LlmPart.Text(standInWithSnippet(a)))
     }
 
+    /**
+     * A mix heard: its label, then each song sent, by its place and name, before its sound
+     * ("2. Alien Blues by Vundabar:"); what didn't fit is said not to be sent this time.
+     */
+    private fun mixParts(a: ContentPart.Attachment, bytes: List<ByteArray>): List<LlmPart> = buildList {
+        val sent = a.tracks.indices.filter { bytes.getOrNull(it)?.isNotEmpty() == true }
+        val previews = sent.isNotEmpty() && sent.all { a.tracks[it].previewOnly }
+        add(LlmPart.Text("${a.standIn} (its songs${if (previews) ", as 30-second previews" else ""}:)"))
+        for (i in sent) {
+            val t = a.tracks[i]
+            val name = listOfNotNull(t.title ?: t.name?.substringBeforeLast('.') ?: "a song", t.artist?.let { "by $it" }).joinToString(" ")
+            add(LlmPart.Text("${i + 1}. $name${if (t.previewOnly && !previews) " (its 30-second preview)" else ""}:"))
+            add(LlmPart.Media(bytes[i], MediaSupport.geminiAudioType(t.mimeType) ?: t.mimeType ?: "audio/mp4", t.title ?: t.name))
+        }
+        if (sent.size < a.tracks.size) add(LlmPart.Text("(The rest of the mix isn't sent this time.)"))
+    }
+
     /** What the model is told the thing is, as the provider wants it named. */
     private fun wireType(a: ContentPart.Attachment): String = when (a.kind) {
         AttachmentKind.SONG -> MediaSupport.sentType(a).let { MediaSupport.geminiAudioType(it) ?: it.orEmpty() }
@@ -98,6 +147,9 @@ class MediaParts(private val blobs: BlobStore) {
     }
 
     companion object {
+        /** In a mix's songs to send, one that isn't. */
+        private val NOT_SENT = ByteArray(0)
+
         /**
          * Whether this epoch reads the description: it was written on arrival (no later than the
          * note), or before the epoch began. Otherwise the epoch keeps sending what it first sent.
