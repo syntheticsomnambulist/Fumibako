@@ -264,6 +264,9 @@ From the agreed decisions in `calendar.md`:
     - a persona's marks.
   - **Fixed along the way:** a lazy-list crash at first launch, seen twice in the tours; three
     runs since were clean.
+- **0.4.1 (version code 23), getting ready to go public:** a new debug signing key, with key
+  rotation so builds still install over the old key's (v0.2.2 included) and keep their letters;
+  the GPL-3.0-or-later license. See `docs/going-public.md`.
 
 ## Noted for later
 

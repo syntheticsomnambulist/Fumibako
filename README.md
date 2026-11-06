@@ -40,12 +40,14 @@ tested without a device and reused elsewhere.
 ### Builds
 
 Every push runs the tests and builds a debug APK in GitHub Actions (**Actions → Build → the run →
-Artifacts**). Debug builds share one signing key, so a new build installs over the old one. While
-the repository is private that key is committed (`app/debug.keystore`). It must be replaced before
-the repository goes public: see [`docs/going-public.md`](docs/going-public.md), which CI enforces.
+Artifacts**). Debug builds share one signing key, so a new build installs over the old one. The key
+is never committed: CI and cloud sessions get it from a secret, and without it a build is signed
+with the machine's own debug key. Builds also carry `app/signing/debug-lineage`, which hands over
+from the key used up to 0.4.0, so they install over those builds too. See
+[`docs/going-public.md`](docs/going-public.md).
 
-**Stored data before 1.0:** there are no migrations. A database schema change wipes the app's data
-and it starts fresh, re-creating the sample persona.
+**Stored data:** database changes come with migrations, so letters survive updates. A phone whose
+database is older than the migrations kept starts fresh, re-creating the sample persona.
 
 ## Architecture
 
@@ -215,3 +217,16 @@ stickers. Fonts are bundled placeholders (SIL OFL, see `app/src/main/assets/lice
   label; Gemini's file upload API isn't used yet.
 - Heartbeat timing is best-effort: WorkManager batches periodic work, and battery optimizations can
   delay wakeups.
+
+## License
+
+Fumibako is free software: you can redistribute it and modify it under the terms of the GNU General
+Public License, version 3 or (at your option) any later version. It comes with no warranty. See
+[`LICENSE`](LICENSE).
+
+Two parts keep their own licenses:
+
+- **The madoromi palette** (`docs/design/madoromi-palette.json` and
+  `app/src/main/kotlin/dev/aiharness/app/ui/theme/MadoromiPalette.kt`): Mozilla Public License 2.0.
+- **The bundled placeholder fonts** (`app/src/main/res/font/`): SIL Open Font License 1.1, with the
+  notice in `app/src/main/assets/licenses/fonts.txt`.

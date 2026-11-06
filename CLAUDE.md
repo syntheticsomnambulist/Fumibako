@@ -16,8 +16,15 @@
     keeps its stored name with `@SerialName`. Don't write backfills or legacy fallbacks for them.
   - Settings (DataStore JSON) work the same way: defaults, no fallbacks.
 - **The repository is private for now.** Before it goes public, follow
-  [`docs/going-public.md`](docs/going-public.md): the committed debug signing key must be replaced.
-  CI fails on a public repository while `app/debug.keystore` exists.
+  [`docs/going-public.md`](docs/going-public.md). The code is GPL-3.0-or-later (`LICENSE`); the
+  palette (MPL-2.0) and fonts (OFL) keep their own licenses.
+- **Signing: testers' phones need the key chain.** Debug builds are signed with a shared key from
+  `HARNESS_DEBUG_KEYSTORE_B64` (never committed) and carry `app/signing/debug-lineage`, which hands
+  over from the retired key (`app/signing/retired-debug.keystore`) that signed builds up to 0.4.0.
+  Never delete or regenerate either file, and never change the debug key without extending the
+  lineage: a phone that can't verify the chain must uninstall, which wipes its letters. Without the
+  variable, builds use the machine's own debug key; send the user an APK only when it's signed with
+  the shared key (`apksigner verify --print-certs` shows "CN=Fumibako Debug").
 - **App text uses American spelling** (aging, color, license, summarize), since that's how the app's
   user writes.
 - **Where things are:**

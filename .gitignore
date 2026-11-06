@@ -11,5 +11,5 @@ captures/
 *.apk
 *.aab
 *.keystore
-!app/debug.keystore
 *.jks
+!app/signing/retired-debug.keystore
