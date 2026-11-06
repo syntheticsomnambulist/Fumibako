@@ -4,6 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.aiharness.app.AppContainer
 import dev.aiharness.app.engine.GenerationState
+import dev.aiharness.core.media.LinkPreviews
+import dev.aiharness.core.model.Track
+import dev.aiharness.core.model.ContentPart
+import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.ModelProfile
@@ -21,6 +25,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class ChatHeader(
@@ -105,9 +111,63 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         .map { it.imageGen.ready }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    /** What's waiting to go with your note. */
+    val going = MutableStateFlow<List<Going>>(emptyList())
+
+    /** Sends the note with what's waiting. A link on a line of its own leaves the text: its cutting carries it. */
     fun send(text: String) {
-        if (text.isNotBlank()) container.generation.send(conversationId, text.trim())
+        val waiting = going.value
+        if (waiting.any { it is Going.Preparing }) return
+        val cut = waiting.mapNotNull { (it as? Going.Item)?.attachment?.url }.toSet()
+        val body = text.lines().filterNot { it.trim() in cut }.joinToString("\n").trim()
+        val images = waiting.filterIsInstance<Going.Picture>().map { it.image }
+        val attachments = waiting.filterIsInstance<Going.Item>().map { it.attachment }
+        if (body.isBlank() && images.isEmpty() && attachments.isEmpty()) return
+        going.value = emptyList()
+        container.generation.send(conversationId, body, images, attachments)
     }
+
+    private fun prepare(label: String, work: suspend () -> List<Going>) {
+        val key = "preparing-" + System.nanoTime()
+        going.update { it + Going.Preparing(key, label) }
+        viewModelScope.launch {
+            val ready = runCatching { work() }.getOrDefault(emptyList())
+            going.update { list -> list.flatMap { if (it.key == key) ready else listOf(it) } }
+        }
+    }
+
+    fun addPhotos(uris: List<android.net.Uri>) = prepare("photos") { uris.mapNotNull { container.media.photo(it) }.map { Going.Picture(it) } }
+    fun addFile(uri: android.net.Uri) = prepare("a file") { listOfNotNull(container.media.file(uri)?.let { Going.Item(it) }) }
+    fun addVideo(uri: android.net.Uri) = prepare("a video") { listOfNotNull(container.media.video(uri)?.let { Going.Item(it) }) }
+
+    /** Songs: one is a ticket, several a playlist (returned so the editor can open on it). */
+    fun addSongs(uris: List<android.net.Uri>, onMix: (ContentPart.Attachment) -> Unit) = prepare("music") {
+        val persona = header.value.persona?.name ?: "you"
+        val you = header.value.userPersona?.name ?: "me"
+        val made = container.media.songs(uris, persona, you)
+        if (made?.kind == AttachmentKind.PLAYLIST) onMix(made)
+        listOfNotNull(made?.let { Going.Item(it) })
+    }
+
+    /** More songs for the mix being edited. */
+    suspend fun moreTracks(uris: List<android.net.Uri>): List<Track> = container.media.tracks(uris)
+
+    /** A link written in your note becomes a cutting waiting with the rest, once. */
+    fun noticeLinks(text: String) {
+        val known = going.value.mapNotNull { (it as? Going.Item)?.attachment?.url } + going.value.mapNotNull { (it as? Going.Preparing)?.key?.removePrefix("link:") }
+        LinkPreviews.findLinks(text).filter { it !in known }.forEach { url ->
+            val key = "link:$url"
+            going.update { it + Going.Preparing(key, url.substringAfter("://").substringBefore('/')) }
+            viewModelScope.launch {
+                val cutting = harness.links.cutting(url)
+                going.update { list -> list.map { if (it.key == key) Going.Item(cutting) else it } }
+            }
+        }
+    }
+
+    fun replace(item: Going) = going.update { list -> list.map { if (it.key == item.key) item else it } }
+
+    fun remove(item: Going) = going.update { list -> list.filterNot { it.key == item.key } }
 
     fun stop() = container.generation.cancel(conversationId)
     fun regenerate() = container.generation.regenerate(conversationId)

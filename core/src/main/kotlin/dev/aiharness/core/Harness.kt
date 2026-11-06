@@ -16,6 +16,7 @@ import dev.aiharness.core.llm.ProviderRegistry
 import dev.aiharness.core.llm.anthropic.AnthropicProvider
 import dev.aiharness.core.llm.gemini.GeminiProvider
 import dev.aiharness.core.llm.openai.OpenAiCompatibleProvider
+import dev.aiharness.core.media.LinkPreviews
 import dev.aiharness.core.memory.EmbedderFactory
 import dev.aiharness.core.memory.MemoryService
 import dev.aiharness.core.model.ActivityEntry
@@ -96,6 +97,7 @@ class Harness(
     val images = ImageService(imageGenerator, blobs, ::apiKey)
     val stickerService = StickerService(stickers, settings, clock)
     val stickerMaker = StickerMaker(images, blobs, stickers, stickerCutter, clock)
+    val links = LinkPreviews(blobs)
     val tools = ToolRegistry(
         listOf(
             MemorySaveTool(memory),

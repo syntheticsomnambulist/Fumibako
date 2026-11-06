@@ -68,6 +68,7 @@ class AgentRunner(private val h: Harness) {
         conversationId: String,
         text: String,
         images: List<ContentPart.Image> = emptyList(),
+        attachments: List<ContentPart.Attachment> = emptyList(),
     ): Flow<AgentEvent> = channelFlow {
         h.locks.withLock(conversationId) {
             val setup = resolveOrFail(conversationId) { send(it) } ?: return@withLock
@@ -93,6 +94,7 @@ class AgentRunner(private val h: Harness) {
                 parts = buildList {
                     if (text.isNotBlank()) add(ContentPart.Text(text))
                     addAll(images)
+                    addAll(attachments)
                 },
                 createdAt = now,
                 origin = MessageOrigin.USER,

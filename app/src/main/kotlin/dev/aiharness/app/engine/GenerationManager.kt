@@ -38,7 +38,12 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
 
     private fun flow(id: String) = states.getOrPut(id) { MutableStateFlow(GenerationState()) }
 
-    fun send(conversationId: String, text: String) = run(conversationId) { harness.agent.send(conversationId, text) }
+    fun send(
+        conversationId: String,
+        text: String,
+        images: List<ContentPart.Image> = emptyList(),
+        attachments: List<ContentPart.Attachment> = emptyList(),
+    ) = run(conversationId) { harness.agent.send(conversationId, text, images, attachments) }
 
     fun regenerate(conversationId: String) = run(conversationId) { harness.agent.regenerate(conversationId) }
 

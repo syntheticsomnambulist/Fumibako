@@ -258,6 +258,101 @@ sealed interface ContentPart {
     @Serializable
     @SerialName("reasoning")
     data class Reasoning(val text: String) : ContentPart
+
+    /**
+     * Something sent with a letter or note besides its text and pictures (photos stay [Image]s): a
+     * file, a song, a playlist, a video or a link. It carries what its frame shows, and a
+     * [description] written when it arrives, which later context epochs send instead of the file.
+     */
+    @Serializable
+    @SerialName("attachment")
+    data class Attachment(
+        val id: String,
+        val kind: AttachmentKind,
+        /** The file, copied into the app's storage; null for a link or a song that lives elsewhere. */
+        val ref: String? = null,
+        val mimeType: String? = null,
+        /** The file's name as it was picked. */
+        val name: String? = null,
+        val sizeBytes: Long? = null,
+        /** A PDF's pages. */
+        val pages: Int? = null,
+        /** A song's or playlist's title, or a link's headline. */
+        val title: String? = null,
+        val artist: String? = null,
+        val album: String? = null,
+        val lengthMs: Long? = null,
+        /** A playlist's songs, in order. */
+        val tracks: List<Track> = emptyList(),
+        /** The line beneath a playlist's title ("for Aria, from Sam"). */
+        val subtitle: String? = null,
+        /** A link's address, or where a song can be heard. */
+        val url: String? = null,
+        /** A link's site name, from its page. */
+        val site: String? = null,
+        /** A link's description, from its page. */
+        val snippet: String? = null,
+        /** A link's picture, a song's cover, or a video's poster. */
+        val pictureRef: String? = null,
+        /** A video's three frames (what a model that can't watch it receives). */
+        val frameRefs: List<String> = emptyList(),
+        /** A small picture of it for lists and the memory book. */
+        val thumbRef: String? = null,
+        val description: String? = null,
+    ) : ContentPart {
+        /** What a model that can't take it in reads, and the handle it knows it by: `[ticket: October Walk by Hana Sato, 3:42]`. */
+        val standIn: String
+            get() = "[" + when (kind) {
+                AttachmentKind.FILE -> "tag: " + listOfNotNull(name ?: "a file", fileFacts()).joinToString(", ")
+                AttachmentKind.SONG -> "ticket: " + listOfNotNull(songLine(title, artist), lengthMs?.let(::clock)).joinToString(", ")
+                AttachmentKind.PLAYLIST -> "cassette: " + listOfNotNull(
+                    title ?: "a mix",
+                    subtitle,
+                    "${tracks.size} songs".takeIf { tracks.isNotEmpty() },
+                    tracks.takeIf { it.isNotEmpty() }?.joinToString("; ") { songLine(it.title ?: it.name, it.artist) },
+                ).joinToString(", ")
+                AttachmentKind.VIDEO -> "film: " + listOfNotNull(title ?: name ?: "a video", lengthMs?.let(::clock)).joinToString(", ")
+                AttachmentKind.LINK -> "cutting: " + listOfNotNull(title, site, url).joinToString(", ")
+            } + "]"
+
+        private fun fileFacts(): String? = listOfNotNull(
+            mimeType?.substringAfter('/')?.uppercase()?.takeIf { it.length <= 12 },
+            pages?.let { if (it == 1) "1 page" else "$it pages" },
+            sizeBytes?.let(::humanSize),
+        ).joinToString(", ").ifEmpty { null }
+    }
+}
+
+@Serializable
+enum class AttachmentKind { FILE, SONG, PLAYLIST, VIDEO, LINK }
+
+/** One song on a playlist. */
+@Serializable
+data class Track(
+    val ref: String? = null,
+    val mimeType: String? = null,
+    val title: String? = null,
+    val artist: String? = null,
+    val lengthMs: Long? = null,
+    /** The file's name, for songs without tags. */
+    val name: String? = null,
+)
+
+private fun songLine(title: String?, artist: String?): String =
+    listOfNotNull(title ?: "a song", artist?.let { "by $it" }).joinToString(" ")
+
+/** "3:42", or "1:02:10". */
+fun clock(ms: Long): String {
+    val s = ms / 1000
+    return if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) else "%d:%02d".format(s / 60, s % 60)
+}
+
+/** "2.4 MB". */
+fun humanSize(bytes: Long): String = when {
+    bytes >= 1_000_000_000 -> "%.1f GB".format(bytes / 1e9)
+    bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1e6)
+    bytes >= 1_000 -> "${bytes / 1_000} KB"
+    else -> "$bytes bytes"
 }
 
 @Serializable
@@ -309,6 +404,9 @@ data class ChatMessage(
 
     val images: List<ContentPart.Image>
         get() = parts.filterIsInstance<ContentPart.Image>()
+
+    val attachments: List<ContentPart.Attachment>
+        get() = parts.filterIsInstance<ContentPart.Attachment>()
 
     val reasoning: String?
         get() = parts.filterIsInstance<ContentPart.Reasoning>().joinToString("\n") { it.text }.ifBlank { null }

@@ -74,6 +74,7 @@ fun StickerTray(
     onDrag: (Offset) -> Unit,
     onDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
 ) {
     val colors = paper
     var page by rememberSaveable { mutableStateOf(if (recent.isEmpty()) TrayPage.EMOJI else TrayPage.RECENT) }
@@ -100,6 +101,14 @@ fun StickerTray(
                 .drawBehind { drawLine(colors.nijimi1, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx()) },
             horizontalArrangement = Arrangement.spacedBy(3.dp),
         ) {
+            onBack?.let { back ->
+                Text(
+                    "‹ Add",
+                    style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp),
+                    color = colors.usuzumi1,
+                    modifier = Modifier.clip(PaperCorner).clickable(onClickLabel = "Back to everything you can add") { back() }.padding(horizontal = 4.dp, vertical = 6.dp),
+                )
+            }
             listOf(TrayPage.RECENT to "Recent", TrayPage.PERSONA to "$personaName's", TrayPage.SHARED to "Shared", TrayPage.EMOJI to "Emoji").forEach { (p, label) ->
                 val on = page == p
                 Box(

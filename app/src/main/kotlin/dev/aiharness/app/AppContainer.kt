@@ -42,6 +42,7 @@ class AppContainer(private val context: Context) {
 
     private val secrets = KeystoreSecretStore(context)
     val blobStore = FileBlobStore(context)
+    val media = dev.aiharness.app.media.MediaImport(context, blobStore)
     private val database = HarnessDatabase.create(context, onWiped = ::forgetEverythingElse)
 
     val harness = Harness(

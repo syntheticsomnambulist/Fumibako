@@ -77,6 +77,9 @@ import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Sticker
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.offset
@@ -119,6 +122,45 @@ fun ChatScreen(nav: NavController, conversationId: String) {
 
     // Stickers: the tray, the one selected (and its live position while it moves), dragging one in.
     var trayOpen by rememberSaveable { mutableStateOf(false) }
+    var stickerPage by rememberSaveable { mutableStateOf(false) }
+    val going by vm.going.collectAsStateWithLifecycle()
+    var editingMix by remember { mutableStateOf<dev.aiharness.core.model.ContentPart.Attachment?>(null) }
+    val scope = rememberCoroutineScope()
+    val pickPhotos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(12)) { uris -> if (uris.isNotEmpty()) { vm.addPhotos(uris); trayOpen = false } }
+    val pickVideo = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let { vm.addVideo(it); trayOpen = false } }
+    val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { vm.addFile(it); trayOpen = false } }
+    val pickSongs = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) { vm.addSongs(uris) { mix -> editingMix = mix }; trayOpen = false }
+    }
+    val moreSongs = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        val mix = editingMix ?: return@rememberLauncherForActivityResult
+        if (uris.isNotEmpty()) scope.launch {
+            val added = vm.moreTracks(uris)
+            val updated = mix.copy(tracks = mix.tracks + added, lengthMs = (mix.tracks + added).sumOf { it.lengthMs ?: 0L })
+            editingMix = updated
+            vm.replace(Going.Item(updated))
+        }
+    }
+    var cameraShot by remember { mutableStateOf<android.net.Uri?>(null) }
+    val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
+        val shot = cameraShot
+        if (ok && shot != null) { vm.addPhotos(listOf(shot)); trayOpen = false }
+    }
+    val container2 = LocalAppContainer.current
+    val pickFromTray: (TrayItem) -> Unit = { item ->
+        when (item) {
+            TrayItem.PHOTOS -> pickPhotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            TrayItem.CAMERA -> {
+                val (_, uri) = container2.media.cameraTarget()
+                cameraShot = uri
+                takePicture.launch(uri)
+            }
+            TrayItem.FILE -> pickFile.launch(arrayOf("*/*"))
+            TrayItem.MUSIC -> pickSongs.launch(arrayOf("audio/*"))
+            TrayItem.VIDEO -> pickVideo.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+            TrayItem.STICKERS -> stickerPage = true
+        }
+    }
     var selectedStickerId by remember { mutableStateOf<String?>(null) }
     var moving by remember { mutableStateOf<Sticker?>(null) }
     var peeled by remember { mutableStateOf<Sticker?>(null) }
@@ -269,6 +311,9 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             )
         }
 
+        GoingWithYourNote(going, onRemove = { vm.remove(it) }, onOpen = { item ->
+            ((item as? Going.Item)?.attachment)?.takeIf { it.kind == dev.aiharness.core.model.AttachmentKind.PLAYLIST }?.let { editingMix = it }
+        })
         val youInk = header.userPersona?.ink?.let { stationery.ink(it) } ?: stationery.you
         val sheet = stationery
         // Half-typed :name: — offer the stickers it could be.
@@ -282,18 +327,20 @@ fun ChatScreen(nav: NavController, conversationId: String) {
         }
         EntryBar(
             value = input,
-            onValueChange = { input = it },
+            onValueChange = { input = it; vm.noticeLinks(it) },
             placeholder = "Write to $personaName…",
             personaInk = stationery.ink(persona?.ink),
             youInk = youInk,
             busy = generation.active,
             onSend = { vm.send(input); input = ""; trayOpen = false },
+            hasAttachments = going.isNotEmpty() && going.none { it is Going.Preparing },
             onStop = { vm.stop() },
             trayOpen = trayOpen,
             onTray = {
                 if (trayOpen) trayOpen = false else {
                     keyboard?.hide()
                     focus.clearFocus()
+                    stickerPage = false
                     trayOpen = true
                 }
             },
@@ -310,8 +357,10 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 ) { field() }
             },
         )
-        if (trayOpen) {
+        if (trayOpen && !stickerPage) TrayButtons(pickFromTray)
+        if (trayOpen && stickerPage) {
             StickerTray(
+                onBack = { stickerPage = false },
                 personaName = personaName,
                 personaId = persona?.id,
                 recent = recentStickers,
@@ -345,6 +394,25 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     }
     }
 
+    editingMix?.let { mix ->
+        PlaylistEditor(
+            mix,
+            stationery.ink(header.userPersona?.ink ?: "sora"),
+            onChange = { changed -> editingMix = changed; vm.replace(Going.Item(changed)) },
+            onAddSongs = { moreSongs.launch(arrayOf("audio/*")) },
+            onDone = {
+                // Down to one song, the mix goes as a ticket; with none, it comes out of the note.
+                when (mix.tracks.size) {
+                    0 -> vm.remove(Going.Item(mix))
+                    1 -> mix.tracks.single().let { t ->
+                        vm.replace(Going.Item(mix.copy(kind = dev.aiharness.core.model.AttachmentKind.SONG, ref = t.ref, mimeType = t.mimeType, name = t.name, title = t.title, artist = t.artist, lengthMs = t.lengthMs, tracks = emptyList(), subtitle = null)))
+                    }
+                    else -> Unit
+                }
+                editingMix = null
+            },
+        )
+    }
     selected?.let { group -> MessageActions(group, vm, onDismiss = { selected = null }) }
     viewing?.let { ref ->
         Dialog(onDismissRequest = { viewing = null }) {
@@ -462,6 +530,7 @@ private fun EntryBar(
     onStop: () -> Unit,
     trayOpen: Boolean = false,
     onTray: () -> Unit = {},
+    hasAttachments: Boolean = false,
     onFieldFocus: () -> Unit = {},
     draft: @Composable RowScope.(field: @Composable () -> Unit) -> Unit = { it() },
 ) {
@@ -485,10 +554,10 @@ private fun EntryBar(
                 .clip(shape)
                 .background(if (trayOpen) colors.chitsu else colors.kami)
                 .border(1.dp, if (trayOpen) colors.nijimi2 else colors.nijimi1, shape)
-                .clickable(onClickLabel = if (trayOpen) "Close the tray" else "Add a sticker") { onTray() },
+                .clickable(onClickLabel = if (trayOpen) "Close the tray" else "Add something") { onTray() },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Filled.Add, if (trayOpen) "Close the tray" else "Add a sticker", tint = colors.sumi, modifier = Modifier.size(20.dp).graphicsLayer { rotationZ = turn })
+            Icon(Icons.Filled.Add, if (trayOpen) "Close the tray" else "Add something", tint = colors.sumi, modifier = Modifier.size(20.dp).graphicsLayer { rotationZ = turn })
         }
         draft {
         BasicTextField(
@@ -513,7 +582,7 @@ private fun EntryBar(
             },
         )
         }
-        val canSend = value.isNotBlank()
+        val canSend = value.isNotBlank() || hasAttachments
         val active = busy || canSend
         // Dimmed by colour, not by an alpha layer: adding and removing that layer as you typed left the
         // button undrawn (though still tappable).

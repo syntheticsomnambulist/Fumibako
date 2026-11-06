@@ -100,7 +100,7 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
     }
 }
 
-/** Generated images and avatars as files under the app's private storage. Refs look like `file:<name>`. */
+/** Pictures, stickers and attachments as files under the app's private storage. Refs look like `file:<name>`. */
 class FileBlobStore(context: Context) : BlobStore {
     private val dir = File(context.filesDir, "blobs").apply { mkdirs() }
 
@@ -114,6 +114,13 @@ class FileBlobStore(context: Context) : BlobStore {
 
     override suspend fun get(ref: String): ByteArray? = withContext(Dispatchers.IO) {
         fileFor(ref)?.takeIf { it.exists() }?.readBytes()
+    }
+
+    /** Stores what [input] holds without reading it all into memory (songs and videos can be large). */
+    suspend fun putStream(input: java.io.InputStream, extension: String): String = withContext(Dispatchers.IO) {
+        val name = "${newId()}.${extension.trimStart('.')}"
+        File(dir, name).outputStream().use { out -> input.use { it.copyTo(out) } }
+        PREFIX + name
     }
 
     override suspend fun delete(ref: String) {

@@ -148,7 +148,10 @@ class ScreenshotTour {
         compose.onNode(hasSetTextAction()).performTextInput("You'll get to pick for yourself :3\nWe've just updated to a new version.")
         assertDrawn(compose.onNodeWithContentDescription("Send"), shot("${prefix}_02b_chat_typing"))
         // The + tray: tap a sticker onto your note.
-        compose.onNodeWithContentDescription("Add a sticker").performClick()
+        compose.onNodeWithContentDescription("Add something").performClick()
+        waitFor("Camera")
+        shot("${prefix}_02c0_tray")
+        click("Stickers")
         waitFor("Hold and drag")
         compose.waitUntilAtLeastOneExists(hasContentDescription(":blush:"), 10_000)
         shot("${prefix}_02c_sticker_tray")
@@ -167,6 +170,10 @@ class ScreenshotTour {
         waitFor("Only Aria can peel it off")
         shot("${prefix}_02f_her_sticker")
         click("Done")
+        // A link written in the note waits as a cutting (a local address: never fetched).
+        compose.onNode(hasSetTextAction()).performTextInput(" http://localhost/tea")
+        waitFor("GOING WITH YOUR NOTE")
+        shot("${prefix}_02c9_going_with_your_note")
         // Typing a :name: offers the stickers it could be.
         compose.onNode(hasSetTextAction()).performTextInput(" :ari")
         waitFor(":aria-hello:")

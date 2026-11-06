@@ -234,6 +234,7 @@ class ContextBuilder(
                             LlmPart.Text("[Image${image.caption?.let { ": $it" } ?: ""}]")
                         }
                     }
+                    message.attachments.forEach { parts += LlmPart.Text(it.description?.let { d -> "${it.standIn} $d" } ?: it.standIn) }
                     if (parts.isNotEmpty()) out += LlmMessage.User(parts)
                 }
                 MessageRole.ASSISTANT -> {
@@ -241,7 +242,8 @@ class ContextBuilder(
                         message.epochId == state.epochId &&
                         message.providerType == profile.provider
                     val calls = message.toolCalls.map { LlmToolCall(it.id, it.name, it.argumentsJson) }
-                    val imageNotes = message.images.joinToString("\n") { "[Image you sent: ${it.caption.orEmpty()}]" }
+                    val imageNotes = (message.images.map { "[Image you sent: ${it.caption.orEmpty()}]" } + message.attachments.map { "(you sent ${it.standIn})" })
+                        .joinToString("\n")
                     val text = listOf(message.text, imageNotes).filter { it.isNotBlank() }.joinToString("\n")
                     if (text.isBlank() && calls.isEmpty() && !replayValid) return@forEachIndexed
                     out += LlmMessage.Assistant(text, calls, if (replayValid) message.replay else null)

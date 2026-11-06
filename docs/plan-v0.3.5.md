@@ -7,7 +7,17 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
 
 ## Progress
 
-- Nothing built yet.
+- **Step 1, attachments and the tray: done.** Files, songs, playlists, videos and links are a new
+  content part (photos stay pictures), each with a stand-in a model reads until step 3
+  (`[cassette: rainy day mix, …]`, `[tag: market-map.pdf, PDF, 3 pages, 2.4 MB]`). The + tray
+  opens on five buttons drawn after the design canvas (Photos, Camera, File, Music, Video) and
+  Stickers. What you pick is copied into the app; pictures are scaled to 1280 px; songs bring
+  their tags, length and cover; PDFs their pages and first page; videos their length and three
+  frames. Picked items wait under "Going with your note" with a remove button. Several songs make
+  a playlist and open the playlist editor (label, the line beneath, songs moved up and down or
+  taken out, more added; down to one, it goes as a ticket). A link written in a note becomes a
+  cutting from the page's Open Graph data (public addresses only, redirects checked); on a line
+  of its own it leaves the text when sent. A note can be attachments alone.
 
 ## What v0.3.5 includes
 
