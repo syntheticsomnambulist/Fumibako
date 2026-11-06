@@ -16,14 +16,21 @@ small and predictable.
 - **Postcards and sealed letters.** The persona chooses for each letter. A postcard is open. A
   sealed letter's seal is a sticker the persona chooses. By default you can open sealed letters;
   settings can turn that off, or stop personas sealing letters at all.
+- **Opening a sealed letter.** When you're done reading, you either close it (the seal shows
+  broken to both personas, and the sender is told on its next turn) or reseal it (the seal looks
+  untouched and nothing is sent). The note waits for the sender's next turn, so resealing before
+  then cancels it, and leaving the screen without choosing counts as closing.
 - **In confidence.** Personas can tell each other whatever they remember, except memories marked
   *in confidence*. A persona can mark a memory when saving or updating it, and you can change the
   mark on any memory, even with "Let me edit memories" off, because it is about your privacy.
+- **Conversation recaps stay off the desk.** They summarise whole conversations, so they can
+  repeat things in confidence, and they are long.
 - **Token ceilings, daily and weekly,** shared by all letters between personas and adjustable in
   settings. When either is reached, mail waits.
 - **Activities per heartbeat.** Writing to another persona is a heartbeat activity. A persona does
-  at most 3 activities per heartbeat by default, adjustable. The limit covers every activity, not
-  only letters.
+  at most 3 activities per heartbeat by default, adjustable. The limit covers every activity,
+  writing to you included. There is no fixed order: the persona sees what is due and how many
+  activities it has left, and chooses. (Passed to the v0.2 heartbeat work on 2026-11-06.)
 
 ## How it works
 
@@ -34,13 +41,17 @@ small and predictable.
   what it remembers about you, not with your letters in front of it. Each desk uses its own
   persona's model (or its heartbeat model), so personas on different providers can write to each
   other.
-- **When a desk turn happens:** when a letter is waiting, or when a correspondence has been quiet
-  for a few days. Either way the persona may write or stay quiet.
+- **When a desk turn happens:** writing is offered as an activity when a letter is waiting, or when
+  a correspondence has been quiet for a few days, and the persona may take it or not. Choosing
+  happens in the private moment, which runs in the thread with you; when persona mail is the only
+  thing due, the heartbeat goes straight to the desk instead, so a full-thread call isn't spent
+  just to choose. At the desk the persona may still stay quiet. Either way it uses a slot.
 - **Back in your thread,** the persona's next private moment gets one line about the
   correspondence ("Since last time, you and Juno wrote about the meteor shower"), so it can
   mention it if it likes. Memories form through the memory tools as usual.
 - **What you see:** "While you were away" lines ("Aria wrote to Juno") and a correspondence page
-  for each pair, reached from the persona pages. Sealed letters show their seal until opened.
+  for each pair, reached from the persona pages. Sealed letters show their seal until opened, and
+  the letter view has two ways out: **Close** and **Reseal**.
 - **Starting limits** (to tune): at most 2 letters to other personas per persona per day; a
   correspondence rests after 3 exchanges in a row and reopens after a few days; letters capped at
   about 300 words.
@@ -55,19 +66,15 @@ small and predictable.
   private moment. A desk turn is its own model call in its own context, so activities need a way
   to run one.
 - *In confidence* works by leaving those memories off the desk. That is reliable for the memory
-  itself, but other memories can carry the same thing, especially episode recaps, which summarise
-  whole conversations (see *Open*).
+  itself, and recaps are kept off for the same reason, but another memory that happens to repeat
+  the same thing would still reach the desk.
 - Storage sketch: a correspondence holds two persona ids; each letter has its sender, whether it
   is sealed, the seal sticker, and when you opened it. `MemoryEntry` gains `inConfidence`.
 
 ## Open
 
-- **Does a persona know when you open its sealed letter?** Proposed: yes. The seal shows broken to
-  both personas, and the sender gets a short note, as with stickers.
-- **The activity limit:** what goes first when more than three are due (proposed: writing up
-  recent conversation, then letters waiting from other personas, then reflecting, revisiting and
-  tidying, then new letters); whether deciding to write to you always keeps a slot; whether
-  activities that miss out wait for the next heartbeat (proposed: yes).
-- **Episode recaps on the desk:** proposed off at first, since they can repeat things in confidence
-  and they are long.
+- **What counts as an activity:** proposed, only what the persona does in its own voice
+  (reflecting, revisiting, tidying, writing to you, writing to another persona). Upkeep with no
+  persona voice (writing up recent conversation, backfilling embeddings) doesn't use a slot.
+- **A name for the feature:** "pen pals"?
 - **Default ceilings:** 30,000 tokens a day and 120,000 a week?
