@@ -59,7 +59,7 @@ small and predictable.
 - **Starting limits** (to tune): at most 2 letters to other personas per persona per day; a
   correspondence rests after 3 exchanges in a row and reopens after a few days; letters capped at
   about 300 words.
-- **Starting ceilings:** a desk turn is roughly 3,000 to 7,000 tokens, depending on the persona's
+- **Default ceilings** (agreed, to revisit with real use): a desk turn is roughly 3,000 to 7,000 tokens, depending on the persona's
   length and on thinking. 30,000 a day and 120,000 a week allow about six letters on a busy day,
   but not every day. Usage comes from what providers report (already stored on replies); where a
   provider doesn't report it, it is estimated from length.
@@ -77,4 +77,4 @@ small and predictable.
 
 ## Open
 
-- **Default ceilings:** 30,000 tokens a day and 120,000 a week?
+- **Mockups** for the pen pals page and the sealed letter.
