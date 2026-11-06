@@ -147,7 +147,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     val scope = rememberCoroutineScope()
     val pickPhotos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(12)) { uris -> if (uris.isNotEmpty()) { vm.addPhotos(uris); trayOpen = false } }
     val pickVideo = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let { vm.addVideo(it); trayOpen = false } }
-    val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { vm.addFile(it); trayOpen = false } }
+    val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { vm.addFile(it) { mix -> editingMix = mix }; trayOpen = false } }
     val pickSongs = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNotEmpty()) { vm.addSongs(uris) { mix -> editingMix = mix }; trayOpen = false; musicPage = false }
     }
@@ -437,7 +437,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             MusicTray(
                 search = songSearch,
                 onQuery = vm::searchSongs,
-                onPick = { song -> vm.addFoundSong(song); trayOpen = false; musicPage = false },
+                onPick = { song -> vm.addFoundSong(song) { mix -> editingMix = mix }; trayOpen = false; musicPage = false },
                 onFromPhone = { pickSongs.launch(arrayOf("audio/*")) },
                 onBack = { musicPage = false },
                 youInk = stationery.dayColors.ink(header.userPersona?.ink ?: "sora"),
@@ -525,9 +525,8 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 // Down to one song, the mix goes as a ticket; with none, it comes out of the note.
                 when (mix.tracks.size) {
                     0 -> vm.remove(Going.Item(mix))
-                    1 -> mix.tracks.single().let { t ->
-                        vm.replace(Going.Item(mix.copy(kind = dev.aiharness.core.model.AttachmentKind.SONG, ref = t.ref, mimeType = t.mimeType, name = t.name, title = t.title, artist = t.artist, lengthMs = t.lengthMs, tracks = emptyList(), subtitle = null)))
-                    }
+                    // Its preview, cover and link too, for a song from the search.
+                    1 -> vm.replace(Going.Item(mix.tracks.single().ticket(mix.id)))
                     else -> Unit
                 }
                 editingMix = null

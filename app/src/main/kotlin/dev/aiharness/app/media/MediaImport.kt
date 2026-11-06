@@ -48,6 +48,9 @@ class MediaImport(private val context: Context, private val blobs: FileBlobStore
 
     private val resolver get() = context.contentResolver
 
+    /** What kind of thing is at [uri] ("video/mp4"), by what the phone says or else its name. */
+    fun typeOf(uri: Uri): String? = runCatching { resolver.getType(uri) }.getOrNull() ?: mimeOf(nameAndSize(uri).first)
+
     /** A photo, scaled so its longer side is at most [maxSide] (0 keeps it full size). */
     suspend fun photo(uri: Uri, maxSide: Int = 1280): ContentPart.Image? = withContext(Dispatchers.IO) {
         val bitmap = decode(uri, maxSide) ?: return@withContext null

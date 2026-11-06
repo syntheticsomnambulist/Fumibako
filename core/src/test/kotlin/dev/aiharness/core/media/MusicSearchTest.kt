@@ -71,10 +71,15 @@ class MusicSearchTest {
         assertTrue(ticket.previewOnly)
         assertEquals(1200, blobs.get(ticket.ref!!)?.size)
         assertNotNull(ticket.pictureRef?.let { blobs.get(it) })
-        assertEquals("[ticket: Harness Your Hopes (B-side) by Pavement, from Brighten the Corners (1997), 3:26, with its 30-second preview]", ticket.standIn)
+        assertEquals("[ticket: Harness Your Hopes (B-side) by Pavement, from Brighten the Corners (1997), 3:26]", ticket.standIn)
         val gemini = ModelProfile(id = "g", name = "Gemini", provider = ProviderType.GEMINI, modelId = "gemini-3-flash")
         assertEquals((MediaSupport.PREVIEW_MS / 1000 * 32).toInt(), MediaSupport.wholeTokens(ticket, gemini), "a model hears thirty seconds of it")
         assertEquals("Aria hears its 30-second preview.", MediaSupport.cantTakeIn(ticket, gemini, "Aria"))
+        // Only a model that hears it is told it's a preview.
+        val heard = MediaParts(blobs).attachmentParts(ticket, MediaParts.Way.WHOLE, listOf(ByteArray(3)), describedNow = false, profile = gemini)
+        assertEquals("[ticket: Harness Your Hopes (B-side) by Pavement, from Brighten the Corners (1997), 3:26] (its 30-second preview:)", (heard.first() as dev.aiharness.core.llm.LlmPart.Text).text)
+        val read = MediaParts(blobs).attachmentParts(ticket, null, emptyList(), describedNow = false, profile = gemini)
+        assertEquals(listOf(ticket.standIn), read.map { (it as dev.aiharness.core.llm.LlmPart.Text).text })
     }
 
     @Test

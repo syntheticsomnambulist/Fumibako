@@ -9,6 +9,7 @@ import dev.aiharness.core.media.MusicLinks
 import dev.aiharness.core.media.SongSource
 import dev.aiharness.core.util.newId
 import dev.aiharness.core.model.Track
+import dev.aiharness.core.model.asTrack
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ChatMessage
@@ -178,8 +179,17 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         return true
     }
 
-    /** Shows [label] waiting (with its [kind]'s drawing) while [work] makes it ready, and how far along that is when it says. */
-    private fun prepare(label: String, kind: TrayItem?, work: suspend (progress: (Float) -> Unit) -> List<Going>) {
+    /**
+     * Shows [label] waiting (with its [kind]'s drawing) while [work] makes it ready, and how far
+     * along that is when it says. A song made ready with [onMix] joins a song or mix already
+     * waiting (see [joinMix]).
+     */
+    private fun prepare(
+        label: String,
+        kind: TrayItem?,
+        onMix: ((ContentPart.Attachment) -> Unit)? = null,
+        work: suspend (progress: (Float) -> Unit) -> List<Going>,
+    ) {
         val key = "preparing-" + System.nanoTime()
         going.update { it + Going.Preparing(key, label, kind) }
         val progress: (Float) -> Unit = { p ->
@@ -188,22 +198,59 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         this.work.launch {
             val ready = runCatching { work(progress) }.getOrDefault(emptyList())
             going.update { list -> list.flatMap { if (it.key == key) ready else listOf(it) } }
+            val song = (ready.singleOrNull() as? Going.Item)?.attachment
+            if (onMix != null && song != null && song.kind == AttachmentKind.SONG && song.ref != null) {
+                // The editor it opens is the screen's: told on its thread.
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { joinMix(song, onMix) }
+            }
         }
+    }
+
+    /**
+     * A song added while another (with its file) is waiting: the two become a mix, as picking
+     * several at once does, and the mix's editor opens on it ([onMix]). One added to a waiting
+     * mix joins it, and the editor opens again.
+     */
+    private fun joinMix(song: ContentPart.Attachment, onMix: (ContentPart.Attachment) -> Unit) {
+        var mixed: ContentPart.Attachment? = null
+        going.update { list ->
+            val (joined, mix) = joinedIntoMix(list, song, header.value.persona?.name ?: "you", header.value.userPersona?.name ?: "me")
+            mixed = mix
+            joined
+        }
+        mixed?.let(onMix)
     }
 
     fun addPhotos(uris: List<android.net.Uri>) = prepare("photos", TrayItem.PHOTOS) {
         val side = harness.settings.current().media.pictureSide
         uris.mapNotNull { container.media.photo(it, side) }.map { Going.Picture(it) }
     }
-    fun addFile(uri: android.net.Uri) = prepare("a file", TrayItem.FILE) { listOfNotNull(container.media.file(uri)?.let { Going.Item(it) }) }
+    /**
+     * A file from the phone's files. A video, song or picture goes as itself (a film strip, a
+     * ticket, a photo), which also keeps its real name (the photo picker may not give one); one
+     * that can't be read as that goes as a file after all.
+     */
+    fun addFile(uri: android.net.Uri, onMix: (ContentPart.Attachment) -> Unit) {
+        val asFile: suspend () -> List<Going> = { listOfNotNull(container.media.file(uri)?.let { Going.Item(it) }) }
+        when (container.media.typeOf(uri)?.substringBefore('/')) {
+            "video" -> prepare("a video", TrayItem.VIDEO) { progress -> container.media.video(uri, progress)?.let { listOf(Going.Item(it)) } ?: asFile() }
+            "audio" -> prepare("a song", TrayItem.MUSIC, onMix) { progress ->
+                container.media.songs(listOf(uri), header.value.persona?.name ?: "you", header.value.userPersona?.name ?: "me", progress)?.let { listOf(Going.Item(it)) } ?: asFile()
+            }
+            "image" -> prepare("a photo", TrayItem.PHOTOS) {
+                container.media.photo(uri, harness.settings.current().media.pictureSide)?.let { listOf(Going.Picture(it)) } ?: asFile()
+            }
+            else -> prepare("a file", TrayItem.FILE) { asFile() }
+        }
+    }
     fun addVideo(uri: android.net.Uri) = prepare("a video", TrayItem.VIDEO) { progress -> listOfNotNull(container.media.video(uri, progress)?.let { Going.Item(it) }) }
 
     /** Songs: one is a ticket, several a playlist (returned so the editor can open on it). */
-    fun addSongs(uris: List<android.net.Uri>, onMix: (ContentPart.Attachment) -> Unit) = prepare("music", TrayItem.MUSIC) { progress ->
+    fun addSongs(uris: List<android.net.Uri>, onMix: (ContentPart.Attachment) -> Unit) = prepare("music", TrayItem.MUSIC, onMix) { progress ->
         val persona = header.value.persona?.name ?: "you"
         val you = header.value.userPersona?.name ?: "me"
         val made = container.media.songs(uris, persona, you, progress)
-        if (made?.kind == AttachmentKind.PLAYLIST) onMix(made)
+        if (made?.kind == AttachmentKind.PLAYLIST) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { onMix(made) }
         listOfNotNull(made?.let { Going.Item(it) })
     }
 
@@ -231,8 +278,8 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         }
     }
 
-    /** A song picked from the search, as a ticket with its preview. */
-    fun addFoundSong(song: dev.aiharness.core.media.FoundSong) = prepare("a song", TrayItem.MUSIC) { listOf(Going.Item(harness.music.ticket(song))) }
+    /** A song picked from the search, as a ticket with its preview (or onto the mix, with another waiting). */
+    fun addFoundSong(song: dev.aiharness.core.media.FoundSong, onMix: (ContentPart.Attachment) -> Unit) = prepare("a song", TrayItem.MUSIC, onMix) { listOf(Going.Item(harness.music.ticket(song))) }
 
     /** More songs for the mix being edited. */
     suspend fun moreTracks(uris: List<android.net.Uri>): List<Track> = container.media.tracks(uris)

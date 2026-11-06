@@ -56,6 +56,7 @@ import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.Track
+import dev.aiharness.core.model.asTrack
 import dev.aiharness.core.model.clock
 
 /** What the + tray offers. */
@@ -75,6 +76,25 @@ sealed interface Going {
 
     /** Still being made ready: [kind] for its drawing, and [progress] (0 to 1) once the work says how far along it is. */
     data class Preparing(override val key: String, val label: String, val kind: TrayItem? = null, val progress: Float? = null) : Going
+}
+
+/**
+ * What's waiting once [song] (already in [list]) joins a mix: added to a waiting mix, or made
+ * into one ("A mix for Pidge", "for Pidge, from Ness") with a song already waiting (one with its
+ * file: a link's ticket can't play on a cassette). The mix takes the place of what it was made
+ * from. Returns the list unchanged, and no mix, when there's nothing to join.
+ */
+fun joinedIntoMix(list: List<Going>, song: ContentPart.Attachment, toName: String, fromName: String, newId: () -> String = { dev.aiharness.core.util.newId() }): Pair<List<Going>, ContentPart.Attachment?> {
+    val waiting = list.mapNotNull { (it as? Going.Item)?.attachment }.filter { it.id != song.id }
+    val mix = waiting.lastOrNull { it.kind == AttachmentKind.PLAYLIST }
+    val single = waiting.lastOrNull { it.kind == AttachmentKind.SONG && it.ref != null }
+    val joined = mix ?: single ?: return list to null
+    val tracks = (if (mix != null) mix.tracks else listOf(single!!.asTrack())) + song.asTrack()
+    val made = mix?.copy(tracks = tracks, lengthMs = tracks.sumOf { it.lengthMs ?: 0L }) ?: ContentPart.Attachment(
+        newId(), AttachmentKind.PLAYLIST, title = "A mix for $toName", subtitle = "for $toName, from $fromName",
+        tracks = tracks, lengthMs = tracks.sumOf { it.lengthMs ?: 0L },
+    )
+    return list.filterNot { it.key == song.id }.map { if (it.key == joined.id) Going.Item(made) else it } to made
 }
 
 /** The tray's first page: a paper button for each kind of thing, each with a small drawing of it. */

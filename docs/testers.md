@@ -67,8 +67,9 @@ ads or analytics.
 - Type `:` and a few letters to write a sticker into your note.
 - **Sending things:** the **+** also has Photos, Camera, File, Music and Video. Music searches
   Apple's catalog: tap a song's play button to hear a preview, tap the song to send it as a ticket with its preview
-  and a link to the whole song; "From your phone" picks files. Several songs make a mixtape (a
-  cassette) you can name and reorder. A link in your note becomes a newspaper cutting with the
+  and a link to the whole song; "From your phone" picks files. Several songs (picked together,
+  or one after another) make a mixtape (a cassette) you can name and reorder. Google Photos,
+  behind Video, gives videos numbers for names; pick one with File to keep its name. A link in your note becomes a newspaper cutting with the
   page's title; a Spotify, Apple Music, SoundCloud or Bandcamp link becomes a ticket, and a
   YouTube video can be either (tap it under "Going with your note"). Each arrives as stationery, and a line under it says what the persona can't take in
   with its model (Claude reads PDFs; Gemini also hears songs and watches videos).

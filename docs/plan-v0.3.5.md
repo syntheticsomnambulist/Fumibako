@@ -171,6 +171,18 @@ https://claude.ai/artifact/YRJXX7GbfT5Xpj8szVE6LA).
   - The running film no longer shows bare strip before its frames come round; the + and send
     buttons stand exactly as tall as the box at any text size. A sticker stuck and peeled
     before your next note was already left out of what the persona hears; a test says so now.
+- **After 0.3.5.4** (your notes):
+  - A note of only things (tickets, a tag, a film) shows in the thread; it was left out when it
+    had no words or photos, though the persona got it.
+  - Songs added one by one (from the search, or the phone) make a mixtape, as picking several
+    at once does: the second turns the first into a cassette and opens its editor, and more
+    join it. A searched song keeps its preview, cover and link on the cassette (and back on a
+    ticket if the mix is taken down to one).
+  - File keeps a video, song or picture what it is: a film strip, a ticket, a photo, with its
+    real name (Google Photos, behind the Video button, hands out numbers instead); one that
+    can't be read as that still goes as a tag.
+  - Only a model that hears a searched song is told it's hearing "its 30-second preview"; to
+    others the ticket reads as the song.
 
 ## What v0.3.5 includes
 

@@ -80,6 +80,10 @@ class MediaParts(private val blobs: BlobStore) {
     fun attachmentParts(a: ContentPart.Attachment, way: Way?, bytes: List<ByteArray>, describedNow: Boolean, profile: ModelProfile): List<LlmPart> = when {
         describedNow -> listOf(LlmPart.Text("${a.standIn} ${a.description}"))
         way == Way.WHOLE && MediaSupport.isText(a) -> listOf(LlmPart.Text(textFile(a, bytes.first(), MediaSupport.textChars(profile))))
+        // A song from a music search is sent as its preview; only a model hearing it is told so
+        // (one that can't hear it has no use for a preview it isn't sent).
+        way == Way.WHOLE && a.kind == AttachmentKind.SONG && a.previewOnly ->
+            listOf(LlmPart.Text("${a.standIn} (its 30-second preview:)"), LlmPart.Media(bytes.first(), wireType(a), a.title))
         way == Way.WHOLE -> listOf(LlmPart.Text(a.standIn), LlmPart.Media(bytes.first(), wireType(a), a.name ?: a.title))
         way == Way.PICTURES -> listOf(LlmPart.Text("${a.standIn} ${if (a.kind == AttachmentKind.VIDEO) "(three frames from it:)" else "(its first page:)"}")) +
             bytes.map { LlmPart.Image(it, "image/jpeg") }

@@ -341,9 +341,7 @@ sealed interface ContentPart {
         val standIn: String
             get() = "[" + when (kind) {
                 AttachmentKind.FILE -> "tag: " + listOfNotNull(name ?: "a file", documentLine(), fileFacts()).joinToString(", ")
-                AttachmentKind.SONG -> "ticket: " + listOfNotNull(
-                    songLine(title, artist), albumLine(), lengthMs?.let(::clock), "with its 30-second preview".takeIf { previewOnly && ref != null },
-                ).joinToString(", ")
+                AttachmentKind.SONG -> "ticket: " + listOfNotNull(songLine(title, artist), albumLine(), lengthMs?.let(::clock)).joinToString(", ")
                 AttachmentKind.PLAYLIST -> "cassette: " + listOfNotNull(
                     title ?: "a mix",
                     subtitle,
@@ -433,6 +431,23 @@ data class Track(
     val lengthMs: Long? = null,
     /** The file's name, for songs without tags. */
     val name: String? = null,
+    /** Where the whole song is, for one picked from a music search (its file is the preview). */
+    val url: String? = null,
+    val previewOnly: Boolean = false,
+    /** Its cover. */
+    val pictureRef: String? = null,
+) {
+    /** This song as a ticket of its own. */
+    fun ticket(id: String): ContentPart.Attachment = ContentPart.Attachment(
+        id, AttachmentKind.SONG, ref = ref, mimeType = mimeType, name = name, title = title, artist = artist, album = album, year = year,
+        lengthMs = lengthMs, url = url, previewOnly = previewOnly, pictureRef = pictureRef,
+    )
+}
+
+/** A ticket's song as a track on a mix. */
+fun ContentPart.Attachment.asTrack(): Track = Track(
+    ref = ref, mimeType = mimeType, title = title, artist = artist, album = album, year = year, lengthMs = lengthMs, name = name,
+    url = url, previewOnly = previewOnly, pictureRef = pictureRef,
 )
 
 /** The day a video was recorded, as the persona's context writes days: "3 Nov 2026". */

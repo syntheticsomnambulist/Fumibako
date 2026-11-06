@@ -66,6 +66,19 @@ class ThreadTest {
     }
 
     @Test
+    fun aNoteOfOnlyThingsStillShows() {
+        val song = ContentPart.Attachment("s1", dev.aiharness.core.model.AttachmentKind.SONG, title = "Harness Your Hopes", artist = "Pavement")
+        val rows = buildThread(
+            listOf(
+                msg(MessageRole.USER, song, origin = MessageOrigin.USER),
+                msg(MessageRole.ASSISTANT, ContentPart.Text("Ooh.")),
+            ),
+            ZoneOffset.UTC,
+        )
+        assertTrue(rows.any { it is ThreadRow.Note && it.message.attachments.single().id == "s1" }, "a ticket sent without words is still a note")
+    }
+
+    @Test
     fun aNewDayGetsAHeading() {
         val rows = buildThread(
             listOf(

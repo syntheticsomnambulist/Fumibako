@@ -85,7 +85,7 @@ fun buildThread(messages: List<ChatMessage>, zone: ZoneId = ZoneId.systemDefault
             MessageRole.USER -> {
                 // Hidden user turns (heartbeat prompts) still end the letter before them.
                 closeLetter()
-                if (message.hidden || (message.displayText.isBlank() && message.images.isEmpty())) continue
+                if (message.hidden || (message.displayText.isBlank() && message.images.isEmpty() && message.attachments.isEmpty())) continue
                 startRow(message)
                 rows += ThreadRow.Note(message)
             }
