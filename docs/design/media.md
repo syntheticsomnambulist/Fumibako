@@ -20,24 +20,34 @@ its boards are named below. Quoted app text follows the app's American spelling.
 ## The tray ("Adding something" board, interactive)
 
 - A **+** button to the left of the text field: a paper slip with a hairline edge, 44dp. It opens
-  a drawer of six paper buttons, each with a small drawing of its object: Photos, Camera, File,
-  Music, Video, Link.
+  a drawer of five paper buttons, each with a small drawing of its object: Photos, Camera, File,
+  Music, Video. (A Link button was dropped: pasting a link makes a cutting.)
 - **+** turns into × (a 45° turn), the drawer slides up, and its buttons arrive in a quick
   stagger.
 - Picked items wait above the text field under "GOING WITH YOUR NOTE", as small versions of their
   frames, each with a remove button (a 44dp target around a small × chip). A new item pops in, and
   the drawer closes after a pick.
 - **A link pasted into a note becomes a cutting** (decided 2026-11-06), waiting with the other
-  items.
+  items. A link on a line of its own leaves the note's text; a link in the middle of a sentence
+  stays in the text as well.
 - **Several songs picked at once become one playlist** (decided): a cassette. A playlist file is
   always a playlist. There's no length limit.
 
-## The playlist editor
+## The playlist editor ("Playlist editor" board, interactive)
 
-Picking several songs opens a small pop-up editor; tapping the waiting cassette before sending
-opens it again. In it: the label's title and the line beneath it (the "for Aria, from Sam" note),
-both written on the cassette in the sender's hand; the songs, which you can reorder and remove;
-and the total length. A long list scrolls, on the J-card too. (Not mocked up yet.)
+Picking several songs opens the editor, a sheet titled "Your mix" with a Done button; tapping the
+waiting cassette before sending opens it again, and tapping above the sheet is the same as Done.
+
+- **The cassette** at the top relabels itself as you type, with the total length.
+- **Two index-card fields:** "On the label" (the title) and "Beneath it" (the "for Aria, from
+  Sam" line), typed in the handwriting face in the sender's ink, as they'll appear on the label.
+- **The songs** on a J-card ("SIDE A", the count and total length): each row has a drag handle,
+  its number, title and artist, length, and a remove button. Drag a handle to reorder; the other
+  rows make room. On Android the handle also offers "Move up" and "Move down" as accessibility
+  actions. A long list scrolls.
+- **Add songs** opens the picker again.
+- **Proposed:** a mix that's down to one song goes as a ticket instead, and the preview says so
+  ("One song goes as a ticket."). The last song can't be removed.
 
 ## The frames ("In a letter" and "Every frame" boards)
 
@@ -117,7 +127,7 @@ Timings are the prototypes'; tune them on a phone.
 ## Links
 
 - **Tap opens the page** in an in-app browser (Custom Tabs, toolbar in the paper colour). A setting
-  on the Letters page opens links in the default browser instead.
+  on the Media page opens links in the default browser instead.
 - **Cuttings** are built from the page's Open Graph data (site name, title, picture, description),
   fetched once when the link is attached and stored with the message. A page without a picture
   gets a text-only cutting.
@@ -171,10 +181,9 @@ chat input doesn't offer them.
 - **Setting, "Lamplight at night"** (proposed for Settings, Look): "Dim and warm everything"
   (default), "Leave photos as they are", "Leave everything as it is".
 
-## Settings: a Letters page
+## Settings: a Media page
 
-A new settings page, 九 Letters (decided 2026-11-06; its contents proposed), for how letters
-handle what's in them:
+A new settings page, 九 Media (decided 2026-11-06; its contents proposed):
 
 - **Open links in:** "In the app" (default) or "Your browser".
 - **Link previews:** whether the app fetches a page's title and picture to make the cutting, which
@@ -198,8 +207,5 @@ Lamplight stays on the Look page, since it's about appearance.
 
 ## Open
 
-- **The link's text:** proposed, a link on a line of its own leaves the note's text when it
-  becomes a cutting, and a link in the middle of a sentence stays in the text as well.
-- **The tray's Link button:** now that pasting makes a cutting, keep it as a shortcut that pastes
-  from the clipboard, or drop it?
-- **Mockups still to do:** the playlist editor and the Letters settings page.
+- **A mix down to one song:** goes as a ticket (proposed, see the playlist editor)?
+- **Mockups still to do:** the Media settings page.
