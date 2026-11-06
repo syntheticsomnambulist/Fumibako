@@ -90,6 +90,9 @@ fun MusicTray(
 ) {
     val colors = paper
     val preview = rememberPreviewPlayer()
+    // Leaving the page puts the keyboard away with it.
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    val leave = { preview.stop(); focus.clearFocus() }
     Column(
         modifier
             .fillMaxWidth()
@@ -109,7 +112,7 @@ fun MusicTray(
                 "‹ Add",
                 style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp),
                 color = colors.usuzumi1,
-                modifier = Modifier.clip(PaperCorner).clickable(onClickLabel = "Back to everything you can add") { preview.stop(); onBack() }.padding(horizontal = 4.dp, vertical = 6.dp),
+                modifier = Modifier.clip(PaperCorner).clickable(onClickLabel = "Back to everything you can add") { leave(); onBack() }.padding(horizontal = 4.dp, vertical = 6.dp),
             )
             Box(
                 Modifier
@@ -125,7 +128,7 @@ fun MusicTray(
                 "From your phone ›",
                 style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp),
                 color = colors.usuzumi1,
-                modifier = Modifier.clip(PaperCorner).clickable(role = Role.Button, onClickLabel = "Pick songs from your phone") { preview.stop(); onFromPhone() }
+                modifier = Modifier.clip(PaperCorner).clickable(role = Role.Button, onClickLabel = "Pick songs from your phone") { leave(); onFromPhone() }
                     .padding(horizontal = 6.dp, vertical = 6.dp),
             )
         }
@@ -158,7 +161,7 @@ fun MusicTray(
             } else {
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
                     items(search.results, key = { (it.appleUrl ?: "") + it.title + it.artist }) { song ->
-                        FoundRow(song, preview.playing == song.previewUrl, youInk, onPreview = { preview.toggle(song.previewUrl) }) { preview.stop(); onPick(song) }
+                        FoundRow(song, preview.playing == song.previewUrl, youInk, onPreview = { preview.toggle(song.previewUrl) }) { leave(); onPick(song) }
                     }
                 }
             }
