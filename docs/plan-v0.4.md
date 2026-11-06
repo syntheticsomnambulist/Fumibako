@@ -216,6 +216,13 @@ From the agreed decisions in `calendar.md`:
 - **Times of day follow the clock setting everywhere**, not only in the planner: letter stamps,
   sticker slips ("stuck fri 2:10 pm"), the letters list, and sunrise and sunset on the Look page.
 
+- **After 0.4.0-preview.6:** there wasn't room for the side tabs' sideways words ("Mont",
+  "Toda"), so the tabs show only their glyph (週, 月, ‹, 今, ›), with the words in their spoken
+  labels; they're shorter too. The season bar is off every page (your call, 2026-11-06): a
+  solar term's kanji still marks its first day on the week and the month, a day's page still
+  names its term and microseason, and letters are still told each new one. The Settings switch
+  is now "The solar terms and microseasons".
+
 ## Noted for later
 
 - **Explaining the utility model in setup:** what it's for, with examples, so you know you can

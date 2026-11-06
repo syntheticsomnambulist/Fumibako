@@ -148,7 +148,6 @@ fun PlannerScreen(nav: NavController) {
             )
           } else {
             WeekHeader(days) { you?.let { u -> stickers.openTray(StickerTarget.day(u.id, (if (thisWeek) today else days.first()).toString())) } }
-            if (settings.planner.seasonBand) SeasonBand(if (thisWeek) today else days.first(), vm.zone, hemisphere)
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(start = 18.dp, end = 30.dp)) {
                 val col = ((maxWidth - GUTTER) / 7).coerceAtLeast(36.dp)
                 Column(Modifier.fillMaxSize()) {
@@ -237,14 +236,14 @@ fun PlannerScreen(nav: NavController) {
         // Going between weeks (or months): tabs at the right edge, under 週 and 月.
         if (view == PlannerView.MONTH) {
             NavTabs(
-                "Month", thisMonth, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 132.dp),
+                "Month", thisMonth, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 116.dp),
                 onPrevious = { vm.shownDay.value = month.minusMonths(1).atDay(1) },
                 onToday = { vm.shownDay.value = vm.today() },
                 onNext = { vm.shownDay.value = month.plusMonths(1).atDay(1) },
             )
         } else {
             NavTabs(
-                "Week", thisWeek, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 132.dp),
+                "Week", thisWeek, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 116.dp),
                 onPrevious = { vm.shownDay.value = shown.minusWeeks(1); picked = null },
                 onToday = { vm.shownDay.value = vm.today(); picked = null },
                 onNext = { vm.shownDay.value = shown.plusWeeks(1); picked = null },
@@ -324,58 +323,6 @@ private fun MonthHeader(month: YearMonth, onStickers: () -> Unit) {
 }
 
 /**
- * The season band, one thin line: this microseason and the next solar term, each with its motif
- * ("楓蔦黄 Maples and ivy turn yellow | 立冬 winter begins, 7th"). A tap opens both in full.
- */
-@Composable
-private fun SeasonBand(day: LocalDate, zone: java.time.ZoneId, hemisphere: Hemisphere) {
-    val colors = paper
-    val red = dayInk(java.time.DayOfWeek.SUNDAY, colors.sumi, stationery.isNight)
-    val season = remember(day, hemisphere) { Seasons.on(day, zone, hemisphere) }
-    var open by rememberSaveable { mutableStateOf(false) }
-    val micro = season.micro
-    val next = season.next
-    val nextOn = season.nextFirst.let { if (it.month == day.month) ordinal(it.dayOfMonth) else "${it.dayOfMonth} ${month(it)}" }
-    val first = season.microFirst
-    val last = season.microLast
-    val days = if (first.month == last.month) "${first.dayOfMonth} to ${last.dayOfMonth} ${first.month.getDisplayName(DayText.FULL, Locale.US)}"
-    else "${first.dayOfMonth} ${first.month.getDisplayName(DayText.FULL, Locale.US)} to ${last.dayOfMonth} ${last.month.getDisplayName(DayText.FULL, Locale.US)}"
-    val small = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 9.5.sp, lineHeight = 11.sp)
-    val brush = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 11.5.sp, lineHeight = 13.sp)
-    Column(
-        Modifier
-            .padding(start = 24.dp, end = 36.dp, top = 4.dp)
-            .fillMaxWidth()
-            .heightIn(min = 26.dp)
-            .background(colors.hyoshi)
-            .drawBehind { drawLine(red, Offset(0f, 0f), Offset(0f, size.height), 2.5.dp.toPx()) }
-            .clickable(onClickLabel = if (open) "Fold the season away" else "The season in full") { open = !open }
-            .semantics { contentDescription = "Season: ${micro.english.lowercase()} (${micro.kanji}); next, ${next.english.lowercase()} on the ${ordinal(season.nextFirst.dayOfMonth)}" }
-            .padding(start = 8.dp, end = 6.dp, top = 5.dp, bottom = 5.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            SeasonMotif(micro.index / 3, Modifier.size(14.dp))
-            Text(micro.kanji, style = brush, color = colors.sumi, maxLines = 1, softWrap = false)
-            Text(micro.english, style = small, color = colors.sumi, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-            Box(Modifier.padding(horizontal = 2.dp).size(1.dp, 13.dp).background(colors.nijimi2))
-            SeasonMotif(next.index, Modifier.size(14.dp))
-            Text(next.kanji, style = brush, color = colors.sumi, maxLines = 1, softWrap = false)
-            Text("${next.english.lowercase()}, $nextOn", style = small, color = colors.sumi, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-        }
-        if (open) {
-            val term = season.term
-            Text(
-                "${term.kanji} ${micro.partKanji} ${micro.kanji}: ${term.english}, the ${micro.part} microseason: ${micro.english.replaceFirstChar { it.lowercase() }}. $days. " +
-                    "Then ${next.kanji}, ${next.english.lowercase()}, from ${season.nextFirst.dayOfMonth} ${season.nextFirst.month.getDisplayName(DayText.FULL, Locale.US)}.",
-                style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = 12.5.sp, lineHeight = 17.sp),
-                color = colors.sumi,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
-    }
-}
-
-/**
  * Going between weeks (or months), as tabs at the page's right edge under 週 and 月: the one
  * before, today (in your ink while you're on it), and the one after.
  */
@@ -413,7 +360,10 @@ private fun IndexTabs(view: PlannerView, ink: Color, modifier: Modifier, onWeek:
     }
 }
 
-/** One tab at the page's edge: open, it's in [ink] and a little proud of the others. */
+/**
+ * One tab at the page's edge, its glyph only (週, 月, ‹, 今, ›): the words are in its spoken label,
+ * since sideways words didn't fit. Open, it's in [ink] and a little proud of the others.
+ */
 @Composable
 private fun EdgeTab(kanji: String, word: String, open: Boolean, ink: Color, spoken: String? = null, onClick: () -> Unit) {
     val colors = paper
@@ -422,21 +372,20 @@ private fun EdgeTab(kanji: String, word: String, open: Boolean, ink: Color, spok
     // 48dp to tap, though the tab is narrower.
     Box(
         Modifier
-            .size(44.dp, 56.dp)
+            .size(44.dp, 48.dp)
             .clickable(role = if (spoken != null) Role.Button else Role.Tab, onClickLabel = spoken ?: if (open) null else "Open the $word page", onClick = onClick)
             .semantics { contentDescription = spoken ?: if (open) "$word, the page you're on" else word },
         contentAlignment = Alignment.CenterEnd,
     ) {
         Column(
             Modifier
-                .size(if (open) 26.dp else 22.dp, 52.dp)
+                .size(if (open) 26.dp else 22.dp, 40.dp)
                 .then(if (open) Modifier.shadow(1.dp, shape).background(ink, shape) else Modifier.background(colors.hyoshi, shape).border(1.dp, colors.nijimi1, shape)),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 12.5.sp, lineHeight = 13.sp), color = on)
-            // Sideways in a narrow tab, so it grows with large text only as far as it fits.
-            Text(word, style = TextStyle(fontFamily = HarnessFonts.Ui, fontWeight = if (open) FontWeight.Bold else FontWeight.Normal, fontSize = grid(7.5f)), color = on, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 3.dp).sideways())
+            // In a narrow tab, so it grows with large text only as far as it fits.
+            Text(kanji, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = grid(14f), lineHeight = grid(15f)), color = on, maxLines = 1, softWrap = false)
         }
     }
 }
@@ -939,14 +888,6 @@ private fun Memo(
             style = PaperType.postscript,
             color = colors.usuzumi1,
         )
-    }
-}
-
-/** Text set on its side, read top to bottom, as an index tab's word is. */
-private fun Modifier.sideways(): Modifier = layout { measurable, _ ->
-    val p = measurable.measure(androidx.compose.ui.unit.Constraints())
-    layout(p.height, p.width) {
-        p.placeWithLayer(-(p.width - p.height) / 2, (p.width - p.height) / 2) { rotationZ = 90f }
     }
 }
 

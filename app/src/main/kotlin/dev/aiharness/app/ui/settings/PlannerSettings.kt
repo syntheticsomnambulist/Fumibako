@@ -59,8 +59,8 @@ internal fun SettingsCards.plannerPage(nav: NavController, s: AppSettings, updat
     card {
         CardTitle("Seasons and special days")
         SwitchRow(
-            "The season band", p.seasonBand, { v -> planner { it.copy(seasonBand = v) } },
-            subtitle = "The 24 solar terms and 72 microseasons on the planner's pages, worked out on the phone. A letter is told each new one as it begins.",
+            "The solar terms and microseasons", p.seasonBand, { v -> planner { it.copy(seasonBand = v) } },
+            subtitle = "Each of the 24 solar terms marked on its first day, and a day's microseason on its page, worked out on the phone. A letter is told each new microseason as it begins.",
         )
         Hemispheres(s, update)
     }

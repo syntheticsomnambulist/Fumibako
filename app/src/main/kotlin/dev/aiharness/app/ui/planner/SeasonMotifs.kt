@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** The season band's small pictures, one for each stretch of solar terms (placeholders, like the app's other drawings). */
+/** The seasons' small pictures, one for each stretch of solar terms, on personas' slips and a day's page (placeholders, like the app's other drawings). */
 enum class Motif { PLUM, CHERRY, HYDRANGEA, MORNING_GLORY, MOON, MAPLE, CAMELLIA, SNOW }
 
 /** The motif of a solar term, by its index from 立春. */

@@ -547,11 +547,7 @@ class ScreenshotTour {
         compose.waitUntil(10_000) { runCatching { compose.onNode(hasClickActionLabel("Stick stickers on this day")).assertIsDisplayed() }.isSuccess }
         shot("${prefix}_24h_planner_day")
         back()
-        // The season band in full, then the month page, and back to the week.
-        compose.onNode(hasClickActionLabel("The season in full")).performClick()
-        compose.waitForIdle()
-        shot("${prefix}_24i_season_band")
-        compose.onNode(hasClickActionLabel("Fold the season away")).performClick()
+        // The month page, and back to the week.
         compose.onNode(hasClickActionLabel("Open the Month page")).performClick()
         compose.waitUntilAtLeastOneExists(hasContentDescription("Month, the page you're on"), 10_000)
         compose.waitUntilAtLeastOneExists(hasContentDescription("Founders' Day", substring = true), 10_000)

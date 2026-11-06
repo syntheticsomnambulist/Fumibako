@@ -69,8 +69,7 @@ object MonthDays {
 }
 
 /**
- * The month page (月): the traditional month name, the month's two solar terms, and a grid of
- * its days. Each day shows its date (Saturday blue, Sunday and public holidays red, today ringed),
+ * The month page (月): the traditional month name and a grid of its days. Each day shows its date (Saturday blue, Sunday and public holidays red, today ringed),
  * a term's name on its first day, a holiday's name or its first plan, small ink marks for who has
  * written there, and 済 when everything on it is stamped. A tap opens the day; stickers stuck on
  * a day show here too.
@@ -96,10 +95,10 @@ fun MonthPage(
     val night = stationery.isNight
     val days = MonthDays.of(month, startsSunday)
     val weekdays = days.take(7).map { it.dayOfWeek }
-    val terms = Seasons.termsBeginning(days.first(), days.last(), zone, hemisphere).toMap()
+    // A solar term's name on its first day, when the seasons are shown.
+    val terms = if (seasonBand) Seasons.termsBeginning(days.first(), days.last(), zone, hemisphere).toMap() else emptyMap()
     val byDay = occurrences.groupBy { it.day }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
-        if (seasonBand) MonthBand(month, zone, hemisphere)
         BoxWithConstraints(Modifier.fillMaxWidth().padding(start = 18.dp, end = 30.dp, top = 6.dp)) {
             val col: Dp = maxWidth / 7
             Column {
@@ -231,35 +230,6 @@ private fun DayCell(
         }
     } else {
         cell()
-    }
-}
-
-/** The month's two solar terms (or one), on one line: "7日 立冬 winter begins | 22日 小雪 light snow". */
-@Composable
-private fun MonthBand(month: YearMonth, zone: ZoneId, hemisphere: Hemisphere) {
-    val colors = paper
-    val red = dayInk(DayOfWeek.SUNDAY, colors.sumi, stationery.isNight)
-    val terms = Seasons.termsBeginning(month.atDay(1), month.atEndOfMonth(), zone, hemisphere)
-    Row(
-        Modifier
-            .padding(start = 24.dp, end = 34.dp, top = 6.dp)
-            .fillMaxWidth()
-            .height(26.dp)
-            .background(colors.hyoshi)
-            .drawBehind { drawLine(red, Offset(0f, 0f), Offset(0f, size.height), 2.5.dp.toPx()) }
-            .padding(horizontal = 8.dp)
-            .semantics {
-                contentDescription = "Season: " + terms.joinToString("; ") { (d, t) -> "${t.english.lowercase()} from the ${ordinal(d.dayOfMonth)}" }
-            },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-    ) {
-        terms.forEachIndexed { i, (d, t) ->
-            if (i > 0) Box(Modifier.padding(horizontal = 3.dp).size(1.dp, 13.dp).background(colors.nijimi2))
-            SeasonMotif(t.index, Modifier.size(14.dp))
-            Text("${d.dayOfMonth}日 ${t.kanji}", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 11.5.sp), color = colors.sumi, maxLines = 1)
-            Text(t.english.lowercase(), style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 9.5.sp), color = colors.sumi, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
     }
 }
 
