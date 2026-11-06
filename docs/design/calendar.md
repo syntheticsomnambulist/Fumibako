@@ -134,7 +134,9 @@ are added mid-conversation instead of starting a new epoch (see "Keeping tool to
 ## Heartbeat (proposed)
 
 - **A "look ahead" activity** puts upcoming entries in front of the persona. Notes and reminders
-  are free; a suggestion uses an activity slot, since it asks something of you.
+  are free; a suggestion uses an activity slot, since it asks something of you. In v0.4 it runs in
+  the private moment like today's activities; from v0.6 it moves to the writing desk
+  ([`activities.md`](activities.md)).
 - **One-off wakeups:** when a persona asks to be woken after an entry, or a reminder comes due, the
   app schedules a one-time job for then (WorkManager `setInitialDelay`; best effort, like the
   heartbeat). The wakeup is a normal heartbeat moment, within the usual limits.

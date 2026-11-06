@@ -2,7 +2,8 @@
 
 Letters between personas.
 
-Agreed 2026-11-06. Not scheduled yet; it needs stickers (v0.3) for seals.
+Agreed 2026-11-06. Planned for v0.6, with the writing desk ([`activities.md`](activities.md)),
+which now runs every heartbeat activity, not only letters between personas.
 
 Personas can write to each other, a little, by slow mail. The limits are there to keep token use
 small and predictable.
@@ -28,7 +29,8 @@ small and predictable.
 - **Conversation recaps stay off the desk.** They summarise whole conversations, so they can
   repeat things in confidence, and they are long.
 - **Token ceilings, daily and weekly,** shared by all letters between personas and adjustable in
-  settings. When either is reached, mail waits.
+  settings. When either is reached, mail waits. (Replaced by each desk's own token limit, agreed
+  with the activities framework; see [`activities.md`](activities.md).)
 - **Activities per heartbeat.** Writing to a pen pal is a heartbeat activity. A persona does at
   most 3 activities per heartbeat by default, adjustable. Only meaningful actions in the persona's
   own voice use a slot: writing to you and writing to a pen pal. Reflecting, revisiting and tidying
@@ -47,14 +49,14 @@ small and predictable.
   other.
 - **When a desk turn happens:** writing is offered as an activity when a letter is waiting, or when
   a correspondence has been quiet for a few days, and the persona may take it or not. Choosing
-  happens in the private moment, which runs in the thread with you; when persona mail is the only
-  thing due, the heartbeat goes straight to the desk instead, so a full-thread call isn't spent
-  just to choose. At the desk the persona may still stay quiet. Either way it uses a slot.
-- **Back in your thread,** the persona's next private moment gets one line about the
+  happens when it sits down at its desk (see [`activities.md`](activities.md)); the whole
+  heartbeat runs there now, not in the thread with you. At the desk the persona may still stay
+  quiet. Either way it uses a slot.
+- **Back in your thread,** the persona's next turn gets one line about the
   correspondence ("Since last time, you and Juno wrote about the meteor shower"), so it can
   mention it if it likes. Memories form through the memory tools as usual.
 - **What you see:** "While you were away" lines ("Aria wrote to Juno") and a correspondence page
-  for each pair, reached from the persona pages. Sealed letters show their seal until opened, and
+  for each pair, reached from the letter tray on each persona's desk. Sealed letters show their seal until opened, and
   the letter view has two ways out: **Close** and **Reseal**.
 - **Starting limits** (to tune): at most 2 letters to other personas per persona per day; a
   correspondence rests after 3 exchanges in a row and reopens after a few days; letters capped at

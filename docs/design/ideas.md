@@ -5,21 +5,28 @@ when we work through them.
 
 ## Roadmap
 
-Updated 2026-11-06.
+Updated 2026-11-06, with the user's rough plan to v0.7.
 
 - **Shipped on the build branch:** v0.3 (pictures, then stickers); v0.3.1 (you in pictures, and a
   NovelAI key turns pictures on); v0.3.5 (media in letters, keepsakes in the memory book, Settings
   Media, several pronoun sets per persona). See `docs/plan-v0.3.md` and `docs/plan-v0.3.5.md` on
   the build branch.
-- **v0.4: the planner**, in [`calendar.md`](calendar.md), with two passes of mockups. Not started
+- **v0.4: the planner,** in [`calendar.md`](calendar.md), with two passes of mockups. Not started
   on the build branch yet.
-- **Next design pass: activities** (see *Activities* below).
-- **Designed, not scheduled:** letters between personas, in [`pen-pals.md`](pen-pals.md) (it was
-  waiting on stickers, which have shipped); Japanese stationery across the app and import and
-  export, both below.
-- **Later, not designed:** weather and places (below); a scrapbook of your own (see
-  [`keepsakes.md`](keepsakes.md)).
-- Everything else below is unscheduled.
+- **v0.5: import and export, the stationery update, and quality of life:**
+  - import and export (below);
+  - the stationery update: Japanese stationery across the app (below);
+  - from Fieldwork (below): the context slip ("What she had in mind"), the note after a model
+    switch, thinking lines the persona chooses, and searching past letters. The context slip sits
+    beside the "Show thoughts" slip under a letter, each with an icon of its own (to design).
+- **v0.6: activities,** in [`activities.md`](activities.md): the writing desk, today's activities
+  moved onto it, at least one game, and pen pals ([`pen-pals.md`](pen-pals.md)). **v0.6.5:**
+  probably another batch of activities.
+- **v0.7: the outdoor update:** seasons, and what it means for a persona to live in a place of its
+  own (often fictional) with its own weather; weather events for personas (below). It will feed
+  back into the "going out" activities.
+- **Not designed or scheduled:** a scrapbook of your own (see [`keepsakes.md`](keepsakes.md)), a
+  Discord bridge, and the rest of this page.
 
 ## Name and icon
 
@@ -39,7 +46,7 @@ Updated 2026-11-06.
 
 Moved to [`media.md`](media.md); shipped in v0.3.5.
 
-## Japanese stationery across the app (proposed)
+## Japanese stationery across the app (v0.5)
 
 From the planner's second pass ([`calendar.md`](calendar.md)); these would reach beyond the
 planner:
@@ -62,9 +69,9 @@ planner:
 - **Traditional month names** (霜月, 師走) on the memory book's month envelopes, as on the
   planner's month page.
 
-## Weather and places (later)
+## Weather and places (v0.7)
 
-Raised 2026-11-06, separately from the planner:
+Raised 2026-11-06, separately from the planner; the v0.7 outdoor update goes into it in depth:
 
 - **Weather events for personas:** notable events reach the persona with the time note in each
   turn's context: events in the sky (meteor showers, eclipses, full moons, solstices), first frost
@@ -78,7 +85,7 @@ Raised 2026-11-06, separately from the planner:
   microseasons written for your region (72 short lines per region), or a persona naming the
   week's microseason as an activity.
 
-## Import and export
+## Import and export (v0.5)
 
 - **SillyTavern cards** (Character Card V2: JSON in a PNG `chara` chunk; V3: a `ccv3` chunk or a
   `.charx` zip). `name`, `description`, `personality` and `scenario` map to the same fields;
@@ -102,20 +109,23 @@ Raised 2026-11-06, separately from the planner:
 
 Ideas only: [Fieldwork](https://github.com/4thkira/fieldworkharness) is GPL-3.0, so no code.
 
-- **"What she had in mind":** a folded slip under each letter showing what the persona was given
-  (recalled memories, the time note, later the calendar line). Mockups before committing.
-- **"Your model changed":** a one-line note to the persona after its model is switched.
+- **"What she had in mind"** (v0.5): a folded slip under each letter showing what the persona was
+  given (recalled memories, the time note, later the planner line). It sits beside the "Show
+  thoughts" slip, each with an icon of its own. Mockups before committing.
+- **"Your model changed"** (v0.5): a one-line note to the persona after its model is switched.
 - **The persona's own rest:** it can set its own quiet hours or take a break, shown with a
   resting sign and in its planner. The mirror of the user's busy calendar. (Proposed for v0.4, in
   [`calendar.md`](calendar.md).)
 - **Free time and a daily postcard:** a visit with no task (staying quiet leaves no trace), and a
-  postcard about its day at a time you choose. Both are activities.
+  postcard about its day at a time you choose. Both are activities (see
+  [`activities.md`](activities.md)).
 - **Collections and belongings:** small things a persona keeps (plants, recipes, a dream log,
-  pictures). Some belong in the scrapbook, others at the writing desk.
+  pictures). Some belong in the scrapbook, others on the writing desk.
 - **Promises and reminders with dates:** memories that wait until a date or come due. They show
   in the persona's planner. (Proposed for v0.4, in [`calendar.md`](calendar.md).)
-- **Thinking lines:** the persona chooses what shows while it writes ("Aria is chewing her pen").
-- **Searching past letters:** exact wording across conversations, not only memories.
+- **Thinking lines** (v0.5): the persona chooses what shows while it writes ("Aria is chewing her
+  pen").
+- **Searching past letters** (v0.5): exact wording across conversations, not only memories.
 - **Notes to the builder** (the persona reports something broken, confusing or missing): useful
   for debugging, probably not in the final build.
 - **A Discord bridge**, at some point. Not Telegram.
@@ -123,12 +133,13 @@ Ideas only: [Fieldwork](https://github.com/4thkira/fieldworkharness) is GPL-3.0,
 
 ## Activities
 
-Things a persona can do in its heartbeats, beyond what v0.2 has:
+Things a persona can do in its heartbeats, beyond what v0.2 has. They run at the persona's
+writing desk, in v0.6 and after ([`activities.md`](activities.md)):
 
 - **Making:** a picture for its sketchbook or for you, a poem or a haiku, its own stickers (v0.3).
 - **Playing, by post:** correspondence chess, shiritori, twenty questions, a riddle left in a
   letter. The app keeps the board and the model only makes a move. Pen pals can play each other.
-- **Keeping:** a diary (which can be sealed), collections, the memory book.
+- **Keeping:** a diary (the persona can seal entries), collections, the memory book.
 - **Going out:** reading a link you shared and writing notes; looking up something it's curious
   about; postcards from an imagined trip.
 - **Seasonal:** moon-viewing in autumn, New Year cards, first snow, following the madoromi seasons
@@ -141,6 +152,8 @@ Rules:
   lookups) are meant for a small core cast, so they start off for new personas.
 - **Slots:** making, playing and going out use activity slots; keeping is free (see
   [`pen-pals.md`](pen-pals.md)).
+- **Things you leave on the desk** (a link, a riddle, a game challenge) are offered first at the
+  persona's next heartbeat.
 
 ## Keeping tool tokens down
 
