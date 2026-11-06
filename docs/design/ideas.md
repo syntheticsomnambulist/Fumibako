@@ -32,6 +32,24 @@ when we work through them.
 
 Moved to [`media.md`](media.md), planned for v0.3.5.
 
+## Japanese stationery across the app (proposed)
+
+From the planner's second pass ([`calendar.md`](calendar.md)); these would reach beyond the
+planner:
+
+- **Traditional tape patterns:** 市松 ichimatsu (checks), 七宝 shippō (linked rings), 青海波
+  seigaiha (waves), 麻の葉 asanoha (hemp leaf) and 矢絣 yagasuri (arrow feathers), as new
+  `TapePattern` choices beside Plain, Dots, Stripes and Gingham, in the owner's ink like the
+  others. Drawn on the "Pieces of the planner" board.
+- **Seasons that follow the solar terms:** a Look setting, "Seasons change with: the months"
+  (today's meteorological seasons) or "the solar terms" (spring from 立春 in early February, summer
+  from 立夏 in early May, autumn from 立秋 in early August, winter from 立冬 in early November),
+  so the theme and the planner's season band agree.
+- **Persona seals:** the planner's one-character seal could also sign letters or sit by the
+  persona's name.
+- **Traditional month names** (霜月, 師走) on the memory book's month envelopes, as on the
+  planner's month page.
+
 ## Import and export
 
 - **SillyTavern cards** (Character Card V2: JSON in a PNG `chara` chunk; V3: a `ccv3` chunk or a
@@ -86,7 +104,8 @@ Things a persona can do in its heartbeats, beyond what v0.2 has:
 - **Going out:** reading a link you shared and writing notes; looking up something it's curious
   about; postcards from an imagined trip.
 - **Seasonal:** moon-viewing in autumn, New Year cards, first snow, following the madoromi seasons
-  and the calendar.
+  and the calendar; a haiku on the first day of a solar term or microseason (see
+  [`calendar.md`](calendar.md)).
 
 Rules:
 

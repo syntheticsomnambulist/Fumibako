@@ -38,6 +38,8 @@ It is also the other half of the memory book: the memory book looks back, the pl
 - **Personas write in the planner:** notes and reminders on dates, in their own ink and visible to
   the user, and suggested plans ("meteor shower Saturday?") that show up as entries.
 - **Stickers in the planner**, placed by the user and by personas, as on letters.
+- **A tab of its own: 帳 Planner** (帳 as in 手帳, the Japanese pocket planner), between 人
+  Personas and 設 Settings (agreed after the first mockups).
 
 ## What's in the planner (proposed)
 
@@ -66,8 +68,6 @@ Everyone's writing is in one planner, in their own ink, like a shared paper diar
 
 ## Screens (proposed)
 
-- **A fourth tab: 帳 Planner** (帳 as in 手帳, the Japanese pocket planner), between 人 Personas
-  and 設 Settings.
 - **The week** (the tab's first page): the seven days down the page, each a ruled section with its
   entries in time order. Today has a strip of your tape down its edge. A switch at the top goes
   between Week and Month; arrows go between weeks.
@@ -193,12 +193,114 @@ https://claude.ai/artifact/641ZZiMG4rVyRHyP1PDszb), drawn 2026-11-06:
 - **Notifications:** the held notification when a busy entry ends, and "Busy for now" with its
   lengths.
 
+Second pass (see below), on the same canvas under "Second pass: stationery and Japanese
+aesthetics":
+
+- **The week, vertical** (interactive): a バーチカル week with the season band, kanji weekdays,
+  work bands, pencil boxes, highlighted plans, Aria's seal at 16:00 and a 付箋 on Saturday; tap a
+  plan or task to stamp it 済; Aria's slip and suggestion below the grid (accepting puts the
+  meteor shower on Saturday).
+- **The month, frost month:** 霜月 with kanji month tabs, the month's sekki and kō, Saturday and
+  Sunday colours, ink dots, 済 on finished days, Juno's rest, a sticker and Aria's haiku slip.
+- **Pieces of the planner:** seals, slips in the four seasons, the five tape patterns, how each
+  kind of entry is drawn, motifs for the season band, and the ribbon and binding.
+
+## Second pass: stationery and Japanese aesthetics (proposed)
+
+Asked for after the first mockups (2026-11-06): push the planner further towards stationery and
+Japanese diaries. Everything here is proposed; it changes how things look, not what the planner
+does.
+
+### The page
+
+- **The week as a バーチカル (vertical) page**, the usual layout of Japanese 手帳: seven narrow
+  columns with the hours down the side (7 to 23 in the mockup), so a busy stretch shows as a length
+  of the day rather than a line in a list. Columns are about 48dp, so titles are cut to a word or
+  two; the full title is in each entry's spoken label, and tapping a column opens the day. Below
+  the grid, a メモ area holds the week's untimed plans and the personas' slips.
+- **Paper:** a faint dot grid (方眼 style) instead of plain paper; the pages stitched down the left
+  edge (a dashed thread line and a shadow in the gutter); a beni ribbon (栞) hanging from the top
+  edge, which goes back to today.
+- **Dates:** kanji weekdays (月火水木金土日), with the English underneath on the month page;
+  Saturday in blue and Sunday in red, as in Japanese diaries. Today is ringed in your ink.
+- **Month names:** the month page is titled with the traditional name (霜月, "frost month"), the
+  English underneath; the week page shows it beside the month's number.
+- **Index tabs:** kanji month tabs down the month page's right edge (十月, 十一月, 十二月), the
+  current one in your ink. They go to other months, like the arrows.
+
+### The season band
+
+- **Under the header, the current season and the next:** the 二十四節気 (24 solar terms) and the
+  七十二候 (72 microseasons, about five days each), each with a small motif. On 6 November 2026:
+  "霜降 楓蔦黄: Maples and ivy turn yellow, to the 6th" and "立冬 山茶始開: Winter begins,
+  camellias open, from the 7th".
+- **The month page** shows the month's two solar terms and lists its microseasons by start date;
+  a term's first day carries its name in small beni kanji (立冬 on the 7th, 小雪 on the 22nd).
+- **Computed on the phone** from the sun's position, so no network and no data file. In 2026, 立冬
+  falls on 7 November and 小雪 on 22 November
+  ([1](https://braindetox.kr/ja/posts/ipdong_2026_date_meaning.html),
+  [2](https://allabout.co.jp/gm/gc/471422/),
+  [3](https://can-chan.com/LDG/72_getSolarTerm.php)).
+- **Motifs:** one per solar term (the mockup draws seven: plum, cherry, morning glory, moon with
+  susuki grass, maple, camellia, snow ring). Placeholders, like the app's other drawings.
+- **This is the "Seasons and special days" setting** on the Planner page: the band can be turned
+  off.
+
+### Who wrote what
+
+These replace the looks in the table above where they differ:
+
+| What | Looks like |
+| --- | --- |
+| A phone calendar event | A pencil box (as before) |
+| Your plan | Highlighter in your ink, with slightly rough edges, on the vertical week; a line in your ink in lists and on the day page |
+| A persona's note | A 一筆箋 (one-brush slip): a narrow ruled slip whose motif follows the season (ume, asagao, momiji, tsubaki), signed with the persona's seal |
+| A suggestion | A 付箋 sticky tab in the persona's ink: a small tab on the grid at its time ("Meteors?"), and the full tab with its two buttons below the grid |
+| A reminder | The persona's seal on the grid at the time it will wake, instead of the clock mark |
+| Done | Your 済 stamp (see below) |
+
+- **Seals (判子):** each persona has a one-character seal it picks for itself (Aria 歌, "song";
+  Juno 月, "moon"), drawn in its ink with a slightly uneven stamped edge. It signs the persona's
+  slips and marks its reminders. Proposed: the persona picks it when the planner is first turned on
+  for it, and you can change it on its page.
+- **Your 済 stamp:** tap a plan or an untimed plan to stamp it 済 ("done"), with a small stamping
+  motion and a light haptic tick; tap again to lift it. On the month page a day where everything
+  is stamped gets a small 済. This adds "done" to your plans: the storage sketch's status field
+  covers it. Personas see it in their context ("the library books: done").
+- **A date stamp (日付印)** with the month's name, the date and your persona's name is drawn on the
+  pieces board but not used yet; it could replace the memory book's date stamp.
+
+### The persona's side
+
+- **A haiku on a new season:** on the first day of a solar term or microseason, a persona may write
+  a haiku on a slip in the planner ("maple and ivy / letting go of their summer / one leaf at a
+  time", signed 歌, "Aria, on 楓蔦黄, 2 Nov"). It's a making activity, so it uses an activity slot,
+  and it can be switched off per persona like the others.
+- **Context:** the band reaches the persona as one line, "Season: 立冬 (winter begins), camellias
+  open", only when it changes, so it doesn't add tokens to every turn.
+
+### Notes
+
+- **Lamplight** applies to slips, seals and tape at night, as to other objects on the desk.
+- **Fonts:** the brush face for kanji (Yuji Syuku) is a placeholder, like the app's other fonts.
+- **Kanji are always paired with English** on screen or in the spoken label, so nothing depends on
+  reading Japanese.
+
 ## Open
 
-- Everything marked **proposed** above, in particular: the 帳 tab; a suggestion using an activity
-  slot while notes and reminders are free; the sharing defaults; quick busy from a notification;
-  sleep as quiet hours.
-- **Seasons and special days:** which ones, and do personas get seasonal activities from them?
+- Everything marked **proposed** above, in particular: a suggestion using an activity slot while
+  notes and reminders are free; the sharing defaults; quick busy from a notification; sleep as
+  quiet hours.
+- **The second pass:** whether the vertical week replaces the list or is offered beside it; who
+  picks a persona's seal; whether plans should get a "done" state at all.
+- **The app's seasons and the solar terms:** the theme follows meteorological seasons (autumn until
+  30 November), while the band says winter begins on 7 November. Either the theme follows the solar
+  terms too (a Look setting; see [`ideas.md`](ideas.md)), or the band and theme disagree for a few
+  weeks each season.
+- **Holidays:** Japanese diaries colour public holidays like Sundays. Which holidays (your
+  country's, from a holiday calendar on the phone or a built-in list), or none?
+- **Special days** beyond the solar terms (moon-viewing, New Year): which ones, and do personas get
+  seasonal activities from them?
 
 ## Parked ideas
 
