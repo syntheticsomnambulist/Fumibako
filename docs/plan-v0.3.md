@@ -124,8 +124,12 @@ Started 2026-11-06, after v0.2.2 (the Fumibako build for testing with friends).
   for music and video, links in an in-app browser, and what each provider can take in, with
   stand-ins and short descriptions for later epochs. The design is the design session's
   `media.md`, with mockups on its "Media frames" canvas. Stickers go on attachment frames too,
-  and on keepsakes in the memory book (its `keepsakes.md`): new sticker target kinds, since a
-  sticker already points at a kind and an id.
-- **Pronouns, to be confirmed:** more than one set for a persona (e.g. she/they).
+  and on keepsakes in the memory book (its `keepsakes.md`): a new sticker target kind, since a
+  sticker already points at a kind and an id. **Stickers stay stuck** (decided 2026-11-06): a
+  sticker belongs to the attachment it's on, so media kept as a keepsake keeps its stickers, and
+  one stuck on either shows on both.
+  **Several pronoun sets for a persona** (decided 2026-11-06) also come in v0.3.5: e.g. she/they.
+  The persona is told all of them; the app's own sentences alternate between them (or pick one
+  at random).
 - **v0.4: the planner** (the design session's `calendar.md`).
 - **Not scheduled:** letters between personas (pen pals).
