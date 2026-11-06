@@ -84,5 +84,5 @@ scrapbook, with stickers. Not designed yet.
 
 ## Open
 
-- **When:** with media in v0.3.5, or right after it?
+- **When (settled):** shipped with media in v0.3.5 (see `docs/plan-v0.3.5.md` on the build branch).
 - **Your scrapbook:** what it holds and where it lives.

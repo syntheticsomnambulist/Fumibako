@@ -52,7 +52,15 @@ Agreed after the second pass (see *Second pass* below for the details):
 - **Public holidays are shown**, from a country chosen once in a one-time setup, with a switch on
   the Planner settings page.
 - **The ribbon is in your persona's ink**, and wider than first drawn.
-- **More tape patterns, including hearts** (see [`ideas.md`](ideas.md)), with more to come.
+- **More tape patterns, including hearts** (see [`ideas.md`](ideas.md)): the nine on the pieces
+  board for this pass, with more to come later.
+- **Local seasons mean the hemisphere, for now:** south of the equator the solar terms (and the
+  theme's seasons) shift by six months. Local weather comes later and separately (see "Weather and
+  places" in [`ideas.md`](ideas.md)).
+- **Holidays don't change your typical week:** the work band stays on a holiday, since few
+  holidays are days off for everyone. Marking a day off is up to you.
+- **The month page doesn't list the microseasons:** their names mean little to English readers,
+  so the line under the band was taken out.
 
 ## What's in the planner (proposed)
 
@@ -221,7 +229,7 @@ aesthetics", revised after the user's notes:
   (done, move, cancel); moving leaves a ghost. Below the grid, tasks that stamp done with one tap,
   Aria's slip, and her suggestion (accepting puts the meteor shower on Saturday).
 - **The month, frost month:** 霜月 with the same tabs and ribbon, kanji month tabs, a one-line
-  band, the month's microseasons, Saturday and Sunday colours, public holidays in red (US as the
+  band, Saturday and Sunday colours, public holidays in red (US as the
   example), ink dots, 済 on finished days, Juno's rest, a sticker and Aria's haiku slip.
 - **Aria's marks** (interactive): her unread, signature, wake and done marks, each changed from
   seals or her stickers, with a preview of where each shows.
@@ -272,9 +280,9 @@ Japanese diaries. The user's notes on it are in *Decisions*; the rest here is pr
   full: "霜降 末候 楓蔦黄: Frost falls, last microseason: maples and ivy turn yellow. 2 to 6
   November." The band uses the 二十四節気 (24 solar terms) and 七十二候 (72 microseasons, about
   five days each).
-- **The month page** shows the month's two solar terms on one line and lists its microseasons by
-  start date; a term's first day carries its name in small beni kanji (立冬 on the 7th, 小雪 on the
-  22nd).
+- **The month page** shows the month's two solar terms on one line; a term's first day carries
+  its name in small beni kanji (立冬 on the 7th, 小雪 on the 22nd). It doesn't list the
+  microseasons (decided).
 - **Computed on the phone** from the sun's position, so no network and no data file. In 2026, 立冬
   falls on 7 November and 小雪 on 22 November
   ([1](https://braindetox.kr/ja/posts/ipdong_2026_date_meaning.html),
@@ -284,7 +292,10 @@ Japanese diaries. The user's notes on it are in *Decisions*; the rest here is pr
   susuki grass, maple, camellia, snow ring). Placeholders, like the app's other drawings.
 - **This is the "Seasons and special days" setting** on the Planner page: the band can be turned
   off.
-- **Local seasons:** the user would like the band to follow local seasons; see *Open*.
+- **The southern hemisphere** (decided): the solar terms shift by six months (立春 in early
+  August), and the microseasons with them, so "camellias open" comes in late autumn there too. The
+  same calculation, flipped. Proposed: the hemisphere comes from the phone's time zone, with a
+  setting to correct it.
 
 ### Who wrote what
 
@@ -356,8 +367,7 @@ Proposed details:
   calendars), or a bundled offline library such as
   [Jollyday](https://jollyday.sourceforge.net/) (its current fork lists 100+ countries;
   check its size and Android support first).
-- **Days off:** proposed, a holiday leaves out the typical week's work band, with "Holidays are
-  days off" as a setting (on by default) for people who work them.
+- **Not days off** (decided): a holiday leaves your typical week alone, work band included.
 
 ### The persona's side
 
@@ -382,25 +392,11 @@ Proposed details:
 - Everything marked **proposed** above, in particular: a suggestion using an activity slot while
   notes and reminders are free; the sharing defaults; quick busy from a notification; sleep as
   quiet hours.
-- **Local seasons:** what "local" should mean, one or more of:
-  - **Hemisphere:** in the southern hemisphere, the solar terms shift by six months (立春 in early
-    August). The same calculation, flipped; small work. The theme's seasons would flip too.
-  - **Microseasons written for your region:** the solar terms are astronomical and hold anywhere,
-    but the 72 microseasons describe Japan's nature (camellias opening, frogs, rainbows). Japan
-    itself rewrote the Chinese microseasons for its own climate in the Edo period. A set for one
-    region is a writing job (72 short lines) rather than code; any number of regions is a content
-    project.
-  - **Local weather:** first frost, first snow and the like from a weather service and your
-    approximate location. Needs network, a location permission and rules for turning weather into
-    seasons: the most work, and the fuzziest.
-  - **The persona names them:** a seasonal activity where a persona writes the week's
-    microseason for where you are, from what you've told it. Cheap and charming, but invented.
 - **The app's seasons and the solar terms:** the theme follows meteorological seasons (autumn until
   30 November), while the band says winter begins on 7 November. Either the theme follows the solar
   terms too (a Look setting; see [`ideas.md`](ideas.md)), or the band and theme disagree for a few
   weeks each season.
-- **Holidays:** the source (Nager.Date or a bundled library), and whether holidays count as days
-  off by default.
+- **Holidays:** the source (Nager.Date or a bundled library).
 - **Special days** beyond the solar terms (moon-viewing, New Year): which ones, and do personas get
   seasonal activities from them?
 

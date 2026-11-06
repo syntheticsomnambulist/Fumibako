@@ -5,13 +5,20 @@ when we work through them.
 
 ## Roadmap
 
-- **v0.3** (being built): pictures, then stickers. See `docs/plan-v0.3.md` on the build branch.
-- **v0.3.5: media**, in [`media.md`](media.md); media in the memory book, in
-  [`keepsakes.md`](keepsakes.md) (with media or right after, to decide). The build branch's plan
-  also brings several pronoun sets per persona (e.g. she/they) in v0.3.5.
-- **v0.4: the planner**, in [`calendar.md`](calendar.md).
-- **After stickers, not scheduled:** letters between personas, in [`pen-pals.md`](pen-pals.md).
-- **Not designed yet:** a scrapbook of your own (see [`keepsakes.md`](keepsakes.md)).
+Updated 2026-11-06.
+
+- **Shipped on the build branch:** v0.3 (pictures, then stickers); v0.3.1 (you in pictures, and a
+  NovelAI key turns pictures on); v0.3.5 (media in letters, keepsakes in the memory book, Settings
+  Media, several pronoun sets per persona). See `docs/plan-v0.3.md` and `docs/plan-v0.3.5.md` on
+  the build branch.
+- **v0.4: the planner**, in [`calendar.md`](calendar.md), with two passes of mockups. Not started
+  on the build branch yet.
+- **Next design pass: activities** (see *Activities* below).
+- **Designed, not scheduled:** letters between personas, in [`pen-pals.md`](pen-pals.md) (it was
+  waiting on stickers, which have shipped); Japanese stationery across the app and import and
+  export, both below.
+- **Later, not designed:** weather and places (below); a scrapbook of your own (see
+  [`keepsakes.md`](keepsakes.md)).
 - Everything else below is unscheduled.
 
 ## Name and icon
@@ -30,7 +37,7 @@ when we work through them.
 
 ## Media
 
-Moved to [`media.md`](media.md), planned for v0.3.5.
+Moved to [`media.md`](media.md); shipped in v0.3.5.
 
 ## Japanese stationery across the app (proposed)
 
@@ -54,6 +61,22 @@ planner:
   or sit by the persona's name.
 - **Traditional month names** (霜月, 師走) on the memory book's month envelopes, as on the
   planner's month page.
+
+## Weather and places (later)
+
+Raised 2026-11-06, separately from the planner:
+
+- **Weather events for personas:** notable events reach the persona with the time note in each
+  turn's context: events in the sky (meteor showers, eclipses, full moons, solstices), first frost
+  and first snow, and weather warnings where you are. Events only, not a daily forecast, to keep
+  tokens down. Needs your approximate location (a permission, or a town you type) and a weather
+  service.
+- **A place of a persona's own:** a persona can have a place (a real town or an imagined one), so
+  it can talk about the weather where it is. A real town uses the same weather service; an
+  imagined place's weather could be made up to suit the season.
+- **Other ways to make the seasons local**, from the planner's second pass, not chosen for now:
+  microseasons written for your region (72 short lines per region), or a persona naming the
+  week's microseason as an activity.
 
 ## Import and export
 
