@@ -127,14 +127,14 @@ persona's heartbeat page.
   desk** (below). **Kept in the drawer** (agreed), as tags you can open: letters from past months,
   bundled; last month's diary; finished games; the trinkets the dish has no room for.
 
-### Rearranging her desk (agreed as an activity; details proposed)
+### Rearranging her desk (agreed)
 
 - **Now and then, in a heartbeat,** she's shown what's on her desk and what's in her drawer
   (only what she may do), with how long since she last used each, and may move things either
   way: one small call with a tool, `rearrange(put_away, take_out)`.
-- **When:** proposed, at most once a week, and only when something on the desk has gone unused for
+- **When:** at most once a week, and only when something on the desk has gone unused for
   a fortnight or something in the drawer is waiting.
-- **What you moved stays put a while:** proposed, for a week after you move something she sees
+- **What you moved stays put a while:** for a week after you move something she sees
   "Sam put this away on Tuesday" and leaves it.
 - **Free by default** in "What she does" (it's short), with Slot | Free like the rest.
 - **Logged** in "Lately at the desk" ("Rearranged her desk: put her haiku notebook away"), which
