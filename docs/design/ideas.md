@@ -5,33 +5,28 @@ when we work through them.
 
 ## Roadmap
 
-Updated 2026-11-06, with the user's rough plan to v0.7.
+Updated 2026-11-07.
 
-- **Shipped on the build branch:** v0.3 (pictures, then stickers); v0.3.1 (you in pictures, and a
-  NovelAI key turns pictures on); v0.3.5 (media in letters, keepsakes in the memory book, Settings
-  Media, several pronoun sets per persona). See `docs/plan-v0.3.md` and `docs/plan-v0.3.5.md` on
-  the build branch.
-- **v0.4: the planner,** in [`calendar.md`](calendar.md), with two passes of mockups. Not started
-  on the build branch yet.
-- **v0.5: import and export, the stationery update, and quality of life:**
-  - import and export (below);
-  - the stationery update: Japanese stationery across the app (below);
-  - a font audit: the app's faces are all placeholders so far;
-  - from Fieldwork (below): the context slip ("What she had in mind"), the note after a model
-    switch, thinking lines the persona chooses, and searching past letters. The context slip sits
-    beside the "Show thoughts" slip under a letter, each with an icon of its own (to design).
-- **v0.6: activities,** in [`activities.md`](activities.md): the writing desk, today's activities
-  moved onto it, shiritori, trinkets, and pen pals ([`pen-pals.md`](pen-pals.md)), with at least a
-  small desk of your own for the trinkets you're given. **v0.6.5:**
-  probably another batch of activities, with more games (candidates in
+- **Shipped on the build branch:** v0.1 to v0.3.5, and **v0.4, the planner** (0.4.0, then 0.4.1 with
+  a new signing key and the GPL-3.0-or-later licence, and 0.4.2). Friends last had **v0.2.2**; the
+  next tester build is **v0.5**. See `docs/plan-v0.4.md` and `docs/testers.md` on the build branch.
+- **Desktop, alongside v0.5** (`docs/plan-desktop.md` on the build branch): Fumibako on Windows,
+  macOS and Linux, shipping with v0.5. The screens and storage have moved into shared modules and
+  a first desktop shell runs; v0.5 uses the phone's layouts in a resizable window. Wider desktop
+  layouts come later.
+- **v0.5: in a letter, letter search, import and export, the stationery update, fonts.** Designed
+  ([`v0.5.md`](v0.5.md)), nothing left open; the build starts after the desktop move.
+- **v0.6: activities** ([`activities.md`](activities.md)): the writing desk in a 机 Desk tab with
+  your desk beside it (trinket dish, a scrapbook), today's activities moved onto the desk,
+  shiritori, trinkets, pen pals ([`pen-pals.md`](pen-pals.md)), the drawer and rearranging her
+  desk, and "What she does" in her settings. Being designed.
+- **v0.6.5:** another batch of activities, with more games (candidates in
   [`activities.md`](activities.md)).
 - **v0.7: the outdoor update:** seasons, and what it means for a persona to live in a place of its
   own (often fictional) with its own weather; weather events for personas (below). It will feed
   back into the "going out" activities.
 - **v0.95: the settings, redesigned top-down** (the user, 2026-11-06): persona settings (where
   "What she does" moves in v0.6) and the app's Settings, as menus, before 1.0.
-- **Not designed or scheduled:** a desk of your own with your scrapbooks and trinkets (see
-  [`activities.md`](activities.md)), a Discord bridge, and the rest of this page.
 
 ## Name and icon
 
