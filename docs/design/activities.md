@@ -277,10 +277,17 @@ you somewhere to land.
   cutting, ticket or cassette and **Paste in your scrapbook**; or on the page, **From a letter**,
   **A photo**, **A note**, **A sticker**. Each lands in the next free spot ("What you add next lands
   here"), with "Aria will hear about it" when she will.
-- **Arranging:** **Arrange** outlines every piece; tap one, then move it, turn it, change its tape
-  (corners, top, none) or take it off the page; **Done** keeps it where you put it. Pieces keep
-  their place; new ones keep flowing after the last.
-- **Storage:** scrapbooks, pages and pieces (kind, what it points at, position, turn, tape),
+- **Arranging works like stickers** (agreed): in **Arrange**, hold a piece to lift and move it
+  (straight away once it's selected); tap it for the dashed box and the corner handle that turns
+  and resizes it about its middle. A selected piece also has **Tape…**, **To the front** and
+  **Take off**; **Done** keeps everything where you put it. Pieces keep their place; new ones keep
+  flowing after the last.
+- **Tape… opens a menu** (agreed) for exactly how it's taped: **how** (no tape, a strip, two
+  corners, across the top, a top pair, one corner, and whatever the v0.5 placement review adds),
+  **pattern** (all thirteen), **colour** (the inks) and **shade** (light or dark), with a preview,
+  then **Tape it like this**. Each piece remembers its own tape.
+- **Storage:** scrapbooks, pages and pieces (kind, what it points at, position, turn, size, its
+  tape: placement, pattern, ink and shade, and z-order),
   pieces pointing at the original attachment or message so stickers stay stuck and "open the
   letter it came from" works.
 
