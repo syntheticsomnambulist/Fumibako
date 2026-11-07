@@ -254,6 +254,7 @@ you somewhere to land.
 - **One desk for each of your personas,** like their planners: what a persona gives Sam lands on
   Sam's desk.
 - **In v0.6:** the trinket dish and one scrapbook. More scrapbooks and other objects later.
+  **Labels**, stickers you can write on, come with it (see *Labels* in [`v0.5.md`](v0.5.md)).
 - **Scrapbook pages:** adding is quick, things flowing into the next free spot; while arranging,
   anything can go anywhere.
 - **Telling her:** when you paste something of a persona's (her drawing, a line from her letter),

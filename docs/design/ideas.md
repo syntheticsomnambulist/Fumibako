@@ -19,7 +19,8 @@ Updated 2026-11-07.
 - **v0.6: activities** ([`activities.md`](activities.md)): the writing desk in a 机 Desk tab with
   your desk beside it (trinket dish, a scrapbook), today's activities moved onto the desk,
   shiritori, trinkets, pen pals ([`pen-pals.md`](pen-pals.md)), the drawer and rearranging her
-  desk, and "What she does" in her settings. Being designed.
+  desk, "What she does" in her settings, and labels, stickers you can write on (designed in
+  [`v0.5.md`](v0.5.md)). Being designed.
 - **v0.6.5:** another batch of activities, with more games (candidates in
   [`activities.md`](activities.md)).
 - **v0.7: the outdoor update:** seasons, and what it means for a persona to live in a place of its
