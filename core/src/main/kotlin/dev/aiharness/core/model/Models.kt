@@ -344,6 +344,8 @@ sealed interface ContentPart {
         val modelRef: String? = null,
         val modelMimeType: String? = null,
         val modelSizeBytes: Long? = null,
+        /** The smaller copy's length when it holds only the video's first part (a long video); null when it's all of it. */
+        val modelLengthMs: Long? = null,
         /** A short description written when it arrived, which later context epochs carry instead of the file. */
         val description: String? = null,
         /** When [description] was written: epochs that began after it send the description. */

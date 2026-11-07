@@ -348,6 +348,7 @@ internal fun takesIn(senses: Senses): String {
         "PDFs".takeIf { senses.pdfs },
         "songs".takeIf { senses.audio },
         "videos".takeIf { senses.video },
+        "YouTube links".takeIf { senses.youtube },
     ) + "text files"
     val sees = if (senses.pictures) listOfNotNull("a PDF's first page".takeIf { !senses.pdfs }, "three frames of a video".takeIf { !senses.video }) else emptyList()
     val labels = listOfNotNull(

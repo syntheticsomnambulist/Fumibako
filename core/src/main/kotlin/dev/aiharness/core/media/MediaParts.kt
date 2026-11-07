@@ -5,6 +5,7 @@ import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.MessageRole
+import dev.aiharness.core.model.clock
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.storage.BlobStore
 
@@ -23,7 +24,8 @@ import dev.aiharness.core.storage.BlobStore
  * Whole things are chosen newest first, as long as the request stays within the provider's size.
  */
 class MediaParts(private val blobs: BlobStore) {
-    enum class Way { WHOLE, PICTURES }
+    /** [LINKED]: a YouTube link the model fetches and watches itself. */
+    enum class Way { WHOLE, PICTURES, LINKED }
 
     /** What goes whole (or as pictures) this time, by picture ref or attachment id, with the bytes. */
     data class Plan(val chosen: Map<String, Pair<Way, List<ByteArray>>> = emptyMap()) {
@@ -53,6 +55,11 @@ class MediaParts(private val blobs: BlobStore) {
                         room -= songs.sumOf { it.size }
                         chosen[a.id] = Way.WHOLE to songs
                     }
+                    continue
+                }
+                // A YouTube link takes no room: Gemini fetches it.
+                if (MediaSupport.watchesOnYouTube(a, senses, profile)) {
+                    chosen[a.id] = Way.LINKED to emptyList()
                     continue
                 }
                 if (MediaSupport.takesWhole(a, profile, senses)) {
@@ -116,6 +123,15 @@ class MediaParts(private val blobs: BlobStore) {
         // (one that can't hear it has no use for a preview it isn't sent).
         way == Way.WHOLE && a.kind == AttachmentKind.SONG && a.previewOnly ->
             listOf(LlmPart.Text("${a.standIn} (its 30-second preview:)"), LlmPart.Media(bytes.first(), wireType(a), a.title))
+        way == Way.LINKED -> listOf(
+            LlmPart.Text("${a.standIn} (${watchedWords(a, profile, "the video itself")}, from YouTube:)"),
+            LlmPart.LinkedVideo(MediaSupport.youtubeUrl(a)!!, MediaSupport.endSeconds(a, profile)),
+        )
+        // A long video, as its first part (its smaller copy is only that, or Gemini cuts it).
+        way == Way.WHOLE && a.kind == AttachmentKind.VIDEO && MediaSupport.watchedPart(a, profile) != null -> listOf(
+            LlmPart.Text("${a.standIn} (${watchedWords(a, profile, "")}:)"),
+            LlmPart.Media(bytes.first(), wireType(a), a.name ?: a.title, MediaSupport.endSeconds(a, profile)),
+        )
         way == Way.WHOLE -> listOf(LlmPart.Text(a.standIn), LlmPart.Media(bytes.first(), wireType(a), a.name ?: a.title))
         way == Way.PICTURES -> listOf(LlmPart.Text("${a.standIn} ${if (a.kind == AttachmentKind.VIDEO) "(three frames from it:)" else "(its first page:)"}")) +
             bytes.map { LlmPart.Image(it, "image/jpeg") }
@@ -137,6 +153,12 @@ class MediaParts(private val blobs: BlobStore) {
             add(LlmPart.Media(bytes[i], MediaSupport.geminiAudioType(t.mimeType) ?: t.mimeType ?: "audio/mp4", t.title ?: t.name))
         }
         if (sent.size < a.tracks.size) add(LlmPart.Text("(The rest of the mix isn't sent this time.)"))
+    }
+
+    /** How much of a video is sent, for the model: "its first 4:00", "up to its first 4:00", or [whole]. */
+    private fun watchedWords(a: ContentPart.Attachment, profile: ModelProfile, whole: String): String {
+        val part = MediaSupport.watchedPart(a, profile) ?: return whole
+        return (if (a.lengthMs == null) "up to its first " else "its first ") + clock(part * 1000L)
     }
 
     /** What the model is told the thing is, as the provider wants it named. */

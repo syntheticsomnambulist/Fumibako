@@ -121,7 +121,7 @@ class WhatThePersonaReceivesTest {
         env.settingsRepo.update { it.copy(utilityModelProfileId = ears.id) }
         val conversation = env.harness.createConversation(env.persona.id)
         val mix = env.mix()
-        assertEquals("Mira can read the label, but can't hear the songs.", MediaSupport.cantTakeIn(mix, env.profiles.get(env.profile.id)!!, "Mira"))
+        assertEquals("Mira can read the label, but Gemma can't hear music.", MediaSupport.cantTakeIn(mix, env.profiles.get(env.profile.id)!!, "Mira"))
         env.harness.agent.send(conversation.id, "For the drive.", attachments = listOf(mix)).toList()
 
         val described = env.provider.requests.single { it.system == MediaDescriber.SYSTEM }
@@ -220,8 +220,11 @@ class WhatThePersonaReceivesTest {
         assertEquals("video/mp4", media.mimeType)
         assertEquals(6_000, media.bytes.size, "the copy, not the original")
 
+        // An older Gemini model watches at higher cost: within half the budget, its first 1:20.
         val older = env.profile.copy(provider = ProviderType.GEMINI, modelId = "gemini-2.5-flash", contextBudgetTokens = 48_000)
-        assertFalse(MediaSupport.takesWhole(walk, older), "older Gemini models watch at higher cost, so it's too long for them")
+        assertTrue(MediaSupport.takesWhole(walk, older))
+        assertEquals(80, MediaSupport.endSeconds(walk, older))
+        assertEquals("Aria watches its first 1:20; the whole of it is too much to send at once.", MediaSupport.cantTakeIn(walk, older, "Aria"))
     }
 
     @Test
@@ -233,15 +236,90 @@ class WhatThePersonaReceivesTest {
         val mix = ContentPart.Attachment("m", AttachmentKind.PLAYLIST, title = "rainy day mix")
 
         assertEquals("Aria can read the label, but can't hear the songs.", MediaSupport.cantTakeIn(mix, gemini, "Aria"))
-        assertEquals("Aria knows its title and artist, but can't hear it.", MediaSupport.cantTakeIn(env.song(), claude, "Aria"))
+        assertEquals("Aria knows its title and artist, but Claude can't hear music.", MediaSupport.cantTakeIn(env.song(), claude, "Aria"))
         assertNull(MediaSupport.cantTakeIn(env.song(), gemini, "Aria"))
         // A song too long for a third of the budget goes by its ticket.
-        assertEquals("Aria knows its title and artist, but can't hear it.", MediaSupport.cantTakeIn(env.song(), gemini.copy(contextBudgetTokens = 12_000), "Aria"))
-        assertEquals("Aria sees three frames from the video.", MediaSupport.cantTakeIn(env.video(), claude, "Aria"))
+        assertEquals("Aria knows its title and artist, but it's too long to send.", MediaSupport.cantTakeIn(env.song(), gemini.copy(contextBudgetTokens = 12_000), "Aria"))
+        assertEquals("Aria knows its title and artist, but a link brings no sound to send.", MediaSupport.cantTakeIn(env.song().copy(ref = null, url = "https://open.spotify.com/track/x"), gemini, "Aria"))
+        assertEquals("Aria sees three frames from the video; Claude can't watch video.", MediaSupport.cantTakeIn(env.video(), claude, "Aria"))
+        assertEquals("Aria sees three frames from the video; it's too big to send.", MediaSupport.cantTakeIn(env.video().copy(sizeBytes = 400L * 1024 * 1024), gemini, "Aria"))
         assertNull(MediaSupport.cantTakeIn(env.pdf(), claude, "Aria"))
         assertEquals("Aria can read the tag, but can't open the file.", MediaSupport.cantTakeIn(env.pdf(), textOnly, "Aria"))
         assertEquals("Aria sees the first page.", MediaSupport.cantTakeIn(env.pdf(), textOnly.copy(supportsVision = true), "Aria"))
         assertEquals("Aria can't see this photo.", MediaSupport.cantSee(textOnly, "Aria", several = false))
         assertNull(MediaSupport.cantSee(gemini.copy(supportsVision = false), "Aria", several = true))
+    }
+
+    @Test
+    fun aVideoMayTakeHalfTheBudgetAndALongerOneIsWatchedAsItsFirstPart() = runTest {
+        // A budget of 48,000 tokens lets a video take 24,000: four minutes at Gemini 3's 100 a second.
+        val env = env(ProviderType.GEMINI, modelId = "gemini-3-flash")
+        val gemini = env.profiles.get(env.profile.id)!!
+        val copy = env.harness.blobs.put(ByteArray(6_000) { 9 }, "mp4")
+        fun video(length: Long, copyLength: Long? = null) =
+            ContentPart.Attachment(
+                "v$length", AttachmentKind.VIDEO, ref = copy, mimeType = "video/mp4", name = "beach.mp4", title = "beach", lengthMs = length,
+                sizeBytes = 400L * 1024 * 1024, modelRef = copy, modelMimeType = "video/mp4", modelSizeBytes = 6_000, modelLengthMs = copyLength,
+            )
+        // 3:47 goes whole (under a third of the budget, it went as three frames).
+        assertNull(MediaSupport.cantTakeIn(video(227_000), gemini, "Pidge"))
+        assertNull(MediaSupport.endSeconds(video(227_000), gemini))
+        // 6:40: its first four minutes, cut by Gemini.
+        val long = video(400_000)
+        assertEquals(240, MediaSupport.endSeconds(long, gemini))
+        assertEquals("Pidge watches its first 4:00; the whole of it is too much to send at once.", MediaSupport.cantTakeIn(long, gemini, "Pidge"))
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.harness.agent.send(conversation.id, "", attachments = listOf(long)).toList()
+        val note = env.personaRequests().last().lastNote()
+        assertEquals(240, note.filterIsInstance<LlmPart.Media>().single().endSeconds)
+        assertContains(note.texts(), "[film: beach, 6:40] (its first 4:00:)")
+        // Ten minutes, whose smaller copy holds only its first three: all of the copy, uncut.
+        val tenMinutes = video(600_000, copyLength = 180_000)
+        assertNull(MediaSupport.endSeconds(tenMinutes, gemini))
+        assertEquals("Pidge watches its first 3:00; the whole of it is too much to send at once.", MediaSupport.cantTakeIn(tenMinutes, gemini, "Pidge"))
+    }
+
+    private fun youtubeCutting() = ContentPart.Attachment("yt1", AttachmentKind.LINK, url = "https://youtu.be/abcdefghijk", title = "when you sleep", site = "YouTube")
+
+    @Test
+    fun geminiWatchesAYouTubeLinkByItsAddress() = runTest {
+        val env = env(ProviderType.GEMINI, modelId = "gemini-3-flash")
+        val gemini = env.profiles.get(env.profile.id)!!
+        val ticket = youtubeCutting().copy(id = "yt2", kind = AttachmentKind.SONG, artist = "my bloody valentine")
+        // Its length unknown, Gemini is told to stop at four minutes.
+        assertEquals("Pidge watches up to its first 4:00, from YouTube.", MediaSupport.cantTakeIn(youtubeCutting(), gemini, "Pidge"))
+        assertEquals("Pidge listens to up to its first 4:00, from YouTube.", MediaSupport.cantTakeIn(ticket, gemini, "Pidge"))
+        assertNull(MediaSupport.cantTakeIn(ticket.copy(lengthMs = 200_000), gemini, "Pidge"))
+
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.harness.agent.send(conversation.id, "", attachments = listOf(ticket)).toList()
+        val note = env.personaRequests().last().lastNote()
+        val linked = note.filterIsInstance<LlmPart.LinkedVideo>().single()
+        assertEquals("https://www.youtube.com/watch?v=abcdefghijk", linked.uri)
+        assertEquals(240, linked.endSeconds)
+        assertContains(note.texts(), "(up to its first 4:00, from YouTube:)")
+    }
+
+    @Test
+    fun claudeReadsAYouTubeCuttingAndTheNoteSaysWhy() = runTest {
+        val env = env(ProviderType.ANTHROPIC)
+        val claude = env.profiles.get(env.profile.id)!!
+        assertEquals("Aria can read the cutting, but Claude can't play YouTube links.", MediaSupport.cantTakeIn(youtubeCutting(), claude, "Aria"))
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.harness.agent.send(conversation.id, "", attachments = listOf(youtubeCutting())).toList()
+        assertTrue(env.personaRequests().last().lastNote().none { it is LlmPart.LinkedVideo })
+    }
+
+    @Test
+    fun aWatchedYouTubeLinkIsDescribedForLaterEpochs() = runTest {
+        val env = env(ProviderType.GEMINI, modelId = "gemini-3-flash")
+        val conversation = env.harness.createConversation(env.persona.id)
+        env.harness.agent.send(conversation.id, "Look!", attachments = listOf(youtubeCutting())).toList()
+        env.clock.advanceMinutes(1)
+        env.harness.describer.catchUp(conversation.id)
+        val described = env.provider.requests.last { it.system == MediaDescriber.SYSTEM }
+        assertTrue(described.lastNote().any { it is LlmPart.LinkedVideo }, "the describer watched it too")
+        val link = env.conversations.getMessages(conversation.id).first { it.role == MessageRole.USER }.attachments.single()
+        assertEquals("A tabby cat asleep on a sill.", link.description)
     }
 }

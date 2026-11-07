@@ -78,7 +78,8 @@ phone's calendars are read, never changed or copied.
   behind Video, gives videos numbers for names; pick one with File to keep its name. A link in your note becomes a newspaper cutting with the
   page's title; a Spotify, Apple Music, SoundCloud or Bandcamp link becomes a ticket, and a
   YouTube video can be either (tap it under "Going with your note"). Each arrives as stationery, and a line under it says what the persona can't take in
-  with its model (Claude reads PDFs; Gemini also hears songs and watches videos).
+  with its model, and why (Claude reads PDFs; Gemini also hears songs, watches videos, and watches YouTube links; a long video is
+  watched as its first few minutes).
 - **Tapping things:** songs and mixtapes play (a small player docks above where you write, and
   music carries on outside the app); photos open to swipe and zoom; videos play; a file's tag
   swings and offers Open and Save; a cutting opens the page. When a persona opens a link you

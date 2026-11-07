@@ -113,7 +113,12 @@ Claude rejects (or drops) them if earlier turns or the system prompt were edited
 - **Pictures and files** you send go whole where the model takes them (`core/media/MediaSupport.kt`:
   Claude reads pictures and PDFs, Gemini also songs and videos, OpenAI-compatible servers pictures
   with "Sees pictures"; text files go as text everywhere), else as pictures standing in (a video's
-  three frames, a PDF's first page) or a stand-in line. After a turn a short description is written
+  three frames, a PDF's first page) or a stand-in line. A video may take half the context budget
+  (other things a third); a longer one goes as its first part (a long video's smaller copy is its
+  first four minutes, and Gemini cuts it further with `videoMetadata`). Gemini also watches YouTube
+  links (cuttings and tickets) by their address, up to that share, and if it refuses one (a private
+  video) the request goes again without it. The line under a frame says why something isn't taken
+  in whole. After a turn a short description is written
   (`MediaDescriber`); epochs that begin after it carry the description instead of the file. One the
   persona's model can't take in at all is described by the utility model before it first reads it.
 

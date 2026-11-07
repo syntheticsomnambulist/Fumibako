@@ -64,7 +64,8 @@ class MediaDescriber(private val h: Harness) {
             AttachmentKind.SONG, AttachmentKind.VIDEO -> true
             // A mix, by a model that hears its songs.
             AttachmentKind.PLAYLIST -> MediaSupport.hearableTracks(part).isNotEmpty()
-            AttachmentKind.LINK -> false
+            // A YouTube link, by a model that watches it.
+            AttachmentKind.LINK -> MediaSupport.youtubeUrl(part) != null
         }
         else -> false
     }
@@ -117,6 +118,8 @@ class MediaDescriber(private val h: Harness) {
                     val songs = parts.mixToSend(part, profile, MediaSupport.inlineBudget(profile))
                     if (songs.none { it.isNotEmpty() }) return null
                     parts.attachmentParts(part, MediaParts.Way.WHOLE, songs, describedNow = false, profile = profile)
+                } else if (whole && MediaSupport.watchesOnYouTube(part, senses, profile)) {
+                    parts.attachmentParts(part, MediaParts.Way.LINKED, emptyList(), describedNow = false, profile = profile)
                 } else if (whole) {
                     val bytes = MediaSupport.sentRef(part)?.let { h.blobs.get(it) } ?: return null
                     parts.attachmentParts(part, MediaParts.Way.WHOLE, listOf(bytes), describedNow = false, profile = profile)
@@ -142,7 +145,7 @@ class MediaDescriber(private val h: Harness) {
     private fun instruction(part: ContentPart, whole: Boolean): String = when {
         part is ContentPart.Image -> "Describe this photo in two or three sentences: what and who it shows, the setting and mood, and any words in it."
         part !is ContentPart.Attachment -> ""
-        part.kind == AttachmentKind.VIDEO && whole -> "Describe this video in up to four sentences: what happens, who and what is in it, and how it sounds."
+        (part.kind == AttachmentKind.VIDEO || part.kind == AttachmentKind.LINK) && whole -> "Describe this video in up to four sentences: what happens, who and what is in it, and how it sounds."
         part.kind == AttachmentKind.VIDEO -> "These are three frames from the video named above. In two or three sentences, describe what it seems to show."
         part.kind == AttachmentKind.SONG -> "Describe this song in two or three sentences: how it sounds, its mood, its language, and what the words are about."
         part.kind == AttachmentKind.PLAYLIST -> "Describe this mix in up to five sentences: how its songs sound and go together, their moods and languages, and what the words are about."

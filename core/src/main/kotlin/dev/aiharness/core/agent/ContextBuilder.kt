@@ -349,7 +349,7 @@ object TokenEstimator {
             estimate(a.standIn) + when {
                 a.description != null -> estimate(a.description)
                 profile == null -> 0
-                MediaSupport.takesWhole(a, profile, senses!!) -> MediaSupport.wholeTokens(a, profile).coerceAtMost(MediaSupport.tokenCap(profile))
+                MediaSupport.takesWhole(a, profile, senses!!) -> MediaSupport.wholeTokens(a, profile).coerceAtMost(MediaSupport.capFor(a, profile))
                 else -> MediaSupport.picturesFor(a, senses).size * MediaSupport.PICTURE_TOKENS
             }
         }
