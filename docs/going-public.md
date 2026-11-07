@@ -45,7 +45,7 @@ letters.
    session's title bar, then **Edit**), add an environment variable `HARNESS_DEBUG_KEYSTORE_B64`
    with the same text. New sessions pick it up. Don't paste the key into a chat.
 4. **On your phone:** install 0.4.1 over your current build and check your letters are all there,
-   before friends get a rotated build.
+   before friends get a rotated build. (Done: it installed over 0.4.0 and kept them.)
 
 **When to flip the switch:** testers' phones can still take an old-key APK until they've installed a
 rotated build (v0.5), though someone would have to talk them into installing a fake one. For no gap

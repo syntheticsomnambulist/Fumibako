@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -167,8 +170,12 @@ fun PlannerScreen(nav: NavController) {
                     AllDayRow(
                         days, occurrences, col, ink, holidaysOf,
                         termOf = if (settings.planner.seasonBand) remember(days, hemisphere) { Seasons.termsBeginning(days.first(), days.last(), vm.zone, hemisphere).toMap() } else emptyMap(),
-                    ) { o -> if (o.entry.phone != null) openPhoneEvent(context, o.entry) else card = PlanDraft.of(o.entry, o.day) }
-                    Column(Modifier.weight(1f).verticalScroll(scroll).padding(bottom = 24.dp)) {
+                        now = vm.now(),
+                        onPick = { picked = if (picked?.entryId == it.entryId && picked?.day == it.day && !it.moving) null else it },
+                        onOpen = { o -> picked = null; if (o.entry.phone != null) openPhoneEvent(context, o.entry) else card = PlanDraft.of(o.entry, o.day) },
+                    )
+                    Box(Modifier.weight(1f).fillMaxWidth()) {
+                    Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(bottom = 24.dp)) {
                         WeekGrid(
                             days = days, occurrences = occurrences, entries = entries, layout = layout, col = col, today = today,
                             now = vm.now(), zone = vm.zone, clock = clock, ink = ink, picked = picked,
@@ -191,6 +198,20 @@ fun PlannerScreen(nav: NavController) {
                             onTypicalWeek = { nav.navigate(Routes.TYPICAL_WEEK) },
                         )
                     }
+                    // An all-day plan's stamps, just under the all-day row, over the hours.
+                    val allDayPicked = picked?.let { p -> occurrences.firstOrNull { it.entry.allDay && it.entry.kind == EntryKind.PLAN && it.entry.id == p.entryId && it.day == p.day } }
+                    if (allDayPicked != null) {
+                        val p = picked!!
+                        Box(Modifier.matchParentSize().clickable(onClickLabel = "Put the stamps away") { picked = null })
+                        StampTray(
+                            allDayPicked, p, days, col, ink, top = 4.dp,
+                            onStamp = { e, state -> vm.stamp(e, state); picked = null },
+                            onMoving = { picked = p.copy(moving = true) },
+                            onMove = { e, from, to -> vm.move(e, from, to); picked = null },
+                            onOpen = { o -> picked = null; if (o.entry.phone != null) openPhoneEvent(context, o.entry) else card = PlanDraft.of(o.entry, o.day) },
+                        )
+                    }
+                    }
                 }
             }
           }
@@ -205,6 +226,25 @@ fun PlannerScreen(nav: NavController) {
         else "the week of ${markedWeek.dayOfMonth} ${markedWeek.month.getDisplayName(DayText.FULL, Locale.US)}"
         val toast = LocalContext.current
         val ribbonLength by androidx.compose.animation.core.animateDpAsState(if (here) 60.dp else 22.dp, label = "ribbon")
+        // The ribbon runs up behind the status bar to the page's top edge, as a bookmark comes out of
+        // the book's spine; only its end, below the status bar, takes taps.
+        val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .padding(end = 58.dp + 7.dp)
+                .size(30.dp, statusTop + ribbonLength)
+                .shadow(2.dp, RibbonShape)
+                .clip(RibbonShape)
+                .background(ink)
+                .drawBehind {
+                    var x = 0f
+                    while (x < size.width) {
+                        drawLine(Color.White.copy(alpha = 0.07f), Offset(x, 0f), Offset(x, size.height), 1.dp.toPx())
+                        x += 3.dp.toPx()
+                    }
+                },
+        )
         Box(
             Modifier
                 .align(Alignment.TopEnd)
@@ -221,23 +261,7 @@ fun PlannerScreen(nav: NavController) {
                     },
                 ) { if (!here) { vm.shownDay.value = marked; picked = null } }
                 .semantics { contentDescription = if (here) "Your bookmark, on this page" else "Your bookmark, on $markedWords" },
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            Box(
-                Modifier
-                    .size(30.dp, ribbonLength)
-                    .shadow(2.dp, RibbonShape)
-                    .clip(RibbonShape)
-                    .background(ink)
-                    .drawBehind {
-                        var x = 0f
-                        while (x < size.width) {
-                            drawLine(Color.White.copy(alpha = 0.07f), Offset(x, 0f), Offset(x, size.height), 1.dp.toPx())
-                            x += 3.dp.toPx()
-                        }
-                    },
-            )
-        }
+        )
         IndexTabs(
             view, ink, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 6.dp),
             onWeek = { vm.view.value = PlannerView.WEEK },
@@ -474,6 +498,7 @@ private fun DayHeads(days: List<LocalDate>, today: LocalDate, col: Dp, holidaysO
 
 internal fun dayName(day: LocalDate) = "${day.dayOfWeek.getDisplayName(DayText.FULL, Locale.US)} ${day.dayOfMonth} ${day.month.getDisplayName(DayText.FULL, Locale.US)}"
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AllDayRow(
     days: List<LocalDate>,
@@ -482,12 +507,21 @@ private fun AllDayRow(
     ink: Color,
     holidaysOf: (LocalDate) -> List<String>,
     termOf: Map<LocalDate, SolarTerm>,
+    now: Long,
+    onPick: (Picked) -> Unit,
     onOpen: (Occurrence) -> Unit,
 ) {
     val colors = paper
     val red = dayInk(java.time.DayOfWeek.SUNDAY, colors.sumi, stationery.isNight)
     val allDay = occurrences.filter { it.entry.allDay && it.entry.kind == EntryKind.PLAN }
-    Box(Modifier.fillMaxWidth().heightIn(min = 32.dp).padding(bottom = 4.dp).drawBehind { drawLine(colors.nijimi1, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }) {
+    // A line above and below: the hours scroll under it, and the line is where they go.
+    val line = 1.dp
+    Box(
+        Modifier.fillMaxWidth().heightIn(min = 32.dp).drawBehind {
+            drawLine(colors.nijimi1, Offset.Zero, Offset(size.width, 0f), line.toPx())
+            drawLine(colors.nijimi1, Offset(0f, size.height - line.toPx() / 2), Offset(size.width, size.height - line.toPx() / 2), line.toPx())
+        }.padding(bottom = 4.dp),
+    ) {
         Text("all day", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(8.5f), lineHeight = grid(10f)), color = colors.kasure2, modifier = Modifier.width(GUTTER - 2.dp).padding(top = 4.dp), textAlign = TextAlign.End, maxLines = 2)
         days.forEachIndexed { i, day ->
             Column(Modifier.offset(x = GUTTER + col * i + 2.dp).width(col - 4.dp).padding(vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -499,17 +533,29 @@ private fun AllDayRow(
                     Text(name, style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(7.5f), lineHeight = grid(8.5f)), color = red, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
                 allDay.filter { it.day == day }.forEach { o ->
-                    val pencil = o.entry.phone != null
-                    Text(
-                        o.entry.title.ifBlank { if (pencil) "Busy" else "Plan" },
-                        style = TextStyle(fontFamily = if (pencil) HarnessFonts.Hand else HarnessFonts.Read, fontSize = grid(9f), lineHeight = grid(13f)),
-                        color = if (pencil) Pencil else lerp(ink, colors.sumi, 0.45f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth()
-                            .then(if (pencil) Modifier.border(1.dp, Pencil.copy(alpha = 0.6f)) else Modifier.clip(Highlighter).background(ink.copy(alpha = 0.3f)))
-                            .clickable(onClickLabel = "Open ${o.entry.title}") { onOpen(o) }.padding(horizontal = 3.dp),
-                    )
+                    val e = o.entry
+                    val pencil = e.phone != null
+                    val cancelled = e.state == EntryState.CANCELLED
+                    // Like a plan in the hours: a tap for its stamps, a long press for its card.
+                    Box {
+                        Text(
+                            e.title.ifBlank { if (pencil) "Busy" else "Plan" },
+                            style = TextStyle(
+                                fontFamily = if (pencil) HarnessFonts.Hand else HarnessFonts.Read, fontSize = grid(9f), lineHeight = grid(13f),
+                                textDecoration = if (cancelled) TextDecoration.LineThrough else null,
+                            ),
+                            color = (if (pencil) Pencil else lerp(ink, colors.sumi, 0.45f)).copy(alpha = if (cancelled) 0.55f else 1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth()
+                                .then(if (pencil) Modifier.border(1.dp, Pencil.copy(alpha = if (cancelled) 0.35f else 0.6f)) else Modifier.clip(Highlighter).background(ink.copy(alpha = if (cancelled) 0.14f else 0.3f)))
+                                .combinedClickable(onClickLabel = "Stamps for ${e.title}", onLongClick = { onOpen(o) }) { onPick(Picked(e.id, o.day)) }
+                                .semantics { contentDescription = allDayLabel(e, o) }
+                                .padding(horizontal = 3.dp),
+                        )
+                        // Its stamp at the end, half off it, so the title still reads.
+                        stampOf(e)?.let { s -> Stamp(s, ink, Modifier.align(Alignment.CenterEnd).offset(x = 7.dp), size = 15.dp, fresh = e.updatedAt > now - 1_500) }
+                    }
                 }
             }
         }
@@ -743,39 +789,67 @@ private fun WeekGrid(
         // A plan's stamps, or the days to move it to.
         picked?.let { p ->
             val o = plans.firstOrNull { it.entry.id == p.entryId && it.day == p.day } ?: return@let
-            val i = days.indexOf(o.day)
             val start = o.start ?: return@let
             val bottom = maxOf(y(minute(o.end ?: start, o.day)), y(minute(start, o.day)) + 16.dp)
             val below = bottom + 4.dp + 52.dp < height
             val top = if (below) bottom + 4.dp else y(minute(start, o.day)) - 56.dp
             // A tap anywhere else puts it away.
             Box(Modifier.matchParentSizeCompat().clickable(onClickLabel = "Put the stamps away", onClick = onClose))
-            if (p.moving) {
-                MoveTo(days, o.day, col, Modifier.offset(x = GUTTER, y = top.coerceAtLeast(0.dp))) { to -> onMove(o.entry, o.day, to) }
-            } else {
-                val e = o.entry
-                val left = (GUTTER + col * i + col / 2 - 100.dp).coerceIn(GUTTER, GUTTER + col * 7 - 200.dp)
-                Row(
-                    Modifier
-                        .offset(x = left, y = top.coerceAtLeast(0.dp))
-                        .shadow(3.dp, RoundedCornerShape(2.dp))
-                        .background(colors.hyoshi, RoundedCornerShape(2.dp))
-                        .border(1.dp, colors.nijimi1, RoundedCornerShape(2.dp))
-                        .padding(horizontal = 4.dp, vertical = 3.dp),
-                ) {
-                    StampButton("済", if (e.state == EntryState.DONE) "Lift" else "Done", if (e.state == EntryState.DONE) "Lift the done stamp" else "Stamp it done", ink) { onStamp(e, EntryState.DONE) }
-                    if (e.phone == null) {
-                        StampButton("延", "Move", "Move it to another day", ink) { onPick(p.copy(moving = true)) }
-                        StampButton("止", if (e.state == EntryState.CANCELLED) "Restore" else "Cancel", if (e.state == EntryState.CANCELLED) "Lift the cancelled stamp" else "Stamp it cancelled", ink) { onStamp(e, EntryState.CANCELLED) }
-                        StampButton("›", "Open", "Open the plan's card", ink) { onOpen(o) }
-                    } else {
-                        // From the phone's calendar: it moves and changes there, not here.
-                        StampButton("止", if (e.state == EntryState.CANCELLED) "Going" else "Not going", if (e.state == EntryState.CANCELLED) "Lift the not-going stamp" else "Stamp it not going", ink) { onStamp(e, EntryState.CANCELLED) }
-                    }
-                }
-            }
+            StampTray(o, p, days, col, ink, top.coerceAtLeast(0.dp), onStamp, onMoving = { onPick(p.copy(moving = true)) }, onMove = onMove, onOpen = onOpen)
         }
     }
+}
+
+/** A plan's stamps (済 done, 延 move, 止 cancel, › its card), or the days to move it to, [top] down the area it's drawn in. */
+@Composable
+private fun StampTray(
+    o: Occurrence,
+    p: Picked,
+    days: List<LocalDate>,
+    col: Dp,
+    ink: Color,
+    top: Dp,
+    onStamp: (PlannerEntry, EntryState) -> Unit,
+    onMoving: () -> Unit,
+    onMove: (PlannerEntry, LocalDate, LocalDate) -> Unit,
+    onOpen: (Occurrence) -> Unit,
+) {
+    val colors = paper
+    if (p.moving) {
+        MoveTo(days, o.day, col, Modifier.offset(x = GUTTER, y = top)) { to -> onMove(o.entry, o.day, to) }
+        return
+    }
+    val e = o.entry
+    val i = days.indexOf(o.day)
+    val left = (GUTTER + col * i + col / 2 - 100.dp).coerceIn(GUTTER, GUTTER + col * 7 - 200.dp)
+    Row(
+        Modifier
+            .offset(x = left, y = top)
+            .shadow(3.dp, RoundedCornerShape(2.dp))
+            .background(colors.hyoshi, RoundedCornerShape(2.dp))
+            .border(1.dp, colors.nijimi1, RoundedCornerShape(2.dp))
+            .padding(horizontal = 4.dp, vertical = 3.dp),
+    ) {
+        StampButton("済", if (e.state == EntryState.DONE) "Lift" else "Done", if (e.state == EntryState.DONE) "Lift the done stamp" else "Stamp it done", ink) { onStamp(e, EntryState.DONE) }
+        if (e.phone == null) {
+            StampButton("延", "Move", "Move it to another day", ink, onMoving)
+            StampButton("止", if (e.state == EntryState.CANCELLED) "Restore" else "Cancel", if (e.state == EntryState.CANCELLED) "Lift the cancelled stamp" else "Stamp it cancelled", ink) { onStamp(e, EntryState.CANCELLED) }
+            StampButton("›", "Open", "Open the plan's card", ink) { onOpen(o) }
+        } else {
+            // From the phone's calendar: it moves and changes there, not here.
+            StampButton("止", if (e.state == EntryState.CANCELLED) "Going" else "Not going", if (e.state == EntryState.CANCELLED) "Lift the not-going stamp" else "Stamp it not going", ink) { onStamp(e, EntryState.CANCELLED) }
+        }
+    }
+}
+
+private fun allDayLabel(e: PlannerEntry, o: Occurrence): String {
+    val state = when {
+        e.state == EntryState.DONE -> ", done"
+        e.state == EntryState.CANCELLED -> ", cancelled"
+        e.movedFrom != null -> ", moved"
+        else -> ""
+    }
+    return "${e.title.ifBlank { "A plan" }}, ${o.day.dayOfWeek.getDisplayName(DayText.FULL, Locale.US)}, all day$state. Tap for stamps, hold to open"
 }
 
 /** Which of a day's plans overlap, and so how its column is shared: each one's place and how many share it. */
