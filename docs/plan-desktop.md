@@ -2,8 +2,20 @@
 
 Started 2026-11-06, after v0.4.0, by the desktop session (branch `claude/epic-davinci-rpggbc`),
 beside the build session's v0.5. **Friends get a desktop build with v0.5**, the next tester build,
-so the desktop work runs alongside v0.5 and ships with it. This is a proposal until you've
-answered *Open* at the end; no code has moved yet.
+so the desktop work runs alongside v0.5 and ships with it. Agreed on 2026-11-07, with your
+answers below; the reorganization has started (see *Progress*).
+
+## Your answers (2026-11-07)
+
+- **All three systems:** Windows, macOS and Linux. You have a Windows PC, so Windows is tried
+  first and most; the macOS and Linux builds come from CI and get tried more slowly.
+- **The window in v0.5:** the phone's layouts in a resizable window. Wider layouts are wanted,
+  designed later, for a later version.
+- **Phone and computer:** two separate Fumibakos, with v0.5's backups to move a persona or
+  everything between them. Sync, if ever, is a feature of its own.
+- **The move** lands before the build session starts v0.5.
+- **Closing the window** keeps Fumibako in the tray, so heartbeats go on (on by default, and the
+  first close says so). Starting at login stays off until you turn it on.
 
 ## The aim
 
@@ -12,9 +24,9 @@ answered *Open* at the end; no code has moved yet.
 - **One set of screens.** The Compose screens move into a module both apps build, with Compose
   Multiplatform, so each screen is written once and v0.5's new screens reach both.
 - **The same version on both:** 0.5.0 on the phone and on the computer, from one version number in
-  the build. Before 1.0, a v0.5 backup opens only in the version that made it, so with matching
-  versions, v0.5's import and export is how you move a persona (or everything) between phone and
-  computer.
+  the build. A v0.5 backup opens in its own version or a later one (a backup from a newer version
+  is refused until you update), so with matching versions, v0.5's import and export moves a
+  persona (or everything) either way between phone and computer.
 - **The phone app doesn't change** because of the move: the same app id, database file, settings
   file and key alias, so testers' letters survive the update (see *Data and migrations*).
 
@@ -47,7 +59,7 @@ answered *Open* at the end; no code has moved yet.
   stable release). Room 2.8.5 (and `room-testing`), the bundled SQLite driver and DataStore 1.3.0
   all have JVM builds.
 
-## How it's laid out (proposed)
+## How it's laid out
 
 ```
 core/      unchanged: plain Kotlin/JVM, all agent logic
@@ -76,7 +88,7 @@ desktop/   new, the desktop shell: main(), the window, the tray, and the desktop
 
 ## What's different on a computer
 
-| | On the phone (today) | On a computer (proposed for v0.5) |
+| | On the phone (today) | On a computer (v0.5) |
 | --- | --- | --- |
 | Where data lives | The app's private storage | The user's app-data folder (`%APPDATA%\Fumibako`, `~/Library/Application Support/Fumibako`, `~/.local/share/Fumibako`), outside the install folder, so updates and reinstalls keep your letters |
 | API keys | Encrypted with a Keystore key | Encrypted with a key kept in the system's keychain (Windows Credential Manager, the macOS Keychain, the Linux Secret Service) |
@@ -95,12 +107,12 @@ desktop/   new, the desktop shell: main(), the window, the tray, and the desktop
 | The burn, in the memory book | A GPU shader on Android 13 and later, else the simpler fallback | The fallback first; the shader ported to Skia later |
 | One at a time | One app | One Fumibako per user on a computer: opening it again brings the open window forward |
 
-## Mouse, keyboard and the window (proposed)
+## Mouse, keyboard and the window
 
 The screens are designed for a phone held upright. For v0.5:
 
 - **The phone's layouts in a resizable window**, about 440 by 860 at first. In a wider window the
-  content stays centered at a phone-like width. No new layouts in v0.5 (see *Open*).
+  content stays centered at a phone-like width. No new layouts in v0.5.
 - **A long press becomes a right-click, or a plain drag** where it starts one: dragging a sticker
   from the tray, moving the bookmark, a plan's stamps.
 - **Stickers:** drag to move; the scroll wheel (or the handles) to resize and Shift with the
@@ -108,8 +120,8 @@ The screens are designed for a phone held upright. For v0.5:
 - **Writing:** Enter starts a new line, since letters are long; Ctrl+Enter (Cmd+Enter on a Mac)
   sends. Escape goes back, like the phone's back gesture.
 - **Scrollbars** on long pages, and a hover state on what can be clicked.
-- **Wider layouts** (the letters list beside a thread, a week with room to breathe) are for later,
-  designed with the design session.
+- **Wider layouts** (the letters list beside a thread, a week with room to breathe) come in a
+  later version, designed with the design session first.
 
 ## v0.5 on both: notes for the build session
 
@@ -170,7 +182,7 @@ The rules in CLAUDE.md hold through the move:
 - **CI:** today's job, plus a desktop job on Windows, macOS and Linux runners that runs the desktop
   tests and packages an installer for each (`.msi`, `.dmg`, `.deb`), uploaded beside the APK.
 - **Unsigned for friends:** Windows SmartScreen and macOS Gatekeeper warn about unsigned apps, and
-  [`docs/testers.md`](testers.md) gets the steps past them on each system. Signing (an Apple
+  [`docs/testers.md`](testers.md) gets the steps past them on each system, Windows first. Signing (an Apple
   Developer ID with notarization, a Windows code-signing certificate) costs money and can wait for
   more testers. To check in step 1: whether macOS asks for the keychain password after each
   unsigned update.
@@ -187,7 +199,7 @@ The rules in CLAUDE.md hold through the move:
      (the screens use `java.time` about 70 times), or needs small helpers;
    - the font chain from Latin to Japanese faces on the desktop;
    - the tray's notifications on each system, and the keychain library;
-   - the player for songs and previews, with its license (nothing GPL-only);
+   - the player for songs and previews, with a license that fits the app's GPL-3.0-or-later;
    - whether the 26 Material icons the app uses come from Compose Multiplatform's icon artifact
      (it stopped at 1.7.3) or are copied in as vector resources.
 2. **The move,** as one change, timed with the build session (see below): the `data` and `ui`
@@ -211,26 +223,19 @@ The rules in CLAUDE.md hold through the move:
 ## Working beside the build session
 
 - **The move touches every screen file,** so it should land at a quiet point: after v0.4.0 and
-  before the build session starts v0.5 (proposed), or while the build session pauses. Later than
-  that, v0.5's work and the move collide in the same files.
+  before the build session starts v0.5 (agreed). Later than that, v0.5's work and the move would
+  collide in the same files.
 - **After the move,** the build session writes each screen once in `ui` and needs to know little
   about the desktop. When a v0.5 part needs a desktop side, the desktop session adds it.
 - **This branch** carries the desktop work. The move goes into the build branch as one change, so
   both sessions carry on from it.
+- **Signing stays the build session's:** the move leaves `app/signing/` and the debug APK's
+  re-signing in `app/build.gradle.kts` as they are.
 
-## Open (your call)
+## Progress
 
-1. **Which computers** do friends use: Windows, macOS, Linux? CI can build all three; testing and
-   the testers' guide follow the ones they have.
-2. **The window in v0.5:** the phone's layouts in a resizable window (proposed), or wider layouts
-   designed first (a pass with the design session, and more work before v0.5).
-3. **Phone and computer together:** two separate Fumibakos, with v0.5's backups to move a persona
-   or everything between them (proposed). Keeping the two in step on their own (sync) is a feature
-   of its own, for later if you want it.
-4. **When the move lands:** before the build session starts v0.5 (proposed), which means the build
-   session waits for it; or another quiet point you choose.
-5. **With the window closed:** Fumibako stays in the tray so heartbeats go on (proposed: on by
-   default, and the first close says so); starting at login stays off until you turn it on.
+- **2026-11-07:** your answers are in; step 1 (the spike) has started. The build and design
+  sessions have been told.
 
 ## Noted for later
 
