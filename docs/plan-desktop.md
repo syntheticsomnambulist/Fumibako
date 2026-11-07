@@ -257,10 +257,12 @@ The rules in CLAUDE.md hold through the move:
     identity hash is unchanged, so an existing database opens as before. The phone's
     MigrationTest reads `data/schemas`, and `DesktopMigrationTest` runs the same steps on the
     desktop's SQLite.
-  - **Tests:** everything passes, except two things that were already there. One is
-    `ScreenshotTour.largeTextTour`, which fails before the move too: it waits for "THE WEEK STARTS
-    ON" after opening Planner settings. The other is `nightTour`, which once in five runs read
-    ExoPlayer off the main thread under load (unchanged code; it passed the other four).
+  - **Tests:** everything passes. `ScreenshotTour.largeTextTour` failed the same way before and
+    after the move (it waited for "THE WEEK STARTS ON"); the build session's 0.4.2 fixed it, and
+    the merged branch passes it. `nightTour` once in five runs read ExoPlayer off the main thread
+    under load (unchanged code; it passed the other four), so it's worth watching.
+  - **Merged with 0.4.2:** the build session's week-page changes came through into the moved file;
+    the tour's 276 screenshots match the build branch's, pixel for pixel.
   - **The version** is set once, in `gradle.properties`, for both apps.
   - **CI** also builds the desktop on Windows, macOS and Linux runners: its tests and an installer
     for each. The Linux `.deb` builds here (164 MB with the whole Java runtime, trimmed later).

@@ -22,7 +22,9 @@
   `HARNESS_DEBUG_KEYSTORE_B64` (never committed) and carry `app/signing/debug-lineage`, which hands
   over from the retired key (`app/signing/retired-debug.keystore`) that signed builds up to 0.4.0.
   Never delete or regenerate either file, and never change the debug key without extending the
-  lineage: a phone that can't verify the chain must uninstall, which wipes its letters. Without the
+  lineage: a phone that can't verify the chain must uninstall, which wipes its letters. The
+  retired key keeps every right in the lineage except rollback: AndroidX declares a signature
+  permission, and without the permission right an update fails with "App not installed". Without the
   variable, builds use the machine's own debug key; send the user an APK only when it's signed with
   the shared key (`apksigner verify --print-certs` shows "CN=Fumibako Debug").
 - **Screens are shared with the desktop:** they live in `ui/src/commonMain`, which can't use Android;

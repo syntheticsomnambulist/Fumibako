@@ -267,6 +267,20 @@ From the agreed decisions in `calendar.md`:
 - **0.4.1 (version code 23), getting ready to go public:** a new debug signing key, with key
   rotation so builds still install over the old key's (v0.2.2 included) and keep their letters;
   the GPL-3.0-or-later license. See `docs/going-public.md`.
+  - **The first 0.4.1 build wouldn't install** ("App not installed"): its lineage withheld the old
+    key's "permission" right, which the update needs because AndroidX declares a signature
+    permission. The lineage now keeps apksigner's default rights, all but rollback.
+  - **Confirmed on your phone:** the fixed 0.4.1 installed over 0.4.0 and kept the letters.
+- **0.4.2 (version code 24), after 0.4.1 (your notes from the phone):**
+  - **The all-day row** has a line under it too, so the hours scrolling beneath it don't look cut
+    off.
+  - **An all-day plan** takes a tap for its stamps (済, 延, 止, its card), like a plan in the hours,
+    and shows its stamp; a long press opens its card.
+  - **The ribbon** runs up behind the status bar to the page's top edge; only its end takes taps.
+  - **The week and month headers:** you're rethinking them on the design side.
+  - **Tests:** the tour stamps an all-day plan done and lifts it again; the large-text tour now
+    scrolls to the week page's settings, which sit below the screen at that size, rather than
+    waiting for them to appear.
 
 ## Noted for later
 

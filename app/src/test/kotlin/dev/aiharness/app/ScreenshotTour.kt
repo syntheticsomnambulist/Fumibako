@@ -432,8 +432,11 @@ class ScreenshotTour {
         // 十 Planner: the week page, the seasons, public holidays.
         compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasClickActionLabel("Open Planner"))
         compose.onNode(hasClickActionLabel("Open Planner")).performClick()
-        waitFor("THE WEEK STARTS ON")
+        // Its first card; the cards further down only come in as the page scrolls (at large text,
+        // the week page's is off the screen).
+        waitFor("Phone calendars")
         shot("${prefix}_18c_settings_planner")
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("THE WEEK STARTS ON"))
         compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("Hide them all"))
         compose.waitForIdle()
         shot("${prefix}_18c2_settings_phone_calendars")
@@ -525,6 +528,16 @@ class ScreenshotTour {
         waitFor("MOVE TO")
         shot("${prefix}_24c_planner_move")
         compose.onNode(hasClickActionLabel("Put the stamps away")).performClick()
+        // An all-day plan takes a tap for its stamps too, not straight to its card.
+        compose.onNodeWithContentDescription("Jo's birthday", substring = true).performClick()
+        waitFor("Done")
+        assertTrue(compose.onAllNodesWithText("At a time").fetchSemanticsNodes().isEmpty(), "the stamps, not the card")
+        compose.onNodeWithContentDescription("Stamp it done").performClick()
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Jo's birthday", substring = true) and hasContentDescription("all day, done", substring = true), 10_000)
+        shot("${prefix}_24c2_planner_all_day_done")
+        compose.onNodeWithContentDescription("Jo's birthday", substring = true).performClick()
+        compose.onNodeWithContentDescription("Lift the done stamp").performClick()
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Jo's birthday", substring = true) and hasContentDescription("all day. Tap", substring = true), 10_000)
         // The sleep hours open, and fold again.
         compose.onAllNodes(hasClickActionLabel("Unfold your sleep hours")).onFirst().performScrollTo().performClick()
         compose.waitForIdle()

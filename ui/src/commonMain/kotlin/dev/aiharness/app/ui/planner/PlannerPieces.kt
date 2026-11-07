@@ -43,7 +43,8 @@ val RibbonShape = GenericShape { size, _ ->
     moveTo(0f, 0f)
     lineTo(size.width, 0f)
     lineTo(size.width, size.height)
-    lineTo(size.width / 2f, size.height * 0.88f)
+    // A notch as deep as a quarter of its width, however long the ribbon runs.
+    lineTo(size.width / 2f, size.height - size.width * 0.24f)
     lineTo(0f, size.height)
     close()
 }
