@@ -48,7 +48,19 @@ sealed interface LlmPart {
      * A PDF, a song or a video, sent whole to a model that takes it in (see `MediaSupport`). The
      * context builder only makes these for providers that can send them; others drop them.
      */
-    data class Media(val bytes: ByteArray, val mimeType: String, val name: String? = null) : LlmPart
+    data class Media(
+        val bytes: ByteArray,
+        val mimeType: String,
+        val name: String? = null,
+        /** For a video too long to send whole: only its first this many seconds are watched (Gemini's clipping). */
+        val endSeconds: Int? = null,
+    ) : LlmPart
+
+    /**
+     * A video the provider fetches itself from its address: a YouTube link, which Gemini watches
+     * (pictures and sound). Cut to its first [endSeconds] when set. Only made for Gemini.
+     */
+    data class LinkedVideo(val uri: String, val endSeconds: Int? = null) : LlmPart
 }
 
 data class LlmToolCall(val id: String, val name: String, val argumentsJson: String)

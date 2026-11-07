@@ -281,6 +281,22 @@ From the agreed decisions in `calendar.md`:
   - **Tests:** the tour stamps an all-day plan done and lifts it again; the large-text tour now
     scrolls to the week page's settings, which sit below the screen at that size, rather than
     waiting for them to appear.
+- **0.4.3 (version code 25), videos and YouTube for Gemini (your notes):** Pidge sent a 3:47 video
+  as three frames and couldn't hear a YouTube ticket, though Gemini takes both. The reason was the
+  share of the context one thing may take (a third of "Summarize after", so about 2:40 of video
+  at the Gemini preset's 48,000), and a pasted link having no sound file.
+  - **A video may take half** the budget (four minutes at the preset); other things keep a third.
+  - **A longer one is watched as its first part:** a video over four minutes keeps a smaller copy
+    of its first four (all that fits one request at its bitrate), and Gemini cuts a video to what
+    fits (`videoMetadata` offsets), so the persona is told "(its first 4:00:)".
+  - **YouTube links:** Gemini personas watch a YouTube cutting or ticket by its address (Gemini
+    fetches it; Google calls this a preview), up to the same share. Its length is usually unknown,
+    so Gemini is told to stop at that point. If Gemini refuses the request (a private video, say),
+    it goes again once without the link. A watched link is described for later epochs like a video.
+  - **The line under a frame says why:** "Aria sees three frames from the video; Claude can't watch
+    video", "Pidge watches its first 4:00; the whole of it is too much to send at once", "Pidge
+    watches up to its first 4:00, from YouTube", "…but a link brings no sound to send".
+  - The model screen lists YouTube links among what Gemini takes in.
 
 ## Noted for later
 

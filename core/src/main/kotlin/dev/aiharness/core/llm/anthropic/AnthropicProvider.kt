@@ -253,6 +253,8 @@ class AnthropicProvider : LlmProvider {
                     is LlmPart.Text -> BetaContentBlockParam.ofText(BetaTextBlockParam.builder().text(part.text).build())
                     is LlmPart.Image -> imageBlock(part)
                     is LlmPart.Media -> documentBlock(part)
+                    // Only Gemini watches links (MediaSupport); the stand-in beside it says what it is.
+                    is LlmPart.LinkedVideo -> null
                 }
             }.ifEmpty { listOf(BetaContentBlockParam.ofText(BetaTextBlockParam.builder().text("...").build())) },
         )

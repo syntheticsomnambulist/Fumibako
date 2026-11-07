@@ -54,6 +54,51 @@ class GeminiProviderTest {
         assertEquals("AQID", sent[2]["inlineData"]!!.jsonObject["data"]!!.jsonPrimitive.content)
     }
 
+    private fun okStream() = MockResponse().setHeader("Content-Type", "text/event-stream")
+        .setBody("data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Nice.\"}]},\"finishReason\":\"STOP\"}]}\n\n")
+
+    @Test
+    fun aLongVideoIsCutAndAYouTubeLinkGoesByItsAddress() = runTest {
+        server.enqueue(okStream())
+        val parts = listOf(
+            LlmPart.Media(byteArrayOf(1), "video/mp4", "walk.mp4", endSeconds = 240),
+            LlmPart.LinkedVideo("https://www.youtube.com/watch?v=abcdefghijk", endSeconds = 240),
+            LlmPart.LinkedVideo("https://www.youtube.com/watch?v=lmnopqrstuv"),
+        )
+        GeminiProvider().complete(LlmRequest(profile(), "gkey", "sys", listOf(LlmMessage.User(parts))))
+        val sent = HarnessJson.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject["contents"]!!
+            .jsonArray.single().jsonObject["parts"]!!.jsonArray.map { it.jsonObject }
+        val cut = sent[0]["videoMetadata"]!!.jsonObject
+        assertEquals("0s", cut["startOffset"]!!.jsonPrimitive.content)
+        assertEquals("240s", cut["endOffset"]!!.jsonPrimitive.content)
+        assertEquals("https://www.youtube.com/watch?v=abcdefghijk", sent[1]["fileData"]!!.jsonObject["fileUri"]!!.jsonPrimitive.content)
+        assertEquals("240s", sent[1]["videoMetadata"]!!.jsonObject["endOffset"]!!.jsonPrimitive.content)
+        assertEquals(null, sent[2]["videoMetadata"], "a short one goes whole")
+    }
+
+    @Test
+    fun aYouTubeLinkGeminiWontTakeIsLeftOutAndTheLetterStillComes() = runTest {
+        // A private video, say: Gemini refuses the request.
+        server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":{"code":400,"message":"Cannot fetch content from the provided URL.","status":"INVALID_ARGUMENT"}}"""))
+        server.enqueue(okStream())
+        val parts = listOf(LlmPart.Text("Watch this!"), LlmPart.LinkedVideo("https://www.youtube.com/watch?v=abcdefghijk"))
+        val result = GeminiProvider().complete(LlmRequest(profile(), "gkey", "sys", listOf(LlmMessage.User(parts))))
+        assertEquals("Nice.", result.text)
+        server.takeRequest()
+        val again = HarnessJson.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject["contents"]!!
+            .jsonArray.single().jsonObject["parts"]!!.jsonArray.map { it.jsonObject }
+        assertTrue(again.none { "fileData" in it })
+        assertEquals("(The video didn't come through this time.)", again[1]["text"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun aRefusedRequestWithoutLinksIsntSentAgain() = runTest {
+        server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":{"code":400,"message":"Bad.","status":"INVALID_ARGUMENT"}}"""))
+        val failed = runCatching { GeminiProvider().complete(LlmRequest(profile(), "gkey", "sys", listOf(LlmMessage.User(listOf(LlmPart.Text("hi")))))) }
+        assertTrue(failed.isFailure)
+        assertEquals(1, server.requestCount)
+    }
+
     @Test
     fun preservesThoughtSignaturesForReplay() = runTest {
         server.enqueue(

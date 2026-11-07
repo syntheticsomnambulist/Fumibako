@@ -28,17 +28,21 @@ import kotlin.coroutines.resume
 /**
  * Makes the smaller copy of a video or song that models are sent (docs/plan-v0.3.5.md, after
  * step 8): video at 360 px high and about 400 kbit/s with compact sound, a song as 64 kbit/s AAC.
- * A clip of two or three minutes then fits in one request to Gemini, with nothing stored at Google.
- * The original stays for playing and saving. Best effort: null when the phone can't do it.
+ * Up to four minutes of video then fit in one request to Gemini, with nothing stored at Google; a
+ * longer video's copy is its first four minutes. The original stays for playing and saving. Best
+ * effort: null when the phone can't do it.
  */
 class Shrinker(private val context: Context) {
-    /** A copy of the video at [source], written to [out]; null if it couldn't be made. [onProgress] hears how far along it is (0 to 1). */
-    suspend fun video(source: File, out: File, onProgress: (Float) -> Unit = {}): File? = run(source, out, video = true, onProgress)
+    /**
+     * A copy of the video at [source], written to [out], of its first [endMs] when set; null if it
+     * couldn't be made. [onProgress] hears how far along it is (0 to 1).
+     */
+    suspend fun video(source: File, out: File, endMs: Long? = null, onProgress: (Float) -> Unit = {}): File? = run(source, out, video = true, endMs, onProgress)
 
     /** A compact copy of the song at [source]. */
-    suspend fun song(source: File, out: File, onProgress: (Float) -> Unit = {}): File? = run(source, out, video = false, onProgress)
+    suspend fun song(source: File, out: File, onProgress: (Float) -> Unit = {}): File? = run(source, out, video = false, endMs = null, onProgress)
 
-    private suspend fun run(source: File, out: File, video: Boolean, onProgress: (Float) -> Unit): File? = withContext(Dispatchers.Main) {
+    private suspend fun run(source: File, out: File, video: Boolean, endMs: Long?, onProgress: (Float) -> Unit): File? = withContext(Dispatchers.Main) {
         withTimeoutOrNull(TIMEOUT_MS) {
             var started: Transformer? = null
             // The transformer says how far it's got when asked (on the thread it was made on, this one).
@@ -51,14 +55,14 @@ class Shrinker(private val context: Context) {
                 }
             }
             try {
-                make(source, out, video) { started = it }
+                make(source, out, video, endMs) { started = it }
             } finally {
                 watch.cancel()
             }
         }
     }
 
-    private suspend fun make(source: File, out: File, video: Boolean, onStart: (Transformer) -> Unit): File? =
+    private suspend fun make(source: File, out: File, video: Boolean, endMs: Long?, onStart: (Transformer) -> Unit): File? =
             suspendCancellableCoroutine { cont ->
                 val encoders = DefaultEncoderFactory.Builder(context)
                     .setRequestedVideoEncoderSettings(VideoEncoderSettings.Builder().setBitrate(VIDEO_BITRATE).build())
@@ -81,7 +85,10 @@ class Shrinker(private val context: Context) {
                         },
                     )
                     .build()
-                val item = EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(source)))
+                val media = MediaItem.Builder().setUri(Uri.fromFile(source))
+                    .apply { endMs?.let { setClippingConfiguration(MediaItem.ClippingConfiguration.Builder().setEndPositionMs(it).build()) } }
+                    .build()
+                val item = EditedMediaItem.Builder(media)
                     .apply {
                         if (video) setEffects(Effects(emptyList(), listOf(Presentation.createForShortSide(VIDEO_SHORT_SIDE))))
                         else setRemoveVideo(true)
@@ -104,8 +111,11 @@ class Shrinker(private val context: Context) {
         private const val TIMEOUT_MS = 120_000L
         private const val PROGRESS_EVERY_MS = 250L
 
-        /** Videos longer than this won't fit a model's budget even small, so they aren't shrunk. */
-        const val LONGEST_VIDEO_MS = 5 * 60_000L
+        /**
+         * The most of a video one request carries at the copy's 450 kbit/s or so (under Gemini's
+         * 14 MB): a longer video's copy is its first four minutes.
+         */
+        const val FIRST_PART_MS = 4 * 60_000L
 
         /** Songs smaller than this, in a type Gemini knows, go as they are. */
         const val SMALL_SONG = 6L * 1024 * 1024

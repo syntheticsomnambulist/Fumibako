@@ -248,7 +248,7 @@ open class OpenAiCompatibleProvider(
                 when (part) {
                     is LlmPart.Text -> add(buildJsonObject { put("type", "text"); put("text", part.text) })
                     // Servers differ too much in what else they take; the stand-in beside it says what it is.
-                    is LlmPart.Media -> Unit
+                    is LlmPart.Media, is LlmPart.LinkedVideo -> Unit
                     is LlmPart.Image -> add(
                         buildJsonObject {
                             put("type", "image_url")
