@@ -122,11 +122,23 @@ persona's heartbeat page.
   puts it away (what can go is outlined), and tapping something in the drawer takes it out and
   puts it back on her desk.
 - **The drawer means "allowed, but not what she's focusing on"** (agreed), and it keeps old things
-  too. Put away, she may still do it, just not as often. Proposed: when she sits down, the drawer
-  gets one line ("In your drawer: your haiku notebook"), and she can take something out herself,
-  which puts it back on the desk. **Kept in the drawer** (proposed), as tags you can open: letters
-  from past months, bundled; last month's diary; finished games; the trinkets the dish has no
-  room for.
+  too. Put away, she may still do it, just not as often. She doesn't see the drawer when she sits
+  down (agreed); she moves things in and out of it in an activity of its own, **rearranging her
+  desk** (below). **Kept in the drawer** (agreed), as tags you can open: letters from past months,
+  bundled; last month's diary; finished games; the trinkets the dish has no room for.
+
+### Rearranging her desk (agreed as an activity; details proposed)
+
+- **Now and then, in a heartbeat,** she's shown what's on her desk and what's in her drawer
+  (only what she may do), with how long since she last used each, and may move things either
+  way: one small call with a tool, `rearrange(put_away, take_out)`.
+- **When:** proposed, at most once a week, and only when something on the desk has gone unused for
+  a fortnight or something in the drawer is waiting.
+- **What you moved stays put a while:** proposed, for a week after you move something she sees
+  "Sam put this away on Tuesday" and leaves it.
+- **Free by default** in "What she does" (it's short), with Slot | Free like the rest.
+- **Logged** in "Lately at the desk" ("Rearranged her desk: put her haiku notebook away"), which
+  opens the drawer.
 - **What she does lives in her settings** (agreed), and means "may she do this at all": each
   activity with a switch (off: never, gone from her desk and from her drawer) that also says where
   it is ("on her desk", "in her drawer"), and a **Slot | Free** choice, with ¥¥ beside the
@@ -342,6 +354,7 @@ activity in its own turn is the new part (pen pals already needed it).
 | Reflecting, revisiting, letting memories settle | Sitting down | No |
 | Drawing stickers | Its own turn; the stickers go in the sketchbook and on its sheet | Yes |
 | Writing to you, with stickers on your note and a change of clothes | Its own turn | Yes |
+| Rearranging her desk (new in v0.6) | Its own short turn | No, by default |
 
 v0.6 adds pen pals (the letter tray) and shiritori. The planner's look-ahead (v0.4) runs
 in the private moment until then, and moves to the desk in v0.6.
