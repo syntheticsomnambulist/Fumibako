@@ -32,6 +32,8 @@ jetbrainsLifecycle = "2.11.0"
 jetbrainsNavigation = "2.10.0"
 # What Room 2.8.5 is built against: the bundled SQLite (desktop) and the framework driver (Android).
 sqlite = "2.6.2"
+# The desktop's keychain: Windows Credential Manager, the macOS Keychain, the Secret Service (BSD-3).
+javaKeyring = "1.0.4"
 
 [libraries]
 mlkit-subject-segmentation = { module = "com.google.android.gms:play-services-mlkit-subject-segmentation", version = "16.0.0-beta1" }
@@ -93,6 +95,7 @@ compose-mp-desktop = { module = "org.jetbrains.compose.desktop:desktop", version
 jetbrains-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "jetbrainsLifecycle" }
 jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "jetbrainsLifecycle" }
 jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "jetbrainsNavigation" }
+java-keyring = { module = "com.github.javakeyring:java-keyring", version.ref = "javaKeyring" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

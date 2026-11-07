@@ -33,12 +33,14 @@ import dev.aiharness.core.theme.ThemeClock
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.util.Locale
+import dev.aiharness.app.platform.deviceNoun
+import dev.aiharness.app.platform.hasDeviceCalendars
 
 /** 十 Planner: your typical week, the week page, the seasons, public holidays (more comes with busy times and phone calendars). */
 internal fun SettingsCards.plannerPage(nav: NavController, s: AppSettings, update: Update) {
     val p = s.planner
     fun planner(transform: (dev.aiharness.core.model.PlannerSettings) -> dev.aiharness.core.model.PlannerSettings) = update { it.copy(planner = transform(it.planner)) }
-    card { PhoneCalendarsCard(s, update) }
+    if (hasDeviceCalendars) card { PhoneCalendarsCard(s, update) }
     card {
         CardTitle("Your typical week")
         Hint("Work, sleep and the rest of your week, printed faintly on every day. Sleep folds the week page.")
@@ -54,7 +56,7 @@ internal fun SettingsCards.plannerPage(nav: NavController, s: AppSettings, updat
         PaperChoice(listOf(false to "Monday", true to "Sunday"), p.weekStartsSunday, { v -> planner { it.copy(weekStartsSunday = v) } })
         Text("CLOCK", style = PaperType.meta, color = paper.kasure2)
         PaperChoice(
-            listOf(ClockStyle.PHONE to "Phone's setting", ClockStyle.H12 to "12-hour", ClockStyle.H24 to "24-hour"),
+            listOf(ClockStyle.PHONE to "${deviceNoun.replaceFirstChar { it.uppercase() }}'s setting", ClockStyle.H12 to "12-hour", ClockStyle.H24 to "24-hour"),
             s.theme.clock,
             { v -> update { it.copy(theme = it.theme.copy(clock = v)) } },
             maxLines = 2,
@@ -65,7 +67,7 @@ internal fun SettingsCards.plannerPage(nav: NavController, s: AppSettings, updat
         PaperChoice(dev.aiharness.core.model.DuringBusy.entries.map { it to it.label }, p.duringBusy, { v -> planner { it.copy(duringBusy = v) } }, maxLines = 2)
         Hint(
             when (p.duringBusy) {
-                dev.aiharness.core.model.DuringBusy.HOLD -> "While your planner says you're busy (work, sleep, a busy plan or phone event), a persona's letter arrives quietly; when you're free, one notification says who wrote."
+                dev.aiharness.core.model.DuringBusy.HOLD -> "While your planner says you're busy (work, sleep, a busy plan${if (hasDeviceCalendars) " or phone event" else ""}), a persona's letter arrives quietly; when you're free, one notification says who wrote."
                 dev.aiharness.core.model.DuringBusy.NOTIFY -> "Letters notify as they come, busy or not."
                 dev.aiharness.core.model.DuringBusy.SILENT -> "While you're busy, letters arrive with no notification at all; they're in your letters when you look."
             },
@@ -81,7 +83,7 @@ internal fun SettingsCards.plannerPage(nav: NavController, s: AppSettings, updat
         CardTitle("Seasons and special days")
         SwitchRow(
             "The solar terms and microseasons", p.seasonBand, { v -> planner { it.copy(seasonBand = v) } },
-            subtitle = "Each of the 24 solar terms marked on its first day, and a day's microseason on its page, worked out on the phone. A letter is told each new microseason as it begins.",
+            subtitle = "Each of the 24 solar terms marked on its first day, and a day's microseason on its page, worked out on the $deviceNoun. A letter is told each new microseason as it begins.",
         )
         Hemispheres(s, update)
     }
@@ -189,14 +191,15 @@ private fun HolidaysCard(s: AppSettings, update: Update) {
                 problem = if (fetched) null else "Chosen; they'll be fetched when you're next online."
             }
         }
-        Hint("Fetched once a year from Nager.Date, a free public list, then kept on the phone. Only the country and the year are sent.")
+        Hint("Fetched once a year from Nager.Date, a free public list, then kept on the $deviceNoun. Only the country and the year are sent.")
     } else if (h.show && h.country != null) {
         val where = listOfNotNull(countryName(h.country), h.region?.let(Holidays::regionName) ?: "nationwide holidays").joinToString(" · ")
         Text(where, style = PaperType.entryTitle, color = paper.sumi)
         val years = h.years.filter { it.country == h.country }.map { it.year }
         Hint(
             if (years.isEmpty()) "Not fetched yet; they'll come when you're next online."
-            else "Kept on the phone for ${years.joinToString(" and ")}, and fetched again from Nager.Date now and then. A holiday calendar from your phone will be able to stand in for these, under Phone calendars.",
+            else "Kept on the $deviceNoun for ${years.joinToString(" and ")}, and fetched again from Nager.Date now and then." +
+                if (hasDeviceCalendars) " A holiday calendar from your phone will be able to stand in for these, under Phone calendars." else "",
         )
         PaperButton("Change") { country = h.country; region = h.region; choosing = true }
     }

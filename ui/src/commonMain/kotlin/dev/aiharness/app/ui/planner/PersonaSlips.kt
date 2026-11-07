@@ -49,6 +49,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.TextStyle as DayText
 import java.util.Locale
+import dev.aiharness.app.platform.deviceNoun
 
 /** A persona's signature seal: the character it picked, or its name's first letter until it does. */
 fun sealOf(persona: Persona): String = persona.planner.seal ?: persona.name.take(1).ifBlank { "?" }
@@ -201,7 +202,7 @@ fun PersonaSlip(
             Text(
                 when {
                     e.state == EntryState.KEPT -> "${persona.name} kept this: ${e.title}"
-                    missed -> "${persona.name} missed this (the phone didn't wake them in time): ${e.title}"
+                    missed -> "${persona.name} missed this (the $deviceNoun didn't wake them in time): ${e.title}"
                     else -> "${persona.name} will wake ${dateWords}${at?.let { " at $it" } ?: ""}: ${e.title}"
                 },
                 style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = 13.5.sp, lineHeight = 18.sp),

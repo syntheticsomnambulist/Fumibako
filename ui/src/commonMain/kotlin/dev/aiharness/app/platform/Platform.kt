@@ -52,6 +52,9 @@ interface AppPlatform {
 
 /** API keys, encrypted where the platform keeps keys. */
 interface ClearableSecretStore : SecretStore {
+    /** What encrypts the keys, for Settings: "the Android Keystore", "a key in your computer's keychain". */
+    val encryptedWith: String
+
     /** Forgets every stored secret (when the database is wiped, their credentials are gone). */
     fun clearAll()
 }

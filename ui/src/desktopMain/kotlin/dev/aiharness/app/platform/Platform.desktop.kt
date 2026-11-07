@@ -52,6 +52,16 @@ import javax.swing.JFileChooser
  * calendar. Filled in during the desktop plan's steps 3 to 5 (docs/plan-desktop.md).
  */
 
+actual val deviceNoun: String = "computer"
+
+actual val deviceOptionsCard: (@Composable () -> Unit)? = { DesktopOptionsCard() }
+
+actual val hasDeviceCalendars: Boolean = false
+
+actual val hasCamera: Boolean = false
+
+actual val systemMotionSetting: String? = null
+
 /** Escape goes back, as the phone's back gesture does (see the desktop window's key handling). */
 @Composable
 actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {

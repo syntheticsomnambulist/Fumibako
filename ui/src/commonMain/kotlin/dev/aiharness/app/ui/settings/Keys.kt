@@ -118,7 +118,7 @@ fun KeysScreen(nav: NavController) {
         }
         item("about") {
             TapedCard(layouts[1], tape, tilt = cardTilt("keys-about")) {
-                Hint("Keys are encrypted with the Android Keystore and only sent to the service they belong to.")
+                Hint("Keys are encrypted with ${LocalAppContainer.current.platform.secrets.encryptedWith} and only sent to the service they belong to.")
                 Hint("For NovelAI, use a persistent API token from your account settings.")
             }
         }

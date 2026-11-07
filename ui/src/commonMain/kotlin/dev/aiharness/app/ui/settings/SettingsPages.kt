@@ -83,7 +83,7 @@ internal fun SettingsCards.lookPage(s: AppSettings, update: Update) {
     card {
         CardTitle("Clock")
         PaperChoice(
-            listOf(dev.aiharness.core.model.ClockStyle.PHONE to "Phone's setting", dev.aiharness.core.model.ClockStyle.H12 to "12-hour", dev.aiharness.core.model.ClockStyle.H24 to "24-hour"),
+            listOf(dev.aiharness.core.model.ClockStyle.PHONE to "${dev.aiharness.app.platform.deviceNoun.replaceFirstChar { it.uppercase() }}'s setting", dev.aiharness.core.model.ClockStyle.H12 to "12-hour", dev.aiharness.core.model.ClockStyle.H24 to "24-hour"),
             s.theme.clock,
             { v -> update { it.copy(theme = it.theme.copy(clock = v)) } },
             maxLines = 2,
@@ -112,6 +112,7 @@ internal fun SettingsCards.heartbeatPage(nav: NavController, s: AppSettings, upd
             color = paper.usuzumi1,
         )
     }
+    dev.aiharness.app.platform.deviceOptionsCard?.let { options -> card { options() } }
     if (hb.mode == HeartbeatMode.PROACTIVE) {
         card { OwnRhythms(nav) }
         card {
@@ -396,7 +397,7 @@ private fun Keys(nav: NavController) {
     CardTitle("Keys", trailing = { InkLink("Manage keys") { nav.navigate(Routes.KEYS) } })
     if (credentials.isEmpty()) Hint("No keys yet. Add one to start writing.")
     credentials.forEach { key -> KeyTag(key) { nav.navigate(Routes.KEYS) } }
-    Hint("Keys are encrypted on this phone and only sent to the service they belong to.")
+    Hint("Keys are encrypted on this ${dev.aiharness.app.platform.deviceNoun} and only sent to the service they belong to.")
 }
 
 @Composable

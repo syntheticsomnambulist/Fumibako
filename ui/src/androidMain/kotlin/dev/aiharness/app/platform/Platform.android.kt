@@ -58,6 +58,16 @@ import java.time.LocalTime
  * here unchanged in what it does.
  */
 
+actual val deviceNoun: String = "phone"
+
+actual val deviceOptionsCard: (@Composable () -> Unit)? = null
+
+actual val hasDeviceCalendars: Boolean = true
+
+actual val hasCamera: Boolean = true
+
+actual val systemMotionSetting: String? = "Android's \"Remove animations\""
+
 @Composable
 actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) = BackHandler(enabled, onBack)
 

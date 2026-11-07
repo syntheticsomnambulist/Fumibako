@@ -61,6 +61,7 @@ import dev.aiharness.core.model.ImageHost
 import dev.aiharness.core.model.ImageProfile
 import dev.aiharness.core.util.newId
 import kotlinx.coroutines.launch
+import dev.aiharness.app.platform.deviceNoun
 
 private fun keyKind(host: ImageHost): CredentialKind? = when (host) {
     ImageHost.NOVELAI -> CredentialKind.NOVELAI
@@ -177,7 +178,7 @@ fun ImageProfileScreen(nav: NavController, profileId: String) {
                 }
                 if (p.host.needsServer) {
                     IndexCardField("Server address", p.baseUrl.orEmpty(), { v -> update { it.copy(baseUrl = v.trim().ifBlank { null }) } }, ink = you, singleLine = true, style = PaperType.noteBody, placeholder = if (p.host == ImageHost.COMFYUI) "http://192.168.1.20:8188" else "http://192.168.1.20:7860")
-                    Hint(if (p.host == ImageHost.COMFYUI) "Start ComfyUI with --listen so the phone can reach it on your Wi-Fi." else "Start it with --api --listen so the phone can reach it on your Wi-Fi.")
+                    Hint(if (p.host == ImageHost.COMFYUI) "Start ComfyUI with --listen so the $deviceNoun can reach it on your Wi-Fi." else "Start it with --api --listen so the $deviceNoun can reach it on your Wi-Fi.")
                 }
                 ModelField(p) { v -> update { it.copy(model = v) } }
             }

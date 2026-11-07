@@ -266,14 +266,38 @@ The rules in CLAUDE.md hold through the move:
   - **The version** is set once, in `gradle.properties`, for both apps.
   - **CI** also builds the desktop on Windows, macOS and Linux runners: its tests and an installer
     for each. The Linux `.deb` builds here (164 MB with the whole Java runtime, trimmed later).
-- **Step 3 begun: a first desktop shell.**
-  - It opens the shared screens in a 440 by 860 window, with a fresh database and Aria seeded.
-    Letters, Personas, Planner, Settings and a persona's page were checked in a real window.
-  - First versions of its services: heartbeats while it runs, photos and files in letters,
-    links and files opening outside, saving through a dialog.
-  - Not yet: the tray, the keychain (API keys are in a file only you can read, unencrypted until
-    the keychain comes), songs and videos playing in the app (they open in the computer's own
-    player), PDFs' pages, and the desktop's own wording ("on this phone" still shows).
+- **Merged into the build branch** (the build session reviewed the migrations first), 2026-11-07.
+- **Step 3, the desktop shell: done.**
+  - **The tray:** the seal in the tray (the menu bar on a Mac), with Open Fumibako, Busy for now
+    (for an hour, till tonight, till tomorrow, into your planner as on the phone), Run a heartbeat
+    now, and Quit. Closing the window keeps Fumibako there, so heartbeats go on; the first close
+    says so. Where the desktop has no tray (some Linux desktops), closing quits. `--background`
+    starts it in the tray.
+  - **Settings, Heartbeat, "On this computer":** keep Fumibako in the tray (on), start it when you
+    log in (off; a Run entry in the Windows registry, a LaunchAgent on a Mac, an autostart entry
+    on Linux; only for the installed app).
+  - **API keys in the keychain:** encrypted (AES-GCM) in Fumibako's folder with one key that
+    Windows Credential Manager, the macOS Keychain or the Linux Secret Service holds. Without a
+    keychain the key is in a file only you can read, and Settings, Models and keys says so. A
+    keychain that can't be reached leaves the keys unread rather than replacing them. Keys the
+    first desktop builds kept in plain text are moved in and the plain file deleted.
+  - **One Fumibako at a time:** starting it again brings the open window forward. A click on the
+    Mac's dock icon does too.
+  - **Letters' notifications** come through the tray, by the same busy rules as the phone (now
+    shared: `ui/.../heartbeat/BusyRules.kt`, which the phone's BusyTimes uses): notified, held while
+    you're busy and told when you're free, or not notified. Held letters survive a restart.
+  - **The window** keeps its size and place.
+  - **Wording:** the shared screens say "computer" where they said "phone" (about keys, songs,
+    holidays, the clock), the phone calendars card and the camera are left out, and the Media
+    page doesn't mention Android's setting. The phone's text is unchanged.
+  - **Checked:** 15 desktop tests (keys, the login item on each system, one at a time, held
+    letters). In a real window on a virtual display with a tray: the tray and its menu, closing
+    into the tray and its notice, a second start, Busy for now landing in the planner, the
+    options card, Quit, and starting in the background.
+  - **To try on Windows and a Mac:** the tray's notifications (Java's may not show on a recent
+    macOS), and whether an unsigned Mac build asks for the keychain password after each update.
+  - **Not yet (step 4):** songs and videos playing in the app, PDFs' pages, a heartbeat as soon as
+    the computer wakes (now it comes at the next interval).
 
 ## Noted for later
 

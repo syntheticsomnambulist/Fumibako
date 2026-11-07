@@ -9,6 +9,8 @@ import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.MediaSettings
 import dev.aiharness.core.model.SongsOpenIn
+import dev.aiharness.app.platform.deviceNoun
+import dev.aiharness.app.platform.systemMotionSetting
 
 /** 九 Media: links, pictures you send, playback, and the paper's motion (docs/design/media.md, "Settings: a Media page"). */
 internal fun SettingsCards.mediaPage(s: AppSettings, update: Update) {
@@ -24,7 +26,7 @@ internal fun SettingsCards.mediaPage(s: AppSettings, update: Update) {
         )
         SwitchRow(
             "Personas open links you share", m.personasOpenLinks, { v -> media { it.copy(personasOpenLinks = v) } },
-            subtitle = "Only links already in your letters. Claude opens them on Anthropic's servers; other models through this phone, so sites see your address.",
+            subtitle = "Only links already in your letters. Claude opens them on Anthropic's servers; other models through this $deviceNoun, so sites see your address.",
         )
     }
     card {
@@ -57,7 +59,7 @@ internal fun SettingsCards.mediaPage(s: AppSettings, update: Update) {
         CardTitle("Paper motion")
         SwitchRow(
             "Frames move", m.paperMotion, { v -> media { it.copy(paperMotion = v) } },
-            subtitle = "Photos lifting, tags swinging, reels turning, letters' things dropping onto the page. Android's \"Remove animations\" stills them too.",
+            subtitle = "Photos lifting, tags swinging, reels turning, letters' things dropping onto the page." + (systemMotionSetting?.let { " $it stills them too." } ?: ""),
         )
         SwitchRow("Haptic ticks", m.haptics, { v -> media { it.copy(haptics = v) } }, subtitle = "A light tick when a read stamp lands.")
     }

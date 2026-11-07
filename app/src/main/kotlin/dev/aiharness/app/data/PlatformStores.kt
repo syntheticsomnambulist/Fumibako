@@ -19,6 +19,8 @@ import javax.crypto.spec.GCMParameterSpec
  * hardware where available). Ciphertext is kept in a private SharedPreferences file.
  */
 class KeystoreSecretStore(context: Context) : ClearableSecretStore {
+    override val encryptedWith = "the Android Keystore"
+
     private val prefs = context.getSharedPreferences("secrets", Context.MODE_PRIVATE)
 
     private fun key(): SecretKey {

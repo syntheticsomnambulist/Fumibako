@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":ui"))
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutines.swing)
+    implementation(libs.java.keyring)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)

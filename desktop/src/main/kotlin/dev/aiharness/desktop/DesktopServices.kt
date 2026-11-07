@@ -3,7 +3,6 @@ package dev.aiharness.desktop
 import dev.aiharness.app.data.FileBlobStore
 import dev.aiharness.app.media.NowPlaying
 import dev.aiharness.app.media.Playback
-import dev.aiharness.app.platform.ClearableSecretStore
 import dev.aiharness.app.platform.HeartbeatScheduling
 import dev.aiharness.app.platform.MediaImporter
 import dev.aiharness.app.platform.Picked
@@ -33,7 +32,6 @@ import java.awt.Desktop
 import java.io.File
 import java.net.URI
 import java.nio.file.Files
-import java.util.Properties
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -51,7 +49,7 @@ class DesktopHeartbeats : HeartbeatScheduling {
     var run: (suspend (force: Boolean, personaId: String?) -> List<HeartbeatOutcome>)? = null
 
     /** What a heartbeat wrote, for the tray's notifications. */
-    var onOutcomes: (List<HeartbeatOutcome>) -> Unit = {}
+    var onOutcomes: suspend (List<HeartbeatOutcome>) -> Unit = {}
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var periodic: Job? = null
@@ -91,38 +89,6 @@ class DesktopHeartbeats : HeartbeatScheduling {
 
     override fun runNow(settings: HeartbeatSettings, personaId: String?) {
         scope.launch { beat(force = true, personaId = personaId) }
-    }
-}
-
-/**
- * API keys in a file only you can read, in Fumibako's folder. Not encrypted yet: the desktop
- * plan's step 3 moves them into the system's keychain, before any tester build.
- */
-class FileSecretStore(private val file: File) : ClearableSecretStore {
-    private val props = Properties().apply { if (file.exists()) file.inputStream().use { load(it) } }
-
-    @Synchronized
-    private fun save() {
-        file.parentFile?.mkdirs()
-        if (!file.exists()) {
-            file.createNewFile()
-            file.setReadable(false, false); file.setReadable(true, true)
-            file.setWritable(false, false); file.setWritable(true, true)
-        }
-        file.outputStream().use { props.store(it, null) }
-    }
-
-    override suspend fun get(key: String): String? = props.getProperty(key)
-    override suspend fun put(key: String, value: String) {
-        props.setProperty(key, value); save()
-    }
-
-    override suspend fun remove(key: String) {
-        props.remove(key); save()
-    }
-
-    override fun clearAll() {
-        props.clear(); save()
     }
 }
 

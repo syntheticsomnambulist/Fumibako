@@ -49,7 +49,7 @@ class DesktopSmokeTest {
 
     @Test
     fun firstLaunchSeedsAriaAndNamesYou() {
-        val container = AppContainer(DesktopPlatform(Files.createTempDirectory("fumibako-desktop").toFile()))
+        val container = AppContainer(DesktopPlatform(Files.createTempDirectory("fumibako-desktop").toFile(), keychain = { null }))
         container.start()
         compose.setContent { FumibakoWindow(container) { AppNavigation(MutableStateFlow(null)) } }
 

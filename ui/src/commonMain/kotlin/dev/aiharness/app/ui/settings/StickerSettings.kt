@@ -69,6 +69,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import dev.aiharness.app.platform.PickKind
 import dev.aiharness.app.platform.rememberPicker
+import dev.aiharness.app.platform.deviceNoun
 
 /** Outline colours to choose from: three colours, the paper, or whoever stuck it's ink. */
 private val Outlines = listOf(
@@ -236,7 +237,7 @@ private fun AddShared(ink: Color) {
                 note = "Couldn't read that picture."
             } else {
                 made = harness.blobs.put(cut.png, "png")
-                if (!cut.bySegmentation) note = "Cut out by its plain background (the phone's cutout wasn't available)."
+                if (!cut.bySegmentation) note = "Cut out by its plain background (the $deviceNoun's cutout wasn't available)."
             }
             working = null
         }

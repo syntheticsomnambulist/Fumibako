@@ -13,6 +13,24 @@ import java.time.LocalTime
  * phone's code, as it was before the screens were shared) and ui/src/desktopMain.
  */
 
+/** What the app calls the device it runs on, in what it says: "phone" or "computer". */
+expect val deviceNoun: String
+
+/** Whether the device has calendars the planner can read (the phone's; none on a computer yet). */
+expect val hasDeviceCalendars: Boolean
+
+/** Whether the device has a camera to take a photo for a letter. */
+expect val hasCamera: Boolean
+
+/** The device's own "no animations" setting, as the Media page names it; null where there's none. */
+expect val systemMotionSetting: String?
+
+/**
+ * A Settings card of what only this device has, on the Heartbeat page (on a computer: keeping
+ * Fumibako in the tray, starting at login); null where there's nothing.
+ */
+expect val deviceOptionsCard: (@Composable () -> Unit)?
+
 /** Back: the phone's back gesture; Escape on a computer. */
 @Composable
 expect fun PlatformBackHandler(enabled: Boolean = true, onBack: () -> Unit)
@@ -58,7 +76,7 @@ expect fun RequestNotificationPermission()
 @Composable
 expect fun rememberApproximateLocation(onLocation: (latitude: Double, longitude: Double) -> Unit, onProblem: (String) -> Unit): (() -> Unit)?
 
-/** Whether the device's own clock is 24-hour (the clock setting's "Phone's setting"). */
+/** Whether the device's own clock is 24-hour (the clock setting's "Phone's setting", "Computer's setting"). */
 @Composable
 expect fun systemUses24HourClock(): Boolean
 

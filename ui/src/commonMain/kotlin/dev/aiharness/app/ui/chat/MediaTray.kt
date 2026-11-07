@@ -58,6 +58,8 @@ import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.Track
 import dev.aiharness.core.model.asTrack
 import dev.aiharness.core.model.clock
+import dev.aiharness.app.platform.hasCamera
+import androidx.compose.foundation.layout.Spacer
 
 /** What the + tray offers. */
 enum class TrayItem(val label: String) { PHOTOS("Photos"), CAMERA("Camera"), FILE("File"), MUSIC("Music"), VIDEO("Video"), STICKERS("Stickers") }
@@ -110,7 +112,7 @@ fun TrayButtons(onPick: (TrayItem) -> Unit, modifier: Modifier = Modifier) {
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        TrayItem.entries.chunked(3).forEach { row ->
+        TrayItem.entries.filter { hasCamera || it != TrayItem.CAMERA }.chunked(3).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.forEach { item ->
                     Column(
@@ -127,6 +129,8 @@ fun TrayButtons(onPick: (TrayItem) -> Unit, modifier: Modifier = Modifier) {
                         Text(item.label, style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp), color = colors.usuzumi1)
                     }
                 }
+                // A short last row (no camera) keeps the buttons the same width.
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }

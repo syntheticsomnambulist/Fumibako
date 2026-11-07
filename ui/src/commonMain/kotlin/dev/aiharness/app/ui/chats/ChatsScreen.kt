@@ -79,6 +79,7 @@ import dev.aiharness.core.model.StickerRef
 import dev.aiharness.core.stickers.StickerService
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import dev.aiharness.app.platform.deviceNoun
 
 /** The letters list: each conversation is a paper card held by its persona's washi strip. */
 @OptIn(ExperimentalFoundationApi::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -238,7 +239,7 @@ private fun GettingStarted(nav: NavController) {
                 }
             }
         }
-        Step(2, "Add an API key", done = credentials.isNotEmpty(), detail = "From Anthropic, Google, OpenAI, OpenRouter or your own server. It stays encrypted on this phone.") {
+        Step(2, "Add an API key", done = credentials.isNotEmpty(), detail = "From Anthropic, Google, OpenAI, OpenRouter or your own server. It stays encrypted on this $deviceNoun.") {
             InkLink("Add a key", you) { nav.navigate(Routes.KEYS) }
         }
         Step(3, "Choose a model", done = false, detail = "Start from a preset; the key you added is filled in.") {

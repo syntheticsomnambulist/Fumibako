@@ -11,28 +11,13 @@ import androidx.work.WorkerParameters
 import dev.aiharness.app.HarnessApp
 import dev.aiharness.core.Harness
 import dev.aiharness.core.agent.HeartbeatOutcome
-import dev.aiharness.core.model.DuringBusy
-import dev.aiharness.core.model.EntryKind
-import dev.aiharness.core.model.RoutineKind
-import dev.aiharness.core.model.PlannerEntry
 import dev.aiharness.core.util.HarnessJson
-import dev.aiharness.core.util.newId
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
-/** A persona's letters whose notification waits for a busy stretch to end. */
-@Serializable
-data class HeldLetter(val personaId: String, val personaName: String, val conversationId: String, val letters: Int, val doing: String)
-
 /**
- * Busy times (docs/design/calendar.md, "Notifications"): while your planner says you're busy, a
- * persona's letter lands in the letters and its notification waits; when the busy stretch ends,
- * one notification per persona says it wrote ("Aria wrote while you were at work").
+ * Busy times on the phone (the rules are [BusyRules], shared with the desktop): held letters are
+ * kept in the `busy_times` preferences, and a WorkManager job releases them when the stretch ends.
  */
 object BusyTimes {
     private const val PREFS = "busy_times"
@@ -41,28 +26,15 @@ object BusyTimes {
 
     /** A heartbeat's letter: notified now, held until you're free, or not notified, as Settings, Planner says. */
     suspend fun deliver(context: Context, harness: Harness, notifier: Notifier, outcome: HeartbeatOutcome.Sent) {
-        val settings = harness.settings.current()
-        val you = settings.activeUserPersonaId
-        val busy = you?.let { runCatching { harness.planner.busyNow(it) }.getOrNull() }
-        when {
-            busy == null || settings.planner.duringBusy == DuringBusy.NOTIFY -> notifier.notifyMessage(outcome)
-            settings.planner.duringBusy == DuringBusy.SILENT -> Unit
-            else -> hold(context, outcome, doingWords(harness, busy.first), busy.second)
+        when (val delivery = BusyRules.delivery(harness)) {
+            Delivery.Notify -> notifier.notifyMessage(outcome)
+            Delivery.Silent -> Unit
+            is Delivery.Hold -> hold(context, outcome, delivery.doing, delivery.until)
         }
     }
 
-    /** "at work", "asleep", or "busy". */
-    private fun doingWords(harness: Harness, entry: PlannerEntry): String = when (entry.routine) {
-        RoutineKind.WORK, RoutineKind.SLEEP -> harness.planner.doing(entry)
-        else -> "busy"
-    }
-
     private fun hold(context: Context, outcome: HeartbeatOutcome.Sent, doing: String, until: Long) {
-        val held = read(context).toMutableList()
-        val i = held.indexOfFirst { it.personaId == outcome.persona.id }
-        if (i >= 0) held[i] = held[i].copy(letters = held[i].letters + 1, conversationId = outcome.conversation.id, doing = doing)
-        else held += HeldLetter(outcome.persona.id, outcome.persona.name, outcome.conversation.id, 1, doing)
-        write(context, held)
+        write(context, BusyRules.hold(read(context), outcome, doing))
         schedule(context, until)
     }
 
@@ -78,10 +50,8 @@ object BusyTimes {
     /** At the end of a busy stretch: one notification per persona that wrote, or held again if you're still busy. */
     suspend fun release(context: Context, harness: Harness, notifier: Notifier) {
         val held = read(context).takeIf { it.isNotEmpty() } ?: return
-        val you = harness.settings.current().activeUserPersonaId
-        val stillBusy = you?.let { runCatching { harness.planner.busyNow(it) }.getOrNull() }
-        if (stillBusy != null && harness.settings.current().planner.duringBusy == DuringBusy.HOLD) {
-            schedule(context, stillBusy.second)
+        BusyRules.stillHoldingUntil(harness)?.let { until ->
+            schedule(context, until)
             return
         }
         held.forEach { notifier.notifyHeld(it) }
@@ -97,28 +67,11 @@ object BusyTimes {
     }
 
     /** "Busy for now" from a persona's notification: a busy plan from now for [length], in your default persona's planner. */
-    suspend fun busyForNow(harness: Harness, length: String) {
-        val settings = harness.settings.current()
-        val you = settings.activeUserPersonaId ?: return
-        val zone = ZoneId.systemDefault()
-        val now = System.currentTimeMillis()
-        val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone)
-        val end = when (length) {
-            HOUR -> now + 3_600_000L
-            // Tonight: 10 pm (or an hour from now, if that's later).
-            TONIGHT -> maxOf(today.atTime(22, 0).atZone(zone).toInstant().toEpochMilli(), now + 3_600_000L)
-            // Tomorrow: until you wake (your typical week's sleep), else 9 am.
-            else -> {
-                val wake = harness.plannerEntries.forPlanner(you).firstOrNull { it.routine == RoutineKind.SLEEP }?.weekly?.to?.let { LocalTime.of(it / 60, it % 60) } ?: LocalTime.of(9, 0)
-                today.plusDays(1).atTime(wake).atZone(zone).toInstant().toEpochMilli()
-            }
-        }
-        harness.plannerEntries.upsert(PlannerEntry(newId(), you, null, EntryKind.PLAN, "Busy for now", start = now, end = end, busy = true, createdAt = now, updatedAt = now))
-    }
+    suspend fun busyForNow(harness: Harness, length: String) = BusyRules.busyForNow(harness, length)
 
-    const val HOUR = "hour"
-    const val TONIGHT = "tonight"
-    const val TOMORROW = "tomorrow"
+    const val HOUR = BusyRules.HOUR
+    const val TONIGHT = BusyRules.TONIGHT
+    const val TOMORROW = BusyRules.TOMORROW
     const val EXTRA_LENGTH = "length"
     const val EXTRA_NOTIFICATION = "notification"
     const val ACTION_BUSY = "dev.aiharness.app.BUSY_FOR_NOW"

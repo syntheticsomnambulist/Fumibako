@@ -175,7 +175,7 @@ class Notifier(private val context: Context) {
             putExtra(MainActivity.EXTRA_CONVERSATION_ID, held.conversationId)
         }
         val pending = PendingIntent.getActivity(context, held.conversationId.hashCode(), intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val text = "${held.personaName} wrote ${if (held.letters == 1) "" else "${held.letters} letters "}while you were ${held.doing}"
+        val text = BusyRules.heldText(held)
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(held.personaName)

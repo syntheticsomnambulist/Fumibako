@@ -60,6 +60,7 @@ import dev.aiharness.app.platform.LruCache
 import dev.aiharness.app.platform.SongPreview
 import dev.aiharness.app.platform.decodeImage
 import dev.aiharness.app.platform.newSongPreview
+import dev.aiharness.app.platform.deviceNoun
 
 /** A search for songs in the tray: what was asked, and what came back. */
 data class SongSearch(
@@ -124,10 +125,10 @@ fun MusicTray(
             }
             Spacer(Modifier.weight(1f))
             Text(
-                "From your phone ›",
+                "From your $deviceNoun ›",
                 style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp),
                 color = colors.usuzumi1,
-                modifier = Modifier.clip(PaperCorner).clickable(role = Role.Button, onClickLabel = "Pick songs from your phone") { leave(); onFromPhone() }
+                modifier = Modifier.clip(PaperCorner).clickable(role = Role.Button, onClickLabel = "Pick songs from your $deviceNoun") { leave(); onFromPhone() }
                     .padding(horizontal = 6.dp, vertical = 6.dp),
             )
         }

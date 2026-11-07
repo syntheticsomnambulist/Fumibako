@@ -13,11 +13,14 @@ import dev.aiharness.app.platform.AboutApp
 import dev.aiharness.app.platform.AppPlatform
 import dev.aiharness.app.platform.AppState
 import dev.aiharness.app.platform.ClearableSecretStore
+import dev.aiharness.app.platform.DesktopOptions
 import dev.aiharness.app.platform.MediaImporter
 import dev.aiharness.core.planner.PhoneCalendar
 import dev.aiharness.core.planner.PhoneCalendars
 import dev.aiharness.core.planner.PhoneEvent
 import dev.aiharness.core.storage.MarkRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.io.File
 import java.util.Properties
 
@@ -25,12 +28,19 @@ import java.util.Properties
  * The desktop's services for the shared AppContainer. Everything lives in [dataDir], outside the
  * install folder, so updates and reinstalls keep your letters.
  */
-class DesktopPlatform(val dataDir: File) : AppPlatform {
+class DesktopPlatform(
+    val dataDir: File,
+    /** The system's keychain; tests give none, so a key file stands in. */
+    keychain: () -> KeyHolder? = KeychainKeyHolder::open,
+    private val loginItem: LoginItem = LoginItem(),
+    /** Whether the system has a tray (AWT's SystemTray); tests have none. */
+    override val trayWorks: Boolean = runCatching { java.awt.SystemTray.isSupported() }.getOrDefault(false),
+) : AppPlatform, DesktopOptions {
     override val context: PlatformContext = object : PlatformContext() {
         override val filesDir: File = dataDir
     }
     override val filesDir: File = dataDir
-    override val secrets: ClearableSecretStore = FileSecretStore(File(dataDir, "secrets"))
+    override val secrets: ClearableSecretStore = KeychainSecretStore(dataDir, keychain)
     override val settingsStore: DataStore<Preferences> =
         PreferenceDataStoreFactory.create(produceFile = { File(dataDir, "settings.preferences_pb") })
     override val appState: AppState = PropertiesAppState(File(dataDir, "app_state.properties"))
@@ -43,6 +53,25 @@ class DesktopPlatform(val dataDir: File) : AppPlatform {
     }
 
     override val heartbeats = DesktopHeartbeats()
+
+    private val _keepInTray = MutableStateFlow(appState.getBoolean(KEY_KEEP_IN_TRAY, true))
+    override val keepInTray: StateFlow<Boolean> = _keepInTray
+
+    override fun setKeepInTray(on: Boolean) {
+        appState.putBoolean(KEY_KEEP_IN_TRAY, on)
+        _keepInTray.value = on
+    }
+
+    // The system's own record (the registry, a LaunchAgent, an autostart entry) is the setting.
+    private val _startAtLogin = MutableStateFlow(runCatching { loginItem.isOn() }.getOrDefault(false))
+    override val startAtLogin: StateFlow<Boolean> = _startAtLogin
+    override val canStartAtLogin: Boolean get() = loginItem.available
+
+    override fun setStartAtLogin(on: Boolean): Boolean {
+        val done = loginItem.set(on)
+        _startAtLogin.value = runCatching { loginItem.isOn() }.getOrDefault(on && done)
+        return done
+    }
 
     override val about: AboutApp = object : AboutApp {
         override val version: String? = System.getProperty("fumibako.version")
@@ -67,6 +96,8 @@ class DesktopPlatform(val dataDir: File) : AppPlatform {
     }
 
     companion object {
+        private const val KEY_KEEP_IN_TRAY = "keep_in_tray"
+
         /**
          * Where Fumibako keeps its files: FUMIBAKO_HOME if set (tests, a second copy), else the
          * system's place for app data.
