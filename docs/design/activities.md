@@ -283,9 +283,11 @@ you somewhere to land.
   **Take off**; **Done** keeps everything where you put it. Pieces keep their place; new ones keep
   flowing after the last.
 - **Tape… opens a menu** (agreed) for exactly how it's taped: **how** (no tape, a strip, two
-  corners, across the top, a top pair, one corner, and whatever the v0.5 placement review adds),
-  **pattern** (all thirteen), **colour** (the inks) and **shade** (light or dark), with a preview,
-  then **Tape it like this**. Each piece remembers its own tape.
+  corners, across an edge, a pair, one corner, four corners, top and bottom, photo corners),
+  **where** (its turn: which edge, which corner, which way round; see *Tape placements* in
+  [`v0.5.md`](v0.5.md)), **pattern** (all thirteen; none for photo corners), **colour** (the inks)
+  and **shade** (light or dark), with a preview, then **Tape it like this**. Each piece remembers
+  its own tape.
 - **Storage:** scrapbooks, pages and pieces (kind, what it points at, position, turn, size, its
   tape: placement, pattern, ink and shade, and z-order),
   pieces pointing at the original attachment or message so stickers stay stuck and "open the
