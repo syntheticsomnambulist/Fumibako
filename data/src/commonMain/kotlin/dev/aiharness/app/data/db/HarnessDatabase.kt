@@ -1,6 +1,6 @@
 package dev.aiharness.app.data.db
 
-import android.content.Context
+import androidx.room.ConstructedBy
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -9,11 +9,12 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
-import androidx.room.Room
-import androidx.room.migration.Migration
 import androidx.room.RoomDatabase
+import androidx.room.RoomDatabaseConstructor
 import androidx.room.Upsert
-import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 import kotlinx.coroutines.flow.Flow
 
 /*
@@ -202,10 +203,11 @@ interface HarnessDao {
     // A schema change bumps the version and adds a step to MIGRATIONS (keeping the last three, and
     // any a tester's phone still needs: see MIGRATIONS);
     // field changes on domain models need neither, since rows are JSON. Schemas are exported to
-    // app/schemas for the migration tests.
+    // data/schemas for the migration tests.
     version = 5,
     exportSchema = true,
 )
+@ConstructedBy(HarnessDatabaseConstructor::class)
 abstract class HarnessDatabase : RoomDatabase() {
     abstract fun dao(): HarnessDao
 
@@ -220,58 +222,74 @@ abstract class HarnessDatabase : RoomDatabase() {
          */
         val MIGRATIONS: Array<Migration> = arrayOf(Migration2To3, Migration3To4, Migration4To5)
 
-        /** [onWiped] runs, while the database opens, when it had to start fresh instead of migrating. */
-        fun create(context: Context, onWiped: () -> Unit = {}, name: String = "harness.db"): HarnessDatabase =
-            Room.databaseBuilder(context, HarnessDatabase::class.java, name)
+        /**
+         * Opens the database called [name] where [context]'s platform keeps databases (on Android,
+         * the app's databases folder, as always). [onWiped] runs, while the database opens, when it
+         * had to start fresh instead of migrating.
+         */
+        fun create(context: PlatformContext, onWiped: () -> Unit = {}, name: String = "harness.db"): HarnessDatabase =
+            databaseBuilder(context, name)
                 .addMigrations(*MIGRATIONS)
                 // For databases older than MIGRATIONS covers, and downgrades. (Don't add
                 // fallbackToDestructiveMigrationOnDowngrade: it switches upgrades back to requiring a migration.)
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .addCallback(
                     object : Callback() {
-                        override fun onDestructiveMigration(db: SupportSQLiteDatabase) = onWiped()
+                        override fun onDestructiveMigration(connection: SQLiteConnection) = onWiped()
                     },
                 )
                 .build()
     }
 }
 
+/** Room's generated constructor for [HarnessDatabase] on each platform. */
+@Suppress("NO_ACTUAL_FOR_EXPECT", "KotlinNoActualForExpect")
+expect object HarnessDatabaseConstructor : RoomDatabaseConstructor<HarnessDatabase> {
+    override fun initialize(): HarnessDatabase
+}
+
+/** Where a platform keeps its files: Android's [android.content.Context]; on a computer, the app's data folder. */
+expect abstract class PlatformContext
+
+/** A builder for the database file [name], with the platform's SQLite driver. */
+internal expect fun databaseBuilder(context: PlatformContext, name: String): RoomDatabase.Builder<HarnessDatabase>
+
 /** v0.3: stickers, and the pictures they can be. Two new tables; nothing else changes. */
 object Migration2To3 : Migration(2, 3) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `stickers` (`id` TEXT NOT NULL, `conversationId` TEXT, `targetKind` TEXT NOT NULL, " +
                 "`targetId` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `peeledAt` INTEGER, `json` TEXT NOT NULL, PRIMARY KEY(`id`))",
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_stickers_conversationId` ON `stickers` (`conversationId`)")
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_stickers_targetKind_targetId` ON `stickers` (`targetKind`, `targetId`)")
-        db.execSQL(
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_stickers_conversationId` ON `stickers` (`conversationId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_stickers_targetKind_targetId` ON `stickers` (`targetKind`, `targetId`)")
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `sticker_art` (`id` TEXT NOT NULL, `ownerPersonaId` TEXT, `name` TEXT NOT NULL, " +
                 "`json` TEXT NOT NULL, PRIMARY KEY(`id`))",
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_sticker_art_ownerPersonaId` ON `sticker_art` (`ownerPersonaId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_sticker_art_ownerPersonaId` ON `sticker_art` (`ownerPersonaId`)")
     }
 }
 
 /** v0.3.5: marks on attachments (punched tickets, read stamps). One new table; nothing else changes. */
 object Migration3To4 : Migration(3, 4) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `marks` (`id` TEXT NOT NULL, `attachmentId` TEXT NOT NULL, `conversationId` TEXT, " +
                 "`json` TEXT NOT NULL, PRIMARY KEY(`id`))",
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_marks_attachmentId` ON `marks` (`attachmentId`)")
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_marks_conversationId` ON `marks` (`conversationId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_marks_attachmentId` ON `marks` (`attachmentId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_marks_conversationId` ON `marks` (`conversationId`)")
     }
 }
 
 /** v0.4: the planner's entries. */
 object Migration4To5 : Migration(4, 5) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `planner_entries` (`id` TEXT NOT NULL, `plannerId` TEXT NOT NULL, `byPersonaId` TEXT, " +
                 "`json` TEXT NOT NULL, PRIMARY KEY(`id`))",
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_planner_entries_plannerId` ON `planner_entries` (`plannerId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_planner_entries_plannerId` ON `planner_entries` (`plannerId`)")
     }
 }

@@ -28,12 +28,13 @@ import kotlin.test.assertFalse
 
 /**
  * Each kept migration step, from a database built with the schema it starts from (exported to
- * app/schemas) to the current one, opened the way the app opens it. Room checks the migrated
+ * data/schemas) to the current one, opened the way the app opens it. Room checks the migrated
  * schema against the current one as it opens, so a step that leaves out a column or an index fails
  * here. When a step is dropped from [HarnessDatabase.MIGRATIONS], its test goes too.
  *
  * (Room's MigrationTestHelper reads schemas from assets, which Robolectric doesn't see for unit
- * tests, so the old database is built from the exported JSON directly.)
+ * tests, so the old database is built from the exported JSON directly. The desktop's SQLite runs
+ * the same steps in data/src/desktopTest.)
  */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [35])
@@ -127,7 +128,7 @@ class MigrationTest {
 
     /** Builds the database as Room would have at [version], from its exported schema, then lets [fill] add rows. */
     private fun createFromSchema(version: Int, fill: (SQLiteDatabase) -> Unit) {
-        val schema = Json.parseToJsonElement(File("schemas/${HarnessDatabase::class.java.name}/$version.json").readText())
+        val schema = Json.parseToJsonElement(File("../data/schemas/${HarnessDatabase::class.java.name}/$version.json").readText())
             .jsonObject.getValue("database").jsonObject
         val path = context.getDatabasePath(name).apply { parentFile?.mkdirs() }
         SQLiteDatabase.openOrCreateDatabase(path, null).use { db ->
