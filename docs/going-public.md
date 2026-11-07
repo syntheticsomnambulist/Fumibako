@@ -55,9 +55,9 @@ at all, send v0.5 before making the repository public.
 option) any later version". Two parts keep their own licenses, as the README lists:
 
 - **The madoromi palette** (MPL-2.0): `docs/design/madoromi-palette.json` and
-  `app/src/main/kotlin/dev/aiharness/app/ui/theme/MadoromiPalette.kt`.
-- **The bundled placeholder fonts** (SIL OFL 1.1): `app/src/main/res/font/`, with the notice in
-  `app/src/main/assets/licenses/fonts.txt`.
+  `ui/src/commonMain/kotlin/dev/aiharness/app/ui/theme/MadoromiPalette.kt`.
+- **The bundled placeholder fonts** (SIL OFL 1.1): `ui/src/androidMain/res/font/`, with the notice in
+  `ui/src/commonMain/composeResources/files/licenses/fonts.txt`.
 
 Still to do: the copyright line in the README's License section, once the studio name is chosen.
 

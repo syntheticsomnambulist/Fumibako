@@ -65,12 +65,15 @@ answers below; the reorganization has started (see *Progress*).
 core/      unchanged: plain Kotlin/JVM, all agent logic
 data/      new, multiplatform (Android and desktop): the Room database, its migrations and
            exported schemas (moved from app/), the repositories, the settings store, the blob store
-ui/        new, multiplatform: every Compose screen, the theme, the fonts (as Compose resources),
-           the view models, GenerationManager, the shared part of AppContainer (seeding Aria,
-           recent stickers, "While you were away"), and the platform interfaces below
-app/       the Android shell: MainActivity, the WorkManager heartbeat, notifications, media3, the
-           Keystore, phone calendars, ML Kit, and Android's side of the platform interfaces
-desktop/   new, the desktop shell: main(), the window, the tray, and the desktop's side
+ui/        new, multiplatform: every Compose screen, the theme, the view models, GenerationManager,
+           AppContainer (seeding Aria, recent stickers, "While you were away"), and platform/:
+           what screens need from the platform, with the phone's code in ui/src/androidMain
+           (pickers, the video and web players, ML Kit's cutter, bitmaps, the fonts as R.font)
+           and the desktop's in ui/src/desktopMain
+app/       the Android shell: MainActivity, AndroidPlatform (the services AppContainer is
+           handed), the WorkManager heartbeat, notifications, media3 import and playback, the
+           Keystore, phone calendars
+desktop/   new, the desktop shell: main(), the window, DesktopPlatform, the desktop's services
 ```
 
 - **Underneath, Android stays as it is.** On Android, Compose Multiplatform is Jetpack Compose,
@@ -79,11 +82,13 @@ desktop/   new, the desktop shell: main(), the window, the tray, and the desktop
 - **The database is Room on both.** The phone keeps its own SQLite (`AndroidSQLiteDriver`); the
   desktop bundles SQLite (`BundledSQLiteDriver`). One schema and one `MIGRATIONS`, written once
   against `SQLiteConnection`, as multiplatform Room requires.
-- **Platform interfaces**, one per need, handed to the screens by the container: folders, secrets,
-  picking photos and files, saving a file, the clock's 12- or 24-hour default, opening a link,
-  notifying, scheduling wakeups, images (decode, scale, encode), media facts (a PDF's first page, a
-  song's tags, a video's frames), playback, the time picker and location. Several already exist in
-  `core` (`SecretStore`, `BlobStore`, `SettingsRepository`, `PhoneCalendars`, `StickerCutter`).
+- **Platform interfaces** (built; `ui/src/commonMain/.../platform`): `AppPlatform`, the services
+  the container is handed (folders, secrets, settings, app state, media import, playback,
+  heartbeats, About), and expect declarations for what screens draw or launch (pickers, the camera,
+  back, permissions, the clock's default, links and files, decoding pictures, the video player, the
+  web embed, song previews). The bundled fonts, sticker drawing, the photo cutters and the burn are
+  expect declarations beside their screens. Each Android actual is the phone's own code, moved from
+  the screen it was in.
 - **The package names** stay `dev.aiharness.*`, as the app's do now.
 
 ## What's different on a computer
@@ -234,8 +239,39 @@ The rules in CLAUDE.md hold through the move:
 
 ## Progress
 
-- **2026-11-07:** your answers are in; step 1 (the spike) has started. The build and design
-  sessions have been told.
+- **2026-11-07:** your answers are in; the build and design sessions have been told.
+- **Step 1, the spike: done.** A throwaway project with this repo's versions built and ran:
+  - Shared code can use `java.time` and `java.io`: with only JVM targets, Kotlin compiles the
+    shared code once per target.
+  - Multiplatform Room migrates a version 2 database on the bundled SQLite.
+  - Compose resources reach the APK; the desktop renders offscreen for tests.
+  - Still open, for steps 3 and 4: the font chain from Latin to Japanese faces, the tray's
+    notifications on each system, the keychain library, and the in-app media player.
+  - The extended icons come from Compose Multiplatform's last build of them (1.7.3).
+- **Step 2, the move: done, on this branch** (not yet in the build branch). `data` and `ui` hold the
+  database and every screen; `app` is the Android shell; `desktop` opens the shared screens.
+  - **The phone is unchanged.** The 268 screenshots of the phone's tour are identical before and
+    after, pixel for pixel, and no AndroidX library changed version. The debug and release APKs
+    build; the release APK grew about 20 KB (14.1 MB).
+  - **Testers' letters are safe.** The kept steps (2→3, 3→4, 4→5) are the same SQL, and Room's
+    identity hash is unchanged, so an existing database opens as before. The phone's
+    MigrationTest reads `data/schemas`, and `DesktopMigrationTest` runs the same steps on the
+    desktop's SQLite.
+  - **Tests:** everything passes, except two things that were already there. One is
+    `ScreenshotTour.largeTextTour`, which fails before the move too: it waits for "THE WEEK STARTS
+    ON" after opening Planner settings. The other is `nightTour`, which once in five runs read
+    ExoPlayer off the main thread under load (unchanged code; it passed the other four).
+  - **The version** is set once, in `gradle.properties`, for both apps.
+  - **CI** also builds the desktop on Windows, macOS and Linux runners: its tests and an installer
+    for each. The Linux `.deb` builds here (164 MB with the whole Java runtime, trimmed later).
+- **Step 3 begun: a first desktop shell.**
+  - It opens the shared screens in a 440 by 860 window, with a fresh database and Aria seeded.
+    Letters, Personas, Planner, Settings and a persona's page were checked in a real window.
+  - First versions of its services: heartbeats while it runs, photos and files in letters,
+    links and files opening outside, saving through a dialog.
+  - Not yet: the tray, the keychain (API keys are in a file only you can read, unencrypted until
+    the keychain comes), songs and videos playing in the app (they open in the computer's own
+    player), PDFs' pages, and the desktop's own wording ("on this phone" still shows).
 
 ## Noted for later
 
@@ -247,3 +283,11 @@ The rules in CLAUDE.md hold through the move:
 - The burn shader on Skia.
 - Wider layouts, a menu bar, and more keyboard shortcuts.
 - Signing, notarization, and updates that install themselves.
+- Found during the move:
+  - Photos from a phone camera may come in turned on the computer: Skia doesn't apply the EXIF
+    orientation.
+  - The installer carries the whole Java runtime (`includeAllModules`); trim it to the modules
+    needed.
+  - The desktop test composes on its own thread, so it can't navigate yet (navigation checks it's
+    on Swing's). The desktop screenshot tour will need to run on that thread.
+  - The camera item in the letter tray should hide on the desktop.

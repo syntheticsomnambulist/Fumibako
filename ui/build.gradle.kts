@@ -51,6 +51,8 @@ kotlin {
         getByName("desktopMain") {
             dependencies {
                 implementation(libs.compose.mp.desktop)
+                // Dispatchers.Main (view models, lifecycle-aware collecting) on the desktop.
+                implementation(libs.kotlinx.coroutines.swing)
             }
             // The same font files the phone reads as R.font, on the desktop's classpath (font/<name>.ttf).
             resources.srcDir("src/androidMain/res")

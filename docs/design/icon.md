@@ -23,7 +23,10 @@ drawables generated from the same geometry, with 文 taken from the app's own br
 To regenerate them (needs `pip install fonttools skia-pathops`):
 
 ```
-python3 tools/make_icon.py app/src/main/res/font/brush_regular.ttf app/src/main/res <preview dir>
+python3 tools/make_icon.py ui/src/androidMain/res/font/brush_regular.ttf app/src/main/res <preview dir>
 ```
 
 It also writes `preview.html` beside a drawing that uses the font directly, to compare.
+
+The desktop's window icon is a copy of the foreground layer, `desktop/src/main/resources/icon.xml`:
+copy it again after regenerating the icon.

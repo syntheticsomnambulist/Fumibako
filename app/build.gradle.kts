@@ -25,8 +25,9 @@ android {
         applicationId = "dev.fumibako.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 23
-        versionName = "0.4.1"
+        // Set once for the phone and the desktop, in gradle.properties.
+        versionCode = providers.gradleProperty("fumibako.versionCode").get().toInt()
+        versionName = providers.gradleProperty("fumibako.versionName").get()
     }
 
     signingConfigs {

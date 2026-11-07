@@ -3,7 +3,7 @@
 - **Data: migrations for the database, three versions back.** Friends are testing, so their letters
   should survive updates.
   - A Room schema change bumps `HarnessDatabase`'s version and adds a step to its `MIGRATIONS`,
-    with a test against the exported schema (`app/schemas`). Keep the last three steps; phones on
+    with a test against the exported schema (`data/schemas`). Keep the last three steps; phones on
     an older database start fresh, so there are usually no more than three old layouts.
   - **But never drop a step a tester's phone still needs:** keep every step from the database
     version of the oldest build friends were given, even if that's more than three. Phones that
@@ -25,6 +25,10 @@
   lineage: a phone that can't verify the chain must uninstall, which wipes its letters. Without the
   variable, builds use the machine's own debug key; send the user an APK only when it's signed with
   the shared key (`apksigner verify --print-certs` shows "CN=Fumibako Debug").
+- **Screens are shared with the desktop:** they live in `ui/src/commonMain`, which can't use Android;
+  what a screen needs from the platform goes through `ui/.../platform` (expect declarations, with
+  the phone's code in `ui/src/androidMain`). The database is `data/`. See
+  [`docs/plan-desktop.md`](docs/plan-desktop.md).
 - **App text uses American spelling** (aging, color, license, summarize), since that's how the app's
   user writes.
 - **Where things are:**
@@ -36,6 +40,6 @@
   - Design decisions: [`docs/design/README.md`](docs/design/README.md).
   - Architecture: [`README.md`](README.md).
 - **Checks:**
-  - Before pushing, run `./gradlew :core:test :app:testDebugUnitTest`.
+  - Before pushing, run `./gradlew :core:test :data:desktopTest :app:testDebugUnitTest :desktop:test`.
   - For a UI change, also run the screenshot tour:
     `HARNESS_SCREENSHOTS_DIR=<dir> ./gradlew :app:testDebugUnitTest --tests '*ScreenshotTour*'`.

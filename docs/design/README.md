@@ -8,7 +8,7 @@ also published as private claude.ai artifacts, which only the repository's owner
 tape patterns, letters and notes, mood words, the letters list with the unread seal and "While you
 were away", the polaroid gallery, the persona page and the kanji navigation. **Not yet:** stickers
 (v0.2), per-persona unread marks, the ink signature, and the memory book, editor and settings
-redesigns. The code lives in `app/.../ui/paper` (tape, paper, polaroids) and `ui/theme`.
+redesigns. The code lives in `ui/.../ui/paper` (tape, paper, polaroids) and `ui/.../ui/theme`.
 
 **Goal:** character-focused, nice to look at, not generic. Bullet-journal stationery more than chat app.
 

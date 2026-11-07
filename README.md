@@ -9,18 +9,21 @@ tested without a device and reused elsewhere.
 
 ## Features
 
+Paths under `ui/` are in `ui/src/commonMain/kotlin/dev/aiharness/app/`, under `app/` in
+`app/src/main/kotlin/dev/aiharness/app/`.
+
 | Feature | Where |
 | --- | --- |
-| Chat with streaming replies, thought summaries, regenerate, edit/delete | `app/ui/chat`, `core/agent/AgentRunner.kt` |
+| Chat with streaming replies, thought summaries, regenerate, edit/delete | `ui/chat`, `core/agent/AgentRunner.kt` |
 | Swappable models: Anthropic (Claude), Google Gemini, any OpenAI-compatible server, NovelAI text | `core/llm/*` |
-| Swappable personas, each with its own memories, greeting, pronouns, looks, outfit, drawing style and default model | `app/ui/personas` |
-| Swappable user personas (who *you* are), switchable mid-chat | `app/ui/settings/KeysAndUsers.kt` |
-| Long-term memory: agent-written via tools, hybrid keyword + optional embedding recall, core memories, episode recaps, keepsakes (things kept from letters) in the memory book | `core/memory`, `core/tools/BuiltinTools.kt`, `app/ui/memory` |
+| Swappable personas, each with its own memories, greeting, pronouns, looks, outfit, drawing style and default model | `ui/personas` |
+| Swappable user personas (who *you* are), switchable mid-chat | `ui/settings/KeysAndUsers.kt` |
+| Long-term memory: agent-written via tools, hybrid keyword + optional embedding recall, core memories, episode recaps, keepsakes (things kept from letters) in the memory book | `core/memory`, `core/tools/BuiltinTools.kt`, `ui/memory` |
 | Heartbeat: **Proactive** (background reflection + optional messages), **Time-aware**, or **Off** | `core/agent/HeartbeatEngine.kt`, `app/heartbeat` |
 | Pictures from NovelAI, Stable Diffusion (Forge, Automatic1111, ComfyUI), OpenAI or Google, through image profiles (persona can call it as a tool, or you can request one) | `core/image` |
-| Photos, files, songs, playlists, videos and links in letters, framed as stationery, with players and an in-app browser; each model receives what it can take in; personas open links you share (Claude's web fetch, or the app's fetcher) and share links and songs back | `core/media`, `core/tools/LinkTools.kt`, `app/media`, `app/ui/media` |
-| Stickers: emoji, each persona's own sheet (drawn from its looks), and a shared library (from photos, cut out on the phone); placed by you or by personas through tools, inline `:name:` in letters | `core/stickers`, `core/tools/StickerTools.kt`, `app/ui/stickers` |
-| The 帳 planner: a vertical week, a month, a day; your typical week, stamps (done, moved, cancelled), stickers, a movable bookmark; solar terms and microseasons worked out on the phone; public holidays (Nager.Date, or a phone holiday calendar); the phone's calendars read live at a detail level you choose; personas see what you share and write in it themselves (notes, suggestions, reminders that wake them, time away, season haiku); notifications held while you're busy | `core/planner`, `core/seasons`, `core/agent/PlannerActivities.kt`, `app/ui/planner`, `app/heartbeat/BusyTimes.kt` |
+| Photos, files, songs, playlists, videos and links in letters, framed as stationery, with players and an in-app browser; each model receives what it can take in; personas open links you share (Claude's web fetch, or the app's fetcher) and share links and songs back | `core/media`, `core/tools/LinkTools.kt`, `app/media`, `ui/media` |
+| Stickers: emoji, each persona's own sheet (drawn from its looks), and a shared library (from photos, cut out on the phone); placed by you or by personas through tools, inline `:name:` in letters | `core/stickers`, `core/tools/StickerTools.kt`, `ui/stickers` |
+| The 帳 planner: a vertical week, a month, a day; your typical week, stamps (done, moved, cancelled), stickers, a movable bookmark; solar terms and microseasons worked out on the phone; public holidays (Nager.Date, or a phone holiday calendar); the phone's calendars read live at a detail level you choose; personas see what you share and write in it themselves (notes, suggestions, reminders that wake them, time away, season haiku); notifications held while you're busy | `core/planner`, `core/seasons`, `core/agent/PlannerActivities.kt`, `ui/planner`, `app/heartbeat/BusyTimes.kt` |
 | API keys encrypted with the Android Keystore | `app/data/PlatformStores.kt` |
 
 ## Getting started
@@ -46,6 +49,9 @@ with the machine's own debug key. Builds also carry `app/signing/debug-lineage`,
 from the key used up to 0.4.0, so they install over those builds too. See
 [`docs/going-public.md`](docs/going-public.md).
 
+The same run builds the desktop app on Windows, macOS and Linux runners, with an installer for each
+(`.msi`, `.dmg`, `.deb`) among the artifacts. Both apps take their version from `gradle.properties`.
+
 **Stored data:** database changes come with migrations, so letters survive updates. A phone whose
 database is older than the migrations kept starts fresh, re-creating the sample persona.
 
@@ -68,12 +74,24 @@ core/                         Plain Kotlin/JVM library: no Android dependencies
   media/                      What each model takes in, the parts it receives, descriptions, link previews
   planner/                    Planner (entries, busy, what a persona is told), its tools, holidays, phone calendars
   seasons/                    The 24 solar terms and 72 microseasons from the sun's position
-app/                          Android shell
-  data/                       Room (JSON-document rows, migrations kept for three versions), Keystore secrets, DataStore settings, file blobs
+data/                         Multiplatform (Android + desktop): Room (JSON-document rows, migration steps kept as
+                              CLAUDE.md says, schemas in data/schemas), the DataStore settings store, file blobs
+ui/                           Multiplatform (Compose Multiplatform): everything both apps show
+  AppContainer.kt             The shared container, handed each platform's services (platform/AppPlatform)
   engine/GenerationManager    Runs turns in an app-wide scope so replies survive leaving the screen
-  heartbeat/                  WorkManager worker, scheduler, notifications, reminders' wakeups, busy times
   ui/                         Compose screens
+  platform/                   What screens need from the platform: expect declarations, with the phone's
+                              code in ui/src/androidMain and the desktop's in ui/src/desktopMain
+app/                          Android shell
+  AndroidPlatform.kt          The phone's services for the shared container
+  data/                       Keystore secrets, DataStore's settings file, phone calendars
+  heartbeat/                  WorkManager worker, scheduler, notifications, reminders' wakeups, busy times
+  media/                      Importing photos, songs and videos; playback (media3); the video shrinker
+desktop/                      Desktop shell (docs/plan-desktop.md): the window, the desktop's services
 ```
+
+The screens are written once, in `ui/src/commonMain`, which can use the JDK but not Android: what a
+screen needs from the platform goes through `ui/.../platform` (see [`docs/plan-desktop.md`](docs/plan-desktop.md)).
 
 ### Context epochs (why history is append-only)
 
@@ -183,7 +201,10 @@ editor can generate an avatar.
 ```
 ./gradlew :core:test                 # providers (mock servers), context epochs, compaction, agent loop,
                                      # memory recall, heartbeat, NovelAI request format
+./gradlew :data:desktopTest          # the migration steps on the desktop's SQLite
 ./gradlew :app:testDebugUnitTest     # Robolectric: Room repositories + a smoke test of the real app UI
+./gradlew :desktop:test              # the desktop app's first launch, offscreen
+./gradlew :desktop:run               # opens the desktop app (its data in FUMIBAKO_HOME, if set)
 ```
 
 Live API smoke tests are skipped unless enabled:
@@ -205,7 +226,7 @@ HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests 
 
 The visual direction (madoromi ink colours, letter-style messages, washi tape, stickers) is written
 up in [`docs/design/`](docs/design/README.md), with interactive mockups; v0.1 builds all of it except
-stickers. Fonts are bundled placeholders (SIL OFL, see `app/src/main/assets/licenses/fonts.txt`). Plans:
+stickers. Fonts are bundled placeholders (SIL OFL, see `ui/src/commonMain/composeResources/files/licenses/fonts.txt`). Plans:
 [`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md),
 [`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.4.md`](docs/plan-v0.4.md) (the planner).
 
@@ -227,6 +248,6 @@ Public License, version 3 or (at your option) any later version. It comes with n
 Two parts keep their own licenses:
 
 - **The madoromi palette** (`docs/design/madoromi-palette.json` and
-  `app/src/main/kotlin/dev/aiharness/app/ui/theme/MadoromiPalette.kt`): Mozilla Public License 2.0.
-- **The bundled placeholder fonts** (`app/src/main/res/font/`): SIL Open Font License 1.1, with the
-  notice in `app/src/main/assets/licenses/fonts.txt`.
+  `ui/src/commonMain/kotlin/dev/aiharness/app/ui/theme/MadoromiPalette.kt`): Mozilla Public License 2.0.
+- **The bundled placeholder fonts** (`ui/src/androidMain/res/font/`): SIL Open Font License 1.1, with the
+  notice in `ui/src/commonMain/composeResources/files/licenses/fonts.txt`.
