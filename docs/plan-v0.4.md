@@ -267,6 +267,9 @@ From the agreed decisions in `calendar.md`:
 - **0.4.1 (version code 23), getting ready to go public:** a new debug signing key, with key
   rotation so builds still install over the old key's (v0.2.2 included) and keep their letters;
   the GPL-3.0-or-later license. See `docs/going-public.md`.
+  - **The first 0.4.1 build wouldn't install** ("App not installed"): its lineage withheld the old
+    key's "permission" right, which the update needs because AndroidX declares a signature
+    permission. The lineage now keeps apksigner's default rights, all but rollback.
 
 ## Noted for later
 

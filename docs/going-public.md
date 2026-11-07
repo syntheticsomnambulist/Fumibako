@@ -19,7 +19,9 @@ Android Keystore.
   certificates and signatures, no private keys. Every debug build carries it, so on Android 9 and
   newer a new build installs over an old-key build and keeps the letters. Once a phone has a rotated
   build, an APK signed with only the old key can't update it: the lineage gives the old key no
-  "rollback" right.
+  "rollback" right. Every other right stays (they're apksigner's defaults): the app declares a
+  signature permission (AndroidX adds one), and without the "permission" right Android refuses the
+  update with "App not installed", as the first 0.4.1 build did.
 - **`app/signing/retired-debug.keystore`:** the old key, kept on purpose. Android 8 only reads the
   older signature scheme, which must come from the lineage's first key, so the old key still signs
   that part. It's public already; nothing relies on it being secret. (Raising the minimum to
