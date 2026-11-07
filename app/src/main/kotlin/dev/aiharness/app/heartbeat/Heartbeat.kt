@@ -23,6 +23,7 @@ import androidx.work.WorkerParameters
 import dev.aiharness.app.HarnessApp
 import dev.aiharness.app.MainActivity
 import dev.aiharness.app.R
+import dev.aiharness.app.platform.Wake
 import dev.aiharness.core.agent.HeartbeatOutcome
 import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.HeartbeatSettings
@@ -74,9 +75,6 @@ object HeartbeatScheduler {
         WorkManager.getInstance(context).enqueueUniqueWork(ONE_SHOT, ExistingWorkPolicy.REPLACE, request)
     }
 
-    /** A persona's reminder: when it wakes it. */
-    data class Wake(val reminderId: String, val personaId: String, val at: Long)
-
     /**
      * One wakeup for each reminder still to come, at its time (a little after, so it's due). A
      * wakeup runs that persona's heartbeat, which its due reminder lets through whatever its pace.
@@ -92,7 +90,7 @@ object HeartbeatScheduler {
                 .setInputData(androidx.work.Data.Builder().putString(KEY_PERSONA, wake.personaId).build())
                 .addTag(REMINDER_TAG)
                 .build()
-            workManager.enqueueUniqueWork("reminder-${wake.reminderId}", ExistingWorkPolicy.REPLACE, request)
+            workManager.enqueueUniqueWork("reminder-${wake.entryId}", ExistingWorkPolicy.REPLACE, request)
         }
     }
 
@@ -192,3 +190,6 @@ class Notifier(private val context: Context) {
         const val CHANNEL = "persona_messages"
     }
 }
+
+/** The phone's notifier, on the shared container (see [dev.aiharness.app.AndroidPlatform]). */
+val dev.aiharness.app.AppContainer.notifier: Notifier get() = (platform as dev.aiharness.app.AndroidPlatform).notifier

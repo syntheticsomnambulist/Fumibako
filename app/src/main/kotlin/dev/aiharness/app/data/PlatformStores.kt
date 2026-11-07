@@ -5,7 +5,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.datastore.preferences.preferencesDataStore
-import dev.aiharness.core.storage.SecretStore
+import dev.aiharness.app.platform.ClearableSecretStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.KeyStore
@@ -18,7 +18,7 @@ import javax.crypto.spec.GCMParameterSpec
  * API keys encrypted with an AES-GCM key held in the Android Keystore (never leaves secure
  * hardware where available). Ciphertext is kept in a private SharedPreferences file.
  */
-class KeystoreSecretStore(context: Context) : SecretStore {
+class KeystoreSecretStore(context: Context) : ClearableSecretStore {
     private val prefs = context.getSharedPreferences("secrets", Context.MODE_PRIVATE)
 
     private fun key(): SecretKey {
@@ -57,7 +57,7 @@ class KeystoreSecretStore(context: Context) : SecretStore {
     }
 
     /** Forgets every stored secret (used when the database is wiped: their credentials are gone). */
-    fun clearAll() {
+    override fun clearAll() {
         prefs.edit().clear().commit()
     }
 

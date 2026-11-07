@@ -42,6 +42,9 @@ class FileBlobStore(private val dir: File) : BlobStore {
 
     fun fileFor(ref: String): File? = ref.removePrefix(PREFIX).takeIf { ref.startsWith(PREFIX) && !it.contains('/') }?.let { File(dir, it) }
 
+    /** The file behind [ref], when it's stored here and still there. */
+    fun existingFile(ref: String?): File? = ref?.let { fileFor(it) }?.takeIf { it.exists() }
+
     override suspend fun put(bytes: ByteArray, extension: String): String = withContext(Dispatchers.IO) {
         val name = "${newId()}.${extension.trimStart('.')}"
         File(dir, name).writeBytes(bytes)

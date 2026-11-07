@@ -12,7 +12,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
 }
 
 val debugKeystore: File? = sharedDebugKeystore()
@@ -116,12 +115,11 @@ androidComponents {
     }
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
 
 dependencies {
     implementation(project(":core"))
+    // The shared screens (ui) and database (data); see docs/plan-desktop.md.
+    implementation(project(":ui"))
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.core.ktx)
@@ -138,9 +136,6 @@ dependencies {
     implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.transformer)
     implementation(libs.androidx.media3.effect)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.datastore.preferences)
 

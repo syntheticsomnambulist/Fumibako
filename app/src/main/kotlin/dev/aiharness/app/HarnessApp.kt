@@ -2,6 +2,7 @@ package dev.aiharness.app
 
 import android.app.Application
 import android.os.Build
+import dev.aiharness.app.heartbeat.notifier
 import java.io.File
 import java.util.Date
 
@@ -12,7 +13,7 @@ class HarnessApp : Application() {
     override fun onCreate() {
         super.onCreate()
         CrashReport.install(this)
-        container = AppContainer(this)
+        container = AppContainer(AndroidPlatform(this))
         container.notifier.ensureChannel()
         container.start()
     }
