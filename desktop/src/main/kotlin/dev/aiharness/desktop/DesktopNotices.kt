@@ -1,8 +1,10 @@
 package dev.aiharness.desktop
 
+import dev.aiharness.app.heartbeat.Arrivals
 import dev.aiharness.app.heartbeat.BusyRules
 import dev.aiharness.app.heartbeat.Delivery
 import dev.aiharness.app.heartbeat.HeldLetter
+import dev.aiharness.app.heartbeat.OnItsWay
 import dev.aiharness.app.platform.AppState
 import dev.aiharness.core.Harness
 import dev.aiharness.core.agent.HeartbeatOutcome
@@ -23,6 +25,7 @@ data class Notice(val title: String, val message: String, val conversationId: St
  * Heartbeat letters' notifications on a computer, by the same busy rules as the phone
  * ([BusyRules]): notified now, held while your planner says you're busy (kept in [state], so a
  * restart doesn't lose them) and released when you're free, or not notified. [notify] shows one.
+ * A reply in the post is told the same way when it arrives ([Arrivals]).
  */
 class DesktopNotices(
     private val harness: Harness,
@@ -32,14 +35,42 @@ class DesktopNotices(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val lock = Mutex()
 
-    /** Checks each minute whether held letters can be told now. */
+    /**
+     * Checks each minute whether held letters can be told now, and for replies that arrived
+     * without their own wake-up (while Fumibako was closed, or the computer asleep).
+     */
     fun start() {
         scope.launch {
             while (isActive) {
                 delay(60_000L)
+                runCatching { arrive() }
                 runCatching { release() }
             }
         }
+    }
+
+    /**
+     * A reply went into the post: told when it arrives [at] (unless it's read as it comes). Kept
+     * in [state] until then, so quitting Fumibako doesn't lose it.
+     */
+    suspend fun expect(conversationId: String, at: Long) {
+        lock.withLock { writePost(readPost() + OnItsWay(conversationId, at)) }
+        // A moment after it arrives, so a thread open in front of you has marked it read.
+        scope.launch {
+            delay((at - harness.clock.nowMillis()).coerceAtLeast(0L) + SETTLE)
+            runCatching { arrive() }
+        }
+    }
+
+    /** Replies that have arrived by now: each told as a heartbeat letter is, unless it's been read. */
+    suspend fun arrive() {
+        val now = harness.clock.nowMillis()
+        val came = lock.withLock {
+            val (came, coming) = readPost().partition { it.at <= now }
+            if (came.isNotEmpty()) writePost(coming)
+            came
+        }
+        if (came.isNotEmpty()) deliver(came.mapNotNull { Arrivals.letter(harness, it.conversationId, it.at) })
     }
 
     suspend fun deliver(outcomes: List<HeartbeatOutcome>) = lock.withLock {
@@ -65,8 +96,16 @@ class DesktopNotices(
 
     private fun write(held: List<HeldLetter>) = state.putString(KEY, HarnessJson.encodeToString(held))
 
+    private fun readPost(): List<OnItsWay> =
+        runCatching { HarnessJson.decodeFromString<List<OnItsWay>>(state.getString(KEY_POST) ?: "[]") }.getOrDefault(emptyList())
+
+    private fun writePost(post: List<OnItsWay>) = state.putString(KEY_POST, HarnessJson.encodeToString(post))
+
     private companion object {
         const val KEY = "held_letters"
+        const val KEY_POST = "letters_on_their_way"
         const val MAX_TEXT = 240
+        /** After a reply arrives, how long its notification waits (as the phone's job does). */
+        const val SETTLE = 5_000L
     }
 }

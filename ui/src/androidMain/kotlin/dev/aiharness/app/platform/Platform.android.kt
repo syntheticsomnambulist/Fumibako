@@ -133,6 +133,9 @@ actual fun Modifier.scrollbar(state: LazyGridState): Modifier = this
 actual fun Modifier.receiveFiles(onFiles: (List<Picked>) -> Unit): Modifier = this
 
 @Composable
+actual fun inFrontOfYou(): Boolean = true
+
+@Composable
 actual fun rememberCamera(onTaken: (Picked) -> Unit): (() -> Unit)? {
     val media = LocalAppContainer.current.media
     val taken by rememberUpdatedState(onTaken)

@@ -72,6 +72,14 @@ expect fun rememberPicker(kind: PickKind, onPicked: (List<Picked>) -> Unit): () 
 @Composable
 expect fun Modifier.receiveFiles(onFiles: (List<Picked>) -> Unit): Modifier
 
+/**
+ * Whether the screen is in front of you, so letters arriving on it count as read: on the phone,
+ * whenever it shows; on a computer, while the window has the focus (not hidden in the tray,
+ * minimized, or behind the window you're using).
+ */
+@Composable
+expect fun inFrontOfYou(): Boolean
+
 /*
  * Mouse and keyboard (docs/plan-desktop.md, "Mouse, keyboard and the window"). Each is nothing on
  * the phone, so its screens stay as they are.
