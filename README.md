@@ -43,15 +43,19 @@ Paths under `ui/` are in `ui/src/commonMain/kotlin/dev/aiharness/app/`, under `a
 
 ### Builds
 
-Every push runs the tests and builds a debug APK in GitHub Actions (**Actions → Build → the run →
-Artifacts**). Debug builds share one signing key, so a new build installs over the old one. The key
+GitHub Actions builds on request, not on every push (**Actions → Build → Run workflow**): the tests
+and the Windows installer by default, and the macOS and Linux installers and the phone's debug APK
+when ticked. The files are under the run's **Artifacts** for a week. Pushes run nothing, since each
+session runs the tests before it pushes and Actions time is limited while the repository is private.
+
+Debug builds share one signing key, so a new build installs over the old one. The key
 is never committed: CI and cloud sessions get it from a secret, and without it a build is signed
 with the machine's own debug key. Builds also carry `app/signing/debug-lineage`, which hands over
 from the key used up to 0.4.0, so they install over those builds too. See
 [`docs/going-public.md`](docs/going-public.md).
 
-The same run builds the desktop app on Windows, macOS and Linux runners, with an installer for each
-(`.msi`, `.dmg`, `.deb`) among the artifacts. Both apps take their version from `gradle.properties`.
+The desktop installers (`.msi`, `.dmg`, `.deb`) are built on Windows, macOS and Linux runners. Both
+apps take their version from `gradle.properties`.
 
 **Stored data:** database changes come with migrations, so letters survive updates. A phone whose
 database is older than the migrations kept starts fresh, re-creating the sample persona.
