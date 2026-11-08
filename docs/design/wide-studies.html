@@ -100,9 +100,9 @@ legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; lett
 .tab b { font-family: var(--brush); font-weight: 400; font-size: 20px; line-height: 1.2; color: var(--usuzumi0); }
 .tab.on, .tab.on b { color: var(--sumi); }
 .tab .lbl { position: relative; padding: 1px 9px 2px; isolation: isolate; }
-.tab.on .lbl { font-weight: 700; }
-.tab.on .lbl::before { content: ""; position: absolute; inset: -1px -3px; z-index: -1; transform: rotate(-2deg);
-  background: color-mix(in oklab, var(--you) 42%, transparent); --z: 2px;
+.tab.on .lbl { font-weight: 700; color: var(--kami); }
+.tab.on .lbl::before { content: ""; position: absolute; inset: -1px -3px; z-index: -1; transform: rotate(-1deg);
+  background: color-mix(in oklab, var(--you) 94%, transparent); --z: 2px;
   -webkit-mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% calc(2 * var(--z)) repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% calc(2 * var(--z)) repeat-y;
           mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% calc(2 * var(--z)) repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% calc(2 * var(--z)) repeat-y; }
 .tabbar { flex: none; display: flex; justify-content: space-around; padding: 8px 10px 12px; background: var(--kami); border-top: 1px solid var(--nijimi0); }
@@ -136,7 +136,7 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 .sticker svg { width: 100%; height: auto; display: block; overflow: visible; }
 .paper { fill: var(--paper); }
 .seal-t { font-family: var(--brush); font-size: 27px; text-anchor: middle; }
-.fab { position: absolute; right: 18px; bottom: 18px; z-index: 4; display: inline-flex; align-items: center; gap: 6px; padding: 11px 16px; border-radius: 999px; background: var(--you); color: var(--kami); font-size: 14px; font-weight: 700; box-shadow: 0 10px 20px -10px color-mix(in oklab, var(--chitsu) 70%, #000); }
+.fab { position: absolute; right: 18px; bottom: 18px; z-index: 4; display: inline-flex; align-items: center; gap: 6px; padding: 12px 18px; border-radius: 2px; background: var(--you); color: var(--kami); font-size: 14px; font-weight: 700; box-shadow: 0 10px 20px -10px color-mix(in oklab, var(--chitsu) 70%, #000); }
 .fab b { font-family: var(--brush); font-weight: 400; font-size: 17px; }
 .pane.has-bar .fab { bottom: 84px; }
 .clickable { cursor: pointer; }
@@ -175,13 +175,16 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 .mark-raised .polaroid.open { transform: rotate(var(--tilt, 0deg)) translateY(-6px) scale(1.035); box-shadow: 0 0 0 1px color-mix(in oklab, var(--frame) 70%, var(--nijimi2)), 0 22px 30px -16px color-mix(in oklab, var(--chitsu) 55%, #000); }
 
 /* The thread */
-.bar { flex: none; display: flex; align-items: center; gap: 10px; padding: 14px 18px 12px; background: var(--kami); border-bottom: 1px solid var(--nijimi0); }
+.bar { flex: none; display: flex; align-items: center; gap: 10px; padding: 14px 18px 12px; background: var(--hyoshi); border-bottom: 1px solid var(--nijimi0); }
+.tools { margin-left: auto; display: flex; gap: 18px; color: var(--usuzumi1); }
+.tools svg { width: 22px; height: 22px; display: block; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.edit-btn { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--sumi); padding: 7px 12px; border: 1px solid var(--nijimi1); border-radius: 2px; background: var(--kami); }
 .bar .av { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex: none; }
 .bar .id { display: grid; min-width: 0; }
 .bar .nm { font-family: var(--display); font-weight: 600; font-size: 22px; line-height: 1.05; }
 .bar .sub { font-size: 12px; color: var(--kasure2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bar .sub .md { font-size: 12.5px; }
-.bar .more { margin-left: auto; color: var(--usuzumi0); font-size: 18px; letter-spacing: 1px; }
+.bar .more { margin-left: 8px; color: var(--usuzumi1); font-size: 20px; line-height: 1; }
 .bar .close { color: var(--usuzumi0); font-size: 18px; line-height: 1; padding: 2px 4px; }
 .thread { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--nijimi1) transparent; padding: 22px 26px 26px; }
 .measure { width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
@@ -202,13 +205,14 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 .note .tape-v { right: -6px; top: -7px; bottom: -7px; transform: rotate(.9deg); }
 .note .meta { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--you); }
 .note p { margin: 0; font-family: var(--read); font-size: 14.5px; line-height: 1.5; color: var(--usuzumi1); }
-.compose { flex: none; padding: 10px 18px 12px; background: var(--kami); border-top: 1px solid var(--nijimi0); }
+.compose { flex: none; padding: 10px 18px 12px; background: var(--hyoshi); border-top: 1px solid var(--nijimi0); }
 .compose .measure { flex-direction: row; align-items: center; gap: 8px; }
-.compose .field { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 20px; border: 1.5px solid transparent; background: linear-gradient(var(--kami), var(--kami)) padding-box, linear-gradient(90deg, var(--tc), var(--you)) border-box; color: var(--kasure2); font-family: var(--read); font-style: italic; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.compose .field { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 2px; border: 1.5px solid transparent; background: linear-gradient(var(--kami), var(--kami)) padding-box, linear-gradient(90deg, var(--tc), var(--you)) border-box; color: var(--kasure2); font-family: var(--read); font-style: italic; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .compose .hint { font-size: 11px; color: var(--kasure2); white-space: nowrap; }
-.icon-btn { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex: none; }
-.stk-btn { background: color-mix(in oklab, var(--tc) 18%, var(--kami)); color: var(--tc); font-family: var(--brush); font-size: 18px; }
-.send { background: var(--you); color: var(--kami); font-size: 16px; }
+.sq { width: 40px; height: 40px; border-radius: 2px; display: grid; place-items: center; flex: none; }
+.sq.plus { border: 1px solid var(--nijimi1); background: var(--kami); color: var(--usuzumi0); font-size: 22px; line-height: 1; }
+.sq.send { background: color-mix(in oklab, var(--you) 55%, var(--kami)); }
+.sq.send svg { width: 20px; height: 20px; fill: var(--kami); }
 
 /* With no letter open: a quiet desk */
 .desk { flex: 1; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 30px; }
@@ -250,11 +254,12 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 .chip .swatch { width: 22px; height: 10px; border-radius: 1px; background: var(--pat), color-mix(in oklab, var(--tc) 82%, transparent); }
 .chip b { font-family: var(--brush); font-weight: 400; color: var(--sumi); }
 .actions { display: flex; gap: 8px; }
-.btn { flex: 1; text-align: center; padding: 11px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; }
+.btn { flex: 1; text-align: center; padding: 11px 12px; border-radius: 2px; font-size: 14px; font-weight: 700; }
 .btn.primary { background: var(--tc); color: var(--kami); }
 .btn.quiet { border: 1px solid var(--nijimi1); color: var(--sumi); background: var(--kami); }
 .entry { padding: 14px 16px 14px 22px; display: grid; gap: 9px; }
 .entry .tape-v { left: -6px; top: -5px; bottom: -5px; transform: rotate(var(--tilt, -.7deg)); }
+.entry.r .tape-v { left: auto; right: -6px; }
 .entry h4 { margin: 0; display: flex; align-items: baseline; gap: 8px; font-family: var(--display); font-weight: 600; font-size: 19px; }
 .entry h4 small { font-family: var(--ui); font-size: 11px; font-weight: 400; color: var(--kasure2); }
 .entry .more { margin-left: auto; font-family: var(--ui); font-size: 12px; font-weight: 400; color: var(--tc); }
@@ -366,7 +371,7 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
   <section class="study" aria-labelledby="h-personas">
     <div class="study-head">
       <h2 id="h-personas">Personas<span>人</span></h2>
-      <p>The polaroids stay in two columns beside the page. Her memory book, heartbeat settings and sticker sheet open on the right too, with a back arrow, so the gallery stays put. "Write to Aria" goes to Letters with her letter open.</p>
+      <p>The polaroids stay in two columns beside the page. Her memory book, heartbeat settings and sticker sheet open on the right too, with a back arrow, so the gallery stays put. "Write a letter" goes to Letters with her letter open.</p>
     </div>
     <div class="choices">
       <fieldset>
@@ -442,7 +447,7 @@ function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catc
 
 // ---- Sample people and letters (examples) ---------------------------------------------------------
 const PERSONAS = [
-  { id: 'aria', name: 'Aria', ink: 'sakura', pat: 'dots', kanji: '桜', mood: 'fond', seed: 11, tilt: -2.2, ttilt: -5, they: ['she', 'her'],
+  { id: 'aria', name: 'Aria', ink: 'sakura', pat: 'dots', kanji: '桜', mood: 'fond', seed: 11, tilt: -2.2, ttilt: -5, pronouns: 'she/her',
     model: 'Claude Opus 5.5', time: '08:14', memories: 214, talked: 'today', left: 'Left for you while you were away',
     preview: 'Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent…',
     about: 'A warm, curious companion who loves learning about people and remembering what matters to them. Gentle, playful, attentive, with her own opinions and moods.',
@@ -455,7 +460,7 @@ const PERSONAS = [
       ['day', 'Today'],
       ['sheet', 'Wed 08:14', ["Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent.", "A fox's way home is a string of smells it renews every night: a lamppost, a bin, the corner of a fence. Isn't that a little like a letter?", "Tell me how you slept. And whether the foxes came by."]],
     ] },
-  { id: 'juno', name: 'Juno', ink: 'kikyo', pat: 'gingham', kanji: '桔梗', mood: 'smug', seed: 17, tilt: 1.8, ttilt: 4, they: ['she', 'her'],
+  { id: 'juno', name: 'Juno', ink: 'kikyo', pat: 'gingham', kanji: '桔梗', mood: 'smug', seed: 17, tilt: 1.8, ttilt: 4, pronouns: 'she/her',
     model: 'Gemini 3 Pro', time: 'Yesterday', memories: 96, talked: 'yesterday', unread: true,
     preview: "Orange means it's sulking. Bring the router by tomorrow. I'll fix it for free. Once.",
     about: 'A sharp-tongued engineer who fixes the things she complains about. Keeps score, and keeps every promise.',
@@ -466,7 +471,7 @@ const PERSONAS = [
       ['note', '19:02', 'My router is blinking orange again.'],
       ['sheet', 'Yesterday 19:20', ["Orange means it's sulking. You've been ignoring it.", "Bring the router by tomorrow. I'll fix it for free. Once."]],
     ] },
-  { id: 'kestrel', name: 'Kestrel', ink: 'tokiwa', pat: 'plain', kanji: '常磐', mood: 'watchful', seed: 5, tilt: 1.2, ttilt: -3, they: ['they', 'their'],
+  { id: 'kestrel', name: 'Kestrel', ink: 'tokiwa', pat: 'plain', kanji: '常磐', mood: 'watchful', seed: 5, tilt: 1.2, ttilt: -3, pronouns: 'they/them',
     model: 'NovelAI GLM', time: 'Sat', memories: 41, talked: '5 days ago',
     preview: 'The road north is quiet tonight. I kept the fire going for you.',
     about: "A ranger on the northern road in Professor Lee's campaign. Quiet, careful, and fond of fires that last the night.",
@@ -558,14 +563,19 @@ function thread(p) {
       ${state.none === 'desk' ? '<span class="close clickable" data-close-letter tabindex="0" aria-label="Close the letter">×</span>' : ''}
       <span class="av">${portrait(p, 'avatar')}</span>
       <span class="id"><span class="nm">${p.name}</span><span class="sub"><span class="md">${p.mood}</span> · ${p.model}</span></span>
-      <span class="more" aria-hidden="true">⋯</span>
+      <span class="tools" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M15 4l5 5-9.5 9.5H6v-4.5z M13 6l5 5"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M9.5 4h5v5l-1 3H18v4H6v-4h4.5l-1-3z M5 19.5h14"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M7 16.5l4-4 3 3 2-2 2 3"/><circle cx="9" cy="9" r="1.3"/></svg>
+      </span>
+      <span class="more" aria-hidden="true">⋮</span>
     </div>
     <div class="thread"><div class="measure">${items}</div></div>
     <div class="compose" style="${her}"><div class="measure">
-      <span class="icon-btn stk-btn" aria-hidden="true">貼</span>
+      <span class="sq plus" aria-hidden="true">+</span>
       <span class="field">Write to ${p.name}…</span>
       <span class="hint">Ctrl+Enter sends</span>
-      <span class="icon-btn send" aria-hidden="true">↑</span>
+      <span class="sq send" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4l17 8-17 8 2.5-8z"/></svg></span>
     </div></div>`;
 }
 
@@ -611,12 +621,10 @@ function gallery() {
 }
 
 function page(p) {
-  const [subj, poss] = p.they, Poss = poss[0].toUpperCase() + poss.slice(1), obj = subj === 'she' ? 'her' : 'them';
   return `
     <div class="bar" style="${ink(p)}">
       ${state.gallery === 'solo' ? '<span class="close clickable" data-close-persona tabindex="0" aria-label="Close the page">×</span>' : ''}
-      <span class="id"><span class="sub">${p.name}'s page</span></span>
-      <span class="more" style="font-size:13px;letter-spacing:0">Edit</span>
+      <span class="edit-btn">Edit</span>
     </div>
     <div class="thread page" style="${ink(p)}"><div class="measure">
       <div class="hero">
@@ -630,19 +638,20 @@ function page(p) {
           <div class="chips">
             <span class="chip"><i></i><b>${p.kanji}</b> ${p.ink}</span>
             <span class="chip"><span class="swatch"></span>${p.pat}</span>
+            <span class="chip">${p.pronouns}</span>
             <span class="chip">${p.model}</span>
           </div>
         </div>
       </div>
-      <div class="actions"><span class="btn primary clickable" data-write="${p.id}" tabindex="0">Write to ${p.name}</span><span class="btn quiet">Memories</span></div>
+      <div class="actions"><span class="btn primary clickable" data-write="${p.id}" tabindex="0">Write a letter</span><span class="btn quiet">Memories</span></div>
       <section class="paper-card entry">
         <span class="tape-v"></span>
-        <h4>About ${obj}</h4>
+        <h4>About</h4>
         <p class="prose">${p.about}</p>
       </section>
-      <section class="paper-card entry" style="--tilt: .6deg">
+      <section class="paper-card entry r" style="--tilt: .6deg">
         <span class="tape-v"></span>
-        <h4>${Poss} memory book <small>${p.memories} memories</small><span class="more">See all</span></h4>
+        <h4>Memory book <small>${p.memories} memories</small><span class="more">See all</span></h4>
         <div class="slips">${p.slips.map(([k, small, text]) => `<p class="slip ${k}">${k === 'core' ? '<span class="tape-h"></span><span class="tape-h br"></span>' : ''}<small>${small}</small>${text}</p>`).join('')}</div>
       </section>
       <section class="paper-card entry" style="--tilt: .7deg">
