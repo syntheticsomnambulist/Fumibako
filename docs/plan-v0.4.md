@@ -313,6 +313,9 @@ From the agreed decisions in `calendar.md`:
   - **When it comes:** a notification, as a heartbeat letter's (held the same way during busy
     times), unless you read it in the app as it came (WorkManager on the phone; the desktop's
     hook is a no-op for now).
+- **0.4.5 (version code 27):** back (the phone's gesture, Escape on a computer) puts a letter's tray
+  away before it leaves the letter: from the sticker or song page back to the tray, then the tray
+  closed. The desktop session noticed it.
 
 ## Noted for later
 

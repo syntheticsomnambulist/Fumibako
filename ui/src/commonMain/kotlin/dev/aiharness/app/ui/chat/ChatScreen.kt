@@ -110,6 +110,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import dev.aiharness.app.platform.PickKind
+import dev.aiharness.app.platform.PlatformBackHandler
 import dev.aiharness.app.platform.rememberCamera
 import dev.aiharness.app.platform.rememberOutside
 import dev.aiharness.app.platform.receiveFiles
@@ -146,6 +147,15 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     var trayOpen by rememberSaveable { mutableStateOf(false) }
     var stickerPage by rememberSaveable { mutableStateOf(false) }
     var musicPage by rememberSaveable { mutableStateOf(false) }
+    // Back (the phone's gesture, Escape on a computer) puts the tray away before it leaves the
+    // letter: from its sticker or song page back to the tray, then the tray closed.
+    PlatformBackHandler(enabled = trayOpen) {
+        when {
+            stickerPage -> stickerPage = false
+            musicPage -> musicPage = false
+            else -> trayOpen = false
+        }
+    }
     val going by vm.going.collectAsStateWithLifecycle()
     var editingMix by remember { mutableStateOf<dev.aiharness.core.model.ContentPart.Attachment?>(null) }
     val scope = rememberCoroutineScope()
