@@ -82,7 +82,7 @@ class DesktopPlatform(
 
         @Suppress("DEPRECATION") // The classpath loader reads the app's vector icon; Compose resources would need a second copy.
         @Composable
-        override fun icon(): Painter = painterResource("icon.xml")
+        override fun icon(): Painter = painterResource("seal.xml")
     }
 
     override fun mediaImporter(blobs: FileBlobStore): MediaImporter = DesktopMedia(blobs)

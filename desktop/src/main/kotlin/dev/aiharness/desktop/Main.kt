@@ -108,10 +108,13 @@ fun main(args: Array<String>) {
             visible = true
             showRequests.update { it + 1 }
         }
-        @Suppress("DEPRECATION") // The classpath loader reads the app's vector icon.
+        // The classpath loader reads the app's vector icons (tools/make_icon.py draws them).
+        @Suppress("DEPRECATION")
         val icon = painterResource("icon.xml")
+        @Suppress("DEPRECATION")
+        val trayIcon = painterResource("tray.xml")
         if (platform.trayWorks) {
-            Tray(icon = icon, state = trayState, tooltip = "Fumibako", onAction = show) {
+            Tray(icon = trayIcon, state = trayState, tooltip = "Fumibako", onAction = show) {
                 Item("Open Fumibako", onClick = show)
                 Separator()
                 Menu("Busy for now") {

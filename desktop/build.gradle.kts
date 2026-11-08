@@ -58,7 +58,9 @@ compose.desktop {
             // The whole runtime for now; trimmed to the modules it needs once packaging is tried on each system.
             includeAllModules = true
 
+            // The installers' icons, drawn by tools/make_icon.py (docs/design/icon.md).
             windows {
+                iconFile.set(project.file("icons/fumibako.ico"))
                 // Never change: it's how a new installer knows to replace the old one.
                 upgradeUuid = "f9afcf80-a171-41b0-bbf3-e843de80eb3f"
                 perUserInstall = true
@@ -67,12 +69,14 @@ compose.desktop {
             }
             macOS {
                 bundleID = "dev.fumibako.desktop"
+                iconFile.set(project.file("icons/fumibako.icns"))
                 // A macOS package's version can't start at 0: the build number counts instead
                 // (the app itself says $versionName).
                 packageVersion = "1.0.$versionCode"
             }
             linux {
                 packageName = "fumibako"
+                iconFile.set(project.file("icons/fumibako.png"))
             }
         }
     }

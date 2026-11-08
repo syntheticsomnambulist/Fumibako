@@ -298,6 +298,11 @@ The rules in CLAUDE.md hold through the move:
     macOS), and whether an unsigned Mac build asks for the keychain password after each update.
   - **Not yet (step 4):** songs and videos playing in the app, PDFs' pages, a heartbeat as soon as
     the computer wakes (now it comes at the next interval).
+- **The icons, after the first install on Windows (2026-11-08):** the installers and the window
+  showed the default icon, and the tray's seal was tiny (it was the launcher's layer, the seal
+  under half its square). Now the installers, the Start menu and the window have the whole icon,
+  the seal on its envelope, and the tray has the seal filling its square. `tools/make_icon.py`
+  draws them with the phone's (docs/design/icon.md).
 
 ## Noted for later
 
@@ -309,6 +314,8 @@ The rules in CLAUDE.md hold through the move:
 - The burn shader on Skia.
 - Wider layouts, a menu bar, and more keyboard shortcuts.
 - Signing, notarization, and updates that install themselves.
+- A friendlier installer: the Windows installer's banner and dialog pictures, a background for
+  the Mac's disk image.
 - Found during the move:
   - Photos from a phone camera may come in turned on the computer: Skia doesn't apply the EXIF
     orientation.
