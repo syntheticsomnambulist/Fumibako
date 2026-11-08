@@ -248,10 +248,14 @@ Third pass (see below), on the same canvas under "Third pass: calmer headers (No
   header: the label, the navigation in words, Week circled in ink, the hand-ruled line with its
   loop, and the all-day bar's perforated edge. Going to another week changes the dates in the column
   heads and lengthens the ribbon; the mockup has plans for this week only.
+- **Busy times:** six ways to show the typical week's busy hours (work, 9:00 to 17:30) under the
+  same plans: the hatched rail the week has now, pencil shading across the day, a bracket with a tick
+  at each end, a strip of plain masking tape, a pale wash fading in and out, and a dotted line.
 - **Header pieces** (interactive): four Week and Month switches, the two endings for the rule, and
   three edges for the all-day bar, with the picks marked.
 - **The month, header B** (interactive): November with Month circled, "‹ October · December ›",
-  kanji weekdays over the hand-ruled line, taller cells, Juno away, the legend and Aria's haiku
+  the solar terms' line with their motifs, kanji weekdays over the hand-ruled line, your plans'
+  names in highlighter, taller cells, Juno away, the legend and Aria's haiku
   slip.
 - **A day, header B** (interactive): Friday as a list in time order, with "How did it go?" under the
   interview (済 Done or 止 Not going, and Lift to undo), the now line, Aria's slip and who can see
@@ -477,13 +481,19 @@ pieces" board. Agreed:
 - **The all-day bar** stays put while the hours scroll under it, until the end of the week's grid.
   It has a faint fill and ends in a perforated (dashed) edge, like the stitching down the page's
   left side.
-- **No season band** on the week or the day page (the user took it off both). The month page loses
-  it too, for now, with the solar terms still named in small beni kanji on their first days.
+- **No season band** on the week or the day page (the user took it off both). The month page keeps
+  its line (the user asked to see it there): the month's two solar terms with their motifs, "7日
+  立冬 winter begins | 22日 小雪 light snow", between the header and the weekdays, and each term's
+  name in small beni kanji on its first day.
 - The header is about 66dp: the label, and the line of words under it.
 
 ### The pages
 
 - **Nothing smaller than 9.5** on any planner page (the month had text at 7.5).
+- **Your plans in highlighter** (asked for by the user): marked in your ink as with a real
+  highlighter, see-through, with streaks along the stroke, the ink a little darker where the pen
+  starts and stops, and slanted ends from the chisel tip. Blocks on the week are stroked down the
+  column; all-day plans and your plans' names on the month page are stroked across.
 - **Whose writing, by font:** your plans in Literata; phone-calendar entries in Zen Kaku Gothic New
   in a grey outline, printed rather than handwritten, so they don't read as anyone's hand (they
   were in a pencil hand before); personas' slips and notes in their own hand (Aria's is Yomogi).
@@ -504,9 +514,9 @@ pieces" board. Agreed:
 - Everything marked **proposed** above, in particular: a suggestion using an activity slot while
   notes and reminders are free; the sharing defaults; quick busy from a notification; sleep as
   quiet hours.
-- **The season band after the third pass:** gone from the week and day pages. Whether it's gone
-  for good (with the "Seasons and special days" setting reduced to the solar terms' names on the
-  month page, and the haiku on a new season), or comes back somewhere quieter.
+- **The season band after the third pass:** gone from the week and day pages, kept on the month
+  page. Whether the microseasons still reach the persona's context with nothing on screen.
+- **Busy times:** which of the six on the "Busy times" board.
 - **The app's seasons and the solar terms:** the theme follows meteorological seasons (autumn until
   30 November), while the band says winter begins on 7 November. Either the theme follows the solar
   terms too (a Look setting; see [`ideas.md`](ideas.md)), or the band and theme disagree for a few
