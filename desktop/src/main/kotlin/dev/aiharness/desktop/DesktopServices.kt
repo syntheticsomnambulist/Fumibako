@@ -64,6 +64,9 @@ class DesktopHeartbeats(
     /** What a heartbeat wrote, for the tray's notifications. */
     var onOutcomes: suspend (List<HeartbeatOutcome>) -> Unit = {}
 
+    /** A reply went into the post, arriving at the time given: for its notification then. */
+    var onPosted: suspend (conversationId: String, at: Long) -> Unit = { _, _ -> }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val lock = Any()
     // Guarded by [lock].
@@ -108,6 +111,10 @@ class DesktopHeartbeats(
 
     override fun runNow(settings: HeartbeatSettings, personaId: String?) {
         scope.launch { beat(force = true, personaId = personaId) }
+    }
+
+    override fun letterArrives(conversationId: String, at: Long) {
+        scope.launch { runCatching { onPosted(conversationId, at) } }
     }
 
     /**

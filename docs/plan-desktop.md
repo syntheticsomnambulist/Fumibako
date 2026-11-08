@@ -155,7 +155,7 @@ desktop/   new, the desktop shell: main(), the window, DesktopPlatform, the desk
 | API keys | Encrypted with a Keystore key | Encrypted with a key kept in the system's keychain (Windows Credential Manager, the macOS Keychain, the Linux Secret Service) |
 | Heartbeats | WorkManager, even with the app closed | While Fumibako runs. Closing the window keeps it in the tray (the menu bar on macOS), so personas go on writing; **Quit** stops them. A heartbeat missed while the computer slept or Fumibako was quit runs once on waking or at the next launch, not once per missed hour. **Start Fumibako when I log in**, off by default |
 | A reminder that wakes a persona | A one-off WorkManager job | A timer in the running app; a missed one runs at launch, or is missed after half a day, as on the phone |
-| Notifications | With "Busy for an hour", "Till tonight", "Till tomorrow" | The system's notifications, through the tray; a click opens the letter. "Busy for now" moves to the tray's menu, since notifications from a Java app have no buttons |
+| Notifications | With "Busy for an hour", "Till tonight", "Till tomorrow" | The system's notifications, through the tray; a click opens the letter. "Busy for now" moves to the tray's menu, since notifications from a Java app have no buttons. A reply in the post is told when it arrives (one that came while Fumibako was quit, at its next start) unless you've read it; a letter counts as read while the window is in front of you, not while it waits in the tray or sits behind another window |
 | Photos and files | The photo picker, the camera, Files | A file dialog, dragging onto your note, or pasting a picture. No camera |
 | PDFs | The first page, from Android's renderer | The first page, from PDFBox (Apache 2.0) |
 | Songs | Tags and artwork from the file; ExoPlayer with a media session | Tags and artwork from the file (jaudiotagger, LGPL); songs and previews play in the app through JavaFX's player (MP3, AAC, WAV, AIFF), and other formats in the computer's own player |
@@ -411,6 +411,19 @@ The rules in CLAUDE.md hold through the move:
   under half its square). Now the installers, the Start menu and the window have the whole icon,
   the seal on its envelope, and the tray has the seal filling its square. `tools/make_icon.py`
   draws them with the phone's (docs/design/icon.md).
+- **Keeping up: letters in the post (0.4.4) on the computer (2026-11-08).** A reply held in the
+  post is told through the tray when it arrives, by the busy rules, as on the phone, and not when
+  you read it as it came. The check is shared (`ui/.../heartbeat/Arrivals.kt`; the phone's job
+  uses it too). Letters on their way are kept in the app's state, so one that arrives while
+  Fumibako is quit is told within a minute of the next start, unless it's been read.
+  - **Read only while the window is in front of you** (`inFrontOfYou()` in Expect.kt: the window
+    has the focus). Before, a letter open in a window behind others counted as read the moment a
+    reply arrived on it; now it stays unread and the tray tells you, as a computer's mail and
+    chat apps do. Hidden in the tray, the window doesn't redraw, so nothing was marked read there
+    before either (checked in a real window). The phone is always in front, so nothing changes
+    there: the tours' 279 screenshots are identical.
+  - **Checked:** 4 more desktop tests (55 in all): told when it arrives and not before, and once;
+    not when read; still told after a restart; the scheduler hands the arrival to the notices.
 
 ## Noted for later
 
@@ -434,4 +447,3 @@ The rules in CLAUDE.md hold through the move:
     needed.
   - The desktop test composes on its own thread, so it can't navigate yet (navigation checks it's
     on Swing's). The desktop screenshot tour will need to run on that thread.
-  - The camera item in the letter tray should hide on the desktop.

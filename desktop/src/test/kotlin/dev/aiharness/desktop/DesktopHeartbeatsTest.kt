@@ -109,4 +109,12 @@ class DesktopHeartbeatsTest {
         assertEquals(emptyList(), runs)
         assertNull(heartbeats.nextBeat())
     }
+
+    @Test
+    fun aReplyInThePostGoesToTheNotices() = runBlocking {
+        val posted = kotlinx.coroutines.CompletableDeferred<Pair<String, Long>>()
+        heartbeats.onPosted = { conversationId, at -> posted.complete(conversationId to at) }
+        heartbeats.letterArrives("c1", 1_234L)
+        assertEquals("c1" to 1_234L, kotlinx.coroutines.withTimeout(5_000) { posted.await() })
+    }
 }

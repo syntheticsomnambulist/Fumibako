@@ -116,6 +116,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import dev.aiharness.app.platform.PickKind
+import dev.aiharness.app.platform.inFrontOfYou
 import dev.aiharness.app.platform.rememberCamera
 import dev.aiharness.app.platform.rememberOutside
 import dev.aiharness.app.platform.receiveFiles
@@ -251,8 +252,10 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     LaunchedEffect(messages.size, writing != null) {
         if (messages.isNotEmpty()) listState.animateScrollToItem(0)
     }
-    // Everything on screen counts as read, including letters that arrive while it is open.
-    LaunchedEffect(messages.lastOrNull()?.id) { vm.markRead() }
+    // Everything on screen counts as read, including letters that arrive while it is open (on a
+    // computer, while the window is in front of you: not while it waits in the tray).
+    val seen = inFrontOfYou()
+    LaunchedEffect(messages.lastOrNull()?.id, seen) { if (seen) vm.markRead() }
 
     // On a computer, files dropped on the letter or pasted into it (nothing on the phone).
     val receive = Modifier.receiveFiles { uris -> vm.addReceived(uris) { mix -> editingMix = mix }; trayOpen = false }
