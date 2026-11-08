@@ -247,7 +247,9 @@ Third pass (see below), on the same canvas under "Third pass: calmer headers (No
   same week, drawn first; A and C keep the first proposal's season band and arrows. B has the agreed
   header: the label, the navigation in words, Week circled in ink, the hand-ruled line with its
   loop, and the all-day bar's perforated edge; busy hours in a wash and a bracket, and the entries
-  in Sam's hand (pencilled phone events, your plans in highlighter). Going to another week changes the dates in the column
+  in Sam's hand (pencilled phone events, your plans in highlighter). Aria's suggestion is a sticky
+  tab on Saturday and a sticky note below the grid: "Not this time" peels both off, "Put it back"
+  restores them, and "Add it" puts the meteor shower on the grid. Going to another week changes the dates in the column
   heads and lengthens the ribbon; the mockup has plans for this week only.
 - **Pencil and highlighter:** the week's entries in Sam's hand: before (printed and Literata), a
   sketched box (on the week), graphite shading and a dotted outline.
@@ -364,7 +366,7 @@ Agreed: entries have states, including done. Proposed set:
 | Your plan | Planned; done (your done mark); moved (it goes to the new day, and a ghost stays at the old place with 延 and an arrow to the new day); cancelled (crossed through, 止) |
 | An untimed plan | The same as a plan |
 | A phone event | As the calendar has it; done; not going. Both are kept in Fumibako only and nothing is written back; moving or deleting happens in the calendar app |
-| A persona's suggestion | Waiting; added (your plan now, with its slip beside it); not this time (crossed through gently) |
+| A persona's suggestion | Waiting; added (your plan now, with its slip beside it); not this time (peeled off the page; see the third pass) |
 | A persona's reminder or promise | Waiting (its wake mark at the time); kept (its done mark, when it writes); missed (the wakeup didn't run in time, and it's told when it next wakes) |
 | A note, a rest | No states; a rest just ends |
 
@@ -506,6 +508,14 @@ pieces" board. Agreed:
     and a dotted outline, and how they looked before (printed in a grey outline).
   - **No fill behind entries** (agreed): a pencilled box is only its strokes, and the highlighter
     is see-through, so an entry in busy hours sits on the wash, as it would on paper.
+- **A persona's suggestion is a 付箋 sticky tab** in their ink, as in the second pass: a small tab on
+  the grid at its time ("Meteors?", on Saturday at 22:00) with a coloured strip at its stuck end, and
+  a matching sticky note below the grid with "Add it" and "Not this time". Adding it puts the plan on
+  the grid in your hand and highlighter, and the note stays beside it ("ADDED TO YOUR PLANNER").
+  **Declining peels them off** (asked for by the user): the note lifts from its free end, curls a
+  little, and drifts up and away; the tab on the grid follows a moment later, leaving a faint mark
+  where it was stuck that fades. A quiet line takes its place: "Taken down; Aria will hear it
+  wasn't for this time", with "Put it back".
 - **Busy hours: a wash and a bracket, together** (agreed): a thin line down the day's edge with a
   tick at each end, and a pale wash over the hours between that ends at the ticks rather than
   fading out. On the day page the bracket runs down the margin from "9:00 · WORK" to a "17:30 · WORK
