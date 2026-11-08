@@ -317,7 +317,7 @@ The rules in CLAUDE.md hold through the move:
     know (FLAC, Ogg) opens in the computer's player, with a notice.
   - **Videos** come as film strips with their name, and their length and title for an MP4 or a
     QuickTime file. They still play in the computer's own player.
-  - **Checked:** 48 desktop tests (heartbeats through sleep, PDFs, turned photos, song tags, the
+  - **Checked:** 45 desktop tests (heartbeats through sleep, PDFs, turned photos, song tags, the
     player's controls, what a drop or paste hands over, the icons). In a real window: pasting a
     picture, text, and a copied song into a letter; the Open dialog. JavaFX's player with real
     files: MP3, M4A and WAV play, FLAC says it can't. An opt-in check, `RealAudioCheck`, plays a
