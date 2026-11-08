@@ -42,16 +42,17 @@ class LettersInThePostScreenTest {
     fun aReplyOnItsWayShowsOnlyWhenItArrives() {
         val h = ApplicationProvider.getApplicationContext<HarnessApp>().container.harness
         val reply = "The fern is a maidenhair, I think."
-        var arrives = 0L
+        var conversationId = ""
         runBlocking {
             repeat(50) { if (h.personas.getAll().isEmpty()) Thread.sleep(100) }
             val aria = h.personas.getAll().first()
             val c = h.createConversation(aria.id)
             val now = System.currentTimeMillis()
-            // Far enough off for the screens to come up under Robolectric before it arrives.
-            arrives = now + 10_000
+            // An hour off, so the screens have all the time they need to come up first.
+            val arrives = now + 3_600_000L
+            conversationId = c.id
             h.conversations.appendMessage(ChatMessage(newId(), c.id, MessageRole.USER, listOf(ContentPart.Text("Look what I found")), createdAt = now - 60_000, origin = MessageOrigin.USER))
-            h.conversations.appendMessage(ChatMessage(newId(), c.id, MessageRole.ASSISTANT, listOf(ContentPart.Text(reply)), createdAt = now - 50_000, deliverAt = arrives))
+            h.conversations.appendMessage(ChatMessage("reply", c.id, MessageRole.ASSISTANT, listOf(ContentPart.Text(reply)), createdAt = now - 50_000, deliverAt = arrives))
             h.updateConversation(c.id) { it.copy(updatedAt = now - 50_000, lastAgentMessageAt = arrives, preview = Conversation.previewOf(reply)) }
         }
 
@@ -68,9 +69,15 @@ class LettersInThePostScreenTest {
         assertTrue(shown("reply is on its way"))
         assertTrue(!shown(reply))
 
-        // Once it arrives, it's there, and the postmark is gone.
-        Thread.sleep((arrives - System.currentTimeMillis() + 200).coerceAtLeast(0))
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(11))
+        // It arrives a moment from now instead: then it's there, and the postmark is gone.
+        val soon = System.currentTimeMillis() + 1_500
+        runBlocking {
+            val held = h.conversations.getMessages(conversationId).first { it.id == "reply" }
+            h.conversations.updateMessage(held.copy(deliverAt = soon))
+            h.updateConversation(conversationId) { it.copy(lastAgentMessageAt = soon) }
+        }
+        Thread.sleep((soon - System.currentTimeMillis() + 300).coerceAtLeast(0))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(2))
         compose.waitUntil(10_000) { shown(reply) }
         compose.waitForIdle()
         assertTrue(!shown("reply is on its way"))

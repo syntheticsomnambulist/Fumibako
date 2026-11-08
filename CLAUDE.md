@@ -44,7 +44,12 @@
 - **Checks:**
   - Before pushing, run `./gradlew :core:test :data:desktopTest :app:testDebugUnitTest :desktop:test`.
     Gradle re-runs only the suites whose code changed (with nothing changed it takes seconds), so
-    there's no need to pick suites by hand. A docs-only push skips CI.
+    there's no need to pick suites by hand. These checks are the only ones a push gets: GitHub
+    Actions doesn't run on pushes (its minutes and storage are limited while the repository is
+    private). A build there runs on request (workflow `build.yml`, inputs `tests`, `windows`,
+    `macos`, `linux`, `phone`; tests and Windows by default); start one only when the user asks
+    for one, such as installers for a release, and leave `macos` off unless asked (its minutes
+    count ten times).
   - When a change can alter what a screen shows (`ui/`, `app/src/main`, or text from `core` that
     screens show), also run all five screenshot tours, in one run (about 1.5 minutes):
     `HARNESS_SCREENSHOTS_DIR=<dir> ./gradlew :app:testDebugUnitTest --tests '*ScreenshotTour*'`.
