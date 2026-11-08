@@ -206,6 +206,72 @@ class ScreenshotTour {
         shot("picture_dialog")
     }
 
+    /**
+     * The wide layouts (docs/plan-desktop.md) in a new desktop window's size: the index tabs, Letters'
+     * list beside the open letter, the gallery beside a page, and screens without a wide layout
+     * centered beside the tabs.
+     */
+    @Test
+    @Config(qualifiers = "w1180dp-h780dp-land-xhdpi")
+    fun wideTour() {
+        assumeTrue(outDir != null)
+        seed(TimeOfDay.HIRU, Season.AKI)
+        waitFor("Kestrel")
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Unread"), 10_000)
+        // Nothing opened yet in this window: the desk beside the list.
+        waitFor("Choose a letter")
+        shot("wide_01_letters")
+        click("Aria")
+        waitFor("actually sleep")
+        listOf(":aria-heart: sticker", ":sleeping: sticker", ":gold-star: sticker").forEach { label ->
+            compose.waitUntilAtLeastOneExists(hasContentDescription(label), 10_000)
+        }
+        shot("wide_02_letter")
+        // Another letter takes its place; the list stays.
+        click("Kestrel")
+        waitFor("Write to Kestrel")
+        shot("wide_03_another_letter")
+        click("Personas")
+        waitFor("Choose a persona")
+        shot("wide_04_personas")
+        click("Aria")
+        waitFor("Write a letter")
+        shot("wide_05_persona_page")
+        click("See all")
+        waitFor("Aria's memory book")
+        shot("wide_06_memory_book")
+        click("Settings")
+        waitFor("CONTENTS")
+        shot("wide_07_settings")
+        click("Planner")
+        pause()
+        shot("wide_08_planner")
+        // Back to Letters: the letter that was open is open again.
+        click("Letters")
+        waitFor("Write to Kestrel")
+        shot("wide_09_letters_again")
+    }
+
+    /** A bigger window, by night: room on each side of the letters. */
+    @Test
+    @Config(qualifiers = "w1600dp-h900dp-land-xhdpi")
+    fun wideNightTour() {
+        assumeTrue(outDir != null)
+        seed(TimeOfDay.YORU, Season.AKI)
+        waitFor("Kestrel")
+        click("Aria")
+        waitFor("actually sleep")
+        listOf(":aria-heart: sticker", ":sleeping: sticker", ":gold-star: sticker").forEach { label ->
+            compose.waitUntilAtLeastOneExists(hasContentDescription(label), 10_000)
+        }
+        shot("wide_night_01_letter")
+        click("Personas")
+        waitFor("Choose a persona")
+        click("Kestrel")
+        waitFor("Write a letter")
+        shot("wide_night_02_persona_page")
+    }
+
     private fun tour(prefix: String, time: TimeOfDay, season: Season = Season.AKI) {
         assumeTrue(outDir != null)
         seed(time, season)

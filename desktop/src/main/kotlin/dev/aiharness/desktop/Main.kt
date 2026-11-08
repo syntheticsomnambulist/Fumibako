@@ -1,5 +1,7 @@
 package dev.aiharness.desktop
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import dev.aiharness.app.ui.WideLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -201,9 +203,9 @@ private fun whenDockIconClicked(show: () -> Unit) {
     }
 }
 
-/** The window's size and place, kept for the next start (phone-sized the first time). */
+/** The window's size and place, kept for the next start (wide enough for the wide layouts the first time). */
 private class WindowBounds(private val state: AppState) {
-    val size = DpSize(state.getLong(W, 440).toInt().dp, state.getLong(H, 860).toInt().dp)
+    val size = DpSize(state.getLong(W, FIRST.width.value.toLong()).toInt().dp, state.getLong(H, FIRST.height.value.toLong()).toInt().dp)
     val position: WindowPosition =
         if (state.getString(X) != null && state.getString(Y) != null) WindowPosition(state.getLong(X, 0).toInt().dp, state.getLong(Y, 0).toInt().dp)
         else WindowPosition.PlatformDefault
@@ -225,12 +227,18 @@ private class WindowBounds(private val state: AppState) {
     private companion object {
         const val W = "window_width"
         const val H = "window_height"
+
+        /** A new window: 1180 by 780 (chosen 2026-11-08), or smaller to fit the screen's free space. */
+        val FIRST: DpSize = runCatching {
+            val screen = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
+            DpSize(minOf(1180, screen.width - 40).dp, minOf(780, screen.height - 40).dp)
+        }.getOrDefault(DpSize(1180.dp, 780.dp))
         const val X = "window_x"
         const val Y = "window_y"
     }
 }
 
-/** The app's theme and settings around [content], as on the phone, in a phone-wide column. */
+/** The app's theme and settings around [content], as on the phone: the whole window once it's wide enough for the wide layouts, else a phone-wide column. */
 @Composable
 fun FumibakoWindow(container: AppContainer, backHandlers: BackHandlers = remember { BackHandlers() }, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalAppContainer provides container, LocalBackHandlers provides backHandlers) {
@@ -243,9 +251,10 @@ fun FumibakoWindow(container: AppContainer, backHandlers: BackHandlers = remembe
                 LocalStickerSettings provides (settings?.stickers ?: StickerSettings()),
                 LocalMediaSettings provides (settings?.media ?: MediaSettings()),
             ) {
-                Box(Modifier.fillMaxSize().background(paper.hyoshi)) {
-                    // The phone's layouts, at most a phone and a half wide (wider layouts come later).
-                    Box(Modifier.widthIn(max = 600.dp).fillMaxHeight().align(Alignment.TopCenter)) { content() }
+                BoxWithConstraints(Modifier.fillMaxSize().background(paper.hyoshi)) {
+                    // Narrower than the wide layouts, the phone's, at most a phone and a half wide.
+                    val wide = maxWidth >= WideLayout.MIN_WIDTH
+                    Box(Modifier.then(if (wide) Modifier.fillMaxSize() else Modifier.widthIn(max = 600.dp).fillMaxHeight()).align(Alignment.TopCenter)) { content() }
                     Notice(Modifier.align(Alignment.BottomCenter))
                 }
             }

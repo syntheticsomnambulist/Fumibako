@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -44,11 +45,11 @@ import dev.aiharness.app.platform.PickKind
 import dev.aiharness.app.platform.PlatformBackHandler
 import dev.aiharness.app.platform.rememberPicker
 
-/** Back on the left; [trailing] actions (Edit, Done) on the right. */
+/** Back on the left (unless [showBack] is false: a page beside its list); [trailing] actions (Edit, Done) on the right. */
 @Composable
-fun PageBar(onBack: () -> Unit, backLabel: String = "Back", trailing: @Composable () -> Unit = {}) {
-    Row(Modifier.statusBarsPadding().fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, backLabel, tint = paper.usuzumi0) }
+fun PageBar(onBack: () -> Unit, backLabel: String = "Back", showBack: Boolean = true, trailing: @Composable () -> Unit = {}) {
+    Row(Modifier.statusBarsPadding().fillMaxWidth().padding(top = 4.dp).heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (showBack) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, backLabel, tint = paper.usuzumi0) }
         Box(Modifier.weight(1f))
         trailing()
     }

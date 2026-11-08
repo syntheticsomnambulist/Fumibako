@@ -27,7 +27,44 @@ answers below; the reorganization has started (see *Progress*).
   app included (a tablet, a phone on its side). A phone held upright never is, so it stays as it
   is.
 - **Mockups first:** drawn in the app's look for you to choose from, and the choices written into
-  this plan before any code.
+  this plan before any code. The study is [`docs/design/wide-studies.html`](design/wide-studies.html)
+  (also a private claude.ai artifact: https://claude.ai/artifact/TbgAxSY8pUXZwDxfvvdc19).
+- **Chosen from the study:**
+  - **Index tabs down the left** in place of the bar along the bottom, so long letters get the
+    window's full height. Room for a fifth tab (机 Desk, v0.6).
+  - **Letters at a reading width,** about 640, in the middle of the right side. The margins a
+    wider window leaves are wanted for things (ideas drawn in the study: the day beside its first
+    letter, what she kept as a slip, her index card of what she had in mind, today's planner
+    page); which ones is still to choose. Narrower, each stays where it is on the phone.
+  - **Letters opens on the letter you last had open,** and Personas on the page you last opened,
+    with the gallery beside it.
+  - **A new window opens 1180 × 780,** smaller on a small screen. A window you've already sized
+    keeps its size.
+  - **How the open letter or persona is marked:** not the tab or the raised card first drawn. Of
+    the second set (a paper clip, a folded corner, a highlighter stroke, the card left as an
+    outline, no mark) the folded corner is your favorite, and you asked for the letters list's
+    cards to be **little fumibakos**, the open one opened: drawn in the study (lacquer tied with a
+    cord in their ink, or covered in their washi; the open box with its lid leaning behind it and
+    the letter inside). Still to settle: the finish, whether the phone's list gets boxes too, and
+    the gallery's mark.
+
+## Wide layouts: progress
+
+- **First build (2026-11-08), on `claude/sharp-darwin-o3pk1g`:** from 840 wide, the index tabs
+  down the left; Letters' list (360) beside the open letter, which keeps a reading width of 640
+  with the thread scrolling from the side's edges; Personas' gallery (400) beside the open page,
+  whose memory book, heartbeat and sticker pages open beside it with their back arrows; other
+  screens in the phone's layout, centered beside the tabs. The open side shows what's on top of the
+  back stack, so a window crossing 840 only changes how it's drawn. Letters and Personas open on
+  the letter and page you last had open (kept in app state); with nothing open, a quiet desk. A
+  new desktop window opens 1180 × 780, smaller on a small screen.
+  - Code: `ui/.../ui/WideLayout.kt` (the widths, `openFromList`), `AppNavigation.kt` (the rail,
+    the sides, `Placed`, `LastOpen`), small changes in `ChatScreen`, `ChatsScreen`, `Gallery`,
+    `PersonaPage` and `PageBar`, and the desktop window in `desktop/.../Main.kt`.
+  - **The phone is unchanged:** the 283 screenshots of its tours are identical before and after,
+    pixel for pixel. Two new tours, `wideTour` (1180 × 780) and `wideNightTour` (1600 × 900),
+    render the wide layouts.
+  - **Not yet:** the open one's mark (the fumibakos, above), and the margins.
 
 ## The aim
 
