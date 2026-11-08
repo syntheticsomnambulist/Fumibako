@@ -57,6 +57,13 @@ enum class PickKind {
 @Composable
 expect fun rememberPicker(kind: PickKind, onPicked: (List<Picked>) -> Unit): () -> Unit
 
+/**
+ * Files dropped on what this modifies, or pasted into it (copied files or a picture), go to
+ * [onFiles]: a computer's way to add them to a letter. Nothing on the phone, whose pickers do it.
+ */
+@Composable
+expect fun Modifier.receiveFiles(onFiles: (List<Picked>) -> Unit): Modifier
+
 /** The camera: takes a photo into [MediaImporter.cameraTarget] and hands it over. Null without one. */
 @Composable
 expect fun rememberCamera(onTaken: (Picked) -> Unit): (() -> Unit)?

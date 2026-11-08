@@ -12,6 +12,17 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+/** JavaFX's name for the system this builds on (its jars carry that system's native parts). */
+val javafxPlatform: String = run {
+    val os = System.getProperty("os.name").lowercase()
+    val arm = System.getProperty("os.arch") == "aarch64"
+    when {
+        "win" in os -> "win"
+        "mac" in os -> if (arm) "mac-aarch64" else "mac"
+        else -> if (arm) "linux-aarch64" else "linux"
+    }
+}
+
 kotlin {
     android {
         namespace = "dev.aiharness.app.ui"
@@ -53,6 +64,13 @@ kotlin {
                 implementation(libs.compose.mp.desktop)
                 // Dispatchers.Main (view models, lifecycle-aware collecting) on the desktop.
                 implementation(libs.kotlinx.coroutines.swing)
+                // The system's own Open and Save dialogs (MIT).
+                implementation(libs.filekit.dialogs)
+                // Songs and previews play through JavaFX's media player (GPL-2.0 with the Classpath
+                // Exception): its jars for the system this builds on, as each installer is built on its own.
+                listOf("base", "graphics", "media").forEach { part ->
+                    implementation("org.openjfx:javafx-$part:${libs.versions.javafx.get()}:$javafxPlatform") { isTransitive = false }
+                }
             }
             // The same font files the phone reads as R.font, on the desktop's classpath (font/<name>.ttf).
             resources.srcDir("src/androidMain/res")

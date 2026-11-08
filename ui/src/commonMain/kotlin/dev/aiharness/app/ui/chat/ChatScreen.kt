@@ -111,6 +111,7 @@ import kotlinx.coroutines.launch
 import dev.aiharness.app.platform.PickKind
 import dev.aiharness.app.platform.rememberCamera
 import dev.aiharness.app.platform.rememberOutside
+import dev.aiharness.app.platform.receiveFiles
 import dev.aiharness.app.platform.rememberPicker
 
 @Composable
@@ -242,7 +243,9 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     // Everything on screen counts as read, including letters that arrive while it is open.
     LaunchedEffect(messages.lastOrNull()?.id) { vm.markRead() }
 
-    Box(Modifier.fillMaxSize().onGloballyPositioned { screenOrigin = it.positionInRoot() }) {
+    // On a computer, files dropped on the letter or pasted into it (nothing on the phone).
+    val receive = Modifier.receiveFiles { uris -> vm.addReceived(uris) { mix -> editingMix = mix }; trayOpen = false }
+    Box(Modifier.fillMaxSize().then(receive).onGloballyPositioned { screenOrigin = it.positionInRoot() }) {
     Column(Modifier.fillMaxSize().background(paper.hyoshi).imePadding()) {
         LettersTopBar(
             vm = vm,

@@ -244,6 +244,19 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
             else -> prepare("a file", TrayItem.FILE) { asFile() }
         }
     }
+    /**
+     * Files dropped on the letter or pasted (a computer's way to add them): the pictures together
+     * (as many as the picker takes), several songs as a mix, anything else one by one.
+     */
+    fun addReceived(uris: List<Picked>, onMix: (ContentPart.Attachment) -> Unit) {
+        val kinds = uris.associateWith { container.media.typeOf(it)?.substringBefore('/') }
+        val pictures = uris.filter { kinds[it] == "image" }
+        val songs = uris.filter { kinds[it] == "audio" }
+        if (pictures.isNotEmpty()) addPhotos(pictures.take(12))
+        if (songs.size > 1) addSongs(songs, onMix) else songs.forEach { addFile(it, onMix) }
+        (uris - pictures.toSet() - songs.toSet()).forEach { addFile(it, onMix) }
+    }
+
     fun addVideo(uri: Picked) = prepare("a video", TrayItem.VIDEO) { progress -> listOfNotNull(container.media.video(uri, progress)?.let { Going.Item(it) }) }
 
     /** Songs: one is a ticket, several a playlist (returned so the editor can open on it). */

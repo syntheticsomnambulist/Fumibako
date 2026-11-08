@@ -208,7 +208,8 @@ editor can generate an avatar.
                                      # memory recall, heartbeat, NovelAI request format
 ./gradlew :data:desktopTest          # the migration steps on the desktop's SQLite
 ./gradlew :app:testDebugUnitTest     # Robolectric: Room repositories + a smoke test of the real app UI
-./gradlew :desktop:test              # the desktop app's first launch, offscreen
+./gradlew :desktop:test              # the desktop app: its first launch offscreen, keys, heartbeats,
+                                     # what goes in letters, the player, the tray's helpers
 ./gradlew :desktop:run               # opens the desktop app (its data in FUMIBAKO_HOME, if set)
 ```
 

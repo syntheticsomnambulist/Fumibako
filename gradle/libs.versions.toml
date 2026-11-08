@@ -34,6 +34,12 @@ jetbrainsNavigation = "2.10.0"
 sqlite = "2.6.2"
 # The desktop's keychain: Windows Credential Manager, the macOS Keychain, the Secret Service (BSD-3).
 javaKeyring = "1.0.4"
+pdfbox = "3.0.8"
+# JavaFX (media), for the desktop: ui/build.gradle.kts picks the jars for the system it builds on.
+javafx = "21.0.13"
+jaudiotagger = "3.0.1"
+# The system's own Open and Save dialogs on the desktop; built with this Kotlin (later ones need 2.4).
+filekit = "0.14.1"
 
 [libraries]
 mlkit-subject-segmentation = { module = "com.google.android.gms:play-services-mlkit-subject-segmentation", version = "16.0.0-beta1" }
@@ -96,6 +102,9 @@ jetbrains-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecyc
 jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "jetbrainsLifecycle" }
 jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "jetbrainsNavigation" }
 java-keyring = { module = "com.github.javakeyring:java-keyring", version.ref = "javaKeyring" }
+pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
+jaudiotagger = { module = "net.jthink:jaudiotagger", version.ref = "jaudiotagger" }
+filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref = "filekit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

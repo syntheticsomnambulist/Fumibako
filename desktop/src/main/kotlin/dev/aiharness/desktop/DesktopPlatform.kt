@@ -87,7 +87,7 @@ class DesktopPlatform(
 
     override fun mediaImporter(blobs: FileBlobStore): MediaImporter = DesktopMedia(blobs)
 
-    override fun playback(blobs: FileBlobStore, marks: MarkRepository): Playback = DesktopPlayback(blobs)
+    override fun playback(blobs: FileBlobStore, marks: MarkRepository): Playback = DesktopPlayback(blobs, marks)
 
     override fun log(message: String) = Unit
 

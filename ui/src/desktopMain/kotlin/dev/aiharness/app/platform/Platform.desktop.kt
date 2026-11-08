@@ -13,10 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.LocalAwtWindow
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.input.key.Key
@@ -30,12 +33,17 @@ import dev.aiharness.app.ui.paper.PaperButton
 import dev.aiharness.core.model.AttachmentKind
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.PlannerEntry
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.github.vinceglb.filekit.dialogs.openFileSaver
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Image
 import java.awt.Desktop
-import java.awt.FileDialog
-import java.awt.Frame
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.io.File
@@ -44,12 +52,11 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.time.LocalTime
 import java.util.Locale
-import javax.swing.JFileChooser
 
 /*
- * The desktop's side of Expect.kt. First versions: pickers, links, files, the clipboard and pictures
- * work; videos and song previews open outside the app for now, and there's no camera, location or
- * calendar. Filled in during the desktop plan's steps 3 to 5 (docs/plan-desktop.md).
+ * The desktop's side of Expect.kt: pickers, links, files, the clipboard and pictures; dropping and
+ * pasting (Receive.desktop.kt); songs and previews (Audio.desktop.kt). Videos open in the
+ * computer's own player for now, and there's no camera, location or calendar (docs/plan-desktop.md).
  */
 
 actual val deviceNoun: String = "computer"
@@ -99,29 +106,42 @@ class BackHandlers {
 
 val LocalBackHandlers = androidx.compose.runtime.staticCompositionLocalOf { BackHandlers() }
 
+/** The system's own Open dialog (Windows', a Mac's, or the desktop's on Linux), over Fumibako's window. */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 actual fun rememberPicker(kind: PickKind, onPicked: (List<Picked>) -> Unit): () -> Unit {
     val picked by rememberUpdatedState(onPicked)
-    return remember(kind) {
+    val window = LocalAwtWindow.current
+    val scope = rememberCoroutineScope()
+    return remember(kind, window) {
         {
-            val chooser = JFileChooser().apply {
-                isMultiSelectionEnabled = kind == PickKind.PHOTOS || kind == PickKind.SONGS
-                dialogTitle = when (kind) {
-                    PickKind.PHOTOS, PickKind.PHOTO -> "Choose a photo"
-                    PickKind.VIDEO -> "Choose a video"
-                    PickKind.FILE -> "Choose a file"
-                    PickKind.SONGS -> "Choose songs"
-                }
-            }
-            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                val files = if (chooser.isMultiSelectionEnabled) chooser.selectedFiles.toList() else listOfNotNull(chooser.selectedFile)
-                picked(files.take(if (kind == PickKind.PHOTOS) 12 else Int.MAX_VALUE).map { Picked(it.toURI().toString()) })
-            } else {
-                picked(emptyList())
+            scope.launch {
+                val settings = FileKitDialogSettings(
+                    title = when (kind) {
+                        PickKind.PHOTOS, PickKind.PHOTO -> "Choose a photo"
+                        PickKind.VIDEO -> "Choose a video"
+                        PickKind.FILE -> "Choose a file"
+                        PickKind.SONGS -> "Choose songs"
+                    },
+                    parentWindow = window,
+                )
+                val files = runCatching {
+                    when (kind) {
+                        PickKind.PHOTOS -> FileKit.openFilePicker(type = FileKitType.Image, mode = FileKitMode.Multiple(maxItems = 12), dialogSettings = settings)
+                        PickKind.PHOTO -> listOfNotNull(FileKit.openFilePicker(type = FileKitType.Image, dialogSettings = settings))
+                        PickKind.VIDEO -> listOfNotNull(FileKit.openFilePicker(type = FileKitType.Video, dialogSettings = settings))
+                        PickKind.FILE -> listOfNotNull(FileKit.openFilePicker(type = FileKitType.File(), dialogSettings = settings))
+                        PickKind.SONGS -> FileKit.openFilePicker(type = FileKitType.File(SONG_EXTENSIONS), mode = FileKitMode.Multiple(), dialogSettings = settings)
+                    }
+                }.onFailure { System.err.println("Fumibako: the file dialog didn't open: $it") }.getOrNull().orEmpty()
+                picked(files.map { Picked(it.file.toURI().toString()) })
             }
         }
     }
 }
+
+/** What the songs dialog shows: the formats songs come in. */
+private val SONG_EXTENSIONS = setOf("mp3", "m4a", "aac", "wav", "aif", "aiff", "flac", "ogg", "oga", "opus")
 
 @Composable
 actual fun rememberCamera(onTaken: (Picked) -> Unit): (() -> Unit)? = null
@@ -193,11 +213,14 @@ private class DesktopOutside(private val blobs: FileBlobStore) : Outside {
 
     override fun share(ref: String?, mime: String?, url: String?) = Unit
 
+    /** The system's own Save dialog, suggesting the file's name. */
     override suspend fun save(ref: String?, mime: String?, name: String?): Boolean {
         val file = blobs.existingFile(ref) ?: return false
-        val dialog = FileDialog(null as Frame?, "Save", FileDialog.SAVE).apply { this.file = name ?: file.name }
-        dialog.isVisible = true
-        val target = dialog.file?.let { File(dialog.directory, it) } ?: return false
+        val wanted = name ?: file.name
+        val extension = wanted.substringAfterLast('.', "").takeIf { it.isNotEmpty() && it.length <= 5 }
+        val target = runCatching {
+            FileKit.openFileSaver(suggestedName = if (extension != null) wanted.substringBeforeLast('.') else wanted, extension = extension)
+        }.getOrNull()?.file ?: return false
         return withContext(Dispatchers.IO) { runCatching { file.copyTo(target, overwrite = true); true }.getOrDefault(false) }
     }
 
@@ -286,16 +309,4 @@ actual fun EmbedView(embed: String, modifier: Modifier) {
     Box(modifier, contentAlignment = Alignment.Center) {
         PaperButton("Play it in your browser") { runCatching { Desktop.getDesktop().browse(URI(embed)) } }
     }
-}
-
-actual fun newSongPreview(): SongPreview = BrowserPreview()
-
-/** For now a preview opens in the browser. */
-private class BrowserPreview : SongPreview {
-    override val playing: String? = null
-    override fun toggle(url: String?) {
-        if (url != null) runCatching { Desktop.getDesktop().browse(URI(url)) }
-    }
-
-    override fun stop() = Unit
 }

@@ -102,8 +102,8 @@ desktop/   new, the desktop shell: main(), the window, DesktopPlatform, the desk
 | Notifications | With "Busy for an hour", "Till tonight", "Till tomorrow" | The system's notifications, through the tray; a click opens the letter. "Busy for now" moves to the tray's menu, since notifications from a Java app have no buttons |
 | Photos and files | The photo picker, the camera, Files | A file dialog, dragging onto your note, or pasting a picture. No camera |
 | PDFs | The first page, from Android's renderer | The first page, from PDFBox (Apache 2.0) |
-| Songs | Tags and artwork from the file; ExoPlayer with a media session | Tags from the file; previews and songs play in the app (the player library is chosen in step 1) |
-| Videos | Three frames for models that can't watch; shrunk to fit | Sent whole where the model takes them (Gemini), else by their label. No frames and no shrinking in v0.5 |
+| Songs | Tags and artwork from the file; ExoPlayer with a media session | Tags and artwork from the file (jaudiotagger, LGPL); songs and previews play in the app through JavaFX's player (MP3, AAC, WAV, AIFF), and other formats in the computer's own player |
+| Videos | Three frames for models that can't watch; shrunk to fit | Sent whole where the model takes them (Gemini), else by their label. No frames and no shrinking in v0.5; they play in the computer's own player |
 | Links | Custom Tabs, and a WebView for players | The default browser |
 | A sticker from a photo | ML Kit cuts out the subject | The plain-background cutter (a photo on a plain background), which the phone also has |
 | Phone calendars | Read-only, through `CalendarContract` | None in v0.5; Settings, Planner leaves the section out |
@@ -298,6 +298,37 @@ The rules in CLAUDE.md hold through the move:
     macOS), and whether an unsigned Mac build asks for the keychain password after each update.
   - **Not yet (step 4):** songs and videos playing in the app, PDFs' pages, a heartbeat as soon as
     the computer wakes (now it comes at the next interval).
+- **Step 4, the desktop's services: done.**
+  - **Heartbeats keep to the clock:** one that came due while the computer slept comes a minute
+    after it wakes (time for the network), then the usual pace, not one per missed interval.
+    Reminders wake their persona at their time, or on waking.
+  - **Adding to a letter:** drop files on it, or paste (Ctrl+V, Command+V on a Mac) copied files
+    or a copied picture; text still pastes into the note. Pictures go together, several songs make
+    a mix, anything else goes one by one. A dashed line shows while files are dragged over.
+  - **The system's own Open and Save dialogs** (FileKit, MIT): the modern one on Windows, a Mac's,
+    and the desktop's on Linux, in place of Java's, which looked out of place.
+  - **Photos** come in turned the way the camera held them: Skia reads the EXIF orientation (now
+    tested; the earlier note that it didn't was wrong).
+  - **PDFs** come with their page count, first page (1280 wide, what a model that can't read PDFs
+    sees), a thumbnail, and their title and author, as on the phone (PDFBox, Apache 2.0).
+  - **Songs** come with their tags and cover, one as a ticket and several as a mix. They play in
+    the app with the phone's controls (next and back, shuffle, repeat), and their tickets are
+    punched. Previews in the music tray play in the app too. A format JavaFX's player doesn't
+    know (FLAC, Ogg) opens in the computer's player, with a notice.
+  - **Videos** come as film strips with their name, and their length and title for an MP4 or a
+    QuickTime file. They still play in the computer's own player.
+  - **Checked:** 48 desktop tests (heartbeats through sleep, PDFs, turned photos, song tags, the
+    player's controls, what a drop or paste hands over, the icons). In a real window: pasting a
+    picture, text, and a copied song into a letter; the Open dialog. JavaFX's player with real
+    files: MP3, M4A and WAV play, FLAC says it can't. An opt-in check, `RealAudioCheck`, plays a
+    folder of songs (set `FUMIBAKO_REAL_AUDIO`).
+  - **The phone is unchanged:** the drop-and-paste hook does nothing there, and the tour's
+    screenshots are identical.
+  - **To try on Windows:** songs and previews playing (JavaFX's player hasn't been heard on
+    Windows yet), the Open and Save dialogs, dropping and pasting, and a heartbeat after the
+    computer sleeps.
+  - **Size:** the Linux package grew about 14 MB, to 179 MB: JavaFX about 7, PDFBox, the tag
+    reader and the dialogs (with JNA) the rest.
 - **The icons, after the first install on Windows (2026-11-08):** the installers and the window
   showed the default icon, and the tray's seal was tiny (it was the launcher's layer, the seal
   under half its square). Now the installers, the Start menu and the window have the whole icon,
@@ -310,15 +341,18 @@ The rules in CLAUDE.md hold through the move:
 - Calendars on the computer: a calendar's private iCal link (Google, Outlook and iCloud each offer
   one), read-only like the phone's.
 - Cutting a sticker's subject out of a photo on the computer (an on-device model).
-- Video frames and shrinking on the computer; a camera.
+- Video frames and shrinking on the computer; videos playing in the app (Compose Media Player, MIT,
+  draws frames into the window, but it needs Kotlin 2.4); a camera.
+- A smaller copy of a big or unusual song for models that hear songs, as the phone makes; FLAC and
+  Ogg songs playing in the app.
+- The installers' notices for the libraries they carry: JavaFX (GPL-2.0 with the Classpath
+  Exception), jaudiotagger (LGPL-2.1), PDFBox (Apache 2.0), FileKit and java-keyring (MIT, BSD).
 - The burn shader on Skia.
 - Wider layouts, a menu bar, and more keyboard shortcuts.
 - Signing, notarization, and updates that install themselves.
 - A friendlier installer: the Windows installer's banner and dialog pictures, a background for
   the Mac's disk image.
 - Found during the move:
-  - Photos from a phone camera may come in turned on the computer: Skia doesn't apply the EXIF
-    orientation.
   - The installer carries the whole Java runtime (`includeAllModules`); trim it to the modules
     needed.
   - The desktop test composes on its own thread, so it can't navigate yet (navigation checks it's

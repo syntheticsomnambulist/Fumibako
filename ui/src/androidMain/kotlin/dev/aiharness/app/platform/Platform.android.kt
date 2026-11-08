@@ -98,6 +98,10 @@ actual fun rememberPicker(kind: PickKind, onPicked: (List<Picked>) -> Unit): () 
     }
 }
 
+/** The phone's pickers add files; nothing is dropped or pasted. */
+@Composable
+actual fun Modifier.receiveFiles(onFiles: (List<Picked>) -> Unit): Modifier = this
+
 @Composable
 actual fun rememberCamera(onTaken: (Picked) -> Unit): (() -> Unit)? {
     val media = LocalAppContainer.current.media
