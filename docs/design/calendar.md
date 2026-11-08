@@ -246,8 +246,11 @@ Third pass (see below), on the same canvas under "Third pass: calmer headers (No
 - **The week: A, printed; B, on a label; C, running head** (all interactive): three headers on the
   same week, drawn first; A and C keep the first proposal's season band and arrows. B has the agreed
   header: the label, the navigation in words, Week circled in ink, the hand-ruled line with its
-  loop, and the all-day bar's perforated edge. Going to another week changes the dates in the column
+  loop, and the all-day bar's perforated edge; busy hours in a wash and a bracket, and the entries
+  in Sam's hand (pencilled phone events, your plans in highlighter). Going to another week changes the dates in the column
   heads and lengthens the ribbon; the mockup has plans for this week only.
+- **Pencil and highlighter:** the week's entries in Sam's hand: before (printed and Literata), a
+  sketched box (on the week), graphite shading and a dotted outline.
 - **Busy times:** six ways to show the typical week's busy hours (work, 9:00 to 17:30) under the
   same plans: the hatched rail the week has now, pencil shading across the day, a bracket with a tick
   at each end, a strip of plain masking tape, a pale wash fading in and out, and a dotted line.
@@ -490,13 +493,21 @@ pieces" board. Agreed:
 ### The pages
 
 - **Nothing smaller than 9.5** on any planner page (the month had text at 7.5).
-- **Your plans in highlighter** (asked for by the user): marked in your ink as with a real
-  highlighter, see-through, with streaks along the stroke, the ink a little darker where the pen
-  starts and stops, and slanted ends from the chisel tip. Blocks on the week are stroked down the
-  column; all-day plans and your plans' names on the month page are stroked across.
-- **Whose writing, by font:** your plans in Literata; phone-calendar entries in Zen Kaku Gothic New
-  in a grey outline, printed rather than handwritten, so they don't read as anyone's hand (they
-  were in a pencil hand before); personas' slips and notes in their own hand (Aria's is Yomogi).
+- **Your entries in your hand** (asked for by the user): everything in your planner is written in
+  your persona's handwriting font, as personas' slips are in theirs. In the mockups that's Sam's
+  hand, the imported font from the v0.5 "Her hand" board (Caveat standing in for samhand.ttf, at
+  1.2 times); Aria's slips stay in Yomogi.
+  - **Your plans in ink, with a highlighter** in your ink: see-through, with streaks along the
+    stroke, the ink a little darker where the pen starts and stops, and slanted ends from the
+    chisel tip. Blocks on the week are stroked down the column; all-day plans and your plans' names
+    on the month page are stroked across.
+  - **Phone events pencilled in:** in graphite, in a box sketched with four quick strokes that run
+    a little past the corners. The "Pencil and highlighter" board also has graphite shading and a
+    dotted outline, and how they looked before (printed in a grey outline).
+- **Busy hours: a wash and a bracket** (the user's pick from six): a pale wash over the busy hours,
+  fading in and out at the ends, and a thin line down the day's edge with a tick at each end. On the
+  day page the bracket runs down the margin from the start of work to a "17:30 · WORK ENDS" row,
+  with the wash behind the entries in between.
 - **Week:** kanji weekdays with the date under each, today ringed in your ink. A solar term's first
   day has a small beni dot by its date, instead of the term's kanji squeezed into the column head.
   The away and all-day row, the grid and メモ are as agreed.
@@ -516,7 +527,8 @@ pieces" board. Agreed:
   quiet hours.
 - **The season band after the third pass:** gone from the week and day pages, kept on the month
   page. Whether the microseasons still reach the persona's context with nothing on screen.
-- **Busy times:** which of the six on the "Busy times" board.
+- **Pencilled entries:** the sketched box, or graphite shading or a dotted outline (the "Pencil
+  and highlighter" board).
 - **The app's seasons and the solar terms:** the theme follows meteorological seasons (autumn until
   30 November), while the band says winter begins on 7 November. Either the theme follows the solar
   terms too (a Look setting; see [`ideas.md`](ideas.md)), or the band and theme disagree for a few
