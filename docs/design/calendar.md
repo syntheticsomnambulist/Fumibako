@@ -246,8 +246,11 @@ Third pass (see below), on the same canvas under "Third pass: calmer headers (No
 - **The week: A, printed; B, on a label; C, running head** (all interactive): three headers on the
   same week. The arrows change the header's week (only the header, in the mockup); away from this
   week the ribbon hangs longer and takes you back. Tap the season band for the full text. B, after
-  the user's pick and edits, has the navigation in words and the "Week | Month" switch; going to
-  another week changes the dates in the column heads, and the mockup has plans for this week only.
+  the user's pick and edits, has the navigation in words, the switch on a piece of tape, the rule
+  with a flourish and the all-day bar's edge (scroll the grid for its shadow); going to another week
+  changes the dates in the column heads, and the mockup has plans for this week only.
+- **Header pieces** (interactive): four Week and Month switches, the two endings for the rule, and
+  three edges for the all-day bar.
 - **The month, printed header** (interactive): November in header A, the season band, kanji
   weekdays, taller cells, Juno away, the legend and Aria's haiku slip.
 - **A day, printed header** (interactive): Friday as a list in time order, with "How did it go?"
@@ -458,10 +461,19 @@ They asked for clearer navigation labels. Proposed from there:
 - **The label names the month,** the traditional name and the English: "霜月 • November". A week
   across two months reads "神無月 • Oct – Nov". The dates are in the column heads.
 - **Navigation in words,** on a line under the label where the small capitals were: "‹ Week before
-  · Week after ›". Away from this week, "This week" appears between them, as well as the longer
-  ribbon.
-- **A "Week | Month" switch** at the right of the label, showing which you're on, in place of the
-  single "Month" button.
+  · Week after ›". No "This week" link (decided): it made the line jump, and the ribbon hanging
+  longer already says you've moved.
+- **A Week and Month switch** at the right of the label, showing which you're on, in place of the
+  single "Month" button. The user asked for it to be cuter; four ways are on the "Header pieces"
+  board: the view you're on sits on a piece of tape in your ink that slides across (drawn on the
+  week), two seals (週 and 月, the one you're on stamped in beni), circled in ink, or two divider
+  tabs standing on the coloured rule.
+- **The coloured rule under the days** either runs to the page's edge or ends in a small pen
+  flourish past Sunday (the user's two ideas, both on the pieces board; the week has the flourish).
+- **Where the all-day bar ends.** The bar stays put while the hours scroll under it, until the end
+  of the week's grid (as in the app now). Its bottom edge needs marking: the bar gets a faint fill
+  and a firm hairline, and casts a soft shadow only while the hours are sliding under it (drawn on
+  the week). The pieces board also has a perforated edge and a double rule.
 - The header is about 66dp: the label, and the line of words under it.
 
 ### The pages
@@ -488,7 +500,8 @@ They asked for clearer navigation labels. Proposed from there:
 - Everything marked **proposed** above, in particular: a suggestion using an activity slot while
   notes and reminders are free; the sharing defaults; quick busy from a notification; sleep as
   quiet hours.
-- **The third pass:** the navigation in words on B; whether the month and day pages follow B; and
+- **The third pass:** the switch, the rule's ending and the all-day bar's edge (see the pieces
+  board); whether the month and day pages follow B; and
   whether the season band also leaves the month page (and the "Seasons and special days" setting
   with it) or stays there.
 - **The app's seasons and the solar terms:** the theme follows meteorological seasons (autumn until
