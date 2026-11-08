@@ -348,7 +348,8 @@ The rules in CLAUDE.md hold through the move:
     scrollbar widening and dragging, a sticker dragged from the tray onto a letter, sized and
     turned with the wheel, and moved, selected or not.
   - **Noticed:** Escape with the sticker tray open leaves the letter, as the phone's back gesture
-    does; told the build session.
+    does; told the build session. Fixed in 0.4.5: Escape puts the tray away first (checked in a
+    real window).
 - **The icons, after the first install on Windows (2026-11-08):** the installers and the window
   showed the default icon, and the tray's seal was tiny (it was the launcher's layer, the seal
   under half its square). Now the installers, the Start menu and the window have the whole icon,
