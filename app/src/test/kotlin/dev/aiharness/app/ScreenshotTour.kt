@@ -602,7 +602,7 @@ class ScreenshotTour {
     }
 
     private fun memoryTour(prefix: String) {
-        top()
+        topWith("Aria")
         click("Aria")
         waitFor("Write a letter")
         click("Memories")
@@ -707,6 +707,21 @@ class ScreenshotTour {
         val beside = root.getPixel((bounds.left - 4).toInt(), bounds.center.y.toInt())
         val distance = listOf(16, 8, 0).sumOf { shift -> kotlin.math.abs((inside shr shift and 0xff) - (beside shr shift and 0xff)) }
         check(distance > 60) { "the button isn't drawn (button ${Integer.toHexString(inside)}, around it ${Integer.toHexString(beside)}; bounds $bounds in ${root.width}x${root.height})" }
+    }
+
+    /**
+     * Back at the top of the page showing [text]. Just after a back, the page being left can still
+     * be there (under load, as when every suite runs at once) and get scrolled instead, so try
+     * again until [text] shows.
+     */
+    private fun topWith(text: String) {
+        repeat(30) {
+            top()
+            if (compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()) return
+            Thread.sleep(100)
+            compose.waitForIdle()
+        }
+        waitFor(text)
     }
 
     private fun top() {
