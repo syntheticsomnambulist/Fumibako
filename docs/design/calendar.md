@@ -501,13 +501,15 @@ pieces" board. Agreed:
     stroke, the ink a little darker where the pen starts and stops, and slanted ends from the
     chisel tip. Blocks on the week are stroked down the column; all-day plans and your plans' names
     on the month page are stroked across.
-  - **Phone events pencilled in:** in graphite, in a box sketched with four quick strokes that run
-    a little past the corners. The "Pencil and highlighter" board also has graphite shading and a
-    dotted outline, and how they looked before (printed in a grey outline).
-- **Busy hours: a wash and a bracket** (the user's pick from six): a pale wash over the busy hours,
-  fading in and out at the ends, and a thin line down the day's edge with a tick at each end. On the
-  day page the bracket runs down the margin from the start of work to a "17:30 · WORK ENDS" row,
-  with the wash behind the entries in between.
+  - **Phone events pencilled in** (agreed): in graphite, in a box sketched with four quick strokes
+    that run a little past the corners. The "Pencil and highlighter" board also has graphite shading
+    and a dotted outline, and how they looked before (printed in a grey outline).
+  - **No fill behind entries** (agreed): a pencilled box is only its strokes, and the highlighter
+    is see-through, so an entry in busy hours sits on the wash, as it would on paper.
+- **Busy hours: a wash and a bracket, together** (agreed): a thin line down the day's edge with a
+  tick at each end, and a pale wash over the hours between that ends at the ticks rather than
+  fading out. On the day page the bracket runs down the margin from "9:00 · WORK" to a "17:30 · WORK
+  ENDS" row, with the wash behind the entries in between.
 - **Week:** kanji weekdays with the date under each, today ringed in your ink. A solar term's first
   day has a small beni dot by its date, instead of the term's kanji squeezed into the column head.
   The away and all-day row, the grid and メモ are as agreed.
@@ -527,8 +529,6 @@ pieces" board. Agreed:
   quiet hours.
 - **The season band after the third pass:** gone from the week and day pages, kept on the month
   page. Whether the microseasons still reach the persona's context with nothing on screen.
-- **Pencilled entries:** the sketched box, or graphite shading or a dotted outline (the "Pencil
-  and highlighter" board).
 - **The app's seasons and the solar terms:** the theme follows meteorological seasons (autumn until
   30 November), while the band says winter begins on 7 November. Either the theme follows the solar
   terms too (a Look setting; see [`ideas.md`](ideas.md)), or the band and theme disagree for a few
