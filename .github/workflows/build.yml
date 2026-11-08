@@ -1,9 +1,32 @@
 name: Build
 
+# On request only (Actions → Build → Run workflow, or a session's GitHub tools). Pushes run nothing:
+# every session runs the test suites before it pushes (CLAUDE.md), and Actions minutes and storage
+# are limited while the repository is private. Choose what to build below; the Windows installer and
+# the tests come by default.
 on:
-  push:
-  pull_request:
   workflow_dispatch:
+    inputs:
+      tests:
+        description: "Tests: core, the database, the phone (Robolectric) and the desktop, on Linux"
+        type: boolean
+        default: true
+      windows:
+        description: "Windows installer (.msi), after the desktop tests on Windows"
+        type: boolean
+        default: true
+      macos:
+        description: "macOS installer (.dmg); macOS minutes count ten times"
+        type: boolean
+        default: false
+      linux:
+        description: "Linux installer (.deb)"
+        type: boolean
+        default: false
+      phone:
+        description: "Phone: the debug APK, and the release build's R8 check (slow)"
+        type: boolean
+        default: false
 
 concurrency:
   group: build-${{ github.ref }}
@@ -13,12 +36,10 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  tests:
+    if: ${{ inputs.tests }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      # Optional repository secret holding the shared debug signing key (docs/going-public.md).
-      HARNESS_DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -41,23 +62,8 @@ jobs:
       - name: Install Android SDK platform 37
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;36.1.0" > /dev/null
 
-      - name: Unit tests (core + Robolectric)
-        run: ./gradlew :core:test :app:testDebugUnitTest
-
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v6
-        with:
-          name: ai-harness-debug-${{ github.run_number }}-${{ github.sha }}
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-          retention-days: 30
-
-      # Last, because R8 over the Anthropic SDK is slow; it catches shrinking problems.
-      - name: Build release APK (R8 check)
-        run: ./gradlew :app:assembleRelease
+      - name: Tests (core, the database on both SQLites, Robolectric, the desktop)
+        run: ./gradlew :core:test :data:desktopTest :app:testDebugUnitTest :desktop:test
 
       - name: Upload test reports
         if: failure()
@@ -66,5 +72,103 @@ jobs:
           name: test-reports-${{ github.run_number }}
           path: |
             core/build/reports/tests/
+            data/build/reports/tests/
             app/build/reports/tests/
+            desktop/build/reports/tests/
           if-no-files-found: ignore
+          retention-days: 5
+
+  phone:
+    if: ${{ inputs.phone }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # Repository secret holding the shared debug signing key (docs/going-public.md).
+      HARNESS_DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Install Android SDK platform 37
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;36.1.0" > /dev/null
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: fumibako-debug-${{ github.run_number }}-${{ github.sha }}
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      # R8 over the Anthropic SDK is slow; it catches shrinking problems before a release build.
+      - name: Build release APK (R8 check)
+        run: ./gradlew :app:assembleRelease
+
+  # The desktop app (docs/plan-desktop.md): its tests and an installer for each system chosen. A
+  # system that wasn't chosen is left out of the matrix, so it never starts a runner (a macOS runner
+  # bills ten minutes for each minute begun). Builds without the Android SDK.
+  desktop:
+    if: ${{ inputs.windows || inputs.macos || inputs.linux }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        exclude:
+          - os: ${{ !inputs.windows && 'windows-latest' || 'none' }}
+          - os: ${{ !inputs.macos && 'macos-latest' || 'none' }}
+          - os: ${{ !inputs.linux && 'ubuntu-latest' || 'none' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Desktop tests
+        run: ./gradlew :data:desktopTest :desktop:test
+
+      - name: Debian packaging tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y fakeroot
+
+      - name: Desktop installer
+        run: ./gradlew :desktop:packageDistributionForCurrentOS
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v6
+        with:
+          name: fumibako-desktop-${{ runner.os }}-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            desktop/build/compose/binaries/main/msi/*.msi
+            desktop/build/compose/binaries/main/dmg/*.dmg
+            desktop/build/compose/binaries/main/deb/*.deb
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: desktop-test-reports-${{ runner.os }}-${{ github.run_number }}
+          path: |
+            data/build/reports/tests/
+            desktop/build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 5
