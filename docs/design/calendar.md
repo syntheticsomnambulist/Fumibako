@@ -244,18 +244,18 @@ Third pass (see below), on the same canvas under "Third pass: calmer headers (No
 2026-11-08 in the agreed fonts and soft shadows:
 
 - **The week: A, printed; B, on a label; C, running head** (all interactive): three headers on the
-  same week. The arrows change the header's week (only the header, in the mockup); away from this
-  week the ribbon hangs longer and takes you back. Tap the season band for the full text. B, after
-  the user's pick and edits, has the navigation in words, the switch on a piece of tape, the rule
-  with a flourish and the all-day bar's edge (scroll the grid for its shadow); going to another week
-  changes the dates in the column heads, and the mockup has plans for this week only.
+  same week, drawn first; A and C keep the first proposal's season band and arrows. B has the agreed
+  header: the label, the navigation in words, Week circled in ink, the hand-ruled line with its
+  loop, and the all-day bar's perforated edge. Going to another week changes the dates in the column
+  heads and lengthens the ribbon; the mockup has plans for this week only.
 - **Header pieces** (interactive): four Week and Month switches, the two endings for the rule, and
-  three edges for the all-day bar.
-- **The month, printed header** (interactive): November in header A, the season band, kanji
-  weekdays, taller cells, Juno away, the legend and Aria's haiku slip.
-- **A day, printed header** (interactive): Friday as a list in time order, with "How did it go?"
-  under the interview (済 Done or 止 Not going, and Lift to undo), the now line, Aria's slip and
-  who can see the planner at the foot.
+  three edges for the all-day bar, with the picks marked.
+- **The month, header B** (interactive): November with Month circled, "‹ October · December ›",
+  kanji weekdays over the hand-ruled line, taller cells, Juno away, the legend and Aria's haiku
+  slip.
+- **A day, header B** (interactive): Friday as a list in time order, with "How did it go?" under the
+  interview (済 Done or 止 Not going, and Lift to undo), the now line, Aria's slip and who can see
+  the planner at the foot.
 
 ## Second pass: stationery and Japanese aesthetics
 
@@ -415,6 +415,8 @@ on laying the planner out wide until this settles.
 
 ### One slim header
 
+The first proposal, drawn as A. Where it differs, *Header B* below replaces it.
+
 - **The same header on every planner page,** about 60dp tall (the week's was about 90dp): a plain
   title, and one line of small capitals under it.
 
@@ -452,28 +454,31 @@ Drawn on the week page; the month and day pages use A, and would follow whicheve
   side of the dates. The view switch is a small 月 tab at the left, balancing the ribbon on the
   right.
 
-### After the pick
+### Header B (agreed)
 
-The user picked B (2026-11-08) and edited it on the canvas: the line of small capitals under the
-label went, this week's label reads "霜月 • November", and the season band came off the week page.
-They asked for clearer navigation labels. Proposed from there:
+The user picked B (2026-11-08), edited it on the canvas and chose its pieces from the "Header
+pieces" board. Agreed:
 
-- **The label names the month,** the traditional name and the English: "霜月 • November". A week
-  across two months reads "神無月 • Oct – Nov". The dates are in the column heads.
-- **Navigation in words,** on a line under the label where the small capitals were: "‹ Week before
-  · Week after ›". No "This week" link (decided): it made the line jump, and the ribbon hanging
-  longer already says you've moved.
-- **A Week and Month switch** at the right of the label, showing which you're on, in place of the
-  single "Month" button. The user asked for it to be cuter; four ways are on the "Header pieces"
-  board: the view you're on sits on a piece of tape in your ink that slides across (drawn on the
-  week), two seals (週 and 月, the one you're on stamped in beni), circled in ink, or two divider
-  tabs standing on the coloured rule.
-- **The coloured rule under the days** either runs to the page's edge or ends in a small pen
-  flourish past Sunday (the user's two ideas, both on the pieces board; the week has the flourish).
-- **Where the all-day bar ends.** The bar stays put while the hours scroll under it, until the end
-  of the week's grid (as in the app now). Its bottom edge needs marking: the bar gets a faint fill
-  and a firm hairline, and casts a soft shadow only while the hours are sliding under it (drawn on
-  the week). The pieces board also has a perforated edge and a double rule.
+- **A label naming the month,** the traditional name and the English, on masking tape in your ink's
+  light shade: "霜月 • November". A week across two months reads "神無月 • Oct – Nov"; the dates are
+  in the column heads. The month page's label is the same ("師走 • December" for the next); the day
+  page's has the weekday's kanji and the date ("金 • 6 November"). No line of small capitals under
+  it.
+- **Navigation in words,** on a line under the label: "‹ Week before · Week after ›" on the week
+  page, the months' names on the month page ("‹ October · December ›") and the days' names on the
+  day page ("‹ Thursday · Saturday ›"). No "This week" link: it made the line jump, and the ribbon
+  hanging longer already says you've moved.
+- **A Week and Month switch** at the right of the label: the view you're on is circled in ink, a
+  quick loop drawn again when you switch. On the day page neither is circled, and both are ways
+  back up.
+- **The coloured rule** under the days (on the day page, under the header) is ruled by hand: a
+  calligraphic stroke, heavier where the pen goes down and thinning along the page, finished with a
+  small loop past Sunday.
+- **The all-day bar** stays put while the hours scroll under it, until the end of the week's grid.
+  It has a faint fill and ends in a perforated (dashed) edge, like the stitching down the page's
+  left side.
+- **No season band** on the week or the day page (the user took it off both). The month page loses
+  it too, for now, with the solar terms still named in small beni kanji on their first days.
 - The header is about 66dp: the label, and the line of words under it.
 
 ### The pages
@@ -483,10 +488,9 @@ They asked for clearer navigation labels. Proposed from there:
   in a grey outline, printed rather than handwritten, so they don't read as anyone's hand (they
   were in a pencil hand before); personas' slips and notes in their own hand (Aria's is Yomogi).
 - **Week:** kanji weekdays with the date under each, today ringed in your ink. A solar term's first
-  day has a small beni dot by its date, and the season band names it, instead of the term's kanji
-  squeezed into the column head. The away and all-day row, the season band, the grid and メモ are
-  as agreed. Tapped, the band wraps to show its full text.
-- **Month:** the season band under the header; kanji weekdays alone, without the tiny English under
+  day has a small beni dot by its date, instead of the term's kanji squeezed into the column head.
+  The away and all-day row, the grid and メモ are as agreed.
+- **Month:** kanji weekdays alone, without the tiny English under
   them (the English is in each day's spoken label); cells about 64dp tall, so a plan's name, a
   holiday, an away strip and the ink dots fit without overlapping. The legend is at 11.
 - **Day:** a list in time order: sleep folded at both ends, the typical week's work band, entries
@@ -500,10 +504,9 @@ They asked for clearer navigation labels. Proposed from there:
 - Everything marked **proposed** above, in particular: a suggestion using an activity slot while
   notes and reminders are free; the sharing defaults; quick busy from a notification; sleep as
   quiet hours.
-- **The third pass:** the switch, the rule's ending and the all-day bar's edge (see the pieces
-  board); whether the month and day pages follow B; and
-  whether the season band also leaves the month page (and the "Seasons and special days" setting
-  with it) or stays there.
+- **The season band after the third pass:** gone from the week and day pages. Whether it's gone
+  for good (with the "Seasons and special days" setting reduced to the solar terms' names on the
+  month page, and the haiku on a new season), or comes back somewhere quieter.
 - **The app's seasons and the solar terms:** the theme follows meteorological seasons (autumn until
   30 November), while the band says winter begins on 7 November. Either the theme follows the solar
   terms too (a Look setting; see [`ideas.md`](ideas.md)), or the band and theme disagree for a few
