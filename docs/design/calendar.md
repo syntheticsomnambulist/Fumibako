@@ -245,7 +245,9 @@ Third pass (see below), on the same canvas under "Third pass: calmer headers (No
 
 - **The week: A, printed; B, on a label; C, running head** (all interactive): three headers on the
   same week. The arrows change the header's week (only the header, in the mockup); away from this
-  week the ribbon hangs longer and takes you back. Tap the season band for the full text.
+  week the ribbon hangs longer and takes you back. Tap the season band for the full text. B, after
+  the user's pick and edits, has the navigation in words and the "Week | Month" switch; going to
+  another week changes the dates in the column heads, and the mockup has plans for this week only.
 - **The month, printed header** (interactive): November in header A, the season band, kanji
   weekdays, taller cells, Juno away, the legend and Aria's haiku slip.
 - **A day, printed header** (interactive): Friday as a list in time order, with "How did it go?"
@@ -441,11 +443,26 @@ Drawn on the week page; the month and day pages use A, and would follow whicheve
 
 - **A, printed:** the title and the line under it printed on the paper, left-aligned. The plainest
   and easiest to read.
-- **B, on a label:** the dates on a strip of masking tape in your ink's light shade, slightly
-  turned, like the v0.6 labels (see [`v0.5.md`](v0.5.md)). The line under it as in A.
+- **B, on a label** (picked): the dates on a strip of masking tape in your ink's light shade,
+  slightly turned, like the v0.6 labels (see [`v0.5.md`](v0.5.md)). The line under it as in A.
 - **C, running head:** centred, like the running head of a printed diary, with the arrows either
   side of the dates. The view switch is a small 月 tab at the left, balancing the ribbon on the
   right.
+
+### After the pick
+
+The user picked B (2026-11-08) and edited it on the canvas: the line of small capitals under the
+label went, this week's label reads "霜月 • November", and the season band came off the week page.
+They asked for clearer navigation labels. Proposed from there:
+
+- **The label names the month,** the traditional name and the English: "霜月 • November". A week
+  across two months reads "神無月 • Oct – Nov". The dates are in the column heads.
+- **Navigation in words,** on a line under the label where the small capitals were: "‹ Week before
+  · Week after ›". Away from this week, "This week" appears between them, as well as the longer
+  ribbon.
+- **A "Week | Month" switch** at the right of the label, showing which you're on, in place of the
+  single "Month" button.
+- The header is about 66dp: the label, and the line of words under it.
 
 ### The pages
 
@@ -471,7 +488,9 @@ Drawn on the week page; the month and day pages use A, and would follow whicheve
 - Everything marked **proposed** above, in particular: a suggestion using an activity slot while
   notes and reminders are free; the sharing defaults; quick busy from a notification; sleep as
   quiet hours.
-- **The planner's header** (third pass): A, B or C, and whether the rest of the third pass holds.
+- **The third pass:** the navigation in words on B; whether the month and day pages follow B; and
+  whether the season band also leaves the month page (and the "Seasons and special days" setting
+  with it) or stays there.
 - **The app's seasons and the solar terms:** the theme follows meteorological seasons (autumn until
   30 November), while the band says winter begins on 7 November. Either the theme follows the solar
   terms too (a Look setting; see [`ideas.md`](ideas.md)), or the band and theme disagree for a few
