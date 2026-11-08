@@ -47,6 +47,13 @@ answers below; the reorganization has started (see *Progress*).
     cord in their ink, or covered in their washi; the open box with its lid leaning behind it and
     the letter inside). Still to settle: the finish, whether the phone's list gets boxes too, and
     the gallery's mark.
+  - **The fumibakos it is** (2026-11-08), with the lining in their ink too. A closer pass is in
+    [`docs/design/fumibako-studies.html`](design/fumibako-studies.html) (private artifact:
+    https://claude.ai/artifact/9krTn2vam1SDMUWGSUsU4L): five boxes (lacquer in their ink, black
+    lacquer with their ink inside, paulownia, covered in their washi, maki-e with their kanji in
+    gold), with the latest lines or only the name (as a list or a shelf), and the lining in all
+    fourteen inks. The lining follows madoromi's ink ramps, deep where ink pools, paler in the
+    middle; boxes keep day inks at night, as stickers do.
 
 ## Wide layouts: progress
 

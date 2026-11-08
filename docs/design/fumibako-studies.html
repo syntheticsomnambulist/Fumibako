@@ -1,0 +1,517 @@
+<title>Fumibako box studies</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&family=LINE+Seed+JP:wght@400;700&family=Yuji+Syuku&display=swap">
+<style>
+/* Layout: a control strip, then five box variants side by side (each a little letters list: one box
+   open, two closed), then a shelf of boxes without the preview, then the lining in all fourteen
+   inks. madoromi colours; the script swaps in the current season. Boxes are objects, so by default
+   they keep the season's day inks at night, as stickers and polaroid frames do. */
+:root {
+  --kami: #f8f0e9; --hyoshi: #f0e6dd; --chitsu: #e6dcd3;
+  --nijimi0: #dfcebf; --nijimi1: #cebeaf; --nijimi2: #beae9f;
+  --kasure0: #ae9e90; --kasure1: #9f8f81; --kasure2: #8d7d6f;
+  --usuzumi0: #7d6b5a; --usuzumi1: #715f4f; --sumi: #5d4c3c;
+  --fuji: #581ca7; --you: #178d9d;
+  --outline: #ffffff; --paper: #fffdf9;
+  --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --read: "Literata", "Iowan Old Style", Georgia, serif;
+  --ui: "LINE Seed JP", "Segoe UI", system-ui, sans-serif;
+  --brush: "Yuji Syuku", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+  --gold: #d8b25f; --gold-deep: #9c7630;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kami: #271d14; --hyoshi: #20160e; --chitsu: #181008;
+    --nijimi0: #3d3024; --nijimi1: #534538; --nijimi2: #66584b;
+    --kasure0: #7b6c5e; --kasure1: #908072; --kasure2: #a59587;
+    --usuzumi0: #beaa98; --usuzumi1: #d4c0ae; --sumi: #e8d3c1;
+    --fuji: #d3a1ff; --you: #5ac6f1; --paper: #f4ece2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --kami: #271d14; --hyoshi: #20160e; --chitsu: #181008;
+  --nijimi0: #3d3024; --nijimi1: #534538; --nijimi2: #66584b;
+  --kasure0: #7b6c5e; --kasure1: #908072; --kasure2: #a59587;
+  --usuzumi0: #beaa98; --usuzumi1: #d4c0ae; --sumi: #e8d3c1;
+  --fuji: #d3a1ff; --you: #5ac6f1; --paper: #f4ece2;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--hyoshi); color: var(--sumi); font-family: var(--ui); }
+.studio {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+  max-width: 1380px; margin: 0 auto;
+  display: grid; gap: 34px;
+}
+.studio *, .studio { transition: background-color .35s ease, color .35s ease, border-color .35s ease; }
+@media (prefers-reduced-motion: reduce) { .studio *, .studio { transition: none !important; } }
+
+.intro { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 22px; align-items: center; max-width: 1000px; }
+.glyph { grid-row: span 2; font-family: var(--brush); font-size: 92px; line-height: .9; color: var(--ink-sakura); }
+.intro h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4.2vw, 46px); line-height: 1.05; text-wrap: balance; }
+.intro p { margin: 0; max-width: 72ch; color: var(--usuzumi1); font-size: 15px; line-height: 1.6; }
+@media (max-width: 560px) { .intro { grid-template-columns: minmax(0, 1fr); } .glyph { grid-row: auto; font-size: 64px; } }
+
+.controls { display: flex; flex-wrap: wrap; gap: 18px 30px; align-items: flex-start; padding: 18px 20px; border: 1px solid var(--nijimi0); border-radius: 14px; background: var(--kami); }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--kasure2); }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: inline-flex; align-items: baseline; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--nijimi1); color: var(--usuzumi1); font-size: 13px; white-space: nowrap; }
+.seg span b { font-family: var(--brush); font-weight: 400; font-size: 15px; color: var(--sumi); }
+.seg input:checked + span { background: var(--sumi); border-color: var(--sumi); color: var(--kami); }
+.seg input:checked + span b { color: var(--kami); }
+.seg input:focus-visible + span { outline: 2px solid var(--fuji); outline-offset: 2px; }
+.theme-now { align-self: center; margin-left: auto; text-align: right; }
+.theme-now .big { font-family: var(--brush); font-size: 34px; line-height: 1; }
+.theme-now .small { font-size: 12px; color: var(--kasure2); letter-spacing: .04em; }
+@media (max-width: 700px) { .theme-now { margin-left: 0; text-align: left; } }
+
+.section { display: grid; gap: 16px; min-width: 0; }
+.section-head { display: grid; gap: 6px; max-width: 80ch; }
+.section h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 28px; display: flex; align-items: baseline; gap: 10px; }
+.section h2 span { font-family: var(--brush); font-weight: 400; font-size: 21px; color: var(--ink-sakura); }
+.section-head p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--usuzumi1); }
+
+/* Variant cards: a name, a line, then a piece of the letters list (the phone's 360 wide) */
+.variants { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 30px 26px; }
+.variant { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.variant h3 { margin: 0; display: flex; align-items: baseline; gap: 8px; font-family: var(--display); font-weight: 600; font-size: 21px; }
+.variant h3 b { font-family: var(--brush); font-weight: 400; font-size: 18px; color: var(--usuzumi0); }
+.variant p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--usuzumi1); max-width: 48ch; }
+.pane { width: min(100%, 360px); padding: 24px 18px 22px; display: grid; gap: 22px; background: var(--hyoshi); border: 1px solid var(--nijimi0); border-radius: 10px; }
+
+/* ---- The box ---------------------------------------------------------------------------------- */
+.fb { position: relative; isolation: isolate; border-radius: 5px; padding: 10px 12px 10px 34px; cursor: pointer;
+  --side: color-mix(in oklab, var(--ink) 26%, #0a0503);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), 0 4px 0 var(--side), 0 14px 18px -10px rgba(20, 10, 4, .5); }
+.fb:focus-visible { outline: 2px solid var(--fuji); outline-offset: 4px; }
+.fb::before { content: ""; position: absolute; z-index: 2; inset: 4px; border: 1px solid color-mix(in oklab, var(--gold) 55%, transparent); border-radius: 3px; pointer-events: none; }
+/* Lacquer in their ink */
+.v-lacquer, .v-makie { background: radial-gradient(120% 110% at 18% 0%, rgba(255, 255, 255, .17), transparent 52%), linear-gradient(172deg, color-mix(in oklab, var(--ink) 48%, #1d100a), color-mix(in oklab, var(--ink) 30%, #0e0704)); }
+/* Black lacquer, their ink inside: every box alike until it's open, but for the cord */
+.v-kuro { --side: #060403; background: radial-gradient(120% 110% at 18% 0%, rgba(255, 255, 255, .15), transparent 52%), linear-gradient(172deg, #2c221d, #100b08); }
+/* Paulownia (kiri), pale wood */
+.v-kiri { --side: #bfa078; background: repeating-linear-gradient(90deg, rgba(122, 86, 50, .07) 0 1px, transparent 1px 6px), repeating-linear-gradient(90deg, rgba(122, 86, 50, .05) 0 3px, transparent 3px 17px), linear-gradient(180deg, #f0e3cd, #e2cfb0);
+  box-shadow: inset 0 0 0 1px rgba(122, 86, 50, .18), 0 4px 0 var(--side), 0 14px 18px -10px rgba(60, 40, 20, .35); }
+.v-kiri::before { border-color: rgba(122, 86, 50, .22); }
+/* Covered in their washi */
+.v-washi { --side: color-mix(in oklab, var(--ink) 55%, #3a2a20); background: var(--pat), color-mix(in oklab, var(--ink) 72%, var(--paper)); }
+.v-washi::before { border-color: rgba(255, 255, 255, .38); }
+
+/* The cord, tied in a bow; undone when the box is open */
+.fb .cord { position: absolute; z-index: 3; left: 14px; top: -2px; bottom: -6px; width: 6px; border-radius: 3px;
+  background: repeating-linear-gradient(140deg, color-mix(in oklab, var(--ink) 55%, #fff) 0 2px, var(--ink) 2px 4.5px); box-shadow: 0 1px 1.5px rgba(0, 0, 0, .4); }
+.fb .bow { position: absolute; z-index: 4; left: 17px; top: 50%; width: 0; height: 0; }
+.fb .bow i { position: absolute; top: -7px; width: 13px; height: 8px; border: 3px solid color-mix(in oklab, var(--ink) 80%, #fff); border-radius: 50%; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); }
+.fb .bow i:first-child { right: 1px; transform: rotate(28deg); }
+.fb .bow i:nth-child(2) { left: 1px; transform: rotate(-28deg); }
+.fb .bow b { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 2px; background: var(--ink); box-shadow: 0 1px 1px rgba(0, 0, 0, .4); }
+.fb .loose { display: none; position: absolute; z-index: 3; left: -10px; top: 4px; width: 40px; height: 90px; overflow: visible; pointer-events: none; }
+.fb .loose path { fill: none; stroke: var(--ink); stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); }
+
+/* Open: the lid leaning behind, the lining in their ink, what's inside lying in it */
+.fb .lid, .fb .well { display: none; }
+.fb.open .cord, .fb.open .bow { display: none; }
+.fb.open .loose { display: block; }
+.fb.open .lid { display: block; position: absolute; z-index: -1; left: 20px; right: -6px; top: -15px; height: 44px; border-radius: 5px; transform: rotate(2.6deg);
+  background: inherit; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), 0 -2px 6px rgba(0, 0, 0, .2); }
+.fb.open .lid::before { content: ""; position: absolute; inset: 4px; border: 1px solid color-mix(in oklab, var(--gold) 55%, transparent); border-radius: 3px; }
+.v-kiri.open .lid::before { border-color: rgba(122, 86, 50, .22); }
+.v-washi.open .lid::before { border-color: rgba(255, 255, 255, .38); }
+.fb.open .well { display: block; position: absolute; z-index: 0; inset: 6px; border-radius: 2px; }
+/* The lining follows the ink's own ramp (madoromi measures each ink from pooled to wash): deepest
+   in the corners where ink would pool, paler towards the middle. Lacquer is glossy; silk is matte. */
+.v-lacquer .well, .v-kuro .well, .v-makie .well {
+  background: linear-gradient(118deg, transparent 36%, rgba(255, 255, 255, .17) 45%, transparent 54%),
+    radial-gradient(ellipse 78% 100% at 50% 38%, color-mix(in oklab, var(--ink) 74%, #fff), var(--ink) 58%, color-mix(in oklab, var(--ink) 60%, #000));
+  box-shadow: inset 0 5px 9px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(0, 0, 0, .3); }
+.v-kiri .well, .v-washi .well {
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, .07) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse 78% 100% at 50% 38%, color-mix(in oklab, var(--ink) 34%, var(--paper)), color-mix(in oklab, var(--ink) 62%, var(--paper)) 62%, color-mix(in oklab, var(--ink) 92%, #000));
+  box-shadow: inset 0 4px 8px rgba(40, 24, 12, .35), inset 0 0 0 1px rgba(40, 24, 12, .2); }
+
+/* On the lid: a paper label with the latest lines, or just a name slip; maki-e adds their kanji in gold */
+.label { position: relative; z-index: 1; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 9px 11px 9px 10px; border-radius: 1px; background: var(--kami); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); transition: transform .3s ease, box-shadow .3s ease; }
+.label .pic { width: 44px; height: 54px; border-radius: 3px; overflow: hidden; box-shadow: 0 0 0 1px var(--nijimi0); }
+.label .txt, .slip .txt { display: grid; gap: 2px; min-width: 0; }
+.row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.nm { font-family: var(--display); font-weight: 600; font-size: 19px; line-height: 1.1; color: var(--sumi); }
+.md { font-family: var(--read); font-style: italic; font-size: 12.5px; color: var(--tc); }
+.row time { margin-left: auto; font-size: 11px; color: var(--kasure2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pv { margin: 0; font-family: var(--read); font-size: 13.5px; line-height: 1.42; color: var(--usuzumi1); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pv.unread { color: var(--sumi); }
+.left { font-size: 11px; color: var(--tc); }
+.fb.open .label { transform: rotate(-1.4deg) translate(4px, -1px); box-shadow: 0 7px 12px -5px rgba(0, 0, 0, .6); }
+.slip { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 8px; border-radius: 1px; background: var(--kami); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+.slip .dot { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; flex: none; box-shadow: 0 0 0 1px var(--nijimi0); }
+.slip .txt { flex: 1; }
+.v-makie { padding-right: 56px; }
+.makie { position: absolute; z-index: 1; right: 12px; top: 50%; transform: translateY(-50%); font-family: var(--brush); font-size: 30px; line-height: 1; writing-mode: vertical-rl; letter-spacing: 2px;
+  background: linear-gradient(160deg, #f6dc95, var(--gold) 45%, var(--gold-deep)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .35)); }
+.makie.long { font-size: 22px; }
+.fb.open .makie { display: none; }
+/* Inside, without the preview: their letters, folded, the top one with their name */
+.inside { display: none; }
+.fb.open .slip { display: none; }
+.fb.open .inside { position: relative; z-index: 1; display: block; height: 44px; }
+.inside .lt { position: absolute; height: 30px; border-radius: 1px; background: var(--paper); box-shadow: 0 2px 4px rgba(0, 0, 0, .35); }
+.inside .lt.a { left: 24%; right: 26%; top: 5px; transform: rotate(4deg); opacity: .85; }
+.inside .lt.b { left: 13%; right: 36%; top: 2px; transform: rotate(-3deg); opacity: .92; }
+.inside .lt.c { left: 4%; right: 42%; top: 8px; transform: rotate(-.6deg); display: flex; align-items: center; gap: 8px; padding: 0 10px;
+  background: linear-gradient(90deg, transparent 49.6%, rgba(90, 70, 50, .14) 50%, transparent 50.4%), var(--paper); }
+.inside .lt.c span { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 15px; color: #4a3b30; }
+.inside .lt.c small { margin-left: auto; font-size: 10px; letter-spacing: .06em; color: #8d7d6f; }
+
+/* A shelf: two boxes to a row, name slips only */
+.shelf { width: min(100%, 360px); padding: 26px 18px 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px 14px; background: var(--hyoshi); border: 1px solid var(--nijimi0); border-radius: 10px; }
+.shelf .fb { padding: 12px 10px 12px 26px; min-height: 92px; display: grid; align-content: center; }
+.shelf .fb .cord { left: 9px; }
+.shelf .fb .bow { left: 12px; }
+.shelf .slip { flex-direction: column; align-items: flex-start; gap: 4px; padding: 7px 9px; }
+.shelf .slip .row { flex-wrap: wrap; gap: 0 6px; }
+.shelf .slip .dot { width: 24px; height: 24px; }
+.shelf .v-makie { padding-right: 40px; }
+.shelf .makie { right: 8px; font-size: 24px; }
+.shelf .makie.long { font-size: 17px; }
+.shelf .fb.open .inside { height: 62px; }
+.shelf .inside .lt { height: 44px; }
+.shelf .inside .lt.c { flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; }
+.shelf .inside .lt.c small { margin-left: 0; }
+
+/* Every ink */
+.inks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 30px 16px; }
+.ink-cell { display: grid; gap: 8px; justify-items: start; }
+.ink-cell .fb { width: 100%; min-height: 70px; padding: 10px 10px 10px 26px; }
+.ink-cell .fb .inside { height: 40px; }
+.ink-cell .fb .cord { left: 9px; }
+.ink-cell .name { font-size: 12px; color: var(--usuzumi1); display: flex; gap: 6px; align-items: baseline; }
+.ink-cell .name b { font-family: var(--brush); font-weight: 400; font-size: 16px; color: var(--sumi); }
+
+/* Stickers: the unread seal */
+.sticker { position: absolute; width: var(--w, 40px); transform: translate(-50%, -50%) rotate(var(--r, 0deg)); z-index: 5; line-height: 0; pointer-events: none; }
+.sticker .art { display: block; filter: url(#die-cut) drop-shadow(0 1.5px 1.5px rgba(30, 18, 8, .3)); }
+.sticker svg { width: 100%; height: auto; display: block; overflow: visible; }
+.paper { fill: var(--paper-fill); }
+.seal-t { font-family: var(--brush); font-size: 27px; text-anchor: middle; }
+canvas.portrait { display: block; width: 100%; height: 100%; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px 28px; padding-top: 18px; border-top: 1px solid var(--nijimi0); }
+.notes h3, .decide h3 { margin: 0 0 4px; font-family: var(--display); font-weight: 600; font-size: 19px; }
+.notes p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--usuzumi1); max-width: 48ch; }
+.decide { display: grid; gap: 10px; padding: 18px 20px; border: 1px solid var(--nijimi0); border-radius: 14px; background: var(--kami); }
+.decide ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--usuzumi1); max-width: 92ch; }
+.decide li b { color: var(--sumi); }
+.credits { max-width: 84ch; font-size: 12.5px; line-height: 1.6; color: var(--kasure2); margin: 0; }
+.credits a { color: var(--usuzumi1); }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="die-cut" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="1.75" result="soft"/>
+    <feComponentTransfer in="soft" result="spread"><feFuncA type="linear" slope="22" intercept="-0.6"/></feComponentTransfer>
+    <feFlood class="outline-flood" result="colour"/>
+    <feComposite in="colour" in2="spread" operator="in" result="outline"/>
+    <feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</svg>
+<style>.outline-flood { flood-color: var(--outline); }</style>
+
+<div class="studio" id="studio">
+  <header class="intro">
+    <div class="glyph" aria-hidden="true">箱</div>
+    <h1>Little fumibakos</h1>
+    <p>Each correspondent's letters in a box of their own, in the letters list. A cord in their ink ties it shut, and the open letter's box has its lid off and leaning behind it, the cord undone, and inside, lined in their ink, what's in it. Five boxes to compare, each as a piece of the list with one box open; then the boxes with only a name on the lid, as a list and as a shelf; then the lining in every ink. Click a box to open it.</p>
+  </header>
+
+  <section class="controls" aria-label="Mockup controls">
+    <fieldset>
+      <legend>Time</legend>
+      <div class="seg" id="time">
+        <label><input type="radio" name="time" id="time-auto" value="auto" checked><span>Auto</span></label>
+        <label><input type="radio" name="time" id="time-hiru" value="hiru"><span><b>昼</b>day</span></label>
+        <label><input type="radio" name="time" id="time-yoru" value="yoru"><span><b>夜</b>night</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Box inks at night</legend>
+      <div class="seg" id="night">
+        <label><input type="radio" name="night" id="night-day" value="day" checked><span>Day inks, as stickers keep</span></label>
+        <label><input type="radio" name="night" id="night-night" value="night"><span>The night's inks</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>On the lid</legend>
+      <div class="seg" id="lid">
+        <label><input type="radio" name="lid" id="lid-preview" value="preview" checked><span>The name and latest lines</span></label>
+        <label><input type="radio" name="lid" id="lid-name" value="name"><span>Only the name</span></label>
+      </div>
+    </fieldset>
+    <div class="theme-now" aria-live="polite">
+      <div class="big" id="theme-kanji">秋昼</div>
+      <div class="small" id="theme-name">aki-hiru · autumn by day</div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="h-boxes">
+    <div class="section-head">
+      <h2 id="h-boxes">Five boxes<span>箱</span></h2>
+      <p>Aria's box is open; Juno's has an unread letter (her seal on the lid); Kestrel's is shut. Each piece is the letters list's width on a phone (360).</p>
+    </div>
+    <div class="variants" id="variants"></div>
+  </section>
+
+  <section class="section" aria-labelledby="h-shelf">
+    <div class="section-head">
+      <h2 id="h-shelf">Only the name<span>名</span></h2>
+      <p>Without the latest lines, a box needs only a name slip, so boxes can be slimmer, or sit two to a row like boxes on a shelf. Open, the slip goes with the lid, and inside are their letters, folded, the top one with their name. Pick the box for these and for the inks below.</p>
+    </div>
+    <fieldset>
+      <legend>Box</legend>
+      <div class="seg" id="pick">
+        <label><input type="radio" name="pick" id="pick-lacquer" value="lacquer" checked><span><b>漆</b>Lacquer in their ink</span></label>
+        <label><input type="radio" name="pick" id="pick-kuro" value="kuro"><span><b>黒</b>Black lacquer</span></label>
+        <label><input type="radio" name="pick" id="pick-kiri" value="kiri"><span><b>桐</b>Paulownia</span></label>
+        <label><input type="radio" name="pick" id="pick-washi" value="washi"><span><b>紙</b>Their washi</span></label>
+        <label><input type="radio" name="pick" id="pick-makie" value="makie"><span><b>蒔</b>Maki-e</span></label>
+      </div>
+    </fieldset>
+    <div class="variants" id="name-only"></div>
+  </section>
+
+  <section class="section" aria-labelledby="h-inks">
+    <div class="section-head">
+      <h2 id="h-inks">The lining in every ink<span>墨</span></h2>
+      <p>All fourteen of madoromi's inks, each box open. The lining follows the ink's own ramp, as madoromi measures each ink from pooled to wash: deepest in the corners, paler towards the middle.</p>
+    </div>
+    <div class="inks" id="inks"></div>
+  </section>
+
+  <section class="notes" aria-label="Notes">
+    <div><h3>Boxes are objects</h3><p>Stickers and polaroid frames keep the season's day inks at night, since they're things on the desk rather than ink on the page. The boxes do too, by default; the switch above shows them in the night's inks instead.</p></div>
+    <div><h3>Opening one</h3><p>In the app, opening a letter could undo the bow and lift the lid back in a quarter of a second; closing it, the reverse. On the phone, with no letter beside the list, every box stays shut.</p></div>
+    <div><h3>The unread seal</h3><p>Each persona's unread mark (a seal, an emoji or one of their stickers) goes on the lid, where it is on the card today. It comes off when the box opens.</p></div>
+    <div><h3>Fewer things on the lid</h3><p>With only the name, the list shows less at a glance (no time, no lines) but reads as a row of boxes. The time could stay on the slip; the seal still says there's something new.</p></div>
+  </section>
+
+  <section class="decide" aria-labelledby="h-decide">
+    <h3 id="h-decide">To choose</h3>
+    <ol>
+      <li><b>The box:</b> lacquer in their ink, black lacquer with their ink inside, paulownia, covered in their washi, or lacquer with their kanji in gold (maki-e). Or a mix: a box per persona, chosen in their settings like their unread mark.</li>
+      <li><b>On the lid:</b> the name and their latest lines, or only the name; and if only the name, a list or a shelf.</li>
+      <li><b>At night:</b> day inks, as stickers keep, or the night's.</li>
+      <li><b>On the phone:</b> boxes there too (always shut), or the phone's cards as they are.</li>
+    </ol>
+  </section>
+
+  <p class="credits">Colours are <a href="https://madoromi.moonwit.ch/" target="_blank" rel="noopener">madoromi</a> by samhain (MPL-2.0), measured from Pilot Iroshizuku inks. Fonts as in the other studies. Portraits stand in for NovelAI art, and the people and letters are examples.</p>
+</div>
+
+<script>
+const THEMES = ['haru-hiru', 'natsu-hiru', 'aki-hiru', 'fuyu-hiru', 'haru-yoru', 'natsu-yoru', 'aki-yoru', 'fuyu-yoru'];
+const PAL = {
+  sakura:   ['#aa6e89','#aa6e89','#a26480','#aa6e89','#ffc5da','#ffbde2','#ffb6cc','#ffbee1'],
+  nadeshiko:['#d64891','#ce37a6','#c63368','#b560a0','#ffadda','#dd9fbf','#dfa3c0','#dfa3c0'],
+  botan:    ['#b25d9d','#b0599b','#a1488d','#a74f93','#fe8dc0','#f894d8','#f68fd6','#d18bb7'],
+  fuji:     ['#6928bd','#6526b9','#581ca7','#5e21b0','#ddb3ff','#aea8ff','#d3a1ff','#bbb8ff'],
+  kikyo:    ['#4760c0','#455cbd','#6928bd','#3d53b4','#99b2f5','#87a7ff','#aea8ff','#aaa4ff'],
+  beni:     ['#ce2700','#b53753','#a43b3b','#bb355a','#ff8b79','#ff8c9f','#ff8672','#ff8799'],
+  akane:    ['#ee3244','#d64891','#d80638','#e1376f','#ffa2b5','#faa7ca','#ff9cb5','#ffa3d0'],
+  kaki:     ['#fd5217','#ff5735','#ff5635','#ff5635','#ffbb74','#ffb66d','#ff9b8f','#ff9b8f'],
+  yamabuki: ['#bda343','#e3940b','#e3940b','#e3940b','#ffc849','#eec307','#ffae1e','#ecba09'],
+  wakaba:   ['#5e8933','#00915c','#7e8418','#618c32','#c1dd4a','#b9d740','#bac105','#aece34'],
+  tokiwa:   ['#009162','#028e7f','#008b57','#028e7f','#7bd6b6','#6cd2cc','#58c59f','#5eccc5'],
+  sora:     ['#008bae','#008bae','#178d9d','#2678af','#88d9eb','#5cd7f5','#5ac6f1','#78d5fc'],
+  ruri:     ['#2678af','#2e79b6','#2973b0','#2266a4','#60c9f3','#3ec7e8','#5ea3d4','#8ac3ff'],
+  ai:       ['#1955bf','#526ccb','#384dad','#4a63c3','#6eadff','#4ab8ff','#7f9bea','#829eeb'],
+  sumi:     ['#584a5c','#3b545e','#5d4c3c','#4a4e63','#e1d1e7','#c0dde8','#e8d3c1','#d2d6eb'],
+  usuzumi1: ['#6b5d70','#4e6872','#715f4f','#5e6277','#cdbed3','#adcad4','#d4c0ae','#bec3db'],
+  usuzumi0: ['#77697c','#57717a','#7d6b5a','#696d83','#b7a8bd','#97b3be','#beaa98','#a8adc4'],
+  kasure2:  ['#877b8c','#6f848d','#8d7d6f','#7b7f91','#9f93a4','#869da5','#a59587','#9397aa'],
+  kasure1:  ['#998d9e','#80969f','#9f8f81','#8d91a4','#8a7e8f','#728790','#908072','#7e8294'],
+  kasure0:  ['#a99cad','#8fa6ae','#ae9e90','#9ca0b3','#756a7a','#5d737b','#7b6c5e','#6a6e7f'],
+  nijimi2:  ['#b8acbd','#9fb5be','#beae9f','#acb0c3','#615665','#4a5f66','#66584b','#565a6b'],
+  nijimi1:  ['#c8bccd','#aec5ce','#cebeaf','#bcc0d3','#4e4352','#374b53','#534538','#434757'],
+  nijimi0:  ['#d9ccdd','#bed6df','#dfcebf','#ccd0e4','#392e3c','#23363d','#3d3024','#2f3241'],
+  kami:     ['#f6eff8','#e9f4f8','#f8f0e9','#f0f1f8','#241c26','#132227','#271d14','#1c1e2a'],
+  hyoshi:   ['#ece5ef','#ddeaf0','#f0e6dd','#e5e7f3','#1c151f','#0e1a1f','#20160e','#151722'],
+  chitsu:   ['#e2dbe5','#d3e1e6','#e6dcd3','#dbdde9','#160f18','#091317','#181008','#0f111b'],
+};
+const INKS = [['sakura', '桜'], ['nadeshiko', '撫子'], ['botan', '牡丹'], ['fuji', '藤'], ['kikyo', '桔梗'], ['beni', '紅'], ['akane', '茜'],
+  ['kaki', '柿'], ['yamabuki', '山吹'], ['wakaba', '若葉'], ['tokiwa', '常磐'], ['sora', '空'], ['ruri', '瑠璃'], ['ai', '藍']];
+const ROLES = ['kami', 'hyoshi', 'chitsu', 'nijimi0', 'nijimi1', 'nijimi2', 'kasure0', 'kasure1', 'kasure2', 'usuzumi0', 'usuzumi1', 'sumi', 'fuji'];
+const SEASON_KANJI = { haru: '春', natsu: '夏', aki: '秋', fuyu: '冬' };
+const SEASON_EN = { haru: 'spring', natsu: 'summer', aki: 'autumn', fuyu: 'winter' };
+const PATTERNS = {
+  dots: 'radial-gradient(circle, rgba(255, 255, 255, .55) 0 1.3px, transparent 1.7px) 0 0 / 7px 7px',
+  stripes: 'repeating-linear-gradient(135deg, rgba(255, 255, 255, .34) 0 2.5px, transparent 2.5px 6px)',
+  gingham: 'linear-gradient(90deg, rgba(255, 255, 255, .26) 50%, transparent 0) 0 0 / 8px 8px, linear-gradient(rgba(255, 255, 255, .26) 50%, transparent 0) 0 0 / 8px 8px',
+  plain: 'linear-gradient(transparent, transparent)',
+};
+const VARIANTS = [
+  ['lacquer', '漆', 'Lacquer in their ink', 'Their ink, deep, under clear lacquer, with a thin gold line round the lid; lined in their ink.'],
+  ['kuro', '黒', 'Black lacquer, their ink inside', 'Every box alike and black, as most real fumibako are, until the cord or the open lining says whose.'],
+  ['kiri', '桐', 'Paulownia', 'Pale kiri wood, the wood Japanese keepsake boxes are made of, tied in their ink and lined in silk of their ink.'],
+  ['washi', '紙', 'Covered in their washi', 'A paper box in their ink and tape pattern, lined in plain paper dyed with their ink.'],
+  ['makie', '蒔', 'Maki-e', 'Lacquer in their ink with their ink\'s kanji sprinkled on in gold beside the label.'],
+];
+
+const state = { time: 'auto', night: 'day', lid: 'preview', pick: 'lacquer', open: { aria: true } };
+const KEY = 'fumibako-studies-1';
+try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* storage unavailable */ }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+
+// ---- Sample correspondents (examples) ----------------------------------------------------------
+const PEOPLE = [
+  { id: 'aria', name: 'Aria', ink: 'sakura', pat: 'dots', kanji: '桜', mood: 'fond', time: '08:14', seed: 11, left: 'Left for you while you were away',
+    preview: 'Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent…' },
+  { id: 'juno', name: 'Juno', ink: 'kikyo', pat: 'gingham', kanji: '桔梗', mood: 'smug', time: 'Yesterday', seed: 17, unread: true,
+    preview: "Orange means it's sulking. Bring the router by tomorrow. I'll fix it for free. Once." },
+  { id: 'kestrel', name: 'Kestrel', ink: 'tokiwa', pat: 'stripes', kanji: '常磐', mood: 'watchful', time: 'Sat', seed: 5,
+    preview: 'The road north is quiet tonight. I kept the fire going for you.' },
+];
+const portrait = (p, kind = 'image') => `<canvas class="portrait" data-ink="${p.ink}" data-seed="${p.seed}" data-kind="${kind}" aria-hidden="true"></canvas>`;
+const seal = (kanji, inkName) => `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" class="paper"/><circle cx="32" cy="32" r="23" style="fill:none;stroke:var(--stk-${inkName});stroke-width:3;opacity:.92"/><text x="32" y="42" class="seal-t" style="fill:var(--stk-${inkName});opacity:.92">${kanji}</text></svg>`;
+const sticker = (svg, w, x, y, r, label) => `<span class="sticker" role="img" aria-label="${label}" style="--w:${w}px;left:${x}%;top:${y}%;--r:${r}deg"><span class="art">${svg}</span></span>`;
+const LOOSE = '<svg class="loose" viewBox="0 0 40 90" aria-hidden="true"><path d="M26 -2 C 18 14, 30 26, 20 40 S 4 60, 10 78"/><path d="M24 30 C 12 40, 2 46, -6 62"/></svg>';
+
+// ---- A box -------------------------------------------------------------------------------------
+function box(p, variant, { open, lid, key }) {
+  const isOpen = !!open;
+  const style = `--ink: var(--bx-${p.ink}); --tc: var(--ink-${p.ink}); --pat: var(--pat-${p.pat});`;
+  const unread = p.unread && !isOpen;
+  const onLid = lid === 'preview' ? `
+      <div class="label">
+        <div class="pic">${portrait(p)}</div>
+        <div class="txt">
+          <div class="row"><span class="nm">${p.name}</span><span class="md">${p.mood}</span><time>${p.time}</time></div>
+          <p class="pv${unread ? ' unread' : ''}">${p.preview}</p>
+          ${p.left ? `<span class="left">${p.left}</span>` : ''}
+        </div>
+      </div>` : `
+      <div class="slip">
+        <span class="dot">${portrait(p, 'avatar')}</span>
+        <span class="txt"><span class="row"><span class="nm">${p.name}</span><span class="md">${p.mood}</span></span></span>
+      </div>
+      <div class="inside" aria-hidden="true"><span class="lt a"></span><span class="lt b"></span><span class="lt c"><span>${p.name}</span><small>${p.time}</small></span></div>`;
+  return `
+    <article class="fb v-${variant}${isOpen ? ' open' : ''}" data-box="${key}" tabindex="0" role="button" aria-pressed="${isOpen}" aria-label="${p.name}'s letters, ${isOpen ? 'open' : 'shut'}" style="${style}">
+      <span class="lid" aria-hidden="true"></span>
+      <span class="well" aria-hidden="true"></span>
+      <span class="cord" aria-hidden="true"></span><span class="bow" aria-hidden="true"><i></i><i></i><b></b></span>${LOOSE}
+      ${onLid}
+      ${variant === 'makie' ? `<span class="makie${p.kanji.length > 1 ? ' long' : ''}" aria-hidden="true">${p.kanji}</span>` : ''}
+      ${unread ? sticker(seal('新', p.ink), 30, variant === 'makie' ? 74 : lid === 'preview' ? 92 : 88, 26, 8, `Unread letter from ${p.name}`) : ''}
+    </article>`;
+}
+
+// Aria's box starts open in each piece of the list; a click opens or shuts any box.
+const isOpen = (key, first = false) => key in state.open ? state.open[key] : first;
+
+function render() {
+  document.getElementById('variants').innerHTML = VARIANTS.map(([v, k, title, line]) => `
+    <div class="variant">
+      <h3><b>${k}</b>${title}</h3>
+      <p>${line}</p>
+      <div class="pane">${PEOPLE.map(p => box(p, v, { open: isOpen(`${v}-${p.id}`, p.id === 'aria'), lid: state.lid, key: `${v}-${p.id}` })).join('')}</div>
+    </div>`).join('');
+  const v = state.pick;
+  document.getElementById('name-only').innerHTML = `
+    <div class="variant">
+      <h3>A list</h3>
+      <p>Slimmer boxes, one to a row, as the list is now.</p>
+      <div class="pane">${PEOPLE.map(p => box(p, v, { open: isOpen(`n-${v}-${p.id}`, p.id === 'aria'), lid: 'name', key: `n-${v}-${p.id}` })).join('')}</div>
+    </div>
+    <div class="variant">
+      <h3>A shelf</h3>
+      <p>Two to a row, closer to a real box's proportions.</p>
+      <div class="shelf">${[...PEOPLE, { ...PEOPLE[0], id: 'mira', name: 'Mira', ink: 'yamabuki', kanji: '山吹', mood: 'sleepy', time: 'Thu', seed: 31, pat: 'plain', unread: false }]
+        .map(p => box(p, v, { open: isOpen(`s-${v}-${p.id}`, p.id === 'aria'), lid: 'name', key: `s-${v}-${p.id}` })).join('')}</div>
+    </div>`;
+  document.getElementById('inks').innerHTML = INKS.map(([ink, kanji], i) => {
+    const p = { id: ink, name: ink[0].toUpperCase() + ink.slice(1), ink, kanji, pat: ['dots', 'stripes', 'gingham', 'plain'][i % 4], mood: '', time: '', seed: 40 + i };
+    return `<div class="ink-cell">${box(p, v, { open: isOpen(`i-${ink}`, true), lid: 'name', key: `i-${ink}` })}<span class="name"><b>${kanji}</b>${ink}</span></div>`;
+  }).join('');
+  apply();
+}
+
+// ---- Ink-wash portrait placeholders --------------------------------------------------------------
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function drawPortrait(c) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+  c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const inkHex = css(`--ink-${c.dataset.ink}`) || '#a26480', paper = css('--kami'), deep = css('--sumi'), second = css('--you');
+  const r = rng(+c.dataset.seed * 9973 + 1);
+  g.fillStyle = paper; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 8; i++) {
+    const x = w * (0.15 + r() * 0.7), y = h * (0.1 + r() * 0.75), rad = Math.max(w, h) * (0.2 + r() * 0.4);
+    const col = i % 5 === 4 ? second : inkHex, grad = g.createRadialGradient(x, y, 0, x, y, rad);
+    grad.addColorStop(0, hexA(col, 0.55)); grad.addColorStop(0.6, hexA(col, 0.18)); grad.addColorStop(1, hexA(col, 0));
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  }
+  if (c.dataset.kind === 'image') {
+    const cx = w * 0.5, base = h * 1.02, headR = Math.min(w, h) * 0.2, cy = base - headR * 3.2;
+    const hg = g.createRadialGradient(cx, cy, headR * 0.2, cx, cy, headR * 1.15);
+    hg.addColorStop(0, hexA(deep, 0.4)); hg.addColorStop(1, hexA(deep, 0));
+    g.fillStyle = hg; g.beginPath(); g.arc(cx, cy, headR * 1.15, 0, Math.PI * 2); g.fill();
+  }
+  for (let i = 0; i < (w * h) / 60; i++) { g.fillStyle = hexA(deep, 0.05 * r()); g.fillRect(r() * w, r() * h, 1, 1); }
+}
+const redraw = () => document.querySelectorAll('canvas.portrait').forEach(drawPortrait);
+
+// ---- Theme -----------------------------------------------------------------------------------------
+function viewerDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t === 'dark') return true;
+  if (t === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function seasonNow() { const m = new Date().getMonth(); return m >= 2 && m <= 4 ? 'haru' : m >= 5 && m <= 7 ? 'natsu' : m >= 8 && m <= 10 ? 'aki' : 'fuyu'; }
+function apply() {
+  const season = seasonNow();
+  const time = state.time === 'auto' ? (viewerDark() ? 'yoru' : 'hiru') : state.time;
+  const idx = THEMES.indexOf(`${season}-${time}`), dayIdx = THEMES.indexOf(`${season}-hiru`);
+  const root = document.documentElement.style;
+  ROLES.forEach(role => root.setProperty(`--${role}`, PAL[role][idx]));
+  INKS.forEach(([name]) => {
+    root.setProperty(`--ink-${name}`, PAL[name][idx]);
+    root.setProperty(`--stk-${name}`, PAL[name][dayIdx]);
+    root.setProperty(`--bx-${name}`, PAL[name][state.night === 'day' ? dayIdx : idx]);
+  });
+  Object.entries(PATTERNS).forEach(([name, value]) => root.setProperty(`--pat-${name}`, value));
+  root.setProperty('--you', PAL.sora[idx]);
+  root.setProperty('--paper-fill', '#fffdf9');
+  root.setProperty('color-scheme', time === 'yoru' ? 'dark' : 'light');
+  const kanji = SEASON_KANJI[season] + (time === 'hiru' ? '昼' : '夜');
+  document.getElementById('theme-kanji').textContent = kanji;
+  document.getElementById('theme-name').textContent = `${season}-${time} · ${SEASON_EN[season]} by ${time === 'hiru' ? 'day' : 'night'}`;
+  requestAnimationFrame(redraw);
+}
+
+function init() {
+  ['time', 'night', 'lid', 'pick'].forEach(key => {
+    const el = document.getElementById(`${key}-${state[key]}`); if (el) el.checked = true;
+    document.getElementById(key).addEventListener('change', e => { state[key] = e.target.value; save(); render(); });
+  });
+  const toggle = el => { const k = el.dataset.box; state.open = { ...state.open, [k]: !el.classList.contains('open') }; save(); render(); };
+  document.addEventListener('click', e => { const el = e.target.closest('[data-box]'); if (el) toggle(el); });
+  document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-box]')) { e.preventDefault(); toggle(e.target); } });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+  new MutationObserver(apply).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(redraw, 150); });
+  render();
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(redraw);
+}
+init();
+</script>
