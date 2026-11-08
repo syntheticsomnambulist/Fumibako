@@ -187,6 +187,8 @@ The rules in CLAUDE.md hold through the move:
   compared pixel by pixel, and every test passes.
 - **CI:** today's job, plus a desktop job on Windows, macOS and Linux runners that runs the desktop
   tests and packages an installer for each (`.msi`, `.dmg`, `.deb`), uploaded beside the APK.
+  *Changed 2026-11-08:* builds run on request only (Actions minutes ran out), with the tests and
+  the Windows installer by default and macOS and Linux when asked for (CLAUDE.md, "Checks").
 - **Unsigned for friends:** Windows SmartScreen and macOS Gatekeeper warn about unsigned apps, and
   [`docs/testers.md`](testers.md) gets the steps past them on each system, Windows first. Signing (an Apple
   Developer ID with notarization, a Windows code-signing certificate) costs money and can wait for
