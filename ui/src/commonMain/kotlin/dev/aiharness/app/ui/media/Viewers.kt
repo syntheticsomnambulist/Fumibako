@@ -61,6 +61,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.aiharness.app.platform.onWheel
 import dev.aiharness.app.ui.BlobImage
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.theme.PaperType
@@ -121,7 +122,7 @@ fun PhotoViewer(images: List<ContentPart.Image>, start: Int, onClose: () -> Unit
     }
 }
 
-/** Pinch or double-tap to look closer; panning only once zoomed, so swipes still turn the page. */
+/** Pinch, double-tap or the wheel to look closer; panning only once zoomed, so swipes still turn the page. */
 @Composable
 private fun Zoomable(content: @Composable () -> Unit) {
     var scale by remember { mutableFloatStateOf(1f) }
@@ -139,6 +140,11 @@ private fun Zoomable(content: @Composable () -> Unit) {
                 })
             }
             .transformable(state, canPan = { scale > 1f })
+            // With a mouse, the wheel looks closer.
+            .onWheel { steps, _ ->
+                scale = (scale * (1f - steps * 0.12f)).coerceIn(1f, 5f)
+                if (scale == 1f) offset = Offset.Zero
+            }
             .graphicsLayer { scaleX = scale; scaleY = scale; translationX = offset.x; translationY = offset.y },
     ) { content() }
 }

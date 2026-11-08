@@ -1,5 +1,6 @@
 package dev.aiharness.app.ui.chat
 
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.theme.onInk
 import dev.aiharness.app.ui.paper.StationeryIcons
 import dev.aiharness.app.ui.paper.PaperCorner
@@ -112,6 +113,7 @@ import dev.aiharness.app.platform.PickKind
 import dev.aiharness.app.platform.rememberCamera
 import dev.aiharness.app.platform.rememberOutside
 import dev.aiharness.app.platform.receiveFiles
+import dev.aiharness.app.platform.sendOnCtrlEnter
 import dev.aiharness.app.platform.rememberPicker
 
 @Composable
@@ -296,7 +298,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             LazyColumn(
                 state = listState,
                 reverseLayout = true,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier.weight(1f).fillMaxWidth().scrollbar(listState),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
             ) {
@@ -699,6 +701,8 @@ private fun EntryBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { if (it.isFocused) onFieldFocus() }
+                // On a computer, Ctrl+Enter sends (Enter starts a new line: letters are long).
+                .sendOnCtrlEnter { if (!busy && (value.isNotBlank() || hasAttachments)) onSend() }
                 .border(1.5.dp, Brush.horizontalGradient(listOf(personaInk, youInk)), shape)
                 .background(colors.kami, shape)
                 .padding(horizontal = 14.dp, vertical = 10.dp),

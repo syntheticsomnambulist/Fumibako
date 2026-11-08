@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +47,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.aiharness.app.platform.scrollingPage
 import dev.aiharness.app.ui.BlobImage
 import dev.aiharness.app.ui.paper.IndexCardField
 import dev.aiharness.app.ui.paper.PaperCorner
@@ -387,7 +387,7 @@ fun PlaylistEditor(
         onDismissRequest = onDone,
         title = { Text("Your mix", style = PaperType.entryTitle) },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.scrollingPage(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 IndexCardField("On the label", mix.title.orEmpty(), { onChange(mix.copy(title = it)) }, singleLine = true, ink = ink)
                 IndexCardField("Beneath it", mix.subtitle.orEmpty(), { onChange(mix.copy(subtitle = it)) }, singleLine = true, ink = ink)
                 Text(

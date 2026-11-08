@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.staticCompositionLocalOf
+import dev.aiharness.app.platform.scrollingPage
 import dev.aiharness.core.media.MusicLinks
 import dev.aiharness.core.media.SongSource
 import dev.aiharness.core.model.SongsOpenIn
@@ -33,10 +34,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Forward10
@@ -165,7 +164,7 @@ fun FullPlayer(now: NowPlaying, controls: PlayerControls, knows: String?, onClos
                     .shadow(12.dp, shape)
                     .background(colors.hyoshi, shape)
                     .clickable(remember { MutableInteractionSource() }, indication = null) {}
-                    .verticalScroll(rememberScrollState())
+                    .scrollingPage()
                     .navigationBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,

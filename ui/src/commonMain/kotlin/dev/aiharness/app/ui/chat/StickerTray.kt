@@ -2,7 +2,6 @@ package dev.aiharness.app.ui.chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
@@ -45,6 +45,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.aiharness.app.platform.detectHoldDrag
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.paper.PaperCorner
 import dev.aiharness.app.ui.stickers.StickerBaker
 import dev.aiharness.app.ui.stickers.StickerPicture
@@ -130,9 +132,11 @@ fun StickerTray(
             }
         }
 
+        val gridScroll = rememberLazyGridState()
         LazyVerticalGrid(
             columns = GridCells.Fixed(5),
-            modifier = Modifier.fillMaxWidth().height(260.dp),
+            modifier = Modifier.fillMaxWidth().height(260.dp).scrollbar(gridScroll),
+            state = gridScroll,
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 8.dp),
         ) {
             val cell: LazyGridScope.(List<StickerRef>) -> Unit = { refs ->
@@ -201,7 +205,7 @@ private fun TrayCell(
             .clip(PaperCorner)
             .onGloballyPositioned { origin = it.positionInRoot() }
             .pointerInput(ref) {
-                detectDragGesturesAfterLongPress(
+                detectHoldDrag(
                     onDragStart = { at -> onDragStart(ref, origin + at) },
                     onDrag = { change, amount -> change.consume(); onDrag(amount) },
                     onDragEnd = onDragEnd,

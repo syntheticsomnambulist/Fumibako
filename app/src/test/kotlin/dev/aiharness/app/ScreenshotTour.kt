@@ -85,7 +85,26 @@ import java.io.File
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi")
 class ScreenshotTour {
-    @get:Rule
+    /**
+     * Runs the tour in a time zone where it's early afternoon, whenever it runs: the seeded letters
+     * go back ten hours, and just after midnight they'd fall on yesterday's page (keepsakes and
+     * all). Set before the app starts, so all of it reads the same clock.
+     */
+    @get:Rule(order = 0)
+    val afternoon = object : org.junit.rules.ExternalResource() {
+        private var was: java.util.TimeZone? = null
+        override fun before() {
+            was = java.util.TimeZone.getDefault()
+            val utcHour = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).hour
+            val offset = (14 - utcHour).let { if (it > 14) it - 24 else if (it < -12) it + 24 else it }
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone(java.time.ZoneOffset.ofHours(offset)))
+        }
+        override fun after() {
+            was?.let { java.util.TimeZone.setDefault(it) }
+        }
+    }
+
+    @get:Rule(order = 1)
     val compose = createAndroidComposeRule<MainActivity>()
 
     private val outDir: File? = System.getenv("HARNESS_SCREENSHOTS_DIR")?.let { File(it).apply { mkdirs() } }

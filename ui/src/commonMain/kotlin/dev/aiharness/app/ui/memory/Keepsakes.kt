@@ -91,6 +91,7 @@ import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.Keepsake
 import dev.aiharness.core.model.Sticker
 import dev.aiharness.app.platform.rememberOutside
+import dev.aiharness.app.platform.onRightClick
 
 /** What tapping a keepsake does in the book: plays or opens it in place. */
 class KeepsakeTaps(
@@ -354,7 +355,7 @@ fun KeepsakeObject(
                             onClick = { tap?.invoke() },
                             onLongClickLabel = "Stick a sticker",
                             onLongClick = hold,
-                        )
+                        ).onRightClick { hold?.invoke() }
                     } else {
                         Modifier
                     },

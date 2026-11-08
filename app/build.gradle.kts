@@ -117,6 +117,16 @@ androidComponents {
 }
 
 
+// The screenshot tours run only with HARNESS_SCREENSHOTS_DIR set (ScreenshotTour). Such a run always
+// really runs: never "up to date" and never from the build cache, which would pass it without
+// drawing a single picture.
+tasks.withType<Test>().configureEach {
+    val shots = providers.environmentVariable("HARNESS_SCREENSHOTS_DIR")
+    inputs.property("screenshotsDir", shots.orElse(""))
+    outputs.upToDateWhen { !shots.isPresent }
+    outputs.cacheIf { !shots.isPresent }
+}
+
 dependencies {
     implementation(project(":core"))
     // The shared screens (ui) and database (data); see docs/plan-desktop.md.

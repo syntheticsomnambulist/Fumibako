@@ -43,5 +43,10 @@
   - Architecture: [`README.md`](README.md).
 - **Checks:**
   - Before pushing, run `./gradlew :core:test :data:desktopTest :app:testDebugUnitTest :desktop:test`.
-  - For a UI change, also run the screenshot tour:
-    `HARNESS_SCREENSHOTS_DIR=<dir> ./gradlew :app:testDebugUnitTest --tests '*ScreenshotTour*'`.
+    Gradle re-runs only the suites whose code changed (with nothing changed it takes seconds), so
+    there's no need to pick suites by hand. A docs-only push skips CI.
+  - When a change can alter what a screen shows (`ui/`, `app/src/main`, or text from `core` that
+    screens show), run the same command with `HARNESS_SCREENSHOTS_DIR=<dir>` in front: the five
+    screenshot tours then run inside `:app:testDebugUnitTest`, all of it in about two minutes.
+    Run them in one command, not a tour at a time: each separate run pays Robolectric's startup
+    and Gradle's again. Look over the pictures for what changed.

@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,6 +38,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import dev.aiharness.app.platform.scrollingPage
 import dev.aiharness.app.ui.theme.HarnessFonts
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
@@ -101,7 +100,7 @@ fun MonthPage(
     // A solar term's name on its first day, when the seasons are shown.
     val terms = if (seasonBand) Seasons.termsBeginning(days.first(), days.last(), zone, hemisphere).toMap() else emptyMap()
     val byDay = occurrences.groupBy { it.day }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+    Column(Modifier.fillMaxSize().scrollingPage().padding(bottom = 24.dp)) {
         BoxWithConstraints(Modifier.fillMaxWidth().padding(start = 18.dp, end = 30.dp, top = 6.dp)) {
             val col: Dp = maxWidth / 7
             Column {

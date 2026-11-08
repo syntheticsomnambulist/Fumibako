@@ -1,7 +1,15 @@
 package dev.aiharness.app.platform
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.graphics.ImageBitmap
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.PlannerEntry
@@ -63,6 +71,50 @@ expect fun rememberPicker(kind: PickKind, onPicked: (List<Picked>) -> Unit): () 
  */
 @Composable
 expect fun Modifier.receiveFiles(onFiles: (List<Picked>) -> Unit): Modifier
+
+/*
+ * Mouse and keyboard (docs/plan-desktop.md, "Mouse, keyboard and the window"). Each is nothing on
+ * the phone, so its screens stay as they are.
+ */
+
+/** A right-click doing what a long press does: put beside each long press. */
+expect fun Modifier.onRightClick(action: () -> Unit): Modifier
+
+/**
+ * Whether a drag starts as soon as the pointer moves (a mouse) rather than after holding (a finger,
+ * whose first move scrolls the page).
+ */
+expect val dragsWithoutHolding: Boolean
+
+/** "Hold and drag": after a long press on the phone, straight away with a mouse. */
+expect suspend fun PointerInputScope.detectHoldDrag(
+    onDragStart: (Offset) -> Unit = {},
+    onDragEnd: () -> Unit = {},
+    onDragCancel: () -> Unit = {},
+    onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit,
+)
+
+/**
+ * The mouse wheel, in place of a pinch or twist: [onWheel] gets its steps (positive toward you) and
+ * whether Shift is held. Wheel turns used here don't scroll the page.
+ */
+expect fun Modifier.onWheel(onWheel: (steps: Float, shift: Boolean) -> Unit): Modifier
+
+/** Ctrl+Enter (Command+Enter on a Mac) in a note sends it; Enter alone starts a new line. */
+expect fun Modifier.sendOnCtrlEnter(onSend: () -> Unit): Modifier
+
+/** A scrollbar along the right edge of a long page (put before its verticalScroll). */
+expect fun Modifier.scrollbar(state: ScrollState): Modifier
+
+/** A scrollbar along the right edge of a long list. */
+expect fun Modifier.scrollbar(state: LazyListState): Modifier
+
+/** A scrollbar along the right edge of a grid. */
+expect fun Modifier.scrollbar(state: LazyGridState): Modifier
+
+/** A page that scrolls, with its scrollbar on a computer: verticalScroll with [scrollbar]. */
+@Composable
+fun Modifier.scrollingPage(state: ScrollState = rememberScrollState()): Modifier = scrollbar(state).verticalScroll(state)
 
 /** The camera: takes a photo into [MediaImporter.cameraTarget] and hands it over. Null without one. */
 @Composable
