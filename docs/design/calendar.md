@@ -240,6 +240,18 @@ aesthetics", revised after the user's notes:
 - **Planner settings** (interactive, updated): the week page (fold my sleep hours, clock) and
   public holidays with their one-time setup.
 
+Third pass (see below), on the same canvas under "Third pass: calmer headers (November)", drawn
+2026-11-08 in the agreed fonts and soft shadows:
+
+- **The week: A, printed; B, on a label; C, running head** (all interactive): three headers on the
+  same week. The arrows change the header's week (only the header, in the mockup); away from this
+  week the ribbon hangs longer and takes you back. Tap the season band for the full text.
+- **The month, printed header** (interactive): November in header A, the season band, kanji
+  weekdays, taller cells, Juno away, the legend and Aria's haiku slip.
+- **A day, printed header** (interactive): Friday as a list in time order, with "How did it go?"
+  under the interview (済 Done or 止 Not going, and Lift to undo), the now line, Aria's slip and
+  who can see the planner at the foot.
+
 ## Second pass: stationery and Japanese aesthetics
 
 Asked for after the first mockups (2026-11-06): push the planner further towards stationery and
@@ -389,11 +401,77 @@ Proposed details:
 - **Small targets:** the folds, tabs and the band are thinner than 48dp to keep the page calm;
   each needs a 48dp touch area around it.
 
+## Third pass: calmer headers (proposed)
+
+Asked for 2026-11-08: the user isn't a fan of the planner's headers, finding them too big, too
+busy and hard to read, and not right in look. The scope is the whole planner (week, month and day),
+headers first. Everything here is proposed. The desktop layout session has been asked to hold off
+on laying the planner out wide until this settles.
+
+### One slim header
+
+- **The same header on every planner page,** about 60dp tall (the week's was about 90dp): a plain
+  title, and one line of small capitals under it.
+
+  | Page | Title | Under it |
+  | --- | --- | --- |
+  | Week | "2 – 8 November" | "霜月 · WEEK 45 · THIS WEEK" |
+  | Month | "November 2026" | "霜月 · FROST MONTH" |
+  | Day | "6 November" | "金 · FRIDAY · TODAY" |
+
+  The title is in Zen Old Mincho at 20 (the size of names), the line under it in Zen Kaku Gothic
+  New at 11, as in the aligned type scale. The big month numeral, the brush kanji beside it and the
+  italic range go.
+- **The traditional month name stays,** smaller, at the start of the line under the title, with
+  its English on the month page ("FROST MONTH"; October is "MONTH WITHOUT GODS", December
+  "PRIESTS RUN"). A week across two months shows both: "神無月 · 霜月".
+- **The arrows move into the header:** ‹ and › at its right end, for the week, month or day before
+  and after. The ‹ 今 › tabs on the page's edge go.
+- **The ribbon is the way back to today,** as it already was, so 今 isn't needed. Away from this
+  week, month or day, the ribbon hangs longer, which shows you've moved and where to tap.
+- **Week and month: one small button** in the header, naming the other view ("Month" on the week
+  page, "Week" on the month and day pages). The 週/月 index tabs and the kanji month tabs on the
+  right edge go, so the grid has the page's full width.
+- **Stickers: a sheet's corner** curling up at the bottom right of the page, in place of the tab on
+  the edge. Tap it for the sticker sheet.
+
+### Three directions for the title
+
+Drawn on the week page; the month and day pages use A, and would follow whichever is picked.
+
+- **A, printed:** the title and the line under it printed on the paper, left-aligned. The plainest
+  and easiest to read.
+- **B, on a label:** the dates on a strip of masking tape in your ink's light shade, slightly
+  turned, like the v0.6 labels (see [`v0.5.md`](v0.5.md)). The line under it as in A.
+- **C, running head:** centred, like the running head of a printed diary, with the arrows either
+  side of the dates. The view switch is a small 月 tab at the left, balancing the ribbon on the
+  right.
+
+### The pages
+
+- **Nothing smaller than 9.5** on any planner page (the month had text at 7.5).
+- **Whose writing, by font:** your plans in Literata; phone-calendar entries in Zen Kaku Gothic New
+  in a grey outline, printed rather than handwritten, so they don't read as anyone's hand (they
+  were in a pencil hand before); personas' slips and notes in their own hand (Aria's is Yomogi).
+- **Week:** kanji weekdays with the date under each, today ringed in your ink. A solar term's first
+  day has a small beni dot by its date, and the season band names it, instead of the term's kanji
+  squeezed into the column head. The away and all-day row, the season band, the grid and メモ are
+  as agreed. Tapped, the band wraps to show its full text.
+- **Month:** the season band under the header; kanji weekdays alone, without the tiny English under
+  them (the English is in each day's spoken label); cells about 64dp tall, so a plan's name, a
+  holiday, an away strip and the ink dots fit without overlapping. The legend is at 11.
+- **Day:** a list in time order: sleep folded at both ends, the typical week's work band, entries
+  as cards, the now line in beni, and slips between the entries. An entry that has ended without a
+  stamp shows its stamps under it ("How did it go?"); the stamp lands on its card, and "Lift the
+  stamp" takes it off. "Aria and Juno can see your planner" moves from the header to a quiet line
+  at the foot, with "Who sees what". The "Add a plan" card keeps its fields, in the new fonts.
+
 ## Open
 
 - Everything marked **proposed** above, in particular: a suggestion using an activity slot while
   notes and reminders are free; the sharing defaults; quick busy from a notification; sleep as
   quiet hours.
+- **The planner's header** (third pass): A, B or C, and whether the rest of the third pass holds.
 - **The app's seasons and the solar terms:** the theme follows meteorological seasons (autumn until
   30 November), while the band says winter begins on 7 November. Either the theme follows the solar
   terms too (a Look setting; see [`ideas.md`](ideas.md)), or the band and theme disagree for a few
