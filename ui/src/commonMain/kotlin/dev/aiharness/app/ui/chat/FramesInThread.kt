@@ -67,6 +67,7 @@ import dev.aiharness.core.model.StickerTarget
 import dev.aiharness.core.model.TapePattern
 import kotlinx.coroutines.launch
 import dev.aiharness.app.platform.rememberOutside
+import dev.aiharness.app.platform.onRightClick
 
 /** What a frame does as it's tapped, before (or as) it opens (docs/design/media.md, "Tapping and motion"). */
 sealed interface TapMotion {
@@ -188,7 +189,7 @@ fun OnPaper(
             onTap = handling?.onTap,
             onChange = handling?.onChange,
         ) {
-            Box(Modifier.combinedClickable(onClick = tap, onLongClick = { open = true }, onLongClickLabel = "Save or share")) {
+            Box(Modifier.combinedClickable(onClick = tap, onLongClick = { open = true }, onLongClickLabel = "Save or share").onRightClick { open = true }) {
                 CompositionLocalProvider(LocalLift provides lift.value) { content() }
                 DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
                     menu.forEach { (label, action) -> DropdownMenuItem(text = { Text(label) }, onClick = { open = false; action() }) }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.BlobImage
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.SwitchRow
@@ -76,8 +78,10 @@ fun PersonaStickersScreen(nav: NavController, personaId: String) {
     val update: (Persona) -> Unit = { changed -> scope.launch { harness.personas.upsert(changed.copy(updatedAt = System.currentTimeMillis())) } }
     val switches: (PersonaStickers) -> Unit = { update(p.copy(stickers = it)) }
 
+    val pageScroll = rememberLazyListState()
     LazyColumn(
-        Modifier.fillMaxSize().background(paper.hyoshi),
+        Modifier.fillMaxSize().background(paper.hyoshi).scrollbar(pageScroll),
+        state = pageScroll,
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {

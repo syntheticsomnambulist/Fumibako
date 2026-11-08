@@ -1,5 +1,6 @@
 package dev.aiharness.app.ui.personas
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.clickable
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.Routes
 import dev.aiharness.app.ui.letterTime
@@ -71,8 +73,10 @@ fun YouGalleryScreen(nav: NavController) {
     val users by remember { harness.userPersonas.observeAll() }.collectAsStateWithLifecycle(emptyList())
     val settings by remember { harness.settings.settings }.collectAsStateWithLifecycle(null)
     val conversations by remember { harness.conversations.observeAll() }.collectAsStateWithLifecycle(emptyList())
+    val pageScroll = rememberLazyListState()
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().scrollbar(pageScroll),
+        state = pageScroll,
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
@@ -194,8 +198,10 @@ fun YouPageScreen(nav: NavController, userId: String) {
         }
     }
 
+    val pageScroll = rememberLazyListState()
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().scrollbar(pageScroll),
+        state = pageScroll,
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {

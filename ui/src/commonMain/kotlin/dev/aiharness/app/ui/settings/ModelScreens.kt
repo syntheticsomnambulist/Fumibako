@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.aiharness.app.data.ModelPresets
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.NumberField
 import dev.aiharness.app.ui.PickerField
@@ -126,8 +128,10 @@ fun ModelEditScreen(nav: NavController, profileId: String) {
         }
     }
 
+    val pageScroll = rememberLazyListState()
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().scrollbar(pageScroll),
+        state = pageScroll,
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {

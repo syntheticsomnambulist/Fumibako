@@ -55,6 +55,7 @@ import dev.aiharness.core.media.MediaSupport
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.app.platform.onRightClick
 import dev.aiharness.core.model.ChatMessage
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.Sticker
@@ -125,6 +126,7 @@ fun LetterSheet(
                 .paperCard()
                 .fillMaxWidth()
                 .combinedClickable(onClick = {}, onLongClick = onLongPress, onLongClickLabel = "Letter options")
+                .onRightClick(onLongPress)
                 .padding(start = 22.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -243,6 +245,7 @@ fun NoteSlip(
                     .washiStrip(Tape(you, pattern), side = TapeSide.End, tiltDegrees = 0.9f, overhang = 7.dp)
                     .paperCard(color = lerp(s.colors.kami, you, 0.06f))
                     .combinedClickable(onClick = {}, onLongClick = onLongPress, onLongClickLabel = "Note options")
+                    .onRightClick(onLongPress)
                     .padding(start = 13.dp, end = 20.dp, top = 9.dp, bottom = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {

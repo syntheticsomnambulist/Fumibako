@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -46,6 +47,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.paper.IndexCardField
 import dev.aiharness.app.ui.paper.PaperCorner
 import dev.aiharness.app.ui.theme.PaperType
@@ -159,7 +161,8 @@ fun MusicTray(
                     modifier = Modifier.align(Alignment.TopStart).padding(horizontal = 16.dp, vertical = 14.dp),
                 )
             } else {
-                LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
+                val found = rememberLazyListState()
+                LazyColumn(Modifier.fillMaxSize().scrollbar(found), state = found, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
                     items(search.results, key = { (it.appleUrl ?: "") + it.title + it.artist }) { song ->
                         FoundRow(song, preview.playing == song.previewUrl, youInk, onPreview = { preview.toggle(song.previewUrl) }) { leave(); onPick(song) }
                     }

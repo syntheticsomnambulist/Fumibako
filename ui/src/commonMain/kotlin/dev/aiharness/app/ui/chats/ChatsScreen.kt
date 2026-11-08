@@ -1,6 +1,8 @@
 package dev.aiharness.app.ui.chats
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.rememberLazyListState
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.paper.IndexCardField
 import dev.aiharness.app.ui.paper.PaperButton
 import dev.aiharness.app.ui.paper.InkLink
@@ -80,6 +82,7 @@ import dev.aiharness.core.stickers.StickerService
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import dev.aiharness.app.platform.deviceNoun
+import dev.aiharness.app.platform.onRightClick
 
 /** The letters list: each conversation is a paper card held by its persona's washi strip. */
 @OptIn(ExperimentalFoundationApi::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -99,8 +102,10 @@ fun ChatsScreen(nav: NavController) {
     if (profiles == null) return
 
     Box(Modifier.fillMaxSize()) {
+        val pageScroll = rememberLazyListState()
         LazyColumn(
-            Modifier.fillMaxSize(),
+            Modifier.fillMaxSize().scrollbar(pageScroll),
+            state = pageScroll,
             contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -131,7 +136,7 @@ fun ChatsScreen(nav: NavController) {
                         onClick = { nav.navigate(Routes.chat(conversation.id)) },
                         onLongClick = { deleting = conversation },
                         onLongClickLabel = "Delete",
-                    ),
+                    ).onRightClick { deleting = conversation },
                 )
             }
         }

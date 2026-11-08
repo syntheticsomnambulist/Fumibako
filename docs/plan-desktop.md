@@ -124,7 +124,8 @@ The screens are designed for a phone held upright. For v0.5:
   wheel to turn, in place of pinch and twist.
 - **Writing:** Enter starts a new line, since letters are long; Ctrl+Enter (Cmd+Enter on a Mac)
   sends. Escape goes back, like the phone's back gesture.
-- **Scrollbars** on long pages, and a hover state on what can be clicked.
+- **Scrollbars** on long pages, and a hover state on what can be clicked (the ripple's shade; no
+  hand pointer, as native buttons on Windows keep the arrow).
 - **Wider layouts** (the letters list beside a thread, a week with room to breathe) come in a
   later version, designed with the design session first.
 
@@ -329,6 +330,25 @@ The rules in CLAUDE.md hold through the move:
     computer sleeps.
   - **Size:** the Linux package grew about 14 MB, to 179 MB: JavaFX about 7, PDFBox, the tag
     reader and the dialogs (with JNA) the rest.
+- **Step 5, mouse and keyboard: done.** Each hook is nothing on the phone (Expect.kt), so its screens
+  are unchanged.
+  - **A right-click does what a long press does:** a letter's options, deleting a letter from the
+    list, saving a picture, a plan's stamps, moving the bookmark, a sticker on a keepsake. Only the
+    innermost thing under the pointer answers.
+  - **Drags without holding:** a sticker comes out of the tray, and one on the paper moves, as soon
+    as the mouse moves.
+  - **The wheel:** over a selected sticker it sizes it, and with Shift turns it; in the picture
+    viewer it looks closer.
+  - **Writing:** Enter starts a new line, Ctrl+Enter (Command+Enter on a Mac) sends.
+  - **Scrollbars** on every long page and list (the letters, a letter, the planner's pages,
+    settings, personas, the memory book, the sticker tray): a thin bar at the right edge that
+    widens under the pointer; drag it, or click above or below it to move a page.
+  - **Checked:** 6 more desktop tests (51 in all). In a real window: a right-click on a letter
+    asking to delete it, Ctrl+Enter sending and Enter making a new line, the Heartbeat page's
+    scrollbar widening and dragging, a sticker dragged from the tray onto a letter, sized and
+    turned with the wheel, and moved, selected or not.
+  - **Noticed:** Escape with the sticker tray open leaves the letter, as the phone's back gesture
+    does; told the build session.
 - **The icons, after the first install on Windows (2026-11-08):** the installers and the window
   showed the default icon, and the tray's seal was tiny (it was the launcher's layer, the seal
   under half its square). Now the installers, the Start menu and the window have the whole icon,

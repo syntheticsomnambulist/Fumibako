@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.PickerField
 import dev.aiharness.app.ui.paper.CardTitle
@@ -96,8 +98,10 @@ fun KeysScreen(nav: NavController) {
     val tape = Tape(stationery.you, stationery.youPattern)
     val layouts = tapeLayouts("keys", 2)
 
+    val pageScroll = rememberLazyListState()
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().scrollbar(pageScroll),
+        state = pageScroll,
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {

@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -44,6 +46,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import dev.aiharness.app.platform.dragsWithoutHolding
+import dev.aiharness.app.platform.onWheel
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.core.model.Sticker
 import dev.aiharness.core.stickers.StickerService
@@ -149,7 +153,19 @@ private fun OnePiece(
                             // Let go before a long press: a tap. Moved first (the page scrolling): nothing.
                             var timedOut = true
                             val up = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
-                                waitForUpOrCancellation().also { timedOut = false }
+                                if (dragsWithoutHolding && hold != null) {
+                                    // A mouse: moving past the slop picks the sticker up at once, as a hold does.
+                                    var up: PointerInputChange? = null
+                                    while (true) {
+                                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id }
+                                        if (change == null || change.isConsumed) { timedOut = false; break }
+                                        if (change.changedToUp()) { timedOut = false; up = change; break }
+                                        if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) break
+                                    }
+                                    up
+                                } else {
+                                    waitForUpOrCancellation().also { timedOut = false }
+                                }
                             }
                             when {
                                 up != null -> { up.consume(); tap?.invoke(current) }
@@ -185,6 +201,16 @@ private fun OnePiece(
                         role = Role.Button
                         onClick(label = if (selected) "Done with this sticker" else "Select this sticker") { tap?.invoke(current); true }
                     },
+            )
+            .then(
+                // With a mouse: the wheel sizes it, and Shift with the wheel turns it.
+                if (onChange == null) Modifier else Modifier.onWheel { steps, shift ->
+                    val s = current
+                    change?.invoke(
+                        if (shift) s.copy(rotationDeg = s.rotationDeg + steps * 7.5f)
+                        else s.copy(scale = (s.scale * (1f - steps * 0.08f)).coerceIn(StickerService.MIN_SCALE, StickerService.MAX_SCALE)),
+                    )
+                },
             )
             .then(
                 if (onChange == null) Modifier else Modifier.pointerInput(sticker.id) {

@@ -25,10 +25,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -55,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import dev.aiharness.app.platform.scrollingPage
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.paper.IndexCardField
 import dev.aiharness.app.ui.paper.PaperButton
@@ -80,6 +79,7 @@ import dev.aiharness.app.platform.PlatformBackHandler
 import dev.aiharness.app.platform.rememberOutside
 import dev.aiharness.app.platform.rememberTimePicker
 import dev.aiharness.app.platform.systemUses24HourClock
+import dev.aiharness.app.platform.onRightClick
 
 /** When a plan is: at a time, any time that day (a task), or all day. */
 enum class PlanWhen { TIME, ANY, ALL_DAY }
@@ -226,7 +226,7 @@ fun PlannerDayScreen(nav: NavController, date: String) {
             }
             page {
             Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 14.dp),
+                Modifier.fillMaxSize().scrollingPage().padding(horizontal = 18.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 val timed = occurrences.filter { it.start != null }.sortedBy { it.start }
@@ -290,6 +290,7 @@ private fun DayRow(o: Occurrence, day: LocalDate, clock: ClockFormat, zone: Zone
     Row(
         Modifier.fillMaxWidth()
             .combinedClickable(onClickLabel = "Open ${e.title}", onLongClickLabel = "Stamp it done", onLongClick = onStamp, onClick = onOpen)
+            .onRightClick(onStamp)
             .drawBehind { drawLine(colors.nijimi1, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx()) }
             .padding(start = 4.dp, top = 6.dp, bottom = 8.dp),
         verticalAlignment = Alignment.Top,
@@ -346,7 +347,7 @@ fun PlanCard(
                     .clickable(remember { MutableInteractionSource() }, indication = null) {}
                     .navigationBarsPadding()
                     .imePadding()
-                    .verticalScroll(rememberScrollState())
+                    .scrollingPage()
                     .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {

@@ -1,5 +1,6 @@
 package dev.aiharness.app.ui.settings
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.Routes
 import dev.aiharness.app.ui.chats.ScreenTitle
@@ -81,8 +83,10 @@ fun SettingsScreen(nav: NavController) {
     val version = container.platform.about.version
     val s = settings ?: return
 
+    val pageScroll = rememberLazyListState()
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().scrollbar(pageScroll),
+        state = pageScroll,
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -215,8 +219,10 @@ private fun SettingsPage(nav: NavController, section: SettingsSection, content: 
         cards.content()
         val layouts = tapeLayouts("settings-${section.key}", cards.items.size)
         val tape = Tape(stationery.you, stationery.youPattern.takeIf { it != TapePattern.PLAIN } ?: TapePattern.STRIPES)
+        val pageScroll = rememberLazyListState()
         LazyColumn(
-            Modifier.fillMaxSize(),
+            Modifier.fillMaxSize().scrollbar(pageScroll),
+            state = pageScroll,
             contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {

@@ -27,6 +27,13 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -97,6 +104,29 @@ actual fun rememberPicker(kind: PickKind, onPicked: (List<Picked>) -> Unit): () 
         }
     }
 }
+
+// Mouse and keyboard: nothing on the phone (see Expect.kt), so its screens stay as they were.
+
+actual fun Modifier.onRightClick(action: () -> Unit): Modifier = this
+
+actual val dragsWithoutHolding: Boolean = false
+
+actual suspend fun PointerInputScope.detectHoldDrag(
+    onDragStart: (Offset) -> Unit,
+    onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit,
+    onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit,
+) = detectDragGesturesAfterLongPress(onDragStart = onDragStart, onDragEnd = onDragEnd, onDragCancel = onDragCancel, onDrag = onDrag)
+
+actual fun Modifier.onWheel(onWheel: (steps: Float, shift: Boolean) -> Unit): Modifier = this
+
+actual fun Modifier.sendOnCtrlEnter(onSend: () -> Unit): Modifier = this
+
+actual fun Modifier.scrollbar(state: ScrollState): Modifier = this
+
+actual fun Modifier.scrollbar(state: LazyListState): Modifier = this
+
+actual fun Modifier.scrollbar(state: LazyGridState): Modifier = this
 
 /** The phone's pickers add files; nothing is dropped or pasted. */
 @Composable

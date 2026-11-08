@@ -1,5 +1,6 @@
 package dev.aiharness.app.ui.personas
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.SwitchRow
 import dev.aiharness.app.ui.activityPhrase
@@ -64,8 +66,10 @@ fun PersonaHeartbeatScreen(nav: NavController, personaId: String) {
     fun rhythm(transform: (HeartbeatRhythm) -> HeartbeatRhythm) = save { it.copy(ownHeartbeat = transform(it.ownHeartbeat ?: s.heartbeat.rhythm)) }
     val own = p.ownHeartbeat
 
+    val pageScroll = rememberLazyListState()
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().scrollbar(pageScroll),
+        state = pageScroll,
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {

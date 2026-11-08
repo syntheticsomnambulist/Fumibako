@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,6 +63,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import dev.aiharness.app.platform.scrollingPage
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.Routes
 import dev.aiharness.app.ui.theme.HarnessFonts
@@ -89,6 +89,7 @@ import dev.aiharness.core.seasons.Seasons
 import java.time.YearMonth
 import dev.aiharness.app.platform.rememberOutside
 import dev.aiharness.app.platform.systemUses24HourClock
+import dev.aiharness.app.platform.onRightClick
 
 /** What's picked on the week page: an entry's stamps, or the days to move it to. */
 private data class Picked(val entryId: String, val day: LocalDate, val moving: Boolean = false)
@@ -176,7 +177,7 @@ fun PlannerScreen(nav: NavController) {
                         onOpen = { o -> picked = null; if (o.entry.phone != null) outside.openPhoneEvent(o.entry) else card = PlanDraft.of(o.entry, o.day) },
                     )
                     Box(Modifier.weight(1f).fillMaxWidth()) {
-                    Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(bottom = 24.dp)) {
+                    Column(Modifier.fillMaxSize().scrollingPage(scroll).padding(bottom = 24.dp)) {
                         WeekGrid(
                             days = days, occurrences = occurrences, entries = entries, layout = layout, col = col, today = today,
                             now = vm.now(), zone = vm.zone, clock = clock, ink = ink, picked = picked,
@@ -226,6 +227,11 @@ fun PlannerScreen(nav: NavController) {
         val markedWords = if (view == PlannerView.MONTH) "${marked.month.getDisplayName(DayText.FULL, Locale.US)} ${marked.year}"
         else "the week of ${markedWeek.dayOfMonth} ${markedWeek.month.getDisplayName(DayText.FULL, Locale.US)}"
         val toast = rememberOutside()
+        val moveBookmarkHere = {
+            val day = if (view == PlannerView.MONTH) (if (thisMonth) today else month.atDay(1)) else if (thisWeek) today else days.first()
+            vm.moveBookmark(day)
+            toast.toast(if (view == PlannerView.MONTH) "Bookmark moved to ${month.month.getDisplayName(DayText.FULL, Locale.US)}" else "Bookmark moved to this week")
+        }
         val ribbonLength by androidx.compose.animation.core.animateDpAsState(if (here) 60.dp else 22.dp, label = "ribbon")
         // The ribbon runs up behind the status bar to the page's top edge, as a bookmark comes out of
         // the book's spine; only its end, below the status bar, takes taps.
@@ -255,12 +261,9 @@ fun PlannerScreen(nav: NavController) {
                 .combinedClickable(
                     onClickLabel = if (here) null else "Go to your bookmark",
                     onLongClickLabel = "Put the bookmark here",
-                    onLongClick = {
-                        val day = if (view == PlannerView.MONTH) (if (thisMonth) today else month.atDay(1)) else if (thisWeek) today else days.first()
-                        vm.moveBookmark(day)
-                        toast.toast(if (view == PlannerView.MONTH) "Bookmark moved to ${month.month.getDisplayName(DayText.FULL, Locale.US)}" else "Bookmark moved to this week")
-                    },
+                    onLongClick = moveBookmarkHere,
                 ) { if (!here) { vm.shownDay.value = marked; picked = null } }
+                .onRightClick(moveBookmarkHere)
                 .semantics { contentDescription = if (here) "Your bookmark, on this page" else "Your bookmark, on $markedWords" },
         )
         IndexTabs(
@@ -551,6 +554,7 @@ private fun AllDayRow(
                             modifier = Modifier.fillMaxWidth()
                                 .then(if (pencil) Modifier.border(1.dp, Pencil.copy(alpha = if (cancelled) 0.35f else 0.6f)) else Modifier.clip(Highlighter).background(ink.copy(alpha = if (cancelled) 0.14f else 0.3f)))
                                 .combinedClickable(onClickLabel = "Stamps for ${e.title}", onLongClick = { onOpen(o) }) { onPick(Picked(e.id, o.day)) }
+                                .onRightClick { onOpen(o) }
                                 .semantics { contentDescription = allDayLabel(e, o) }
                                 .padding(horizontal = 3.dp),
                         )
@@ -729,6 +733,7 @@ private fun WeekGrid(
                         else Modifier.clip(Highlighter).background(colors.kami).background(ink.copy(alpha = if (e.state == EntryState.CANCELLED) 0.14f else 0.3f)),
                     )
                     .combinedClickable(onClickLabel = "Stamps for ${e.title}", onLongClick = { onOpen(o) }) { onPick(Picked(e.id, o.day)) }
+                    .onRightClick { onOpen(o) }
                     .semantics { contentDescription = planLabel(e, o, clock, zone) },
             ) {
                 Text(
@@ -966,7 +971,8 @@ private fun Memo(
                 Modifier
                     .fillMaxWidth()
                     .heightIn(min = 40.dp)
-                    .combinedClickable(onClickLabel = if (e.state == EntryState.DONE) "Lift the done stamp" else "Stamp it done", onLongClick = { onOpen(o) }) { onToggle(e) },
+                    .combinedClickable(onClickLabel = if (e.state == EntryState.DONE) "Lift the done stamp" else "Stamp it done", onLongClick = { onOpen(o) }) { onToggle(e) }
+                    .onRightClick { onOpen(o) },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {

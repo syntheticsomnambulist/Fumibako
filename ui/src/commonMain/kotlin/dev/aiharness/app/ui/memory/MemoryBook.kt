@@ -3,12 +3,14 @@ package dev.aiharness.app.ui.memory
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.paper.drawTape
 import dev.aiharness.app.ui.theme.onInk
 import kotlinx.coroutines.delay
@@ -251,8 +253,10 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
 
     KeepsakeHost(personaId, persona, name) { below ->
     CompositionLocalProvider(LocalFeelingStickers provides sheet.filter { it.ownerPersonaId == personaId }) {
+        val pageScroll = rememberLazyListState()
         LazyColumn(
-            Modifier.fillMaxSize(),
+            Modifier.fillMaxSize().scrollbar(pageScroll),
+            state = pageScroll,
             contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp + below),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
