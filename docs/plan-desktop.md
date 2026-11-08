@@ -10,12 +10,24 @@ answers below; the reorganization has started (see *Progress*).
 - **All three systems:** Windows, macOS and Linux. You have a Windows PC, so Windows is tried
   first and most; the macOS and Linux builds come from CI and get tried more slowly.
 - **The window in v0.5:** the phone's layouts in a resizable window. Wider layouts are wanted,
-  designed later, for a later version.
+  designed later, for a later version. *Changed 2026-11-08, below.*
 - **Phone and computer:** two separate Fumibakos, with v0.5's backups to move a persona or
   everything between them. Sync, if ever, is a feature of its own.
 - **The move** lands before the build session starts v0.5.
 - **Closing the window** keeps Fumibako in the tray, so heartbeats go on (on by default, and the
   first close says so). Starting at login stays off until you turn it on.
+
+## Your answers (2026-11-08): wide layouts in v0.5
+
+- **Wide layouts come in v0.5,** in friends' first desktop build, not later. A third session (the
+  desktop-layout session, branch `claude/sharp-darwin-o3pk1g`) draws and builds them.
+- **Letters and Personas first:** the letters list beside the open thread, and the personas
+  gallery beside a persona's page. The planner and Settings keep the phone's layouts for now.
+- **Chosen by the window's width, anywhere:** a window wide enough gets the wide layout, the phone
+  app included (a tablet, a phone on its side). A phone held upright never is, so it stays as it
+  is.
+- **Mockups first:** drawn in the app's look for you to choose from, and the choices written into
+  this plan before any code.
 
 ## The aim
 
@@ -117,7 +129,8 @@ desktop/   new, the desktop shell: main(), the window, DesktopPlatform, the desk
 The screens are designed for a phone held upright. For v0.5:
 
 - **The phone's layouts in a resizable window**, about 440 by 860 at first. In a wider window the
-  content stays centered at a phone-like width. No new layouts in v0.5.
+  content stays centered at a phone-like width, except Letters and Personas, which get wide
+  layouts (see *Your answers (2026-11-08)*).
 - **A long press becomes a right-click, or a plain drag** where it starts one: dragging a sticker
   from the tray, moving the bookmark, a plan's stamps.
 - **Stickers:** drag to move; the scroll wheel (or the handles) to resize and Shift with the
@@ -125,8 +138,8 @@ The screens are designed for a phone held upright. For v0.5:
 - **Writing:** Enter starts a new line, since letters are long; Ctrl+Enter (Cmd+Enter on a Mac)
   sends. Escape goes back, like the phone's back gesture.
 - **Scrollbars** on long pages, and a hover state on what can be clicked.
-- **Wider layouts** (the letters list beside a thread, a week with room to breathe) come in a
-  later version, designed with the design session first.
+- **Wider layouts:** the letters list beside a thread and the personas gallery beside a page come
+  in v0.5 (2026-11-08). A week with room to breathe, and Settings, come later.
 
 ## v0.5 on both: notes for the build session
 
@@ -348,7 +361,7 @@ The rules in CLAUDE.md hold through the move:
 - The installers' notices for the libraries they carry: JavaFX (GPL-2.0 with the Classpath
   Exception), jaudiotagger (LGPL-2.1), PDFBox (Apache 2.0), FileKit and java-keyring (MIT, BSD).
 - The burn shader on Skia.
-- Wider layouts, a menu bar, and more keyboard shortcuts.
+- Wider layouts for the planner and Settings, a menu bar, and more keyboard shortcuts.
 - Signing, notarization, and updates that install themselves.
 - A friendlier installer: the Windows installer's banner and dialog pictures, a background for
   the Mac's disk image.
