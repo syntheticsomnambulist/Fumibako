@@ -88,6 +88,7 @@ fun main(args: Array<String>) {
     }
     platform.heartbeats.run = { force, persona -> container.harness.heartbeat.run(force = force, onlyPersonaId = persona) }
     platform.heartbeats.onOutcomes = { outcomes -> notices.deliver(outcomes) }
+    platform.heartbeats.onPosted = { conversationId, at -> notices.expect(conversationId, at) }
     notices.start()
     container.start()
     whenDockIconClicked { showRequests.update { it + 1 } }
