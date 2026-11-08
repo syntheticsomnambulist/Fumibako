@@ -105,6 +105,26 @@ fun PersonaHeartbeatScreen(nav: NavController, personaId: String) {
                 )
             }
         }
+        item {
+            TapedCard(layouts[3], tape, tilt = cardTilt("${p.id}-hb-post")) {
+                Text("${p.name.uppercase()}'S REPLIES TAKE", style = PaperType.meta, color = paper.kasure2)
+                val usual = s.letters.travel
+                PaperChoice(
+                    listOf(false to "Usual (${dev.aiharness.app.ui.chat.travelLabel(usual).lowercase()})", true to "${p.name}'s own"),
+                    p.letterTravel != null, { mine -> save { it.copy(letterTravel = if (mine) usual else null) } }, ink = ink, maxLines = 2,
+                )
+                p.letterTravel?.let { own ->
+                    PaperChoice(
+                        dev.aiharness.core.model.LetterTravel.entries.map { it to dev.aiharness.app.ui.chat.travelLabel(it) },
+                        own, { v -> save { it.copy(letterTravel = v) } }, ink = ink, columns = 3, maxLines = 2,
+                    )
+                }
+                Text(
+                    dev.aiharness.app.ui.chat.travelWords(p.letterTravel ?: usual) + " Letters in the post: written at once, and on their way a while.",
+                    style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 18.sp), color = paper.usuzumi0,
+                )
+            }
+        }
         if (own != null) {
             item {
                 TapedCard(layouts[1], tape, tilt = cardTilt("${p.id}-hb-1")) {

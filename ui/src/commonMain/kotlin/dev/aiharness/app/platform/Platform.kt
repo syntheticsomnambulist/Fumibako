@@ -111,6 +111,9 @@ interface HeartbeatScheduling {
 
     /** A heartbeat now: for one persona, or every persona (whatever their pace). */
     fun runNow(settings: HeartbeatSettings, personaId: String? = null)
+
+    /** A reply in the post reaches you [at]: its notification then (unless it's been read as it came). */
+    fun letterArrives(conversationId: String, at: Long) {}
 }
 
 /** Settings, About. */

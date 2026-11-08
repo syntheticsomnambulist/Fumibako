@@ -1,5 +1,11 @@
+@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+
 package dev.aiharness.app.ui.chats
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.transformLatest
 import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.rememberLazyListState
 import dev.aiharness.app.platform.scrollbar
@@ -93,6 +99,18 @@ fun ChatsScreen(nav: NavController) {
     val harness = container.harness
     val scope = rememberCoroutineScope()
     val conversations by remember { harness.conversations.observeAll() }.collectAsStateWithLifecycle(emptyList())
+    // Letters in the post: the time now, ticking over as each one on its way arrives (counted off
+    // the screen's own clock, in the background).
+    val now by remember {
+        harness.conversations.observeAll().transformLatest { list ->
+            while (true) {
+                val t = harness.clock.nowMillis()
+                emit(t)
+                val next = list.mapNotNull { it.lastAgentMessageAt }.filter { it > t }.minOrNull() ?: break
+                delay(next - t + 50)
+            }
+        }.flowOn(Dispatchers.Default)
+    }.collectAsStateWithLifecycle(harness.clock.nowMillis())
     val personas by remember { harness.personas.observeAll() }.collectAsStateWithLifecycle(emptyList())
     val profiles by remember { harness.profiles.observeAll() }.collectAsStateWithLifecycle(null)
     val activity by remember { container.awaySince.flatMapLatest { harness.activity.observeSince(it) } }.collectAsStateWithLifecycle(emptyList())
@@ -133,6 +151,7 @@ fun ChatsScreen(nav: NavController) {
                 LetterCard(
                     conversation,
                     persona,
+                    now,
                     modifier = Modifier.combinedClickable(
                         onClick = { nav.openFromList(Routes.chat(conversation.id), Routes.CHATS) },
                         onLongClick = { deleting = conversation },
@@ -336,11 +355,13 @@ private fun summarise(entries: List<ActivityEntry>): List<AwayRow> =
 
 /** One conversation as a paper card: portrait, name, mood, time and the last line of the latest letter. */
 @Composable
-private fun LetterCard(conversation: Conversation, persona: Persona?, modifier: Modifier = Modifier) {
+private fun LetterCard(conversation: Conversation, persona: Persona?, now: Long, modifier: Modifier = Modifier) {
     val s = stationery
     val ink = s.ink(persona?.ink)
     val tilt = remember(conversation.id) { ((conversation.id.hashCode() % 9) / 10f).coerceIn(-0.9f, 0.9f) }
-    val unread = conversation.hasUnread
+    // A reply in the post: "on its way" (its words not shown) until it arrives, then unread.
+    val onItsWay = conversation.onItsWay(now)
+    val unread = conversation.unreadAt(now)
     Box {
         Row(
             modifier
@@ -363,19 +384,23 @@ private fun LetterCard(conversation: Conversation, persona: Persona?, modifier: 
                     Text(persona?.name ?: conversation.title, style = PaperType.listName, color = paper.sumi, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 180.dp))
                     Box(Modifier.weight(1f)) { MoodWord(conversation.mood, ink, Modifier.padding(bottom = 2.dp)) }
                     Text(
-                        letterTime(conversation.lastAgentMessageAt ?: conversation.updatedAt),
+                        letterTime(if (onItsWay) conversation.updatedAt else conversation.lastAgentMessageAt ?: conversation.updatedAt),
                         style = PaperType.meta,
                         color = paper.kasure2,
                         modifier = Modifier.padding(bottom = 3.dp, end = if (unread) 18.dp else 0.dp),
                     )
                 }
-                Text(
-                    conversation.preview ?: " ",
-                    style = PaperType.preview,
-                    color = if (unread) paper.sumi else paper.usuzumi1,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                if (onItsWay) {
+                    Text("〒 ${persona?.name ?: "A"}'s reply is on its way", style = PaperType.postscript, color = ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                } else {
+                    Text(
+                        conversation.preview ?: " ",
+                        style = PaperType.preview,
+                        color = if (unread) paper.sumi else paper.usuzumi1,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 if (unread && conversation.previewFromHeartbeat) {
                     Text("Left for you while you were away", style = PaperType.meta.copy(letterSpacing = 0.sp), color = ink)
                 }

@@ -30,7 +30,12 @@ data class GenerationState(
  * Runs agent turns in an app-wide scope so a reply keeps streaming when the user leaves the chat
  * screen. Exposes per-conversation progress for the UI; finished messages come from the database.
  */
-class GenerationManager(private val harness: Harness, private val scope: CoroutineScope) {
+class GenerationManager(
+    private val harness: Harness,
+    private val scope: CoroutineScope,
+    /** A reply went into the post: it arrives at the time given (for its notification then). */
+    private val onPosted: (conversationId: String, arrivesAt: Long) -> Unit = { _, _ -> },
+) {
     private val states = ConcurrentHashMap<String, MutableStateFlow<GenerationState>>()
     private val jobs = ConcurrentHashMap<String, Job>()
 
@@ -120,6 +125,10 @@ class GenerationManager(private val harness: Harness, private val scope: Corouti
             } finally {
                 state.update { it.copy(active = false, streamingText = "", reasoning = "", activeTool = null) }
             }
+            // A reply in the post: its arrival, for the notification then.
+            runCatching { harness.conversations.get(conversationId)?.lastAgentMessageAt }.getOrNull()
+                ?.takeIf { it > harness.clock.nowMillis() }
+                ?.let { onPosted(conversationId, it) }
             // Descriptions for later epochs, written while nothing waits on them.
             launchDescriptions(conversationId)
         }

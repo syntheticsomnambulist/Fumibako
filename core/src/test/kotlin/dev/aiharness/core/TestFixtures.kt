@@ -60,7 +60,8 @@ class ScriptedProvider(
 
 class TestEnv(
     val provider: ScriptedProvider = ScriptedProvider(),
-    settings: AppSettings = AppSettings(),
+    // Replies come straight away in tests, unless one is about letters in the post.
+    settings: AppSettings = AppSettings(letters = dev.aiharness.core.model.LetterSettings(travel = dev.aiharness.core.model.LetterTravel.STRAIGHT_AWAY)),
     /** The phone's calendars, for the planner (none by default). */
     phone: dev.aiharness.core.planner.PhoneCalendars? = null,
 ) {

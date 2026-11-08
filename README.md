@@ -15,6 +15,7 @@ Paths under `ui/` are in `ui/src/commonMain/kotlin/dev/aiharness/app/`, under `a
 | Feature | Where |
 | --- | --- |
 | Chat with streaming replies, thought summaries, regenerate, edit/delete | `ui/chat`, `core/agent/AgentRunner.kt` |
+| Letters in the post: a reply is written at once and kept back until it arrives (2 to 3 minutes by default, up to 2 or 3 days, or straight away; per persona too), with a postmark meanwhile, an optional watch with its arrival, and a notification when it comes | `core/model/Settings.kt` (`LetterTravel`), `core/agent/AgentRunner.kt`, `ui/chat/InThePost.kt`, `app/heartbeat/LetterArrival.kt` |
 | Swappable models: Anthropic (Claude), Google Gemini, any OpenAI-compatible server, NovelAI text | `core/llm/*` |
 | Swappable personas, each with its own memories, greeting, pronouns, looks, outfit, drawing style and default model | `ui/personas` |
 | Swappable user personas (who *you* are), switchable mid-chat | `ui/settings/KeysAndUsers.kt` |

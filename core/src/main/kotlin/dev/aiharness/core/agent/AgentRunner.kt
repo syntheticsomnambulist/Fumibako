@@ -12,6 +12,7 @@ import dev.aiharness.core.llm.StopReason
 import dev.aiharness.core.llm.complete
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.ChatMessage
+import dev.aiharness.core.model.LetterTravel
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.MessageOrigin
@@ -108,7 +109,7 @@ class AgentRunner(private val h: Harness) {
             val arrived = if (userMessage.images.isEmpty() && userMessage.attachments.isEmpty()) userMessage
             else runCatching { h.describer.onArrival(userMessage, setup.profile, setup.settings) }.getOrDefault(userMessage)
 
-            runGuarded(setup.copy(conversation = conversation), history + arrived) { send(it) }
+            runGuarded(setup.copy(conversation = conversation), history + arrived, arrivalFor(setup, history)) { send(it) }
         }
     }
 
@@ -124,7 +125,7 @@ class AgentRunner(private val h: Harness) {
             }
             // Removing only the tail keeps the earlier prefix intact, so replay data stays valid.
             h.conversations.deleteMessages(history.drop(lastUser + 1).map { it.id })
-            runGuarded(setup, history.take(lastUser + 1)) { send(it) }
+            runGuarded(setup, history.take(lastUser + 1), arrivalFor(setup, history.take(lastUser + 1))) { send(it) }
         }
     }
 
@@ -138,7 +139,19 @@ class AgentRunner(private val h: Harness) {
         null
     }
 
-    private suspend fun runGuarded(setup: TurnSetup, history: List<ChatMessage>, emit: suspend (AgentEvent) -> Unit) {
+    /**
+     * When a reply written now reaches you (letters in the post): after the persona's travel time,
+     * or Settings', and never before a reply already on its way. Null when it comes straight away.
+     */
+    internal fun arrivalFor(setup: TurnSetup, history: List<ChatMessage>): Long? {
+        val travel = setup.persona.letterTravel ?: setup.settings.letters.travel
+        if (travel == LetterTravel.STRAIGHT_AWAY) return null
+        val now = h.clock.nowMillis()
+        val onItsWay = history.mapNotNull { it.deliverAt }.filter { it > now }.maxOrNull()
+        return maxOf(now + travel.pick(), (onItsWay ?: 0L) + 1_000L)
+    }
+
+    private suspend fun runGuarded(setup: TurnSetup, history: List<ChatMessage>, deliverAt: Long?, emit: suspend (AgentEvent) -> Unit) {
         try {
             val outcome = runTurn(
                 setup = setup,
@@ -148,6 +161,7 @@ class AgentRunner(private val h: Harness) {
                 background = false,
                 allowCompaction = true,
                 emit = emit,
+                deliverAt = deliverAt,
             )
             emit(AgentEvent.Finished(outcome.finalText, outcome.refused))
         } catch (e: CancellationException) {
@@ -170,6 +184,8 @@ class AgentRunner(private val h: Harness) {
         allowCompaction: Boolean,
         emit: suspend (AgentEvent) -> Unit,
         slots: SlotKeeper? = null,
+        /** A reply in the post: when it reaches you (its messages are kept back till then). */
+        deliverAt: Long? = null,
     ): TurnOutcome {
         var conversation = setup.conversation
         val transcript = baseHistory.toMutableList()
@@ -235,6 +251,8 @@ class AgentRunner(private val h: Harness) {
                 errorMessage = if (refused) refusalMessage(turn) else null,
                 usage = turn.usage,
                 mood = MoodTags.parse(turn.text),
+                // A refusal is said straight away, not after the wait.
+                deliverAt = deliverAt.takeUnless { refused },
             )
             sink.append(assistant)
             transcript += assistant
@@ -263,6 +281,7 @@ class AgentRunner(private val h: Harness) {
                 createdAt = h.clock.nowMillis(),
                 origin = origin,
                 epochId = prepared.state.epochId,
+                deliverAt = deliverAt,
             )
             sink.append(toolMessage)
             transcript += toolMessage
@@ -294,7 +313,8 @@ class AgentRunner(private val h: Harness) {
         h.updateConversation(conversationId) {
             it.copy(
                 updatedAt = now,
-                lastAgentMessageAt = reply?.createdAt ?: it.lastAgentMessageAt,
+                // A reply in the post counts from when it arrives (the letters list says it's on its way till then).
+                lastAgentMessageAt = reply?.arrivedAt ?: it.lastAgentMessageAt,
                 mood = reply?.mood ?: it.mood,
                 preview = reply?.let { r -> Conversation.previewOf(r.displayText) } ?: it.preview,
                 previewFromHeartbeat = reply?.let { r -> r.origin == MessageOrigin.HEARTBEAT } ?: it.previewFromHeartbeat,

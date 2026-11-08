@@ -41,6 +41,7 @@ class AndroidPlatform(private val app: Application) : AppPlatform {
         override fun apply(settings: HeartbeatSettings, intervalMinutes: Int) = HeartbeatScheduler.apply(app, settings, intervalMinutes)
         override fun wakeFor(settings: HeartbeatSettings, wakes: Set<Wake>) = HeartbeatScheduler.wakeFor(app, settings, wakes)
         override fun runNow(settings: HeartbeatSettings, personaId: String?) = HeartbeatScheduler.runNow(app, settings, personaId)
+        override fun letterArrives(conversationId: String, at: Long) = dev.aiharness.app.heartbeat.LetterArrival.schedule(app, conversationId, at)
     }
 
     override val about = object : AboutApp {

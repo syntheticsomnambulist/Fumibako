@@ -134,7 +134,7 @@ fun LetterSheet(
                 PortraitDot(persona, 26.dp)
                 Text(persona?.name ?: "…", style = PaperType.letterName, color = paper.sumi)
                 Box(Modifier.weight(1f)) { MoodWord(mood, ink) }
-                letter?.let { Text(letterStamp(it.createdAt), style = PaperType.meta, color = paper.kasure2) }
+                letter?.let { Text(letterStamp(it.arrivedAt), style = PaperType.meta, color = paper.kasure2) }
             }
 
             val reasoning = listOfNotNull(letter?.reasoning, writing?.reasoning?.takeIf { it.isNotBlank() }).joinToString("\n\n")
