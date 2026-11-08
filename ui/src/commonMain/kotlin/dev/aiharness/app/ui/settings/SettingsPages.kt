@@ -113,6 +113,20 @@ internal fun SettingsCards.heartbeatPage(nav: NavController, s: AppSettings, upd
         )
     }
     dev.aiharness.app.platform.deviceOptionsCard?.let { options -> card { options() } }
+    card {
+        CardTitle("Letters in the post")
+        Hint("A reply is written as soon as you send your note, then takes a while to reach you. A persona can have its own time on its page; letters it writes on its own come when they come.")
+        Text("REPLIES TAKE", style = PaperType.meta, color = paper.kasure2)
+        PaperChoice(
+            dev.aiharness.core.model.LetterTravel.entries.map { it to dev.aiharness.app.ui.chat.travelLabel(it) }, s.letters.travel,
+            { v -> update { it.copy(letters = it.letters.copy(travel = v)) } }, columns = 3, maxLines = 2,
+        )
+        Hint(dev.aiharness.app.ui.chat.travelWords(s.letters.travel))
+        SwitchRow(
+            "Show when letters arrive", s.letters.showArrival, { v -> update { it.copy(letters = it.letters.copy(showArrival = v)) } },
+            subtitle = "A little watch on a letter's way says when it comes. Without it, only that it's coming.",
+        )
+    }
     if (hb.mode == HeartbeatMode.PROACTIVE) {
         card { OwnRhythms(nav) }
         card {

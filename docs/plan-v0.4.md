@@ -297,6 +297,22 @@ From the agreed decisions in `calendar.md`:
     video", "Pidge watches its first 4:00; the whole of it is too much to send at once", "Pidge
     watches up to its first 4:00, from YouTube", "…but a link brings no sound to send".
   - The model screen lists YouTube links among what Gemini takes in.
+- **0.4.4 (version code 26), letters in the post (your idea):** a reply takes a while to reach
+  you, to build some anticipation.
+  - **Written at once, kept back:** the persona writes as soon as you send (so a bad key or a
+    refusal shows straight away), and the reply and anything it did with tools carry a `deliverAt`
+    and stay hidden until then. A second reply never arrives before the first.
+  - **How long:** Settings, Heartbeat, "Letters in the post": straight away, minutes (2 to 3, the
+    default), half an hour, hours (2 to 4), a day (20 to 28 hours), days (2 to 3), each at a
+    random point in its range. A persona's heartbeat page can give it its own. Heartbeat letters
+    come when they come.
+  - **Meanwhile:** the thread shows a 〒 postmark ("Aria's reply is on its way") instead of the
+    letter being written; with "Show when letters arrive", a little pocket watch says when. The
+    letters list says it's on its way (not the reply's first words) and shows it unread only once
+    it's come. An arrived letter is dated and placed by its arrival.
+  - **When it comes:** a notification, as a heartbeat letter's (held the same way during busy
+    times), unless you read it in the app as it came (WorkManager on the phone; the desktop's
+    hook is a no-op for now).
 
 ## Noted for later
 

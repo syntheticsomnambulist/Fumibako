@@ -60,6 +60,11 @@ phone's calendars are read, never changed or copied.
 
 ## Things to try
 
+- **Letters take a little while:** a persona's reply is written as soon as you send your note, then
+  reaches you a few minutes later (a 〒 postmark says it's on its way, and a notification says
+  when it's come). Settings, Heartbeat, "Letters in the post" sets how long, from straight away to
+  two or three days, and can show a little watch with when it arrives; a persona's heartbeat page
+  can give it its own time. Letters a persona writes on its own come when they come.
 - Write a few letters, then look at the persona's **memory book** (Personas, a persona, Memories).
 - Leave the app for a few hours; the Letters page shows what personas did while you were away.
 - Change how a persona looks or writes: its page, **Edit**. Give it pronouns there too.

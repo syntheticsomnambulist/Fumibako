@@ -80,7 +80,7 @@ class AppContainer(val platform: AppPlatform) {
         log = platform::log,
     )
 
-    val generation = GenerationManager(harness, appScope)
+    val generation = GenerationManager(harness, appScope) { conversationId, at -> platform.heartbeats.letterArrives(conversationId, at) }
 
     /** Songs and playlists from letters. */
     val playback: Playback = platform.playback(blobStore, harness.marks)

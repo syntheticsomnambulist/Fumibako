@@ -137,6 +137,8 @@ data class Persona(
     val seesPlanner: Boolean = true,
     /** Its seal and marks in the planner, and whether it writes season haiku. */
     val planner: PersonaPlanner = PersonaPlanner(),
+    /** How long its replies take to reach you; null follows Settings (letters in the post). */
+    val letterTravel: LetterTravel? = null,
     val createdAt: Long,
     val updatedAt: Long,
 ) {
@@ -214,6 +216,12 @@ data class Conversation(
 ) {
     val hasUnread: Boolean
         get() = lastAgentMessageAt != null && lastAgentMessageAt > (lastReadAt ?: 0L)
+
+    /** A reply in the post that hasn't reached you by [now] (its arrival is the conversation's latest letter). */
+    fun onItsWay(now: Long): Boolean = lastAgentMessageAt != null && lastAgentMessageAt > now
+
+    /** Unread at [now]: a letter came since you last read, and it has arrived. */
+    fun unreadAt(now: Long): Boolean = hasUnread && !onItsWay(now)
 
     companion object {
         /** One line of [text] for a preview. */
@@ -510,6 +518,11 @@ data class ChatMessage(
     val replay: String? = null,
     /** Not shown in the chat UI (e.g. heartbeat prompts). */
     val hidden: Boolean = false,
+    /**
+     * A reply in the post: written at [createdAt], it reaches you then and isn't shown before
+     * (see [LetterSettings]). Null for everything that comes straight away.
+     */
+    val deliverAt: Long? = null,
     /** Kept for the record but never sent to a model (e.g. refusals, failed turns). */
     val excludedFromContext: Boolean = false,
     val errorMessage: String? = null,
@@ -524,6 +537,13 @@ data class ChatMessage(
     /** The text as shown to the user: mood tags removed. */
     val displayText: String
         get() = MoodTags.strip(text)
+
+    /** Whether it has reached you by [now]: a reply in the post only once it arrives. */
+    fun arrived(now: Long): Boolean = deliverAt == null || deliverAt <= now
+
+    /** When it reached (or reaches) you: its arrival, or when it was written. */
+    val arrivedAt: Long
+        get() = deliverAt ?: createdAt
 
     val toolCalls: List<ContentPart.ToolCall>
         get() = parts.filterIsInstance<ContentPart.ToolCall>()

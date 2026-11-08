@@ -252,7 +252,7 @@ class Harness(
             it.copy(
                 preview = reply?.let { r -> Conversation.previewOf(r.displayText) },
                 previewFromHeartbeat = reply?.origin == MessageOrigin.HEARTBEAT,
-                lastAgentMessageAt = reply?.createdAt,
+                lastAgentMessageAt = reply?.arrivedAt,
             )
         }
     }

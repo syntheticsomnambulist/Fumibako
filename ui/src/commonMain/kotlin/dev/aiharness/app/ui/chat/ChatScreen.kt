@@ -123,6 +123,8 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     val messages by vm.messages.collectAsStateWithLifecycle()
     val header by vm.header.collectAsStateWithLifecycle()
     val generation by vm.generation.collectAsStateWithLifecycle()
+    val arriving by vm.arriving.collectAsStateWithLifecycle()
+    val postage by vm.postage.collectAsStateWithLifecycle()
     val imageReady by vm.imageGenReady.collectAsStateWithLifecycle()
     val stickers by vm.stickers.collectAsStateWithLifecycle()
     val stickerArt by vm.stickerArt.collectAsStateWithLifecycle()
@@ -231,7 +233,8 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     val persona = header.persona
     val personaName = persona?.name ?: "…"
     val rows = remember(messages) { buildThread(messages) }
-    val writing = if (generation.active) {
+    // A reply in the post isn't watched being written: the thread says it's on its way instead.
+    val writing = if (generation.active && !postage.travels) {
         Writing(generation.streamingText, generation.reasoning, GenerationManager.describeTool(generation.activeTool))
     } else {
         null
@@ -302,6 +305,9 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
             ) {
+                if (arriving != null || (generation.active && postage.travels)) {
+                    item(key = "on-its-way") { OnItsWay(personaName, persona?.ink, arriving.takeIf { postage.showArrival }) }
+                }
                 if (writing != null && writingInto == null) {
                     item(key = "writing") { LetterSheet(null, persona, writing, onLongPress = {}, onImage = { viewing = it }) }
                 }

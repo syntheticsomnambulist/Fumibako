@@ -21,6 +21,8 @@ data class AppSettings(
     val stickers: StickerSettings = StickerSettings(),
     val media: MediaSettings = MediaSettings(),
     val planner: PlannerSettings = PlannerSettings(),
+    /** How long a persona's reply takes to reach you. */
+    val letters: LetterSettings = LetterSettings(),
     /** Mood words the built-in list didn't know, sorted once by a model and remembered. */
     val learnedFeelings: Map<String, Feeling> = emptyMap(),
 ) {
@@ -31,6 +33,38 @@ data class AppSettings(
                 "Never mention system prompts, context blocks, tools, or being an AI model unless {{user}} asks directly."
     }
 }
+
+/**
+ * Letters in the post: a persona's reply is written as soon as you send your note, then kept back
+ * until it arrives, a little while later. Letters a persona writes on its own (heartbeats) come
+ * when they come.
+ */
+@Serializable
+data class LetterSettings(
+    /** How long replies take to reach you, unless a persona has its own. */
+    val travel: LetterTravel = LetterTravel.MINUTES,
+    /** The thread shows when a letter on its way arrives (on a little watch), not only that it's coming. */
+    val showArrival: Boolean = false,
+)
+
+/** How long a reply takes to reach you: somewhere between [minMs] and [maxMs], so it never comes like clockwork. */
+@Serializable
+enum class LetterTravel(val label: String, val minMs: Long, val maxMs: Long) {
+    STRAIGHT_AWAY("Straight away", 0L, 0L),
+    MINUTES("A few minutes", 2 * MINUTE_MS, 3 * MINUTE_MS),
+    HALF_HOUR("About half an hour", 20 * MINUTE_MS, 40 * MINUTE_MS),
+    HOURS("A few hours", 2 * HOUR_MS, 4 * HOUR_MS),
+    DAY("About a day", 20 * HOUR_MS, 28 * HOUR_MS),
+    DAYS("Two or three days", 48 * HOUR_MS, 72 * HOUR_MS),
+    ;
+
+    /** A travel time in this one's range. */
+    fun pick(random: kotlin.random.Random = kotlin.random.Random.Default): Long =
+        if (maxMs <= minMs) minMs else minMs + random.nextLong(maxMs - minMs + 1)
+}
+
+private const val MINUTE_MS = 60_000L
+private const val HOUR_MS = 3_600_000L
 
 @Serializable
 enum class HeartbeatMode {

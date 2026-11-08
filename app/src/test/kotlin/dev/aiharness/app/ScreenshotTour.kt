@@ -213,6 +213,12 @@ class ScreenshotTour {
         // Aria's unread letter wears her sticker for hello.
         compose.waitUntilAtLeastOneExists(hasContentDescription("Unread"), 10_000)
         shot("${prefix}_01_chats")
+        // Kestrel's reply on its way: the postmark, and the little watch with when it arrives.
+        click("Kestrel")
+        waitFor("arrives ")
+        shot("${prefix}_01b_letter_on_its_way")
+        back()
+        waitFor("Kestrel")
 
         click("Aria")
         waitFor("actually sleep")
@@ -832,6 +838,8 @@ class ScreenshotTour {
                 activeUserPersonaId = sam.id,
                 defaultModelProfileId = profile.id,
                 theme = ThemeSettings(dayNight = DayNightMode.STATIC, staticSeason = season, staticTime = time),
+                // Letters in the post, with the little watch saying when one arrives.
+                letters = dev.aiharness.core.model.LetterSettings(showArrival = true),
             )
         }
 
@@ -847,6 +855,15 @@ class ScreenshotTour {
             h.personas.upsert(persona)
             val c = h.createConversation(persona.id, sam.id)
             h.updateConversation(c.id) { it.copy(mood = mood, updatedAt = now - 86_400_000L, lastAgentMessageAt = now - 86_400_000L) }
+            if (persona == kestrel) {
+                // Kestrel's reply is in the post, arriving in a couple of hours (asked after the greeting).
+                val asked = now + 30_000L
+                val arrives = now + 2 * 3_600_000L + 25 * 60_000L
+                h.conversations.appendMessage(ChatMessage(newId(), c.id, MessageRole.USER, listOf(ContentPart.Text("Are you still keeping watch out there?")), createdAt = asked, origin = MessageOrigin.USER))
+                val reply = "Always. The road is long tonight, but the stars are good company."
+                h.conversations.appendMessage(ChatMessage(newId(), c.id, MessageRole.ASSISTANT, listOf(ContentPart.Text(reply)), createdAt = asked + 20_000, deliverAt = arrives))
+                h.updateConversation(c.id) { it.copy(updatedAt = asked + 20_000, lastUserMessageAt = asked, lastAgentMessageAt = arrives, preview = dev.aiharness.core.model.Conversation.previewOf(reply)) }
+            }
         }
 
         val conversation = h.createConversation(aria.id, sam.id)

@@ -30,6 +30,9 @@ sealed interface ThreadRow {
     data class Letter(val messages: List<ChatMessage>) : ThreadRow {
         override val key get() = "letter-${messages.first().id}"
         val createdAt: Long get() = messages.first().createdAt
+
+        /** When it reached you: a letter in the post, at its arrival. */
+        val arrivedAt: Long get() = messages.first().arrivedAt
         val paragraphs: List<String> get() = messages.filter { it.role == MessageRole.ASSISTANT }.map { it.displayText }.filter { it.isNotBlank() }
         val mood: String? get() = messages.lastOrNull { it.mood != null }?.mood
         val fromHeartbeat: Boolean get() = messages.any { it.role == MessageRole.ASSISTANT && it.origin == MessageOrigin.HEARTBEAT }
@@ -73,7 +76,8 @@ fun buildThread(messages: List<ChatMessage>, zone: ZoneId = ZoneId.systemDefault
     }
 
     fun startRow(message: ChatMessage) {
-        val date = Instant.ofEpochMilli(message.createdAt).atZone(zone).toLocalDate()
+        // A letter in the post goes under the day it arrived.
+        val date = Instant.ofEpochMilli(message.arrivedAt).atZone(zone).toLocalDate()
         if (date != day) {
             rows += ThreadRow.Day(date)
             day = date

@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -37,6 +39,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import dev.aiharness.app.platform.Picked
+
+/** The thread's letters that have reached you, and when the next one on its way arrives. */
+data class InThePost(val shown: List<ChatMessage> = emptyList(), val next: Long? = null)
+
+/** Letters in the post for this thread: [travels] (replies take a while), [showArrival] (the watch says when). */
+data class Postage(val travels: Boolean = false, val showArrival: Boolean = false)
 
 data class ChatHeader(
     val conversation: Conversation? = null,
@@ -58,9 +66,29 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
         .map { marks -> marks.filter { it.kind == dev.aiharness.core.model.MarkKind.READ && it.byPersonaId != null }.associate { it.attachmentId to it.byPersonaId!! } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val messages: StateFlow<List<ChatMessage>> = harness.conversations.observeMessages(conversationId)
+    /**
+     * Letters in the post: what has reached you by now, in the order it arrived, and when the next
+     * one still on its way arrives. Ticks over at each arrival, so a letter shows the moment it comes.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private val post: StateFlow<InThePost> = harness.conversations.observeMessages(conversationId)
         .map { list -> list.filter { !it.hidden } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        .transformLatest { list ->
+            while (true) {
+                val now = harness.clock.nowMillis()
+                val next = list.mapNotNull { it.deliverAt }.filter { it > now }.minOrNull()
+                emit(InThePost(list.filter { it.arrived(now) }.sortedBy { it.arrivedAt }, next))
+                if (next == null) break
+                delay(next - now + 50)
+            }
+        }
+        .flowOn(kotlinx.coroutines.Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InThePost())
+
+    val messages: StateFlow<List<ChatMessage>> = post.map { it.shown }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** When the next letter on its way arrives; null when none is. */
+    val arriving: StateFlow<Long?> = post.map { it.next }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val profiles: StateFlow<List<ModelProfile>> = harness.profiles.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -125,6 +153,14 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
     val stickerArt: StateFlow<Map<String, StickerArt>> = harness.stickers.observeArt()
         .map { list -> list.associateBy { it.id } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** Whether this persona's replies travel (its own time, or Settings'), and whether the thread says when they arrive. */
+    val postage: StateFlow<Postage> = combine(header, harness.settings.settings) { h, settings ->
+        Postage(
+            travels = (h.persona?.letterTravel ?: settings.letters.travel) != dev.aiharness.core.model.LetterTravel.STRAIGHT_AWAY,
+            showArrival = settings.letters.showArrival,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Postage())
 
     val imageGenReady: StateFlow<Boolean> = harness.settings.settings
         .map { it.imageGen.ready }
