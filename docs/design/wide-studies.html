@@ -1,0 +1,901 @@
+<title>Fumibako wide studies</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&family=LINE+Seed+JP:wght@400;700&family=Yuji+Syuku&display=swap">
+<style>
+/* Layout: a control strip, then two desktop windows (Letters, Personas) drawn at their real size and
+   scaled to fit, built from the same stationery parts as the screen and letter studies. Each window
+   has the choices to make beside it. madoromi colours; the script swaps in the current season. */
+:root {
+  --kami: #f8f0e9; --hyoshi: #f0e6dd; --chitsu: #e6dcd3;
+  --nijimi0: #dfcebf; --nijimi1: #cebeaf; --nijimi2: #beae9f;
+  --kasure0: #ae9e90; --kasure1: #9f8f81; --kasure2: #8d7d6f;
+  --usuzumi0: #7d6b5a; --usuzumi1: #715f4f; --sumi: #5d4c3c;
+  --fuji: #581ca7; --you: #178d9d;
+  --outline: #ffffff; --paper: #fffdf9;
+  --frame: #ffffff; --frame-ink: #3b2f27;
+  --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --read: "Literata", "Iowan Old Style", Georgia, serif;
+  --ui: "LINE Seed JP", "Segoe UI", system-ui, sans-serif;
+  --brush: "Yuji Syuku", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kami: #271d14; --hyoshi: #20160e; --chitsu: #181008;
+    --nijimi0: #3d3024; --nijimi1: #534538; --nijimi2: #66584b;
+    --kasure0: #7b6c5e; --kasure1: #908072; --kasure2: #a59587;
+    --usuzumi0: #beaa98; --usuzumi1: #d4c0ae; --sumi: #e8d3c1;
+    --fuji: #d3a1ff; --you: #5ac6f1;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --kami: #271d14; --hyoshi: #20160e; --chitsu: #181008;
+  --nijimi0: #3d3024; --nijimi1: #534538; --nijimi2: #66584b;
+  --kasure0: #7b6c5e; --kasure1: #908072; --kasure2: #a59587;
+  --usuzumi0: #beaa98; --usuzumi1: #d4c0ae; --sumi: #e8d3c1;
+  --fuji: #d3a1ff; --you: #5ac6f1;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--hyoshi); color: var(--sumi); font-family: var(--ui); }
+.studio {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+  max-width: 1380px; margin: 0 auto;
+  display: grid; gap: 34px;
+}
+.studio *, .studio { transition: background-color .35s ease, color .35s ease, border-color .35s ease; }
+@media (prefers-reduced-motion: reduce) { .studio *, .studio { transition: none !important; } }
+
+.intro { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 22px; align-items: center; max-width: 1000px; }
+.glyph { grid-row: span 2; font-family: var(--brush); font-size: 92px; line-height: .9; color: var(--ink-sakura); }
+.intro h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4.2vw, 46px); line-height: 1.05; text-wrap: balance; }
+.intro p { margin: 0; max-width: 70ch; color: var(--usuzumi1); font-size: 15px; line-height: 1.6; }
+@media (max-width: 560px) { .intro { grid-template-columns: minmax(0, 1fr); } .glyph { grid-row: auto; font-size: 64px; } }
+
+/* Controls */
+.controls { display: flex; flex-wrap: wrap; gap: 18px 30px; align-items: flex-start; padding: 18px 20px; border: 1px solid var(--nijimi0); border-radius: 14px; background: var(--kami); }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--kasure2); }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: inline-flex; align-items: baseline; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--nijimi1); color: var(--usuzumi1); font-size: 13px; white-space: nowrap; }
+.seg span b { font-family: var(--brush); font-weight: 400; font-size: 15px; color: var(--sumi); }
+.seg span i { font-style: normal; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--kasure2); }
+.seg input:checked + span { background: var(--sumi); border-color: var(--sumi); color: var(--kami); }
+.seg input:checked + span b, .seg input:checked + span i { color: var(--kami); }
+.seg input:focus-visible + span { outline: 2px solid var(--fuji); outline-offset: 2px; }
+.theme-now { align-self: center; margin-left: auto; text-align: right; }
+.theme-now .big { font-family: var(--brush); font-size: 34px; line-height: 1; }
+.theme-now .small { font-size: 12px; color: var(--kasure2); letter-spacing: .04em; }
+@media (max-width: 700px) { .theme-now { margin-left: 0; text-align: left; } }
+
+/* A study: heading, its own choices, then the window */
+.study { display: grid; gap: 16px; min-width: 0; }
+.study-head { display: grid; gap: 6px; max-width: 80ch; }
+.study h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 28px; display: flex; align-items: baseline; gap: 10px; }
+.study h2 span { font-family: var(--brush); font-weight: 400; font-size: 21px; color: var(--ink-sakura); }
+.study-head p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--usuzumi1); }
+.choices { display: flex; flex-wrap: wrap; gap: 16px 30px; }
+.win-wrap { position: relative; width: 100%; overflow: hidden; }
+.win { position: absolute; left: 50%; top: 0; transform-origin: top center; }
+
+/* The desktop window: a plain title bar, then the app */
+.win { display: flex; flex-direction: column; background: var(--hyoshi); border-radius: 10px; overflow: hidden;
+  box-shadow: 0 0 0 1px var(--nijimi1), 0 34px 60px -34px color-mix(in oklab, var(--chitsu) 60%, #000); }
+.titlebar { flex: none; height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--chitsu); border-bottom: 1px solid var(--nijimi0); font-size: 12px; color: var(--kasure2); }
+.titlebar .seal { width: 16px; height: 16px; }
+.titlebar .ctl { margin-left: auto; display: flex; gap: 18px; font-size: 13px; color: var(--kasure1); letter-spacing: 0; }
+.app { flex: 1; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); }
+.pane { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--hyoshi); }
+.pane.detail { border-left: 1px solid var(--nijimi0); }
+
+/* Tabs: the phone's bar, or index tabs down the left */
+.tab { position: relative; display: grid; justify-items: center; gap: 2px; font-size: 11px; color: var(--kasure2); padding: 2px 10px; cursor: pointer; }
+.tab b { font-family: var(--brush); font-weight: 400; font-size: 20px; line-height: 1.2; color: var(--usuzumi0); }
+.tab.on, .tab.on b { color: var(--sumi); }
+.tab .lbl { position: relative; padding: 1px 9px 2px; isolation: isolate; }
+.tab.on .lbl { font-weight: 700; color: var(--kami); }
+.tab.on .lbl::before { content: ""; position: absolute; inset: -1px -3px; z-index: -1; transform: rotate(-1deg);
+  background: color-mix(in oklab, var(--you) 94%, transparent); --z: 2px;
+  -webkit-mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% calc(2 * var(--z)) repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% calc(2 * var(--z)) repeat-y;
+          mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% calc(2 * var(--z)) repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% calc(2 * var(--z)) repeat-y; }
+.tabbar { flex: none; display: flex; justify-content: space-around; padding: 8px 10px 12px; background: var(--kami); border-top: 1px solid var(--nijimi0); }
+.tabbar.across { grid-column: 1 / -1; }
+.rail { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 22px 4px; background: var(--kami); border-right: 1px solid var(--nijimi0); }
+.rail .tab { padding: 4px 2px; }
+.rail .tab b { font-size: 24px; }
+
+/* Shared stationery */
+.appbar { flex: none; display: flex; align-items: baseline; gap: 10px; padding: 22px 20px 10px; }
+.appbar h3 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1; }
+.appbar .season { font-family: var(--brush); font-size: 15px; color: var(--kasure2); }
+.appbar .act { margin-left: auto; font-size: 13px; color: var(--usuzumi1); }
+.content { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--nijimi1) transparent; padding: 8px 18px 90px; display: flex; flex-direction: column; gap: 16px; }
+.content p { margin: 0; }
+.label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--kasure2); }
+.paper-card { position: relative; background: var(--kami); border-radius: 3px; box-shadow: 0 0 0 1px var(--nijimi0), 0 6px 14px -10px color-mix(in oklab, var(--chitsu) 85%, #000); }
+.tape-v, .tape-h { position: absolute; z-index: 2; pointer-events: none; background: var(--pat), color-mix(in oklab, var(--tc) 82%, transparent); filter: drop-shadow(0 .5px .6px rgba(30, 18, 8, .18)); --z: 2.6px; }
+.night .tape-v, .night .tape-h { filter: drop-shadow(0 .5px 1px rgba(0, 0, 0, .4)); }
+.tape-v { width: 13px;
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--z)) 51% repeat-x, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--z)) 51% repeat-x;
+          mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--z)) 51% repeat-x, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--z)) 51% repeat-x; }
+.tape-h { height: 14px;
+  -webkit-mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% calc(2 * var(--z)) repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% calc(2 * var(--z)) repeat-y;
+          mask: conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left / 51% calc(2 * var(--z)) repeat-y, conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg) right / 51% calc(2 * var(--z)) repeat-y; }
+canvas.portrait { display: block; width: 100%; height: 100%; }
+.md { font-family: var(--read); font-style: italic; color: var(--tc); }
+.sticker { position: absolute; width: var(--w, 40px); transform: translate(-50%, -50%) rotate(var(--r, 0deg)); z-index: 3; line-height: 0; pointer-events: none; }
+.sticker .art { display: block; filter: url(#die-cut) drop-shadow(0 1.5px 1.5px rgba(30, 18, 8, .3)); }
+.night .sticker .art { filter: url(#die-cut) drop-shadow(0 1.5px 2px rgba(0, 0, 0, .5)) brightness(.95); }
+.sticker svg { width: 100%; height: auto; display: block; overflow: visible; }
+.paper { fill: var(--paper); }
+.seal-t { font-family: var(--brush); font-size: 27px; text-anchor: middle; }
+.fab { position: absolute; right: 18px; bottom: 18px; z-index: 4; display: inline-flex; align-items: center; gap: 6px; padding: 12px 18px; border-radius: 2px; background: var(--you); color: var(--kami); font-size: 14px; font-weight: 700; box-shadow: 0 10px 20px -10px color-mix(in oklab, var(--chitsu) 70%, #000); }
+.fab b { font-family: var(--brush); font-weight: 400; font-size: 17px; }
+.pane.has-bar .fab { bottom: 84px; }
+.clickable { cursor: pointer; }
+.clickable:focus-visible { outline: 2px solid var(--fuji); outline-offset: 3px; }
+
+/* While you were away */
+.away { padding: 12px 14px 12px 16px; display: grid; gap: 8px; }
+.away h4 { margin: 0; font-family: var(--display); font-style: italic; font-weight: 600; font-size: 18px; }
+.away ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.away li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; color: var(--usuzumi1); }
+.away li .dot { width: 20px; height: 20px; border-radius: 50%; overflow: hidden; }
+.away li time { font-size: 11px; color: var(--kasure2); font-variant-numeric: tabular-nums; }
+.away li b { color: var(--tc); font-weight: 700; }
+.away .tape-h { left: -9px; top: -4px; width: 44px; transform: rotate(-35deg); }
+.away .tape-h.br { left: auto; top: auto; right: -9px; bottom: -4px; }
+
+/* Letter cards in the list */
+.corr { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; padding: 12px 14px 12px 22px; transition: transform .25s ease, box-shadow .25s ease, background-color .35s ease; }
+.corr .tape-v { left: -6px; top: -5px; bottom: -5px; transform: rotate(var(--tilt, -.7deg)); }
+.corr .pic { width: 52px; height: 62px; border-radius: 4px; overflow: hidden; box-shadow: 0 0 0 1px var(--nijimi0); }
+.corr .txt { display: grid; gap: 3px; min-width: 0; }
+.corr .row { display: flex; align-items: baseline; gap: 8px; }
+.corr .nm { font-family: var(--display); font-weight: 600; font-size: 20px; line-height: 1.1; }
+.corr .md { font-size: 13px; }
+.corr time { margin-left: auto; font-size: 11px; color: var(--kasure2); font-variant-numeric: tabular-nums; }
+.corr .pv { font-family: var(--read); font-size: 14px; line-height: 1.45; color: var(--usuzumi1); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.corr .pv.unread { color: var(--sumi); }
+.corr .left { font-size: 11px; color: var(--tc); }
+
+/* The open one: a paper clip, a folded corner, a highlighter stroke, out on the desk, or nothing */
+.clip { position: absolute; z-index: 4; top: -15px; left: 34px; width: 15px; height: 42px; transform: rotate(-7deg); pointer-events: none; filter: drop-shadow(0 1px 1px rgba(30, 18, 8, .3)); }
+.polaroid .clip { left: 20%; top: -17px; }
+.clip svg { width: 100%; height: 100%; display: block; fill: none; stroke: var(--you); stroke-width: 2; stroke-linecap: round; }
+.fold { position: absolute; z-index: 3; right: 0; bottom: 0; width: 24px; height: 24px; pointer-events: none;
+  background: linear-gradient(315deg, var(--hyoshi) 0 50%, color-mix(in oklab, var(--you) 26%, var(--kami)) 50% 100%);
+  filter: drop-shadow(-1px -1px 1.2px rgba(30, 18, 8, .2)); }
+.mark-highlight .open .nm { background: linear-gradient(transparent 50%, color-mix(in oklab, var(--you) 34%, transparent) 50% 92%, transparent 92%); padding: 0 4px; margin: 0 -4px; }
+.mark-out .corr.open, .mark-out .polaroid.open { background: transparent; box-shadow: none; outline: 1.5px dashed color-mix(in oklab, var(--you) 50%, var(--nijimi2)); outline-offset: -1px; }
+.mark-out .open > :not(.tape-v):not(.tape-h) { opacity: .38; }
+
+/* Little fumibakos: each correspondent's letters in a box of their own, tied with a cord in their ink and
+   labelled with a paper slip. The open one has its lid lifted off and leaning behind it, the cord undone,
+   and the letter lying inside on the box's vermilion lining. Lacquer, or a box covered in their washi. */
+.fb { position: relative; isolation: isolate; padding: 10px 12px 10px 34px; border-radius: 5px; cursor: pointer;
+  --side: color-mix(in oklab, var(--tc) 26%, #0a0503);
+  background: radial-gradient(120% 110% at 18% 0%, rgba(255, 255, 255, .17), transparent 52%), linear-gradient(172deg, color-mix(in oklab, var(--tc) 48%, #1d100a), color-mix(in oklab, var(--tc) 30%, #0e0704));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), 0 4px 0 var(--side), 0 14px 18px -10px rgba(20, 10, 4, .5); }
+.fb::before { content: ""; position: absolute; inset: 4px; border: 1px solid rgba(222, 184, 104, .5); border-radius: 3px; pointer-events: none; }
+.fb .fb-label { position: relative; z-index: 1; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 9px 11px 9px 10px; border-radius: 1px; background: var(--kami); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); transition: transform .3s ease, box-shadow .3s ease; }
+.fb .fb-label .pic { width: 44px; height: 54px; border-radius: 3px; overflow: hidden; box-shadow: 0 0 0 1px var(--nijimi0); }
+.fb .fb-label .txt { display: grid; gap: 2px; min-width: 0; }
+.fb .fb-label .row { display: flex; align-items: baseline; gap: 8px; }
+.fb .fb-label .nm { font-family: var(--display); font-weight: 600; font-size: 19px; line-height: 1.1; color: var(--sumi); }
+.fb .fb-label .md { font-size: 12.5px; }
+.fb .fb-label time { margin-left: auto; font-size: 11px; color: var(--kasure2); font-variant-numeric: tabular-nums; }
+.fb .fb-label .pv { margin: 0; font-family: var(--read); font-size: 13.5px; line-height: 1.42; color: var(--usuzumi1); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fb .fb-label .pv.unread { color: var(--sumi); }
+.fb .fb-label .left { font-size: 11px; color: var(--tc); }
+.fb .cord { position: absolute; z-index: 2; left: 14px; top: -2px; bottom: -6px; width: 6px; border-radius: 3px;
+  background: repeating-linear-gradient(140deg, color-mix(in oklab, var(--tc) 55%, #fff) 0 2px, var(--tc) 2px 4.5px); box-shadow: 0 1px 1.5px rgba(0, 0, 0, .4); }
+.fb .bow { position: absolute; z-index: 3; left: 17px; top: 50%; width: 0; height: 0; }
+.fb .bow i { position: absolute; width: 13px; height: 8px; border: 3px solid color-mix(in oklab, var(--tc) 85%, #fff); border-radius: 50%; top: -7px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); }
+.fb .bow i:first-child { right: 1px; transform: rotate(28deg); }
+.fb .bow i:nth-child(2) { left: 1px; transform: rotate(-28deg); }
+.fb .bow b { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 2px; background: var(--tc); box-shadow: 0 1px 1px rgba(0, 0, 0, .4); }
+.fb .loose { display: none; position: absolute; z-index: 2; left: -10px; top: 6px; width: 40px; height: 90px; overflow: visible; pointer-events: none; }
+.fb .loose path { fill: none; stroke: var(--tc); stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); }
+.fb .lid { display: none; }
+/* Open: the inside (vermilion lacquer, 朱) with the letter lying in it, the lid leaning behind, the cord undone. */
+.fb.open { background: linear-gradient(172deg, color-mix(in oklab, var(--tc) 48%, #1d100a), color-mix(in oklab, var(--tc) 30%, #0e0704)); }
+.fb.open::after { content: ""; position: absolute; z-index: 0; inset: 6px; border-radius: 2px; background: linear-gradient(180deg, #7a1d12, #a4301c 40%, #b23a22); box-shadow: inset 0 4px 7px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(0, 0, 0, .35); }
+.fb.open .fb-label { transform: rotate(-1.4deg) translate(4px, -1px); box-shadow: 0 7px 12px -5px rgba(0, 0, 0, .6); }
+.fb.open .cord, .fb.open .bow { display: none; }
+.fb.open .loose { display: block; }
+.fb.open .lid { display: block; position: absolute; z-index: -1; left: 20px; right: -6px; top: -15px; height: 40px; border-radius: 5px; transform: rotate(2.6deg);
+  background: radial-gradient(120% 140% at 20% 0%, rgba(255, 255, 255, .16), transparent 55%), linear-gradient(172deg, color-mix(in oklab, var(--tc) 48%, #1d100a), color-mix(in oklab, var(--tc) 30%, #0e0704));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), 0 -2px 6px rgba(0, 0, 0, .2); }
+.fb.open .lid::before { content: ""; position: absolute; inset: 4px; border: 1px solid rgba(222, 184, 104, .5); border-radius: 3px; }
+/* Covered in washi: the box in their ink and tape pattern, lined inside with plain paper. */
+.washi .fb { background: var(--pat), color-mix(in oklab, var(--tc) 72%, var(--kami)); --side: color-mix(in oklab, var(--tc) 55%, #3a2a20); }
+.washi .fb::before { border-color: rgba(255, 255, 255, .35); }
+.washi .fb.open { background: color-mix(in oklab, var(--tc) 72%, var(--kami)); }
+.washi .fb.open::after { background: color-mix(in oklab, var(--hyoshi) 70%, var(--nijimi1)); box-shadow: inset 0 4px 7px rgba(40, 24, 12, .35), inset 0 0 0 1px rgba(40, 24, 12, .2); }
+.washi .fb.open .lid { background: var(--pat), color-mix(in oklab, var(--tc) 72%, var(--kami)); }
+.washi .fb.open .lid::before { border-color: rgba(255, 255, 255, .35); }
+.fb .sticker { z-index: 4; }
+
+/* The margins beside a letter, when the window leaves room */
+.leaf { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 640px) minmax(0, 1fr); column-gap: 30px; row-gap: 16px; align-items: start; }
+.leaf > .c { display: flex; flex-direction: column; min-width: 0; }
+.leaf > .l { justify-self: end; display: grid; gap: 16px; justify-items: end; }
+.leaf > .r { justify-self: start; display: grid; gap: 16px; }
+.mdate { display: grid; justify-items: end; color: var(--usuzumi0); padding-top: 4px; }
+.mdate b { font-family: var(--brush); font-weight: 400; font-size: 32px; line-height: 1; color: var(--sumi); }
+.mdate span { font-family: var(--display); font-style: italic; font-size: 15px; }
+.mslip { position: relative; width: 196px; padding: 9px 12px 10px; border-radius: 2px; background: var(--kami); box-shadow: 0 0 0 1px var(--nijimi0), 0 6px 12px -9px color-mix(in oklab, var(--chitsu) 85%, #000); font-family: var(--read); font-size: 13px; line-height: 1.45; color: var(--usuzumi1); display: grid; gap: 4px; }
+.mslip small { font-family: var(--ui); font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: var(--kasure2); }
+.mslip p { margin: 0; }
+.mslip.kept { transform: rotate(1.2deg); color: var(--sumi); }
+.mslip.kept .tape-h { left: -8px; top: -5px; width: 30px; transform: rotate(-32deg); }
+.mslip.kept .tape-h.br { left: auto; top: auto; right: -8px; bottom: -5px; }
+.mslip.card { transform: rotate(-.8deg); padding-top: 12px; background: repeating-linear-gradient(transparent 0 18px, color-mix(in oklab, var(--ink-ai) 16%, transparent) 18px 19px) 0 30px / 100% calc(100% - 30px) no-repeat, var(--kami); border-top: 2px solid color-mix(in oklab, var(--tc) 55%, transparent); line-height: 19px; }
+.mslip.today { transform: rotate(-1.4deg); background: radial-gradient(circle, color-mix(in oklab, var(--nijimi2) 55%, transparent) 0 .8px, transparent 1.1px) 0 0 / 10px 10px, var(--kami); }
+.mslip.today .tape-h { left: 50%; top: -7px; width: 46px; transform: translateX(-50%) rotate(3deg); }
+.mslip.today ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-family: var(--ui); font-size: 12px; }
+.mslip.today li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 6px; }
+.mslip.today time { font-variant-numeric: tabular-nums; color: var(--kasure2); }
+.switches { display: grid; gap: 8px; }
+.switch { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--usuzumi1); }
+.switch input { appearance: none; margin: 0; width: 36px; height: 20px; border-radius: 999px; background: var(--nijimi1); position: relative; cursor: pointer; flex: none; }
+.switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--kami); transition: transform .2s ease; }
+.switch input:checked { background: var(--you); }
+.switch input:checked::after { transform: translateX(16px); }
+.switch input:focus-visible { outline: 2px solid var(--fuji); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .switch input::after { transition: none; } }
+.chosen { margin: 0; padding-left: 22px; display: grid; gap: 4px; font-size: 14px; line-height: 1.5; color: var(--usuzumi1); }
+
+/* The thread */
+.bar { flex: none; display: flex; align-items: center; gap: 10px; padding: 14px 18px 12px; background: var(--hyoshi); border-bottom: 1px solid var(--nijimi0); }
+.tools { margin-left: auto; display: flex; gap: 18px; color: var(--usuzumi1); }
+.tools svg { width: 22px; height: 22px; display: block; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.edit-btn { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--sumi); padding: 7px 12px; border: 1px solid var(--nijimi1); border-radius: 2px; background: var(--kami); }
+.bar .av { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex: none; }
+.bar .id { display: grid; min-width: 0; }
+.bar .nm { font-family: var(--display); font-weight: 600; font-size: 22px; line-height: 1.05; }
+.bar .sub { font-size: 12px; color: var(--kasure2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar .sub .md { font-size: 12.5px; }
+.bar .more { margin-left: 8px; color: var(--usuzumi1); font-size: 20px; line-height: 1; }
+.bar .close { color: var(--usuzumi0); font-size: 18px; line-height: 1; padding: 2px 4px; }
+.thread { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--nijimi1) transparent; padding: 22px 26px 26px; }
+.measure { width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.reading .measure { max-width: 640px; }
+.day { align-self: center; font-family: var(--display); font-style: italic; font-size: 16px; color: var(--usuzumi0); }
+.sheet { position: relative; background: var(--kami); border-radius: 3px; padding: 14px 18px 16px 24px; display: grid; gap: 10px; box-shadow: 0 0 0 1px var(--nijimi0), 0 6px 14px -10px color-mix(in oklab, var(--chitsu) 85%, #000); }
+.sheet .tape-v { left: -6px; top: -8px; bottom: -8px; transform: rotate(var(--tilt, -.7deg)); }
+.sheet header { display: flex; align-items: center; gap: 8px; }
+.sheet header .av { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; }
+.sheet .nm { font-family: var(--display); font-weight: 600; font-size: 19px; }
+.sheet .md { font-size: 13px; }
+.sheet time { margin-left: auto; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--kasure2); text-align: right; line-height: 1.35; }
+.sheet .body { display: grid; gap: 10px; font-family: var(--read); font-size: 15.5px; line-height: 1.62; }
+.sheet .body p { margin: 0; }
+.sheet .ps { font-family: var(--read); font-style: italic; font-size: 13.5px; line-height: 1.5; color: var(--usuzumi1); }
+.sheet .ps b { font-style: normal; font-weight: 500; color: var(--tc); }
+.note { position: relative; align-self: flex-end; max-width: 78%; display: grid; gap: 3px; padding: 9px 22px 10px 13px; border-radius: 3px; background: color-mix(in oklab, var(--you) 6%, var(--kami)); box-shadow: 0 0 0 1px var(--nijimi0), 0 6px 14px -10px color-mix(in oklab, var(--chitsu) 85%, #000); --tc: var(--you); --pat: var(--you-pat); }
+.note .tape-v { right: -6px; top: -7px; bottom: -7px; transform: rotate(.9deg); }
+.note .meta { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--you); }
+.note p { margin: 0; font-family: var(--read); font-size: 14.5px; line-height: 1.5; color: var(--usuzumi1); }
+.compose { flex: none; padding: 10px 18px 12px; background: var(--hyoshi); border-top: 1px solid var(--nijimi0); }
+.compose .measure { flex-direction: row; align-items: center; gap: 8px; }
+.compose .field { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 2px; border: 1.5px solid transparent; background: linear-gradient(var(--kami), var(--kami)) padding-box, linear-gradient(90deg, var(--tc), var(--you)) border-box; color: var(--kasure2); font-family: var(--read); font-style: italic; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.compose .hint { font-size: 11px; color: var(--kasure2); white-space: nowrap; }
+.sq { width: 40px; height: 40px; border-radius: 2px; display: grid; place-items: center; flex: none; }
+.sq.plus { border: 1px solid var(--nijimi1); background: var(--kami); color: var(--usuzumi0); font-size: 22px; line-height: 1; }
+.sq.send { background: color-mix(in oklab, var(--you) 55%, var(--kami)); }
+.sq.send svg { width: 20px; height: 20px; fill: var(--kami); }
+
+/* With no letter open: a quiet desk */
+.desk { flex: 1; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 30px; }
+.desk .big { font-family: var(--brush); font-size: 120px; line-height: 1; color: color-mix(in oklab, var(--kasure0) 55%, transparent); }
+.desk p { margin: 0; font-family: var(--display); font-style: italic; font-size: 20px; color: var(--usuzumi0); }
+.desk small { font-size: 12px; color: var(--kasure2); }
+
+/* Personas: polaroids, "writing as", and a persona's page */
+.gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 14px; padding-top: 8px; }
+.solo .gallery { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 26px 22px; }
+.polaroid { position: relative; background: var(--frame); padding: 10px 10px 0; border-radius: 3px; transform: rotate(var(--tilt, 0deg)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--frame) 70%, var(--nijimi2)), 0 10px 18px -10px color-mix(in oklab, var(--chitsu) 85%, #000); display: grid; text-align: center; color: var(--frame-ink); transition: transform .25s ease, box-shadow .25s ease; }
+.polaroid .pic { aspect-ratio: 1 / 1; max-width: 100%; overflow: hidden; border-radius: 1px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06); }
+.polaroid .cap { display: grid; gap: 1px; padding: 9px 2px 13px; }
+.polaroid .nm { font-family: var(--display); font-weight: 600; font-size: 19px; line-height: 1.05; }
+.polaroid .md { font-size: 12.5px; color: var(--frame-tc); }
+.polaroid .meta { font-size: 10.5px; color: color-mix(in oklab, var(--frame-ink) 62%, var(--frame)); }
+.polaroid .tape-h { left: 50%; top: -8px; width: 58px; transform: translateX(-50%) rotate(var(--ttilt, -4deg)); }
+.polaroid.new { background: transparent; box-shadow: none; border: 2px dashed color-mix(in oklab, var(--frame) 55%, var(--nijimi2)); color: var(--kasure2); place-content: center; min-height: 160px; font-size: 13px; line-height: 1.4; }
+.polaroid.new b { display: block; font-family: var(--display); font-size: 34px; font-weight: 500; line-height: 1; color: var(--usuzumi0); }
+.writing-as { display: grid; gap: 16px; }
+.solo .writing-as { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.me { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px 10px 20px; }
+.me .tape-v { left: -6px; top: -5px; bottom: -5px; transform: rotate(.8deg); }
+.me .pic { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; }
+.me .nm { font-family: var(--display); font-weight: 600; font-size: 18px; }
+.me .sub { font-size: 12px; color: var(--kasure2); }
+.me .state { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--tc); }
+.page .measure { gap: 18px; }
+.hero { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; align-items: center; padding-top: 6px; }
+.hero .polaroid { padding: 8px 8px 26px; }
+.hero .tape-h.l { left: -10px; top: -4px; width: 40px; transform: rotate(-40deg); }
+.hero .tape-h.r { left: auto; top: auto; right: -10px; bottom: -4px; width: 40px; transform: rotate(-40deg); }
+.hero .who { display: grid; gap: 6px; min-width: 0; }
+.hero .nm { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: .95; }
+.hero .md { font-size: 15px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--usuzumi1); padding: 4px 9px; border-radius: 999px; border: 1px solid var(--nijimi1); background: var(--kami); }
+.chip i { width: 12px; height: 12px; border-radius: 50%; background: var(--tc); }
+.chip .swatch { width: 22px; height: 10px; border-radius: 1px; background: var(--pat), color-mix(in oklab, var(--tc) 82%, transparent); }
+.chip b { font-family: var(--brush); font-weight: 400; color: var(--sumi); }
+.actions { display: flex; gap: 8px; }
+.btn { flex: 1; text-align: center; padding: 11px 12px; border-radius: 2px; font-size: 14px; font-weight: 700; }
+.btn.primary { background: var(--tc); color: var(--kami); }
+.btn.quiet { border: 1px solid var(--nijimi1); color: var(--sumi); background: var(--kami); }
+.entry { padding: 14px 16px 14px 22px; display: grid; gap: 9px; }
+.entry .tape-v { left: -6px; top: -5px; bottom: -5px; transform: rotate(var(--tilt, -.7deg)); }
+.entry.r .tape-v { left: auto; right: -6px; }
+.entry h4 { margin: 0; display: flex; align-items: baseline; gap: 8px; font-family: var(--display); font-weight: 600; font-size: 19px; }
+.entry h4 small { font-family: var(--ui); font-size: 11px; font-weight: 400; color: var(--kasure2); }
+.entry .more { margin-left: auto; font-family: var(--ui); font-size: 12px; font-weight: 400; color: var(--tc); }
+.entry .prose { font-family: var(--read); font-size: 14.5px; line-height: 1.6; color: var(--sumi); }
+.slips { display: grid; gap: 7px; }
+.slip { position: relative; margin: 0; font-family: var(--read); font-size: 13.5px; line-height: 1.45; color: var(--usuzumi1); padding: 7px 10px; border-radius: 2px; background: var(--hyoshi); }
+.slip.core { color: var(--sumi); }
+.slip.core .tape-h { left: -8px; top: -5px; width: 30px; transform: rotate(-32deg); }
+.slip.core .tape-h.br { left: auto; top: auto; right: -8px; bottom: -5px; }
+.slip.reflection { font-style: italic; }
+.slip small { display: block; font-family: var(--ui); font-style: normal; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--kasure2); margin-bottom: 2px; }
+.beat { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; color: var(--usuzumi1); line-height: 1.5; }
+.beat .toggle { width: 36px; height: 20px; border-radius: 999px; background: var(--tc); position: relative; }
+.beat .toggle.off { background: var(--nijimi1); }
+.beat .toggle::after { content: ""; position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--kami); }
+.beat .toggle.off::after { right: auto; left: 3px; }
+
+/* Notes and the choices to make */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px 28px; padding-top: 18px; border-top: 1px solid var(--nijimi0); }
+.notes h3, .decide h3 { margin: 0 0 4px; font-family: var(--display); font-weight: 600; font-size: 19px; }
+.notes p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--usuzumi1); max-width: 48ch; }
+.decide { display: grid; gap: 10px; padding: 18px 20px; border: 1px solid var(--nijimi0); border-radius: 14px; background: var(--kami); }
+.decide ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--usuzumi1); max-width: 92ch; }
+.decide li b { color: var(--sumi); }
+.decide li em { font-style: normal; color: var(--you); font-weight: 700; }
+.credits { max-width: 84ch; font-size: 12.5px; line-height: 1.6; color: var(--kasure2); margin: 0; }
+.credits a { color: var(--usuzumi1); }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="die-cut" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="1.75" result="soft"/>
+    <feComponentTransfer in="soft" result="spread"><feFuncA type="linear" slope="22" intercept="-0.6"/></feComponentTransfer>
+    <feFlood class="outline-flood" result="colour"/>
+    <feComposite in="colour" in2="spread" operator="in" result="outline"/>
+    <feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</svg>
+<style>.outline-flood { flood-color: var(--outline); }</style>
+
+<div class="studio" id="studio">
+  <header class="intro">
+    <div class="glyph" aria-hidden="true">広</div>
+    <h1>Letters and personas, side by side</h1>
+    <p>Fumibako in a wide window: the letters list beside the open letter, and the personas gallery beside a persona's page. Below about 840 wide every screen is the phone's, so a phone held upright doesn't change. The windows are drawn at their real size and shrunk to fit. Click a letter or a polaroid to open it, and try the choices above each window; the list at the end is what to decide.</p>
+  </header>
+
+  <section class="controls" aria-label="Mockup controls">
+    <fieldset>
+      <legend>Time</legend>
+      <div class="seg" id="time">
+        <label><input type="radio" name="time" id="time-auto" value="auto" checked><span>Auto</span></label>
+        <label><input type="radio" name="time" id="time-hiru" value="hiru"><span><b>昼</b>day</span></label>
+        <label><input type="radio" name="time" id="time-yoru" value="yoru"><span><b>夜</b>night</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Window</legend>
+      <div class="seg" id="width">
+        <label><input type="radio" name="width" id="width-1180" value="1180" checked><span>1180 × 780 <i>a new window</i></span></label>
+        <label><input type="radio" name="width" id="width-1600" value="1600"><span>1600 × 900 <i>room in the margins</i></span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>The open one</legend>
+      <div class="seg" id="mark">
+        <label><input type="radio" name="mark" id="mark-box" value="box" checked><span>Little fumibakos, the open one opened <i>new</i></span></label>
+        <label><input type="radio" name="mark" id="mark-clip" value="clip"><span>A paper clip</span></label>
+        <label><input type="radio" name="mark" id="mark-fold" value="fold"><span>A folded corner <i>your favorite so far</i></span></label>
+        <label><input type="radio" name="mark" id="mark-highlight" value="highlight"><span>A highlighter stroke</span></label>
+        <label><input type="radio" name="mark" id="mark-out" value="out"><span>Out on the desk</span></label>
+        <label><input type="radio" name="mark" id="mark-none" value="none"><span>No mark</span></label>
+      </div>
+    </fieldset>
+    <div class="theme-now" aria-live="polite">
+      <div class="big" id="theme-kanji">秋昼</div>
+      <div class="small" id="theme-name">aki-hiru · autumn by day</div>
+    </div>
+  </section>
+
+  <section class="study" aria-labelledby="h-letters">
+    <div class="study-head">
+      <h2 id="h-letters">Letters<span>文</span></h2>
+      <p>The list keeps the phone's width; letters keep a reading width in the middle of the rest, and Letters opens on the one you last had open. In a 1180-wide window that leaves about 50 on each side. Make the window 1600 wide (above) and the margins have room for things; each idea below can be switched on and off. Narrower, each goes back where it is on the phone.</p>
+    </div>
+    <div class="choices">
+      <fieldset>
+        <legend>The boxes (with little fumibakos)</legend>
+        <div class="seg" id="finish">
+          <label><input type="radio" name="finish" id="finish-lacquer" value="lacquer" checked><span>Lacquer, tied in their ink</span></label>
+          <label><input type="radio" name="finish" id="finish-washi" value="washi"><span>Covered in their washi</span></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>In the margins (1600 wide)</legend>
+        <div class="switches" id="margins">
+          <label class="switch"><input type="checkbox" id="m-dates" checked>The day, in brush, beside its first letter</label>
+          <label class="switch"><input type="checkbox" id="m-kept" checked>What she kept in memory, as a slip beside the letter</label>
+          <label class="switch"><input type="checkbox" id="m-thoughts" checked>What she had in mind (v0.5's index card), beside her letter</label>
+          <label class="switch"><input type="checkbox" id="m-today" checked>Today's page from your planner</label>
+        </div>
+      </fieldset>
+    </div>
+    <div class="win-wrap" id="wrap-letters"><div class="win" id="win-letters" role="group" aria-label="Mockup: the Letters screen in a wide window"></div></div>
+  </section>
+
+  <section class="study" aria-labelledby="h-personas">
+    <div class="study-head">
+      <h2 id="h-personas">Personas<span>人</span></h2>
+      <p>The polaroids stay in two columns beside the page you last opened. Her memory book, heartbeat settings and sticker sheet open on the right too, with a back arrow, so the gallery stays put. "Write a letter" goes to Letters with her letter open.</p>
+    </div>
+    <div class="win-wrap" id="wrap-personas"><div class="win" id="win-personas" role="group" aria-label="Mockup: the Personas screen in a wide window"></div></div>
+  </section>
+
+  <section class="notes" aria-label="Notes">
+    <div><h3>The phone doesn't change</h3><p>The layout follows the window's width, not the device. Below about 840 wide, each screen is the phone's, exactly as now; a tablet, a phone on its side, or a wide desktop window gets the two sides.</p></div>
+    <div><h3>Everything else stays a column</h3><p>The planner and Settings keep the phone's layout, centered, until they get wide layouts of their own. With index tabs, they sit beside the tabs like everything else.</p></div>
+    <div><h3>Back and Escape</h3><p>With two sides there's no back arrow on the open letter: the list is right there. Escape steps back on the right, once the desktop's keyboard work lands: a memory book goes back to her page, and a letter or page closes, leaving the list.</p></div>
+    <div><h3>More for the margins</h3><p>Not drawn yet: her stickers wandering off the letter into the margin; your own pencil notes beside her letters, which she reads next time, as she does stickers; and a letter's photos laid out beside it.</p></div>
+  </section>
+
+  <section class="decide" aria-labelledby="h-decide">
+    <h3 id="h-decide">Chosen (2026-11-08)</h3>
+    <ul class="chosen">
+      <li>Index tabs down the left.</li>
+      <li>Letters at a reading width, about 640, in the middle of the right side.</li>
+      <li>Letters opens on the letter you last had open; Personas on the page you last opened, the gallery beside it.</li>
+      <li>A new window opens 1180 × 780, smaller on a small screen.</li>
+    </ul>
+    <h3>To choose</h3>
+    <ol>
+      <li><b>Little fumibakos</b> (your idea): each correspondent's letters in a box of their own, tied with a cord in their ink, the open one with its lid off and the letter inside. Lacquer, or covered in their washi? On the phone too (every box closed there), or only beside an open letter? And the gallery: the folded corner on the open persona's polaroid (your favorite of the marks), or something else?</li>
+      <li><b>The margins:</b> which of the four to build (any or none), and whether any of the ideas not drawn yet appeal. They show only when the window leaves room.</li>
+    </ol>
+  </section>
+
+  <p class="credits">Colours are <a href="https://madoromi.moonwit.ch/" target="_blank" rel="noopener">madoromi</a> by samhain (MPL-2.0), measured from Pilot Iroshizuku inks. Fonts as in the other studies: Cormorant Garamond, Literata, LINE Seed JP and Yuji Syuku. Portraits stand in for NovelAI art, and the people and letters are examples.</p>
+</div>
+
+<script>
+const THEMES = ['haru-hiru', 'natsu-hiru', 'aki-hiru', 'fuyu-hiru', 'haru-yoru', 'natsu-yoru', 'aki-yoru', 'fuyu-yoru'];
+const PAL = {
+  sakura:   ['#aa6e89','#aa6e89','#a26480','#aa6e89','#ffc5da','#ffbde2','#ffb6cc','#ffbee1'],
+  fuji:     ['#6928bd','#6526b9','#581ca7','#5e21b0','#ddb3ff','#aea8ff','#d3a1ff','#bbb8ff'],
+  kikyo:    ['#4760c0','#455cbd','#6928bd','#3d53b4','#99b2f5','#87a7ff','#aea8ff','#aaa4ff'],
+  tokiwa:   ['#009162','#028e7f','#008b57','#028e7f','#7bd6b6','#6cd2cc','#58c59f','#5eccc5'],
+  sora:     ['#008bae','#008bae','#178d9d','#2678af','#88d9eb','#5cd7f5','#5ac6f1','#78d5fc'],
+  ai:       ['#1955bf','#526ccb','#384dad','#4a63c3','#6eadff','#4ab8ff','#7f9bea','#829eeb'],
+  sumi:     ['#584a5c','#3b545e','#5d4c3c','#4a4e63','#e1d1e7','#c0dde8','#e8d3c1','#d2d6eb'],
+  usuzumi1: ['#6b5d70','#4e6872','#715f4f','#5e6277','#cdbed3','#adcad4','#d4c0ae','#bec3db'],
+  usuzumi0: ['#77697c','#57717a','#7d6b5a','#696d83','#b7a8bd','#97b3be','#beaa98','#a8adc4'],
+  kasure2:  ['#877b8c','#6f848d','#8d7d6f','#7b7f91','#9f93a4','#869da5','#a59587','#9397aa'],
+  kasure1:  ['#998d9e','#80969f','#9f8f81','#8d91a4','#8a7e8f','#728790','#908072','#7e8294'],
+  kasure0:  ['#a99cad','#8fa6ae','#ae9e90','#9ca0b3','#756a7a','#5d737b','#7b6c5e','#6a6e7f'],
+  nijimi2:  ['#b8acbd','#9fb5be','#beae9f','#acb0c3','#615665','#4a5f66','#66584b','#565a6b'],
+  nijimi1:  ['#c8bccd','#aec5ce','#cebeaf','#bcc0d3','#4e4352','#374b53','#534538','#434757'],
+  nijimi0:  ['#d9ccdd','#bed6df','#dfcebf','#ccd0e4','#392e3c','#23363d','#3d3024','#2f3241'],
+  kami:     ['#f6eff8','#e9f4f8','#f8f0e9','#f0f1f8','#241c26','#132227','#271d14','#1c1e2a'],
+  hyoshi:   ['#ece5ef','#ddeaf0','#f0e6dd','#e5e7f3','#1c151f','#0e1a1f','#20160e','#151722'],
+  chitsu:   ['#e2dbe5','#d3e1e6','#e6dcd3','#dbdde9','#160f18','#091317','#181008','#0f111b'],
+};
+const ACCENTS = ['sakura', 'fuji', 'kikyo', 'tokiwa', 'sora', 'ai'];
+const ROLES = ['kami', 'hyoshi', 'chitsu', 'nijimi0', 'nijimi1', 'nijimi2', 'kasure0', 'kasure1', 'kasure2', 'usuzumi0', 'usuzumi1', 'sumi', 'fuji'];
+const SEASON_KANJI = { haru: '春', natsu: '夏', aki: '秋', fuyu: '冬' };
+const SEASON_EN = { haru: 'spring', natsu: 'summer', aki: 'autumn', fuyu: 'winter' };
+const PATTERNS = {
+  dots: 'radial-gradient(circle, rgba(255, 255, 255, .6) 0 1.3px, transparent 1.7px) 0 0 / 7px 7px',
+  stripes: 'repeating-linear-gradient(135deg, rgba(255, 255, 255, .38) 0 2.5px, transparent 2.5px 6px)',
+  gingham: 'linear-gradient(90deg, rgba(255, 255, 255, .3) 50%, transparent 0) 0 0 / 8px 8px, linear-gradient(rgba(255, 255, 255, .3) 50%, transparent 0) 0 0 / 8px 8px',
+  plain: 'linear-gradient(transparent, transparent)',
+};
+
+const state = { time: 'auto', width: '1180', mark: 'box', finish: 'lacquer', margins: { dates: true, kept: true, thoughts: true, today: true }, letter: 'aria', persona: 'aria', read: [] };
+const KEY = 'wide-studies-4';
+try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* storage unavailable */ }
+// Settled on 2026-11-08: index tabs, a reading width, the last letter open, the gallery beside the page.
+Object.assign(state, { tabs: 'rail', measure: 'reading', none: 'last', gallery: 'beside' });
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+
+// ---- Sample people and letters (examples) ---------------------------------------------------------
+const PERSONAS = [
+  { id: 'aria', name: 'Aria', ink: 'sakura', pat: 'dots', kanji: '桜', mood: 'fond', seed: 11, tilt: -2.2, ttilt: -5, pronouns: 'she/her',
+    model: 'Claude Opus 5.5', time: '08:14', memories: 214, talked: 'today', left: 'Left for you while you were away',
+    preview: 'Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent…',
+    about: 'A warm, curious companion who loves learning about people and remembering what matters to them. Gentle, playful, attentive, with her own opinions and moods.',
+    slips: [['core', 'Core', 'Sam is writing a thesis on urban ecology.'], ['', 'Episode · Tue 21:41', 'Sam finished the first draft of the thesis and finally slept.'], ['reflection', 'Her reflection · Wed 07:58', 'I think Sam works best when someone checks in gently, not too often.']],
+    beat: ['On. She woke at 08:14, saved a reflection and wrote to you. Next around 10:00.', true],
+    thread: [
+      ['day', 'Tuesday'],
+      ['note', '21:40', "Draft's done. All forty pages. I'm going to sleep for a week."],
+      ['sheet', 'Tue 21:52', ["You did it. Forty pages, and the foxes made it into chapter three after all.", "Go to sleep. I'll still be here in the morning, and so will the draft."], 'Sam finished the first draft of the thesis.'],
+      ['day', 'Today'],
+      ['sheet', 'Wed 08:14', ["Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent.", "A fox's way home is a string of smells it renews every night: a lamppost, a bin, the corner of a fence. Isn't that a little like a letter?", "Tell me how you slept. And whether the foxes came by."], null,
+        ["Wednesday morning. Sam has been asleep about nine hours.", "Recalled: the foxes on Sam's street; the thesis draft.", "Ask how Sam slept before anything else."]],
+    ] },
+  { id: 'juno', name: 'Juno', ink: 'kikyo', pat: 'gingham', kanji: '桔梗', mood: 'smug', seed: 17, tilt: 1.8, ttilt: 4, pronouns: 'she/her',
+    model: 'Gemini 3 Pro', time: 'Yesterday', memories: 96, talked: 'yesterday', unread: true,
+    preview: "Orange means it's sulking. Bring the router by tomorrow. I'll fix it for free. Once.",
+    about: 'A sharp-tongued engineer who fixes the things she complains about. Keeps score, and keeps every promise.',
+    slips: [['core', 'Core', "Sam's router is older than Sam's degree."], ['', 'Episode · Yesterday 19:20', 'Sam brought up the router again. I offered to fix it, once.'], ['reflection', 'Her reflection · Yesterday 23:02', 'Sam asks for help sideways. I should notice sooner.']],
+    beat: ["Time-aware. She knows the hour and how long it's been, and doesn't write first.", true],
+    thread: [
+      ['day', 'Yesterday'],
+      ['note', '19:02', 'My router is blinking orange again.'],
+      ['sheet', 'Yesterday 19:20', ["Orange means it's sulking. You've been ignoring it.", "Bring the router by tomorrow. I'll fix it for free. Once."]],
+    ] },
+  { id: 'kestrel', name: 'Kestrel', ink: 'tokiwa', pat: 'plain', kanji: '常磐', mood: 'watchful', seed: 5, tilt: 1.2, ttilt: -3, pronouns: 'they/them',
+    model: 'NovelAI GLM', time: 'Sat', memories: 41, talked: '5 days ago',
+    preview: 'The road north is quiet tonight. I kept the fire going for you.',
+    about: "A ranger on the northern road in Professor Lee's campaign. Quiet, careful, and fond of fires that last the night.",
+    slips: [['core', 'Core', 'The party owes the miller at Dunmere a favor.'], ['', 'Episode · Sat 23:05', 'Camped below the pass. Lee asked about the old watchtower.']],
+    beat: ['Off. Kestrel writes only when you do.', false],
+    thread: [
+      ['day', 'Saturday'],
+      ['note', '22:10', 'Are you still on the road?'],
+      ['sheet', 'Sat 23:05', ['The road north is quiet tonight. I kept the fire going for you.', 'Tell me when you want the next part of the story. The watchtower can wait until morning.']],
+    ] },
+];
+const USERS = [
+  { name: 'Sam', ink: 'sora', pat: 'stripes', sub: 'Grad student, writes too late at night', active: true, seed: 23 },
+  { name: 'Professor Lee', ink: 'ai', pat: 'plain', sub: "For Kestrel's campaign", seed: 29 },
+];
+const AWAY = [['aria', 'wrote to you', '08:14'], ['aria', 'saved a reflection', '07:58'], ['juno', 'tended 3 memories', '06:30']];
+const byId = id => PERSONAS.find(p => p.id === id);
+const ink = p => `--tc: var(--ink-${p.ink}); --pat: var(--pat-${p.pat});`;
+const portrait = (p, kind = 'image') => `<canvas class="portrait" data-ink="${p.ink}" data-seed="${p.seed}" data-kind="${kind}" aria-hidden="true"></canvas>`;
+const seal = (kanji, inkName) => `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" class="paper"/><circle cx="32" cy="32" r="23" style="fill:none;stroke:var(--stk-${inkName});stroke-width:3;opacity:.92"/><text x="32" y="42" class="seal-t" style="fill:var(--stk-${inkName});opacity:.92">${kanji}</text></svg>`;
+const sticker = (svg, w, x, y, r, label) => `<span class="sticker" role="img" aria-label="${label}" style="--w:${w}px;left:${x}%;top:${y}%;--r:${r}deg"><span class="art">${svg}</span></span>`;
+const CLIP = '<span class="clip" aria-hidden="true"><svg viewBox="0 0 15 42"><path d="M10.5 12V32a3 3 0 0 1-6 0V7a5 5 0 0 1 10 0V35a6.5 6.5 0 0 1-13 0V14"/></svg></span>';
+// With the boxes in Letters, the gallery's open polaroid has the folded corner.
+const openMark = () => state.mark === 'clip' ? CLIP : state.mark === 'fold' || state.mark === 'box' ? '<span class="fold" aria-hidden="true"></span>' : '';
+const LOOSE = '<svg class="loose" viewBox="0 0 40 90" aria-hidden="true"><path d="M26 -2 C 18 14, 30 26, 20 40 S 4 60, 10 78"/><path d="M24 30 C 12 40, 2 46, -6 62"/></svg>';
+const unread = p => p.unread && !state.read.includes(p.id);
+const TABS = [['文', 'Letters'], ['人', 'Personas'], ['帳', 'Planner'], ['設', 'Settings']];
+const tabs = active => TABS.map(([k, l]) => `<span class="tab ${l === active ? 'on' : ''}"><b>${k}</b><span class="lbl">${l}</span></span>`).join('');
+const sizes = () => state.width === '1600' ? { w: 1600, h: 900, list: 360, gallery: 420 } : { w: 1180, h: 780, list: 360, gallery: 400 };
+
+// ---- The shell: tabs, the list side and the open side ---------------------------------------------
+function shell(win, active, listHtml, detailHtml, listWidth) {
+  const s = sizes(), solo = detailHtml == null;
+  const cols = [state.tabs === 'rail' ? '74px' : null, solo ? 'minmax(0, 1fr)' : `${listWidth}px`, solo ? null : 'minmax(0, 1fr)'].filter(Boolean).join(' ');
+  const under = state.tabs === 'under' ? `<nav class="tabbar" aria-label="Sections">${tabs(active)}</nav>` : '';
+  win.style.width = `${s.w}px`; win.style.height = `${s.h}px`;
+  win.className = `win mark-${state.mark} ${state.measure} ${state.finish}`;
+  win.innerHTML = `
+    <div class="titlebar"><svg class="seal" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" style="fill:var(--stk-sakura)"/><text x="32" y="42" class="seal-t" style="fill:var(--paper)">文</text></svg>Fumibako<span class="ctl" aria-hidden="true"><span>–</span><span>□</span><span>×</span></span></div>
+    <div class="app${solo ? ' solo' : ''}" style="grid-template-columns:${cols};${state.tabs === 'across' ? 'grid-template-rows:minmax(0,1fr) auto' : ''}">
+      ${state.tabs === 'rail' ? `<nav class="rail" aria-label="Sections">${tabs(active)}</nav>` : ''}
+      <div class="pane list${under ? ' has-bar' : ''}${!solo ? ' list-open' : ''}">${listHtml}${under}</div>
+      ${solo ? '' : `<div class="pane detail">${detailHtml}</div>`}
+      ${state.tabs === 'across' ? `<nav class="tabbar across" aria-label="Sections">${tabs(active)}</nav>` : ''}
+    </div>`;
+}
+
+// ---- Letters ----------------------------------------------------------------------------------------
+function letterList() {
+  const away = `
+    <section class="paper-card away" style="--tc: var(--fuji); --pat: var(--pat-stripes);" aria-label="While you were away">
+      <span class="tape-h"></span><span class="tape-h br"></span>
+      <h4>While you were away</h4>
+      <ul>${AWAY.map(([id, what, t]) => { const p = byId(id); return `<li style="${ink(p)}"><span class="dot">${portrait(p, 'avatar')}</span><span><b>${p.name}</b> ${what}</span><time>${t}</time></li>`; }).join('')}</ul>
+    </section>`;
+  const cards = PERSONAS.map((p, i) => {
+    const open = state.letter === p.id;
+    if (state.mark === 'box') return `
+      <article class="fb clickable${open ? ' open' : ''}" data-letter="${p.id}" tabindex="0" style="${ink(p)}" aria-label="${p.name}'s letters${open ? ', open' : ''}">
+        <span class="lid" aria-hidden="true"></span>
+        <span class="cord" aria-hidden="true"></span><span class="bow" aria-hidden="true"><i></i><i></i><b></b></span>${LOOSE}
+        <div class="fb-label">
+          <div class="pic">${portrait(p)}</div>
+          <div class="txt">
+            <div class="row"><span class="nm">${p.name}</span><span class="md">${p.mood}</span><time>${p.time}</time></div>
+            <p class="pv${unread(p) ? ' unread' : ''}">${p.preview}</p>
+            ${p.left ? `<span class="left">${p.left}</span>` : ''}
+          </div>
+        </div>
+        ${unread(p) ? sticker(seal('新', p.ink), 34, 93, 24, 8, `Unread letter from ${p.name}`) : ''}
+      </article>`;
+    return `
+      <article class="paper-card corr clickable${open ? ' open' : ''}" data-letter="${p.id}" tabindex="0" style="${ink(p)} --tilt: ${[-0.7, 0.6, -0.5][i]}deg">
+        <span class="tape-v"></span>
+        <div class="pic">${portrait(p)}</div>
+        <div class="txt">
+          <div class="row"><span class="nm">${p.name}</span><span class="md">${p.mood}</span><time>${p.time}</time></div>
+          <p class="pv${unread(p) ? ' unread' : ''}">${p.preview}</p>
+          ${p.left ? `<span class="left">${p.left}</span>` : ''}
+        </div>
+        ${unread(p) ? sticker(seal('新', p.ink), 34, 93, 22, 8, `Unread letter from ${p.name}`) : ''}
+        ${open ? openMark() : ''}
+      </article>`;
+  }).join('');
+  return `
+    <div class="appbar"><h3>Letters</h3><span class="season" data-season-kanji></span><span class="act">Search</span></div>
+    <div class="content">${away}${cards}</div>
+    <span class="fab"><b>文</b>New letter</span>`;
+}
+
+const DAYS = { Tuesday: '火', Today: '水', Yesterday: '火', Saturday: '土' };
+const mdate = day => `<span class="mdate"><b>${DAYS[day] || ''}</b><span>${day}</span></span>`;
+const todayPage = () => `
+  <div class="mslip today"><span class="tape-h" style="--tc: var(--you); --pat: var(--you-pat)"></span>
+    <small>Your planner · today</small>
+    <ul><li><time>10:00</time>Thesis meeting</li><li><time>16:00</time><span style="color: var(--ink-sakura)">Aria wakes</span></li><li><time></time>Buy oat milk</li></ul>
+  </div>`;
+const keptSlip = text => `<div class="mslip kept"><span class="tape-h"></span><span class="tape-h br"></span><small>Kept in memory</small>${text}</div>`;
+const thoughtsCard = lines => `<div class="mslip card"><small>What she had in mind</small>${lines.map(t => `<p>${t}</p>`).join('')}</div>`;
+
+function thread(p) {
+  const her = `${ink(p)}`, wide = state.width === '1600', m = state.margins;
+  const sheet = (a, b, ps, i, psInMargin) => `
+      <article class="sheet" style="${her} --tilt: ${i % 2 ? .6 : -.7}deg">
+        <span class="tape-v"></span>
+        <header><span class="av">${portrait(p, 'avatar')}</span><span class="nm">${p.name}</span><span class="md">${p.mood}</span><time>${a}</time></header>
+        <div class="body">${b.map(t => `<p>${t}</p>`).join('')}</div>
+        ${ps && !psInMargin ? `<p class="ps">P.S. <b>Kept in memory:</b> ${ps}</p>` : ''}
+      </article>`;
+  const note = (a, b) => `<div class="note"><span class="tape-v" style="--tc: var(--you); --pat: var(--you-pat)"></span><span class="meta">Sam · ${a}</span><p>${b}</p></div>`;
+  let items;
+  if (!wide) {
+    items = `<div class="measure">${p.thread.map(([kind, a, b, ps], i) =>
+      kind === 'day' ? `<span class="day">${a}</span>` : kind === 'note' ? note(a, b) : sheet(a, b, ps, i, false)).join('')}</div>`;
+  } else {
+    const rows = []; let day = null, first = false;
+    p.thread.forEach(([kind, a, b, ps, thoughts], i) => {
+      if (kind === 'day') { day = a; first = true; if (!m.dates) rows.push(['', `<span class="day">${a}</span>`, '']); return; }
+      let left = '';
+      if (first) { left = (m.dates ? mdate(day) : '') + (day === 'Today' && m.today && p.id === 'aria' ? todayPage() : ''); first = false; }
+      const right = kind === 'sheet' ? (ps && m.kept ? keptSlip(ps) : '') + (thoughts && m.thoughts ? thoughtsCard(thoughts) : '') : '';
+      rows.push([left, kind === 'note' ? note(a, b) : sheet(a, b, ps, i, m.kept), right]);
+    });
+    items = `<div class="leaf">${rows.map(([l, c, r]) => `<div class="l">${l}</div><div class="c">${c}</div><div class="r" style="${her}">${r}</div>`).join('')}</div>`;
+  }
+  return `
+    <div class="bar" style="${her}">
+      ${state.none === 'desk' ? '<span class="close clickable" data-close-letter tabindex="0" aria-label="Close the letter">×</span>' : ''}
+      <span class="av">${portrait(p, 'avatar')}</span>
+      <span class="id"><span class="nm">${p.name}</span><span class="sub"><span class="md">${p.mood}</span> · ${p.model}</span></span>
+      <span class="tools" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M15 4l5 5-9.5 9.5H6v-4.5z M13 6l5 5"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M9.5 4h5v5l-1 3H18v4H6v-4h4.5l-1-3z M5 19.5h14"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M7 16.5l4-4 3 3 2-2 2 3"/><circle cx="9" cy="9" r="1.3"/></svg>
+      </span>
+      <span class="more" aria-hidden="true">⋮</span>
+    </div>
+    <div class="thread">${items}</div>
+    <div class="compose" style="${her}"><div class="measure">
+      <span class="sq plus" aria-hidden="true">+</span>
+      <span class="field">Write to ${p.name}…</span>
+      <span class="hint">Ctrl+Enter sends</span>
+      <span class="sq send" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4l17 8-17 8 2.5-8z"/></svg></span>
+    </div></div>`;
+}
+
+const desk = () => `
+  <div class="desk">
+    <span class="big" aria-hidden="true">文</span>
+    <p>Choose a letter, or start a new one.</p>
+    <small>Letters open here, beside the list.</small>
+  </div>`;
+
+function buildLetters() {
+  const p = state.letter && byId(state.letter);
+  shell(document.getElementById('win-letters'), 'Letters', letterList(), p ? thread(p) : desk(), sizes().list);
+}
+
+// ---- Personas ---------------------------------------------------------------------------------------
+function gallery() {
+  return `
+    <div class="appbar"><h3>Personas</h3><span class="act">Edit</span></div>
+    <div class="content">
+      <span class="label">Your correspondents</span>
+      <div class="gallery">
+        ${PERSONAS.map(p => `
+          <article class="polaroid clickable${state.persona === p.id ? ' open' : ''}" data-persona="${p.id}" tabindex="0" style="${ink(p)} --frame-tc: var(--frame-ink-${p.ink}); --tilt: ${p.tilt}deg; --ttilt: ${p.ttilt}deg">
+            <span class="tape-h"></span>
+            <div class="pic">${portrait(p)}</div>
+            <div class="cap"><span class="nm">${p.name}</span><span class="md">${p.mood}</span><span class="meta">${p.memories} memories · ${p.talked}</span></div>
+            ${state.persona === p.id ? openMark() : ''}
+          </article>`).join('')}
+        <div class="polaroid new" style="--tilt: -1deg"><b>+</b>New persona</div>
+      </div>
+      <span class="label">Writing as</span>
+      <div class="writing-as">
+        ${USERS.map(u => `
+          <div class="paper-card me" style="${ink(u)}">
+            <span class="tape-v"></span>
+            <span class="pic">${portrait(u, 'avatar')}</span>
+            <span><span class="nm">${u.name}</span><br><span class="sub">${u.sub}</span></span>
+            <span class="state">${u.active ? 'Writing as' : ''}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function page(p) {
+  return `
+    <div class="bar" style="${ink(p)}">
+      ${state.gallery === 'solo' ? '<span class="close clickable" data-close-persona tabindex="0" aria-label="Close the page">×</span>' : ''}
+      <span class="edit-btn">Edit</span>
+    </div>
+    <div class="thread page" style="${ink(p)}"><div class="measure">
+      <div class="hero">
+        <article class="polaroid" style="--tilt: -2.5deg">
+          <span class="tape-h l"></span><span class="tape-h r"></span>
+          <div class="pic">${portrait(p)}</div>
+        </article>
+        <div class="who">
+          <span class="nm">${p.name}</span>
+          <span class="md">feeling ${p.mood}</span>
+          <div class="chips">
+            <span class="chip"><i></i><b>${p.kanji}</b> ${p.ink}</span>
+            <span class="chip"><span class="swatch"></span>${p.pat}</span>
+            <span class="chip">${p.pronouns}</span>
+            <span class="chip">${p.model}</span>
+          </div>
+        </div>
+      </div>
+      <div class="actions"><span class="btn primary clickable" data-write="${p.id}" tabindex="0">Write a letter</span><span class="btn quiet">Memories</span></div>
+      <section class="paper-card entry">
+        <span class="tape-v"></span>
+        <h4>About</h4>
+        <p class="prose">${p.about}</p>
+      </section>
+      <section class="paper-card entry r" style="--tilt: .6deg">
+        <span class="tape-v"></span>
+        <h4>Memory book <small>${p.memories} memories</small><span class="more">See all</span></h4>
+        <div class="slips">${p.slips.map(([k, small, text]) => `<p class="slip ${k}">${k === 'core' ? '<span class="tape-h"></span><span class="tape-h br"></span>' : ''}<small>${small}</small>${text}</p>`).join('')}</div>
+      </section>
+      <section class="paper-card entry" style="--tilt: .7deg">
+        <span class="tape-v"></span>
+        <h4>Heartbeat<span class="more">Settings</span></h4>
+        <div class="beat"><span>${p.beat[0]}</span><span class="toggle${p.beat[1] ? '' : ' off'}" aria-hidden="true"></span></div>
+      </section>
+    </div></div>`;
+}
+
+function buildPersonas() {
+  const p = state.persona && byId(state.persona);
+  shell(document.getElementById('win-personas'), 'Personas', gallery(), p ? page(p) : null, sizes().gallery);
+}
+
+// ---- Ink-wash portrait placeholders ---------------------------------------------------------------
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function drawPortrait(c) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+  c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const inkHex = css(`--ink-${c.dataset.ink}`) || '#a26480', paper = css('--kami'), deep = css('--sumi'), second = css('--you');
+  const r = rng(+c.dataset.seed * 9973 + 1);
+  g.fillStyle = paper; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 8; i++) {
+    const x = w * (0.15 + r() * 0.7), y = h * (0.1 + r() * 0.75), rad = Math.max(w, h) * (0.2 + r() * 0.4);
+    const col = i % 5 === 4 ? second : inkHex, grad = g.createRadialGradient(x, y, 0, x, y, rad);
+    grad.addColorStop(0, hexA(col, 0.55)); grad.addColorStop(0.6, hexA(col, 0.18)); grad.addColorStop(1, hexA(col, 0));
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  }
+  if (c.dataset.kind === 'image') {
+    const cx = w * 0.5, base = h * 1.02, headR = Math.min(w, h) * 0.2, cy = base - headR * 3.2;
+    const hg = g.createRadialGradient(cx, cy, headR * 0.2, cx, cy, headR * 1.15);
+    hg.addColorStop(0, hexA(deep, 0.4)); hg.addColorStop(1, hexA(deep, 0));
+    g.fillStyle = hg; g.beginPath(); g.arc(cx, cy, headR * 1.15, 0, Math.PI * 2); g.fill();
+    const sg = g.createRadialGradient(cx, base, headR, cx, base, headR * 2.6);
+    sg.addColorStop(0, hexA(deep, 0.34)); sg.addColorStop(1, hexA(deep, 0));
+    g.fillStyle = sg; g.beginPath(); g.ellipse(cx, base, headR * 2.6, headR * 1.7, 0, Math.PI, 0); g.fill();
+  }
+  for (let i = 0; i < (w * h) / 60; i++) { g.fillStyle = hexA(deep, 0.05 * r()); g.fillRect(r() * w, r() * h, 1, 1); }
+}
+const redraw = () => document.querySelectorAll('canvas.portrait').forEach(drawPortrait);
+
+// ---- Fitting the windows to the page ---------------------------------------------------------------
+function fit() {
+  const s = sizes();
+  ['letters', 'personas'].forEach(name => {
+    const wrap = document.getElementById(`wrap-${name}`), win = document.getElementById(`win-${name}`);
+    const scale = Math.min(1, wrap.clientWidth / s.w);
+    win.style.transform = `translateX(-50%) scale(${scale})`;
+    wrap.style.height = `${Math.ceil(s.h * scale)}px`;
+  });
+}
+
+// ---- Theme ------------------------------------------------------------------------------------------
+function viewerDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t === 'dark') return true;
+  if (t === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function seasonNow() { const m = new Date().getMonth(); return m >= 2 && m <= 4 ? 'haru' : m >= 5 && m <= 7 ? 'natsu' : m >= 8 && m <= 10 ? 'aki' : 'fuyu'; }
+function apply() {
+  const season = seasonNow();
+  const time = state.time === 'auto' ? (viewerDark() ? 'yoru' : 'hiru') : state.time;
+  const idx = THEMES.indexOf(`${season}-${time}`), dayIdx = THEMES.indexOf(`${season}-hiru`);
+  const root = document.documentElement.style;
+  ROLES.forEach(role => root.setProperty(`--${role}`, PAL[role][idx]));
+  ACCENTS.forEach(name => { root.setProperty(`--ink-${name}`, PAL[name][idx]); root.setProperty(`--stk-${name}`, PAL[name][dayIdx]); });
+  Object.entries(PATTERNS).forEach(([name, value]) => root.setProperty(`--pat-${name}`, value));
+  root.setProperty('--you', PAL.sora[idx]);
+  root.setProperty('--you-pat', PATTERNS.stripes);
+  root.setProperty('--frame', '#ffffff');
+  root.setProperty('--frame-ink', '#3b2f27');
+  ACCENTS.forEach(name => root.setProperty(`--frame-ink-${name}`, PAL[name][dayIdx]));
+  root.setProperty('color-scheme', time === 'yoru' ? 'dark' : 'light');
+  const kanji = SEASON_KANJI[season] + (time === 'hiru' ? '昼' : '夜');
+  document.getElementById('theme-kanji').textContent = kanji;
+  document.getElementById('theme-name').textContent = `${season}-${time} · ${SEASON_EN[season]} by ${time === 'hiru' ? 'day' : 'night'}`;
+  document.querySelectorAll('[data-season-kanji]').forEach(el => { el.textContent = kanji; });
+  document.getElementById('studio').classList.toggle('night', time === 'yoru');
+  requestAnimationFrame(redraw);
+}
+
+function render() {
+  buildLetters(); buildPersonas(); fit(); apply();
+}
+
+function init() {
+  ['time', 'width', 'mark', 'finish'].forEach(key => {
+    const el = document.getElementById(`${key}-${state[key]}`); if (el) el.checked = true;
+    document.getElementById(key).addEventListener('change', e => {
+      state[key] = e.target.value;
+      if (key === 'none') state.letter = state.none === 'desk' ? null : (state.letter || 'aria');
+      if (key === 'gallery') state.persona = state.gallery === 'solo' ? null : (state.persona || 'aria');
+      save(); render();
+    });
+  });
+  ['dates', 'kept', 'thoughts', 'today'].forEach(key => {
+    const el = document.getElementById(`m-${key}`);
+    el.checked = state.margins[key] !== false;
+    el.addEventListener('change', () => { state.margins = { ...state.margins, [key]: el.checked }; save(); render(); });
+  });
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-letter], [data-persona], [data-close-letter], [data-close-persona], [data-write]');
+    if (!t) return;
+    if (t.dataset.letter) { state.letter = t.dataset.letter; if (!state.read.includes(t.dataset.letter)) state.read.push(t.dataset.letter); }
+    else if (t.dataset.persona) state.persona = t.dataset.persona;
+    else if ('closeLetter' in t.dataset) state.letter = null;
+    else if ('closePersona' in t.dataset) state.persona = null;
+    else if (t.dataset.write) {
+      state.letter = t.dataset.write;
+      if (!state.read.includes(t.dataset.write)) state.read.push(t.dataset.write);
+      save(); render();
+      document.getElementById('h-letters').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      return;
+    }
+    save(); render();
+  });
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.clickable')) { e.preventDefault(); e.target.click(); }
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+  new MutationObserver(apply).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  let t; window.addEventListener('resize', () => { fit(); clearTimeout(t); t = setTimeout(redraw, 150); });
+  render();
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(redraw);
+}
+init();
+</script>

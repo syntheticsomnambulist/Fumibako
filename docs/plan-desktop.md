@@ -10,12 +10,100 @@ answers below; the reorganization has started (see *Progress*).
 - **All three systems:** Windows, macOS and Linux. You have a Windows PC, so Windows is tried
   first and most; the macOS and Linux builds come from CI and get tried more slowly.
 - **The window in v0.5:** the phone's layouts in a resizable window. Wider layouts are wanted,
-  designed later, for a later version.
+  designed later, for a later version. *Changed 2026-11-08, below.*
 - **Phone and computer:** two separate Fumibakos, with v0.5's backups to move a persona or
   everything between them. Sync, if ever, is a feature of its own.
 - **The move** lands before the build session starts v0.5.
 - **Closing the window** keeps Fumibako in the tray, so heartbeats go on (on by default, and the
   first close says so). Starting at login stays off until you turn it on.
+
+## Your answers (2026-11-08): wide layouts in v0.5
+
+- **Wide layouts come in v0.5,** in friends' first desktop build, not later. A third session (the
+  desktop-layout session, branch `claude/sharp-darwin-o3pk1g`) draws and builds them.
+- **Letters and Personas first:** the letters list beside the open thread, and the personas
+  gallery beside a persona's page. The planner and Settings keep the phone's layouts for now.
+- **Chosen by the window's width, anywhere:** a window wide enough gets the wide layout, the phone
+  app included (a tablet, a phone on its side). A phone held upright never is, so it stays as it
+  is.
+- **Mockups first:** drawn in the app's look for you to choose from, and the choices written into
+  this plan before any code. The study is [`docs/design/wide-studies.html`](design/wide-studies.html)
+  (also a private claude.ai artifact: https://claude.ai/artifact/TbgAxSY8pUXZwDxfvvdc19).
+- **Chosen from the study:**
+  - **Index tabs down the left** in place of the bar along the bottom, so long letters get the
+    window's full height. Room for a fifth tab (机 Desk, v0.6).
+  - **Letters at a reading width,** about 640, in the middle of the right side. The margins a
+    wider window leaves are wanted for things (ideas drawn in the study: the day beside its first
+    letter, what she kept as a slip, her index card of what she had in mind, today's planner
+    page); which ones is still to choose. Narrower, each stays where it is on the phone.
+  - **Letters opens on the letter you last had open,** and Personas on the page you last opened,
+    with the gallery beside it.
+  - **A new window opens 1180 × 780,** smaller on a small screen. A window you've already sized
+    keeps its size.
+  - **How the open letter or persona is marked:** not the tab or the raised card first drawn. Of
+    the second set (a paper clip, a folded corner, a highlighter stroke, the card left as an
+    outline, no mark) the folded corner is your favorite, and you asked for the letters list's
+    cards to be **little fumibakos**, the open one opened: drawn in the study (lacquer tied with a
+    cord in their ink, or covered in their washi; the open box with its lid leaning behind it and
+    the letter inside). Still to settle: the finish, whether the phone's list gets boxes too, and
+    the gallery's mark.
+  - **The fumibakos it is** (2026-11-08), with the lining in their ink too. A closer pass is in
+    [`docs/design/fumibako-studies.html`](design/fumibako-studies.html) (private artifact:
+    https://claude.ai/artifact/9krTn2vam1SDMUWGSUsU4L): five boxes (lacquer in their ink, black
+    lacquer with their ink inside, paulownia, covered in their washi, maki-e with their kanji in
+    gold), with the latest lines or only the name (as a list or a shelf), and the lining in all
+    fourteen inks. The lining follows madoromi's ink ramps, deep where ink pools, paler in the
+    middle; boxes keep day inks at night, as stickers do.
+  - **Your answers (2026-11-09):** each persona picks their own box; the night's inks at night;
+    and the study redrawn flat, in the writing desk's look (`activities.md` on the design branch:
+    fills of ink mixed into the paper, thin lines for cords and seals, no gradients, the soft
+    shadow, boxes from above like the desk's trays). Added: a box with only their seal, and one
+    with the name engraved. The study now has a card per persona for picking their box (a finish:
+    lacquer, washi, paulownia; a lid: name, seal, engraved, kanji), the list three ways (the words
+    beside the box, on the box, or only the boxes), and the phone's list as today's cards beside
+    the same list as boxes, all shut. Still to choose: which finishes and lids to keep, the list's
+    form, and boxes on the phone or not.
+  - **Your answers (2026-11-09, later):** the phone's list becomes shut boxes too; tapping one plays
+    the opening (the bow undoes, the lid tips back, the letter rises) and then goes to the letter.
+    Personas choose their own box, the lid included. Engraved names in gold as well. The latest
+    lines go on a paper strip. And a further pass on the drawing, cuter and clearer: now short,
+    chubby boxes with a lid top, a deeper band for the lid's edge and the box below, a filled
+    bow, and the opening animated (the study's third version). Still to choose: a paper strip or
+    a tag tied on, which lids and finishes to keep, and whether the drawing is ready to build.
+  - **Almost there (2026-11-09):** a wider box (150, with 112 and 180 to compare) so the paper
+    strip, now the name row and one line, is thinner than the box and tucked beneath it; and more
+    ties, shut and open: a bow, tied crosswise with a flat knot, mizuhiki in an awaji knot (slips
+    off whole), and a cord with a tassel (swings aside). Personas choose their tie with the rest
+    of their box (the study's fourth version).
+  - **All four ties stay; the strip is one line** (2026-11-09). Untied cords redrawn to fall
+    where they would: the cord up the box's front stays, the cord on the lid goes with it, and
+    the ends lie on the table at the box's foot; the crosswise loop slips down to the foot;
+    mizuhiki is laid on its side in front; the tassel drops to the table. Widths side by side
+    (120, 150, 180, 210, and an assorted list where each persona's box is its own length). The
+    boxes are inline SVG drawn by the study's script (box, tie, bow, lidMark); the user may do a
+    pass on them by hand, from SVGs exported with the colors filled in.
+  - **One size for every box** (2026-11-09): the study's Sizes grid shows widths 120, 150 and
+    180 against lengths (front to back) 56, 64, 70 and 80. Once a size is chosen: build the boxes
+    in the app, and give the user the SVGs (every finish, lid and tie, shut and open) for a later
+    pass by hand.
+
+## Wide layouts: progress
+
+- **First build (2026-11-08), on `claude/sharp-darwin-o3pk1g`:** from 840 wide, the index tabs
+  down the left; Letters' list (360) beside the open letter, which keeps a reading width of 640
+  with the thread scrolling from the side's edges; Personas' gallery (400) beside the open page,
+  whose memory book, heartbeat and sticker pages open beside it with their back arrows; other
+  screens in the phone's layout, centered beside the tabs. The open side shows what's on top of the
+  back stack, so a window crossing 840 only changes how it's drawn. Letters and Personas open on
+  the letter and page you last had open (kept in app state); with nothing open, a quiet desk. A
+  new desktop window opens 1180 × 780, smaller on a small screen.
+  - Code: `ui/.../ui/WideLayout.kt` (the widths, `openFromList`), `AppNavigation.kt` (the rail,
+    the sides, `Placed`, `LastOpen`), small changes in `ChatScreen`, `ChatsScreen`, `Gallery`,
+    `PersonaPage` and `PageBar`, and the desktop window in `desktop/.../Main.kt`.
+  - **The phone is unchanged:** the 283 screenshots of its tours are identical before and after,
+    pixel for pixel. Two new tours, `wideTour` (1180 × 780) and `wideNightTour` (1600 × 900),
+    render the wide layouts.
+  - **Not yet:** the open one's mark (the fumibakos, above), and the margins.
 
 ## The aim
 
@@ -117,7 +205,8 @@ desktop/   new, the desktop shell: main(), the window, DesktopPlatform, the desk
 The screens are designed for a phone held upright. For v0.5:
 
 - **The phone's layouts in a resizable window**, about 440 by 860 at first. In a wider window the
-  content stays centered at a phone-like width. No new layouts in v0.5.
+  content stays centered at a phone-like width, except Letters and Personas, which get wide
+  layouts (see *Your answers (2026-11-08)*).
 - **A long press becomes a right-click, or a plain drag** where it starts one: dragging a sticker
   from the tray, moving the bookmark, a plan's stamps.
 - **Stickers:** drag to move; the scroll wheel (or the handles) to resize and Shift with the
@@ -126,8 +215,8 @@ The screens are designed for a phone held upright. For v0.5:
   sends. Escape goes back, like the phone's back gesture.
 - **Scrollbars** on long pages, and a hover state on what can be clicked (the ripple's shade; no
   hand pointer, as native buttons on Windows keep the arrow).
-- **Wider layouts** (the letters list beside a thread, a week with room to breathe) come in a
-  later version, designed with the design session first.
+- **Wider layouts:** the letters list beside a thread and the personas gallery beside a page come
+  in v0.5 (2026-11-08). A week with room to breathe, and Settings, come later.
 
 ## v0.5 on both: notes for the build session
 
@@ -381,7 +470,11 @@ The rules in CLAUDE.md hold through the move:
 - The installers' notices for the libraries they carry: JavaFX (GPL-2.0 with the Classpath
   Exception), jaudiotagger (LGPL-2.1), PDFBox (Apache 2.0), FileKit and java-keyring (MIT, BSD).
 - The burn shader on Skia.
-- Wider layouts, a menu bar, and more keyboard shortcuts.
+- Wider layouts for the planner and Settings, a menu bar, and more keyboard shortcuts. The planner was
+  redrawn for v0.5 (`calendar.md`, "Third pass", on the design branch): the header holds the
+  navigation and the Week and Month switch, and nothing hangs off the page's right edge any more,
+  which leaves a wide planner easier to lay out when its turn comes. Design questions go to the
+  design session working from `docs/design/handoff.md`.
 - Signing, notarization, and updates that install themselves.
 - A friendlier installer: the Windows installer's banner and dialog pictures, a background for
   the Mac's disk image.

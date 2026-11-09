@@ -1,5 +1,9 @@
 package dev.aiharness.app.ui.chat
 
+import dev.aiharness.app.ui.LocalBesideList
+import dev.aiharness.app.ui.LocalReadingSides
+import dev.aiharness.app.ui.WideLayout
+import dev.aiharness.app.ui.centeredWithin
 import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.theme.onInk
 import dev.aiharness.app.ui.paper.StationeryIcons
@@ -11,6 +15,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -316,7 +322,8 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 reverseLayout = true,
                 modifier = Modifier.weight(1f).fillMaxWidth().scrollbar(listState),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
+                // In a wide window, letters keep their reading width in the middle, and the thread still scrolls from its edges.
+                contentPadding = PaddingValues(horizontal = LocalReadingSides.current ?: 18.dp, vertical = 18.dp),
             ) {
                 if (arriving != null || (generation.active && postage.travels)) {
                     item(key = "on-its-way") { OnItsWay(personaName, persona?.ink, arriving.takeIf { postage.showArrival }) }
@@ -377,121 +384,125 @@ fun ChatScreen(nav: NavController, conversationId: String) {
 
         }
 
-        generation.error?.let { error ->
-            ErrorSlip(error, onRetry = { vm.dismissError(); vm.regenerate() }, onDismiss = { vm.dismissError() })
-        }
+        // Under the thread, at the letters' reading width in a wide window (the whole width on the phone).
+        val readingSides = LocalReadingSides.current
+        Column(Modifier.fillMaxWidth().centeredWithin(readingSides?.let { WideLayout.READING_WIDTH + WideLayout.PAGE_PADDING * 2 })) {
+            generation.error?.let { error ->
+                ErrorSlip(error, onRetry = { vm.dismissError(); vm.regenerate() }, onDismiss = { vm.dismissError() })
+            }
 
-        val youCanPeel = header.persona?.stickers?.youCanPeel == true
-        selectedSticker?.let { sticker ->
-            val mine = sticker.byPersonaId == null
-            StickerSlip(
-                text = if (mine) "Your ${stickerName(sticker).removeSuffix(" sticker")}, stuck ${letterStamp(sticker.createdAt).lowercase().replaceFirstChar { it.uppercase() }}."
-                else "$personaName stuck this ${letterStamp(sticker.createdAt).lowercase().replaceFirstChar { it.uppercase() }}." + if (youCanPeel) "" else " Only $personaName can peel it off.",
-                peel = if (mine || youCanPeel) ({ vm.peelSticker(sticker); peeled = sticker; moving = null; selectedStickerId = null }) else null,
-                done = { finishSticker() },
-            )
-        }
-        peeled?.let { sticker ->
-            StickerSlip(
-                text = "Peeled off." + if (sticker.target.kind == StickerTargetKind.MESSAGE) " $personaName will hear about it next time." else "",
-                putBack = if (sticker.target.kind == StickerTargetKind.MESSAGE) ({ vm.unpeelSticker(sticker); peeled = null }) else null,
-                done = { peeled = null },
-            )
-        }
+            val youCanPeel = header.persona?.stickers?.youCanPeel == true
+            selectedSticker?.let { sticker ->
+                val mine = sticker.byPersonaId == null
+                StickerSlip(
+                    text = if (mine) "Your ${stickerName(sticker).removeSuffix(" sticker")}, stuck ${letterStamp(sticker.createdAt).lowercase().replaceFirstChar { it.uppercase() }}."
+                    else "$personaName stuck this ${letterStamp(sticker.createdAt).lowercase().replaceFirstChar { it.uppercase() }}." + if (youCanPeel) "" else " Only $personaName can peel it off.",
+                    peel = if (mine || youCanPeel) ({ vm.peelSticker(sticker); peeled = sticker; moving = null; selectedStickerId = null }) else null,
+                    done = { finishSticker() },
+                )
+            }
+            peeled?.let { sticker ->
+                StickerSlip(
+                    text = "Peeled off." + if (sticker.target.kind == StickerTargetKind.MESSAGE) " $personaName will hear about it next time." else "",
+                    putBack = if (sticker.target.kind == StickerTargetKind.MESSAGE) ({ vm.unpeelSticker(sticker); peeled = null }) else null,
+                    done = { peeled = null },
+                )
+            }
 
-        nowPlaying?.let { MiniPlayer(it, container.playback, onOpen = { playerOpen = true }) }
-        GoingWithYourNote(going, onRemove = { vm.remove(it) }, switchesTo = vm::switchesTo, onOpen = { item ->
-            if (vm.switchesTo(item) != null) vm.switchSongOrCutting(item)
-            ((item as? Going.Item)?.attachment)?.takeIf { it.kind == dev.aiharness.core.model.AttachmentKind.PLAYLIST }?.let { editingMix = it }
-        })
-        val youInk = header.userPersona?.ink?.let { stationery.ink(it) } ?: stationery.you
-        val sheet = stationery
-        // Half-typed :name: — offer the stickers it could be.
-        partialStickerName(input)?.let { partial ->
-            val matches = stickerSuggestions(partial, inlineStickers.values)
-            if (matches.isNotEmpty()) {
-                StickerSuggestions(partial, matches, sheet.dayColors.ink(header.userPersona?.ink ?: "sora")) { name ->
-                    input = input.dropLast(partial.length + 1) + ":$name: "
+            nowPlaying?.let { MiniPlayer(it, container.playback, onOpen = { playerOpen = true }) }
+            GoingWithYourNote(going, onRemove = { vm.remove(it) }, switchesTo = vm::switchesTo, onOpen = { item ->
+                if (vm.switchesTo(item) != null) vm.switchSongOrCutting(item)
+                ((item as? Going.Item)?.attachment)?.takeIf { it.kind == dev.aiharness.core.model.AttachmentKind.PLAYLIST }?.let { editingMix = it }
+            })
+            val youInk = header.userPersona?.ink?.let { stationery.ink(it) } ?: stationery.you
+            val sheet = stationery
+            // Half-typed :name: — offer the stickers it could be.
+            partialStickerName(input)?.let { partial ->
+                val matches = stickerSuggestions(partial, inlineStickers.values)
+                if (matches.isNotEmpty()) {
+                    StickerSuggestions(partial, matches, sheet.dayColors.ink(header.userPersona?.ink ?: "sora")) { name ->
+                        input = input.dropLast(partial.length + 1) + ":$name: "
+                    }
                 }
             }
-        }
-        val sendOutside = rememberOutside()
-        EntryBar(
-            value = input,
-            onValueChange = { input = it; vm.noticeLinks(it) },
-            placeholder = "Write to $personaName…",
-            personaInk = stationery.ink(persona?.ink),
-            youInk = youInk,
-            busy = generation.active,
-            onSend = {
-                if (vm.send(input)) {
-                    input = ""
-                    trayOpen = false
-                } else {
-                    // A photo, file, song or video still being made ready holds the note back; say so.
-                    going.firstOrNull { it is Going.Preparing }?.let { waiting ->
-                        sendOutside.toast("Still getting ${(waiting as Going.Preparing).label} ready.")
-                    }
-                }
-            },
-            hasAttachments = going.isNotEmpty() && going.none { it is Going.Preparing },
-            onStop = { vm.stop() },
-            trayOpen = trayOpen,
-            onTray = {
-                if (trayOpen) trayOpen = false else {
-                    keyboard?.hide()
-                    focus.clearFocus()
-                    stickerPage = false
-                    musicPage = false
-                    trayOpen = true
-                }
-            },
-            onFieldFocus = { trayOpen = false },
-            draft = { field ->
-                StuckOn(
-                    stickers = shownStickers[conversationId].orEmpty(),
-                    inkOf = { stickerInk(it, sheet, persona, header.userPersona) },
-                    modifier = Modifier.weight(1f),
-                    nameOf = stickerName,
-                    selectedId = selectedStickerId,
-                    onTap = handling.onTap,
-                    onChange = handling.onChange,
-                ) { field() }
-            },
-        )
-        if (trayOpen && !stickerPage && !musicPage) TrayButtons(pickFromTray)
-        if (trayOpen && musicPage) {
-            val songSearch by vm.songSearch.collectAsStateWithLifecycle()
-            MusicTray(
-                search = songSearch,
-                onQuery = vm::searchSongs,
-                onPick = { song -> vm.addFoundSong(song) { mix -> editingMix = mix }; trayOpen = false; musicPage = false },
-                onFromPhone = { pickSongs() },
-                onBack = { musicPage = false },
-                youInk = stationery.dayColors.ink(header.userPersona?.ink ?: "sora"),
-            )
-        }
-        if (trayOpen && stickerPage) {
-            StickerTray(
-                onBack = { stickerPage = false },
-                personaName = personaName,
-                personaId = persona?.id,
-                recent = recentStickers,
-                art = stickerArt,
-                youInk = stationery.dayColors.ink(header.userPersona?.ink ?: "sora"),
-                onPick = { vm.stickOnDraft(it) },
-                onDragStart = { ref, at -> dragging = ref to at },
-                onDrag = { delta -> dragging = dragging?.let { (ref, at) -> ref to (at + delta) } },
-                onDragEnd = {
-                    dragging?.let { (ref, at) ->
-                        // The innermost paper under the finger: a frame before the letter it's in.
-                        papers.entries.filter { it.value.contains(at) }.minByOrNull { it.value.width * it.value.height }?.let { (target, rect) ->
-                            vm.stickOn(target, ref, (at.x - rect.left) / rect.width, (at.y - rect.top) / rect.height)
+            val sendOutside = rememberOutside()
+            EntryBar(
+                value = input,
+                onValueChange = { input = it; vm.noticeLinks(it) },
+                placeholder = "Write to $personaName…",
+                personaInk = stationery.ink(persona?.ink),
+                youInk = youInk,
+                busy = generation.active,
+                onSend = {
+                    if (vm.send(input)) {
+                        input = ""
+                        trayOpen = false
+                    } else {
+                        // A photo, file, song or video still being made ready holds the note back; say so.
+                        going.firstOrNull { it is Going.Preparing }?.let { waiting ->
+                            sendOutside.toast("Still getting ${(waiting as Going.Preparing).label} ready.")
                         }
                     }
-                    dragging = null
+                },
+                hasAttachments = going.isNotEmpty() && going.none { it is Going.Preparing },
+                onStop = { vm.stop() },
+                trayOpen = trayOpen,
+                onTray = {
+                    if (trayOpen) trayOpen = false else {
+                        keyboard?.hide()
+                        focus.clearFocus()
+                        stickerPage = false
+                        musicPage = false
+                        trayOpen = true
+                    }
+                },
+                onFieldFocus = { trayOpen = false },
+                draft = { field ->
+                    StuckOn(
+                        stickers = shownStickers[conversationId].orEmpty(),
+                        inkOf = { stickerInk(it, sheet, persona, header.userPersona) },
+                        modifier = Modifier.weight(1f),
+                        nameOf = stickerName,
+                        selectedId = selectedStickerId,
+                        onTap = handling.onTap,
+                        onChange = handling.onChange,
+                    ) { field() }
                 },
             )
+            if (trayOpen && !stickerPage && !musicPage) TrayButtons(pickFromTray)
+            if (trayOpen && musicPage) {
+                val songSearch by vm.songSearch.collectAsStateWithLifecycle()
+                MusicTray(
+                    search = songSearch,
+                    onQuery = vm::searchSongs,
+                    onPick = { song -> vm.addFoundSong(song) { mix -> editingMix = mix }; trayOpen = false; musicPage = false },
+                    onFromPhone = { pickSongs() },
+                    onBack = { musicPage = false },
+                    youInk = stationery.dayColors.ink(header.userPersona?.ink ?: "sora"),
+                )
+            }
+            if (trayOpen && stickerPage) {
+                StickerTray(
+                    onBack = { stickerPage = false },
+                    personaName = personaName,
+                    personaId = persona?.id,
+                    recent = recentStickers,
+                    art = stickerArt,
+                    youInk = stationery.dayColors.ink(header.userPersona?.ink ?: "sora"),
+                    onPick = { vm.stickOnDraft(it) },
+                    onDragStart = { ref, at -> dragging = ref to at },
+                    onDrag = { delta -> dragging = dragging?.let { (ref, at) -> ref to (at + delta) } },
+                    onDragEnd = {
+                        dragging?.let { (ref, at) ->
+                            // The innermost paper under the finger: a frame before the letter it's in.
+                            papers.entries.filter { it.value.contains(at) }.minByOrNull { it.value.width * it.value.height }?.let { (target, rect) ->
+                                vm.stickOn(target, ref, (at.x - rect.left) / rect.width, (at.y - rect.top) / rect.height)
+                            }
+                        }
+                        dragging = null
+                    },
+                )
+            }
         }
     }
     dragging?.let { (ref, at) ->
@@ -605,7 +616,8 @@ private fun LettersTopBar(
             .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = iconTint) }
+        // Beside the letters list (a wide window) there's no back arrow: the list is right there.
+        if (LocalBesideList.current) Spacer(Modifier.width(14.dp)) else IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = iconTint) }
         PortraitDot(persona, 34.dp)
         Column(Modifier.weight(1f).padding(start = 10.dp)) {
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
