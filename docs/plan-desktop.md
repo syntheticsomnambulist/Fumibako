@@ -63,6 +63,13 @@ answers below; the reorganization has started (see *Progress*).
     beside the box, on the box, or only the boxes), and the phone's list as today's cards beside
     the same list as boxes, all shut. Still to choose: which finishes and lids to keep, the list's
     form, and boxes on the phone or not.
+  - **Your answers (2026-11-09, later):** the phone's list becomes shut boxes too; tapping one plays
+    the opening (the bow undoes, the lid tips back, the letter rises) and then goes to the letter.
+    Personas choose their own box, the lid included. Engraved names in gold as well. The latest
+    lines go on a paper strip. And a further pass on the drawing, cuter and clearer: now short,
+    chubby boxes with a lid top, a deeper band for the lid's edge and the box below, a filled
+    bow, and the opening animated (the study's third version). Still to choose: a paper strip or
+    a tag tied on, which lids and finishes to keep, and whether the drawing is ready to build.
 
 ## Wide layouts: progress
 
