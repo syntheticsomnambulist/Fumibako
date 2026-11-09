@@ -82,6 +82,10 @@ answers below; the reorganization has started (see *Progress*).
     (120, 150, 180, 210, and an assorted list where each persona's box is its own length). The
     boxes are inline SVG drawn by the study's script (box, tie, bow, lidMark); the user may do a
     pass on them by hand, from SVGs exported with the colors filled in.
+  - **One size for every box** (2026-11-09): the study's Sizes grid shows widths 120, 150 and
+    180 against lengths (front to back) 56, 64, 70 and 80. Once a size is chosen: build the boxes
+    in the app, and give the user the SVGs (every finish, lid and tie, shut and open) for a later
+    pass by hand.
 
 ## Wide layouts: progress
 

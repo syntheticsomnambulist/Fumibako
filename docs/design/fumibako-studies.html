@@ -120,7 +120,7 @@ legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; lett
 .fbx .cordbody { transition: opacity .16s ease; }
 .fbx .loose { opacity: 0; transition: opacity .2s ease .16s; }
 .fbx .letter { opacity: 0; transform: translateY(4px); transition: transform .3s cubic-bezier(.3, .8, .35, 1.2) .3s, opacity .12s ease .28s; }
-.fbx.open .lid { transform: translateY(-12px) scaleY(.42); }
+.fbx.open .lid { transform: translateY(var(--lid-dy, -12px)) scaleY(.42); }
 .fbx.open .bow { transform: scale(.15); opacity: 0; }
 .fbx .lidcord { transition: opacity .14s ease; }
 .fbx.open .lidcord { opacity: 0; }
@@ -133,8 +133,8 @@ legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; lett
 /* Untied: what was on the lid goes with it; the cord up the front stays, and its ends drop and lie on
    the table at the box's foot. Mizuhiki slips off whole and is laid on its side in front of the box;
    a tassel falls and lies on the table. */
-.fbx .mzk { transform-box: view-box; transform-origin: 30px 21px; transition: transform .38s cubic-bezier(.3, .8, .35, 1.08); }
-.fbx.open .mzk { transform: translate(4px, 44px) rotate(-90deg) scale(.62); }
+.fbx .mzk { transform-box: view-box; transition: transform .38s cubic-bezier(.3, .8, .35, 1.08); }
+.fbx.open .mzk { transform: translate(4px, var(--mzk-dy, 44px)) rotate(-90deg) scale(.62); }
 .fbx .tasselcord { transition: opacity .14s ease; }
 .fbx.open .tasselcord { opacity: 0; }
 .fbx .tasselend { transform-box: fill-box; transform-origin: 50% 0%; transition: transform .34s cubic-bezier(.3, .8, .35, 1.15) .06s; }
@@ -144,8 +144,10 @@ legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; lett
 .fbx .strand.b { stroke: var(--kami); }
 .fbx .fringe { fill: none; stroke: var(--bowline); stroke-width: .9; }
 @media (prefers-reduced-motion: reduce) { .fbx .mzk, .fbx .tassel { transition: none; } }
-.widths { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 372px), 1fr)); gap: 26px 22px; }
-.widths .col h3 { font-size: 17px; }
+.widths { display: grid; grid-template-columns: auto repeat(3, minmax(330px, 1fr)); gap: 26px 22px; align-items: center; overflow-x: auto; padding: 10px 2px; }
+.widths .h { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--kasure2); }
+.widths .rowh { font-family: var(--name); font-weight: 600; font-size: 15px; white-space: nowrap; }
+.widths .cell { padding: 14px 12px 12px; background: var(--hyoshi); border: 1px solid var(--nijimi0); }
 .ties { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 34px 28px; }
 .tie { display: grid; gap: 10px; align-content: start; }
 .tie h3 { margin: 0; display: flex; align-items: baseline; gap: 8px; font-family: var(--name); font-weight: 600; font-size: 18px; }
@@ -299,8 +301,8 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
 
   <section class="section" aria-labelledby="h-widths">
     <div class="section-head">
-      <h2 id="h-widths">Widths<span>幅</span></h2>
-      <p>The same list with boxes 120, 150, 180 and 210 wide, the strip one line, and an assorted list where each persona's box is a length of its own, like a set of real boxes.</p>
+      <h2 id="h-widths">Sizes<span>寸</span></h2>
+      <p>One size for every box: widths across (120, 150, 180) and lengths down (front to back: 56, 64, 70 as drawn so far, 80), each a row of the list with its one-line strip. Click a box to open it.</p>
     </div>
     <div class="widths" id="widths"></div>
   </section>
@@ -348,8 +350,8 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
     <h3 id="h-decide">Decided, and to choose</h3>
     <ol>
       <li><b>Decided:</b> each persona chooses their own box, the night's inks at night, shut boxes on the phone that open before the letter comes in.</li>
-      <li><b>The words:</b> on a paper strip tucked under a wider box (112, 150 or 180 wide; one line or two), or on a tag tied to it?</li>
-      <li><b>The ties:</b> a bow, tied crosswise, mizuhiki, a tassel: all four for personas to choose from, or fewer?</li>
+      <li><b>Decided too:</b> all four ties, the words on a paper strip of one line, one size for every box.</li>
+      <li><b>The size:</b> which width and which length (see Sizes)?</li>
       <li><b>The lids:</b> keep all five (name, seal, engraved, gilded, kanji) and all three finishes, or fewer?</li>
       <li><b>The drawing:</b> is this cute and clear enough to build, or another pass first?</li>
     </ol>
@@ -488,59 +490,70 @@ function awaji(x, y, dx) {
     ` C ${X - 5} ${y - 6}, ${X - 6} ${y - 14}, ${X} ${y - 14} C ${X + 6} ${y - 14}, ${X + 5} ${y - 6}, ${X} ${y + 1} C ${X + 4} ${y + 6}, ${X + 7} ${y + 8}, ${X + 7} ${y + 15}`;
 }
 // What each tie draws: on the lid (lifts with it), over everything, on the box's front, and loose (when open).
-function tie(kind, cx, W) {
-  const band = `<rect x="${cx - 2.5}" y="1" width="5" height="49" class="cordc lidcord"/>`;
-  const front = `<rect x="${cx - 2.5}" y="48" width="5" height="19" class="cordc cordbody"/>`;
+/* The box's lines, for a box H tall: the lid's top runs from 2 to T, its edge band shows from T to E,
+   the box below from E to B, the table under it at B. (At H 70: T 40, E 50, B 67.) */
+function lines(H) { const T = H - 30, E = T + 10, B = E + 17; return { T, E, B, ky: Math.round(2 + (T - 2) / 2) }; }
+function tie(kind, cx, W, L) {
+  const { T, E, B, ky } = L;
+  const band = `<rect x="${cx - 2.5}" y="1" width="5" height="${E - 1}" class="cordc lidcord"/>`;
+  const front = `<rect x="${cx - 2.5}" y="${E - 2}" width="5" height="${B - E + 2}" class="cordc cordbody"/>`;
   // The freed ends, dropped down the front and lying on the table, one curling each way.
-  const ends = `<path class="cordline" d="M${cx - 1} 64 C ${cx - 4} 70, ${cx - 14} 71, ${cx - 23} 69 S ${cx - 31} 69, ${cx - 34} 71"/>` +
-    `<path class="cordline" d="M${cx + 1} 64 C ${cx + 5} 70, ${cx + 17} 72, ${cx + 27} 70"/>`;
-  if (kind === 'cross') return {
-    lid: band + `<rect x="0" y="29.5" width="${W}" height="5" class="cordc lidcord"/>`,
-    over: `<g class="bow"><rect x="${cx - 5}" y="27" width="10" height="10" rx="2" transform="rotate(45 ${cx} 32)" class="cordc"/><path class="bowline" d="M${cx - 3} 32 H ${cx + 3} M${cx} 29 V 35"/>` +
-      `<polygon class="cordc" points="${cx + 3},34 ${cx + 13},42 ${cx + 11},44 ${cx + 1},36"/><polygon class="cordc" points="${cx - 3},34 ${cx - 11},43 ${cx - 9},45 ${cx - 1},36"/></g>`,
-    front,
-    // The loop round the sides slips down to the box's foot.
-    loose: `<rect x="5" y="61" width="${W - 10}" height="4" class="cordc"/>` + ends,
-  };
+  const ends = `<path class="cordline" d="M${cx - 1} ${B - 3} C ${cx - 4} ${B + 3}, ${cx - 14} ${B + 4}, ${cx - 23} ${B + 2} S ${cx - 31} ${B + 2}, ${cx - 34} ${B + 4}"/>` +
+    `<path class="cordline" d="M${cx + 1} ${B - 3} C ${cx + 5} ${B + 3}, ${cx + 17} ${B + 5}, ${cx + 27} ${B + 3}"/>`;
+  if (kind === 'cross') {
+    const y = T - 8;
+    return {
+      lid: band + `<rect x="0" y="${y - 2.5}" width="${W}" height="5" class="cordc lidcord"/>`,
+      over: `<g class="bow"><rect x="${cx - 5}" y="${y - 5}" width="10" height="10" rx="2" transform="rotate(45 ${cx} ${y})" class="cordc"/><path class="bowline" d="M${cx - 3} ${y} H ${cx + 3} M${cx} ${y - 3} V ${y + 3}"/>` +
+        `<polygon class="cordc" points="${cx + 3},${y + 2} ${cx + 13},${y + 10} ${cx + 11},${y + 12} ${cx + 1},${y + 4}"/><polygon class="cordc" points="${cx - 3},${y + 2} ${cx - 11},${y + 11} ${cx - 9},${y + 13} ${cx - 1},${y + 4}"/></g>`,
+      front,
+      // The loop round the sides slips down to the box's foot.
+      loose: `<rect x="5" y="${B - 6}" width="${W - 10}" height="4" class="cordc"/>` + ends,
+    };
+  }
   if (kind === 'mizuhiki') {
     const strands = [[-2.6, 'a'], [0, 'b'], [2.6, 'a']];
-    const lines = strands.map(([d, c]) => `<path class="strand ${c}" d="M${cx + d} 1 V 7 ${awaji(cx, 21, d)} M${cx - 7 + d} 36 V 67 M${cx + 7 + d} 36 V 67"/>`).join('');
-    return { lid: '', over: `<g class="mzk">${lines}</g>`, front: '', loose: '' };
+    const lines = strands.map(([d, c]) => `<path class="strand ${c}" d="M${cx + d} 1 V ${ky - 14} ${awaji(cx, ky, d)} M${cx - 7 + d} ${ky + 15} V ${B} M${cx + 7 + d} ${ky + 15} V ${B}"/>`).join('');
+    // Slipped off and laid on its side in front of the box.
+    return { lid: '', over: `<g class="mzk" style="transform-origin: ${cx}px ${ky}px; --mzk-dy: ${B - ky - 2}px">${lines}</g>`, front: '', loose: '' };
   }
   if (kind === 'tassel') return {
     lid: band,
-    over: `<g class="bow"><circle cx="${cx}" cy="20" r="5" class="cordc"/><circle cx="${cx}" cy="20" r="2.2" class="bowline"/></g>` +
-      `<path class="cordline tasselcord" d="M${cx + 2} 23 C ${cx + 10} 34, ${cx + 9} 46, ${cx + 6} 58" style="stroke-width: 2.4"/>` +
-      `<g class="tasselend"><rect x="${cx + 2.5}" y="57" width="7" height="5" rx="2" class="cordc"/><rect x="${cx + 1.5}" y="61" width="9" height="13" rx="1" class="cordc"/>` +
-      `<path class="fringe" d="M${cx + 4} 63 V 73 M${cx + 6} 63 V 73 M${cx + 8} 63 V 73"/></g>`,
+    over: `<g class="bow"><circle cx="${cx}" cy="${ky - 1}" r="5" class="cordc"/><circle cx="${cx}" cy="${ky - 1}" r="2.2" class="bowline"/></g>` +
+      `<path class="cordline tasselcord" d="M${cx + 2} ${ky + 2} C ${cx + 10} ${ky + 13}, ${cx + 9} ${B - 21}, ${cx + 6} ${B - 9}" style="stroke-width: 2.4"/>` +
+      `<g class="tasselend"><rect x="${cx + 2.5}" y="${B - 10}" width="7" height="5" rx="2" class="cordc"/><rect x="${cx + 1.5}" y="${B - 6}" width="9" height="13" rx="1" class="cordc"/>` +
+      `<path class="fringe" d="M${cx + 4} ${B - 4} V ${B + 6} M${cx + 6} ${B - 4} V ${B + 6} M${cx + 8} ${B - 4} V ${B + 6}"/></g>`,
     front,
-    loose: `<path class="cordline" d="M${cx + 1} 64 C ${cx + 5} 70, ${cx + 17} 72, ${cx + 27} 70"/>`,
+    loose: `<path class="cordline" d="M${cx + 1} ${B - 3} C ${cx + 5} ${B + 3}, ${cx + 17} ${B + 5}, ${cx + 27} ${B + 3}"/>`,
   };
-  return { lid: band, over: bow(cx, 20), front, loose: ends };
+  return { lid: band, over: bow(cx, ky - 1), front, loose: ends };
 }
-function box(p, s, { scale = 1, open = false, letters = true, unread = false, attrs = '', W = 112 } = {}) {
-  const id = `b${++uid}`, patId = `${id}p`, H = 70, cx = 30;
-  const t = TONES[s.finish], ti = tie(s.tie || 'bow', cx, W);
-  const grain = s.finish === 'kiri' ? [10, 19, 28].map(y => `<path class="grain" d="M6 ${y} C ${W * .27} ${y - 2}, ${W * .62} ${y + 2}, ${W - 6} ${y}"/>`).join('') : '';
-  const lacquerLine = s.finish === 'lacquer' ? `<rect x="4" y="5.5" width="${W - 8}" height="33" rx="4" class="hair"/>` : '';
+function box(p, s, { scale = 1, open = false, letters = true, unread = false, attrs = '', W = 112, H = 70 } = {}) {
+  const id = `b${++uid}`, patId = `${id}p`, cx = 30;
+  const L = lines(H), { T, E, B, ky } = L;
+  const t = TONES[s.finish], ti = tie(s.tie || 'bow', cx, W, L);
+  const grain = s.finish === 'kiri' ? [.21, .45, .68].map(f => { const y = 2 + (T - 2) * f; return `<path class="grain" d="M6 ${y} C ${W * .27} ${y - 2}, ${W * .62} ${y + 2}, ${W - 6} ${y}"/>`; }).join('') : '';
+  const lacquerLine = s.finish === 'lacquer' ? `<rect x="4" y="5.5" width="${W - 8}" height="${T - 7}" rx="4" class="hair"/>` : '';
+  const floor = E - 16, sy = 14 + floor * .28, sh = floor * .72;
   const inside = `
-    <rect x="5" y="9" width="${W - 10}" height="41" rx="3" class="${t.body}"/>
-    <rect x="10" y="14" width="${W - 20}" height="34" class="t40"/>
+    <rect x="5" y="9" width="${W - 10}" height="${E - 9}" rx="3" class="${t.body}"/>
+    <rect x="10" y="14" width="${W - 20}" height="${floor}" class="t40"/>
     <rect x="10" y="14" width="${W - 20}" height="8" class="t70"/>
-    <polygon points="10,14 16,22 16,48 10,48" class="t55"/><polygon points="${W - 10},14 ${W - 16},22 ${W - 16},48 ${W - 10},48" class="t55"/>
+    <polygon points="10,14 16,22 16,${E - 2} 10,${E - 2}" class="t55"/><polygon points="${W - 10},14 ${W - 16},22 ${W - 16},${E - 2} ${W - 10},${E - 2}" class="t55"/>
     ${letters ? `<g class="letter">
-      <g transform="rotate(5 ${W * .62} 34)"><rect x="${W * .46}" y="24" width="${W * .34}" height="24" class="sheet"/><rect x="${W * .51}" y="31" width="${W * .21}" height="2" class="rule"/><rect x="${W * .51}" y="37" width="${W * .16}" height="2" class="rule"/></g>
-      <g transform="rotate(-4 44 34)"><rect x="24" y="23" width="${Math.max(44, W * .36)}" height="26" class="sheet"/><text x="29" y="40" font-family="Yomogi" font-size="12" style="fill: var(--ink)">${esc(p.name)}</text></g>
+      <g transform="rotate(5 ${W * .62} ${sy + sh / 2})"><rect x="${W * .46}" y="${sy + 1}" width="${W * .34}" height="${sh - 2}" class="sheet"/><rect x="${W * .51}" y="${sy + sh * .3}" width="${W * .21}" height="2" class="rule"/><rect x="${W * .51}" y="${sy + sh * .55}" width="${W * .16}" height="2" class="rule"/></g>
+      <g transform="rotate(-4 44 ${sy + sh / 2})"><rect x="24" y="${sy}" width="${Math.max(44, W * .36)}" height="${sh}" class="sheet"/><text x="29" y="${sy + sh / 2 + 4}" font-family="Yomogi" font-size="12" style="fill: var(--ink)">${esc(p.name)}</text></g>
     </g>` : ''}`;
-  const svg = `<svg width="${W * scale}" height="${H * scale}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs>${PATTERNS[p.pat](patId)}</defs>
-    ${face(s.finish, 5, 44, W - 10, 23, 3, t.body, patId, p.pat)}
+  const lidDy = 8 - (E - 1) * .42;
+  const svg = `<svg width="${W * scale}" height="${H * scale}" viewBox="0 0 ${W} ${H}" aria-hidden="true" style="--lid-dy: ${lidDy}px"><defs>${PATTERNS[p.pat](patId)}</defs>
+    ${face(s.finish, 5, T + 4, W - 10, B - T - 4, 3, t.body, patId, p.pat)}
     ${ti.front}
     ${inside}
     <g class="lid">
-      <rect x="0" y="28" width="${W}" height="22" rx="5" class="${t.edge}"/>
-      ${face(s.finish, 0, 2, W, 38, 6, t.top, patId, p.pat)}${grain}${lacquerLine}
+      <rect x="0" y="${T - 12}" width="${W}" height="${E - T + 12}" rx="5" class="${t.edge}"/>
+      ${face(s.finish, 0, 2, W, T - 2, 6, t.top, patId, p.pat)}${grain}${lacquerLine}
       ${ti.lid}
-      ${lidMark(p, s, (cx + 8 + W) / 2, s.tie === 'cross' ? 17 : 21, W - cx - 18)}
+      ${lidMark(p, s, (cx + 8 + W) / 2, s.tie === 'cross' ? ky - 4 : ky, W - cx - 18)}
     </g>
     ${ti.over}
     <g class="loose">${ti.loose}</g>
@@ -556,10 +569,10 @@ function words(p, unread, i, W = +state.width) {
   if (state.words === 'tag') return `<svg class="tag-thread" viewBox="0 0 30 30" aria-hidden="true" style="left: ${W - 8}px; --cordc-t: color-mix(in oklab, var(--ink) 70%, var(--kami))"><path d="M0 2 C 10 4, 14 12, 30 16"/></svg><span class="tag" style="--tilt: ${tilt * 1.4}deg"><i></i><span>${inner}</span></span>`;
   return `<span class="strip" style="--tilt: ${tilt}deg"><span>${inner}</span></span>`;
 }
-function listRow(p, i, { open, key, W = +state.width }) {
+function listRow(p, i, { open, key, W = +state.width, H = 70 }) {
   const unread = p.unread && !open;
   return `<button class="lr" data-row="${key}" data-id="${p.id}" style="${inkStyle(p)} --bw: ${W}px; --lines: ${state.lines};" aria-label="${esc(p.name)}'s letters${unread ? ', a new letter' : ''}">
-    ${box(p, pick(p), { open, unread, W })}${words(p, unread, i, W)}</button>`;
+    ${box(p, pick(p), { open, unread, W, H })}${words(p, unread, i, W)}</button>`;
 }
 const paneTitle = '<div class="pane-title">Letters<span data-season-kanji></span></div>';
 
@@ -586,9 +599,9 @@ function settingsCard(p) {
 function render() {
   document.getElementById('phone-list').innerHTML = paneTitle + PEOPLE.map((p, i) => listRow(p, i, { open: false, key: 'phone' })).join('');
   document.getElementById('wide-list').innerHTML = paneTitle + PEOPLE.map((p, i) => listRow(p, i, { open: state.wideOpen === p.id, key: 'wide' })).join('');
-  const ASSORTED = { aria: 130, juno: 184, kestrel: 210, mira: 150 };
-  document.getElementById('widths').innerHTML = [120, 150, 180, 210].map(W => `<div class="col"><h3>${W} wide</h3><div class="pane">${paneTitle}${PEOPLE.slice(0, 3).map((p, i) => listRow(p, i, { open: false, key: 'w', W })).join('')}</div></div>`).join('') +
-    `<div class="col"><h3>Assorted</h3><div class="pane">${paneTitle}${PEOPLE.map((p, i) => listRow(p, i, { open: false, key: 'w', W: ASSORTED[p.id] })).join('')}</div></div>`;
+  const WIDTHS = [120, 150, 180], LENGTHS = [56, 64, 70, 80];
+  document.getElementById('widths').innerHTML = '<span></span>' + WIDTHS.map(w => `<span class="h">${w} wide</span>`).join('') +
+    LENGTHS.map(H => `<span class="rowh">${H} long</span>` + WIDTHS.map(W => `<div class="cell">${listRow(PEOPLE[1], 1, { open: false, key: 'w', W, H })}</div>`).join('')).join('');
   document.getElementById('cards').innerHTML = PEOPLE.map(settingsCard).join('');
   document.getElementById('ties').innerHTML = TIES.map(([v, k, label, line], i) => {
     const p = PEOPLE[0], s = { ...pick(p), tie: v };
