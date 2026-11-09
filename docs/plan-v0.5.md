@@ -91,9 +91,10 @@ From `v0.5.md`, in short:
 0. **Merge the wide layouts.** Done.
 1. **Engine:** the letter index and `letter_search` (with its P.S. and switch), the model-change
    record and its context line, lore memories and Won't fade (recall, fading, the memory book's
-   data), and what the index card shows (the context block already stored, and the turn's tokens).
-2. **In a letter:** the two tabs and their slips, the model-change notice, the model row and its
-   tick. Thinking lines once they're settled.
+   data).
+2. **In a letter:** the two tabs and their slips (what the index card shows: the context block
+   already stored, in sections, and the turn's tokens), the model-change notice, the model row and
+   its tick. Thinking lines once they're settled.
 3. **Searching letters, on screen:** the Search letters page, the thread's match strip, ⋯ › Search
    these letters.
 4. **Import and export:** cards, lorebooks, the `.fumibako` zip and locking in `core` first, with
@@ -115,3 +116,32 @@ From `v0.5.md`, in short:
     and after the merge, show the phone's screens laid out the same (279 shots; they differ only
     in the clock's minutes and the random tilts of tape and pictures, which change between runs),
     and the 11 new wide shots render.
+- **Step 1, the engine: done.**
+  - **The word index:** database version 6 adds `letter_words`, an FTS4 index (unicode61, so case
+    and accents don't matter) keyed by each message's rowid and kept as letters are written,
+    edited and deleted. Letters from before it are indexed when the app starts. The 5→6 step has
+    its test on the phone's SQLite and the desktop's; 2→3 onward stay.
+  - **What's searched:** a letter's words and its pictures' captions and descriptions; never
+    thoughts, context or hidden prompts, and a reply in the post only once it's arrived. A
+    search's words match the start of a word ("cat" finds "cats"). Japanese has no spaces, so a run
+    of it is one word, found by its start: searching the middle of a Japanese phrase finds nothing
+    yet.
+  - **Your search** (for step 3's page): every word, newest first, by persona and kind (theirs,
+    yours, pictures), with the sentences around the first match and the words to mark.
+  - **`letter_search`:** a persona's own letters with you only; any of the words (small ones left
+    out), more of them first, then newer; `from` you, me or either; up to 10 passages with who wrote
+    them and when. The tool result keeps the letters found, for the P.S. and the index card. A
+    memory switch, "Letter search", is on by default (its place on the Memory page comes with
+    step 3).
+  - **Model changes:** each reply records the model it was written with. When it differs from
+    the model about to answer, the letter's context says "Your model changed: you were ... until
+    now and are ... from here. Your memories and letters are the same." (once; not with the
+    persona's "Tell her when her model changes" off). The thread's notices are worked out from the
+    same record; only replies to your notes count, since heartbeat letters can have a model of
+    their own. Letters from before v0.5 recorded no model, so the first change shows from v0.5's
+    letters on.
+  - **Lore and Won't fade:** a lore kind of memory (not felt, never offered back to revisit, not
+    counted among what matters deeply), recall words that bring a memory to mind whenever a letter
+    has them, and Won't fade, which only you set (a memory never weakens or goes dormant, but is
+    recalled only when relevant). The memory book's lore label is in; the rest of its look comes
+    with import (step 4).

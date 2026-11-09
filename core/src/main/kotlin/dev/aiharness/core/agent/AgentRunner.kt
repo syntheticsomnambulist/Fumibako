@@ -87,6 +87,7 @@ class AgentRunner(private val h: Harness) {
                 epoch = setup.conversation.context,
                 conversationId = conversationId,
                 currentMessageId = messageId,
+                profile = setup.profile,
             )
             val userMessage = ChatMessage(
                 id = messageId,
@@ -251,6 +252,7 @@ class AgentRunner(private val h: Harness) {
                 errorMessage = if (refused) refusalMessage(turn) else null,
                 usage = turn.usage,
                 mood = MoodTags.parse(turn.text),
+                writtenWith = dev.aiharness.core.model.WrittenWith.of(setup.profile),
                 // A refusal is said straight away, not after the wait.
                 deliverAt = deliverAt.takeUnless { refused },
             )

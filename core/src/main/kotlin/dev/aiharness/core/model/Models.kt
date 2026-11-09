@@ -139,6 +139,11 @@ data class Persona(
     val planner: PersonaPlanner = PersonaPlanner(),
     /** How long its replies take to reach you; null follows Settings (letters in the post). */
     val letterTravel: LetterTravel? = null,
+    /** Told in its next letter when its model changes ("Your model changed: ..."). The thread shows the change either way. */
+    val tellModelChanges: Boolean = true,
+    /** When its model was last changed on its page, and what it was before, for "Since today, 15:40 · was ...". */
+    val modelSince: Long? = null,
+    val previousModelName: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
 ) {
@@ -531,6 +536,8 @@ data class ChatMessage(
     val usage: TokenUsage? = null,
     /** Mood the persona chose for this message, parsed from its `[mood: ...]` tag. */
     val mood: String? = null,
+    /** The model it was written with (a persona's letters), for noticing when its model changes. */
+    val writtenWith: WrittenWith? = null,
 ) {
     /** The text as stored and replayed to the model, including any mood tag. */
     val text: String
@@ -563,6 +570,17 @@ data class ChatMessage(
         get() = parts.filterIsInstance<ContentPart.Reasoning>().joinToString("\n") { it.text }.ifBlank { null }
 }
 
+/** The model a persona's letter was written with: its profile's name, provider and model then. */
+@Serializable
+data class WrittenWith(val name: String, val provider: ProviderType, val modelId: String) {
+    /** The same model, whatever the profile is called. */
+    fun sameModel(other: WrittenWith) = provider == other.provider && modelId == other.modelId
+
+    companion object {
+        fun of(profile: ModelProfile) = WrittenWith(profile.name, profile.provider, profile.modelId)
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Memory
 // ---------------------------------------------------------------------------
@@ -580,6 +598,13 @@ enum class MemoryKind {
 
     /** The persona's own thoughts and conclusions (often written during heartbeats). */
     REFLECTION,
+
+    /**
+     * Lore: what the persona knows of its world, from a card's lorebook (v0.5). Not felt, never
+     * offered back to revisit, and not counted among what matters deeply; recalled by its
+     * [MemoryEntry.recallWords] as well as its words.
+     */
+    LORE,
 }
 
 /** How much a memory matters, chosen by the persona in words. */
@@ -653,6 +678,13 @@ data class MemoryEntry(
     val useCount: Int = 0,
     /** Things kept with the memory from its letter or note: a cassette, a photo, a cutting. */
     val keepsakes: List<Keepsake> = emptyList(),
+    /**
+     * Won't fade (the 永 seal): it never weakens or goes dormant, but is still recalled only when it's
+     * relevant. Only you set it (lore comes in with it on); "matters deeply" is the persona's own.
+     */
+    val wontFade: Boolean = false,
+    /** Words that bring it to mind whenever a letter has them (a lorebook entry's keys). */
+    val recallWords: List<String> = emptyList(),
 ) {
     val isCore: Boolean get() = pinned || kind == MemoryKind.CORE
     val isReplaced: Boolean get() = replacedById != null
