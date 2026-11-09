@@ -415,12 +415,14 @@ Proposed details:
 - **Small targets:** the folds, tabs and the band are thinner than 48dp to keep the page calm;
   each needs a 48dp touch area around it.
 
-## Third pass: calmer headers (proposed)
+## Third pass: the planner redrawn (for v0.5)
 
 Asked for 2026-11-08: the user isn't a fan of the planner's headers, finding them too big, too
 busy and hard to read, and not right in look. The scope is the whole planner (week, month and day),
-headers first. Everything here is proposed. The desktop layout session has been asked to hold off
-on laying the planner out wide until this settles.
+headers first. It ships in v0.5 (the user's call, 2026-11-09), with the stationery update and
+the fonts it builds on. What the user picked or asked for is marked agreed; the rest is proposed.
+The desktop layout session was asked to hold off on laying the planner out wide until this
+settled.
 
 ### One slim header
 

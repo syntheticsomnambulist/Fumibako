@@ -5,7 +5,7 @@ when we work through them.
 
 ## Roadmap
 
-Updated 2026-11-07.
+Updated 2026-11-09.
 
 - **Shipped on the build branch:** v0.1 to v0.3.5, and **v0.4, the planner** (0.4.0, then 0.4.1 with
   a new signing key and the GPL-3.0-or-later licence, and 0.4.2). Friends last had **v0.2.2**; the
@@ -14,7 +14,8 @@ Updated 2026-11-07.
   macOS and Linux, shipping with v0.5. The screens and storage have moved into shared modules and
   a first desktop shell runs; v0.5 uses the phone's layouts in a resizable window. Wider desktop
   layouts come later.
-- **v0.5: in a letter, letter search, import and export, the stationery update, fonts.** Designed
+- **v0.5: in a letter, letter search, import and export, the stationery update, fonts, and the
+  planner redrawn** (added 2026-11-09; the third pass in [`calendar.md`](calendar.md)). Designed
   ([`v0.5.md`](v0.5.md)), nothing left open; the build starts after the desktop move.
 - **v0.6: activities** ([`activities.md`](activities.md)): the writing desk in a 机 Desk tab with
   your desk beside it (trinket dish, a scrapbook), today's activities moved onto the desk,

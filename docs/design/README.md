@@ -1,5 +1,8 @@
 # Design direction
 
+Taking over the design work? Start with [`handoff.md`](handoff.md): where things stand, what's
+next, and the principles so far.
+
 Working notes for the app's visual design. Open `letter-studies.html` (chat) and `screen-studies.html`
 (letters list and persona screens) in a browser to see the mockups these notes describe; both are
 also published as private claude.ai artifacts.
