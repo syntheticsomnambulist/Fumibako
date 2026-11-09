@@ -29,6 +29,8 @@ same way.
 - **Maven Central always rate-limits this environment (HTTP 429).** Retry loops and
   `--max-workers=1` don't fix it. Google's mirror does:
   `https://maven-central.storage-download.googleapis.com/maven2/`.
+  - It doesn't look like a 429. Gradle reports "plugin not found", and Robolectric tests fail as
+    "classMethod FAILED". `--info` shows the real cause.
   - **The lasting fix is in the repository** (art-program has it). List the mirror before
     `mavenCentral()` in both `pluginManagement` and `dependencyResolutionManagement` in
     `settings.gradle.kts`.
@@ -50,6 +52,9 @@ same way.
   session's branch, run:
   - `git fetch --unshallow origin`
   - `git fetch origin '+refs/heads/*:refs/remotes/origin/*'`
+
+  In a shallow clone, another session's branch can look unrelated ("no merge base"). Fumibako's
+  design branch looked that way to one session, but it shares history with the build branch.
 - **Warm the Gradle cache with one build before launching parallel agents.** Otherwise they all
   download at once, and the proxy also answers too many connections with 429.
 - **Never run `./gradlew --stop`.** It stops other agents' daemons too.
@@ -128,6 +133,8 @@ not after.
   - That exemption was committed on `claude/friendly-euler-ixso62`, which was never merged.
     Fumibako's `CLAUDE.md` still says to run the checks before every push.
   - Until that's merged, follow the user's decision and mention the gap.
+- **Count results from the JUnit XML,** under `*/build/test-results`. An exit code is easy to
+  lose: a trailing `; echo` or a pipe reports success whatever Gradle did.
 - **Background test runs:**
   - Don't edit sources or bump the version while a run is going; that broke runs twice.
   - A tour run deletes the previous run's reports, so read the failures right after each run.
@@ -157,7 +164,8 @@ not after.
   - Wait for the list after navigating back.
   - Scroll to a lazy list's item before waiting for it: the item isn't built until then.
 - **Screenshots differ run to run in clock times and random tilts.** In one comparison, 181 of
-  279 shots differed. Compare against a baseline made under the same conditions.
+  279 shots differed. Compare against a baseline made under the same conditions, and look at
+  changed pictures side by side rather than trusting hashes.
   - For refactors, the pixel-for-pixel tour comparison was the strongest check there was. Every
     shot stayed identical across the desktop move and the steps after it (268 shots at first,
     290 by the end). Keep doing it.
@@ -256,6 +264,10 @@ not after.
   what to try, riskiest first.
 - **Database:** Fumibako's `CLAUDE.md` says which migration steps to keep. Keep every step back
   to the oldest build a tester has; a phone that skips builds jumps straight from that version.
+  - **A migration's SQL has to match Room's exported `createSql` exactly,** FTS4 tables included.
+    Build first, then copy the SQL from `data/schemas/.../<version>.json`.
+  - **Run the migration test on both SQLites:** `:data:desktopTest` for the bundled one, and the
+    app's `MigrationTest` under Robolectric.
 
 ## 7. Working with this user
 
@@ -301,6 +313,10 @@ not after.
   - `settings.gradle.kts` has no Maven mirror yet, so use the init script from section 1 until it
     does.
   - Run all five tours in one run, separate from the other suites, as its `CLAUDE.md` says.
+  - **The design notes live on the design branch,** `ccr-09dbf6b8-2c3jno`. Read them without
+    switching branches: `git show origin/ccr-09dbf6b8-2c3jno:docs/design/v0.5.md`.
+  - The mockups are private design canvases. The Artifact tool can read them: list with scope
+    "files", then read `project/<board>.dc.html`.
 - **art-program:**
   - The work is on `ccr-df5e9224-g98iyu`; `main` holds only the initial commit.
   - The mirror and Robolectric's setting are already in the build.
