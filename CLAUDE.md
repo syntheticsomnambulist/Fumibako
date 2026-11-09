@@ -34,8 +34,8 @@
 - **App text uses American spelling** (aging, color, license, summarize), since that's how the app's
   user writes.
 - **Where things are:**
-  - Plans and progress: [`docs/plan-v0.4.md`](docs/plan-v0.4.md) (current),
-    [`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md),
+  - Plans and progress: [`docs/plan-v0.5.md`](docs/plan-v0.5.md) (current),
+    [`docs/plan-v0.4.md`](docs/plan-v0.4.md), [`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md),
     [`docs/plan-v0.1.md`](docs/plan-v0.1.md).
   - The desktop version (alongside v0.5): [`docs/plan-desktop.md`](docs/plan-desktop.md).
   - Testers' guide: [`docs/testers.md`](docs/testers.md).
