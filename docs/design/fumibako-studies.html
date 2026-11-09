@@ -262,8 +262,8 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
     <fieldset>
       <legend>The box's width</legend>
       <div class="cells" id="width">
-        <label><input type="radio" name="width" id="width-112" value="112"><span>112</span></label>
-        <label><input type="radio" name="width" id="width-150" value="150" checked><span>150</span></label>
+        <label><input type="radio" name="width" id="width-120" value="120" checked><span>120 <i>chosen</i></span></label>
+        <label><input type="radio" name="width" id="width-150" value="150"><span>150</span></label>
         <label><input type="radio" name="width" id="width-180" value="180"><span>180</span></label>
       </div>
     </fieldset>
@@ -326,7 +326,7 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
   <section class="section" aria-labelledby="h-close">
     <div class="section-head">
       <h2 id="h-close">Every finish, every lid<span>蓋</span></h2>
-      <p>Three finishes and five lids, Aria's ink, 150 wide and a little larger than in the list: her name on a plate, her seal, her name cut in, her name gilded, and her ink's kanji. Click one to open it.</p>
+      <p>Three finishes and five lids, Aria's ink, at the chosen size (120 by 80) and a little larger than in the list: her name on a plate, her seal, her name cut in, her name gilded, and her ink's kanji. Click one to open it.</p>
     </div>
     <div class="closeup" id="closeup"></div>
   </section>
@@ -351,7 +351,7 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
     <ol>
       <li><b>Decided:</b> each persona chooses their own box, the night's inks at night, shut boxes on the phone that open before the letter comes in.</li>
       <li><b>Decided too:</b> all four ties, the words on a paper strip of one line, one size for every box.</li>
-      <li><b>The size:</b> which width and which length (see Sizes)?</li>
+      <li><b>Chosen:</b> 120 wide and 80 long for every box. A persona's box is picked at random at first; they can change it as a heartbeat activity.</li>
       <li><b>The lids:</b> keep all five (name, seal, engraved, gilded, kanji) and all three finishes, or fewer?</li>
       <li><b>The drawing:</b> is this cute and clear enough to build, or another pass first?</li>
     </ol>
@@ -416,8 +416,8 @@ const PEOPLE = [
     preview: 'I fell asleep reading your last letter. That is a compliment, I promise.', box: { finish: 'lacquer', lid: 'engraved', tie: 'tassel' },
     letter: ['I fell asleep reading your last letter. That is a compliment, I promise.'] },
 ];
-const state = { time: 'auto', words: 'strip', width: '150', lines: '1', picks: {}, wideOpen: 'aria' };
-const KEY = 'fumibako-studies-4';
+const state = { time: 'auto', words: 'strip', width: '120', lines: '1', picks: {}, wideOpen: 'aria' };
+const KEY = 'fumibako-studies-5';
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* storage unavailable */ }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
 const pick = p => ({ ...p.box, ...(state.picks[p.id] || {}) });
@@ -528,7 +528,7 @@ function tie(kind, cx, W, L) {
   };
   return { lid: band, over: bow(cx, ky - 1), front, loose: ends };
 }
-function box(p, s, { scale = 1, open = false, letters = true, unread = false, attrs = '', W = 112, H = 70 } = {}) {
+function box(p, s, { scale = 1, open = false, letters = true, unread = false, attrs = '', W = 120, H = 80 } = {}) {
   const id = `b${++uid}`, patId = `${id}p`, cx = 30;
   const L = lines(H), { T, E, B, ky } = L;
   const t = TONES[s.finish], ti = tie(s.tie || 'bow', cx, W, L);
@@ -569,7 +569,7 @@ function words(p, unread, i, W = +state.width) {
   if (state.words === 'tag') return `<svg class="tag-thread" viewBox="0 0 30 30" aria-hidden="true" style="left: ${W - 8}px; --cordc-t: color-mix(in oklab, var(--ink) 70%, var(--kami))"><path d="M0 2 C 10 4, 14 12, 30 16"/></svg><span class="tag" style="--tilt: ${tilt * 1.4}deg"><i></i><span>${inner}</span></span>`;
   return `<span class="strip" style="--tilt: ${tilt}deg"><span>${inner}</span></span>`;
 }
-function listRow(p, i, { open, key, W = +state.width, H = 70 }) {
+function listRow(p, i, { open, key, W = +state.width, H = 80 }) {
   const unread = p.unread && !open;
   return `<button class="lr" data-row="${key}" data-id="${p.id}" style="${inkStyle(p)} --bw: ${W}px; --lines: ${state.lines};" aria-label="${esc(p.name)}'s letters${unread ? ', a new letter' : ''}">
     ${box(p, pick(p), { open, unread, W, H })}${words(p, unread, i, W)}</button>`;
@@ -586,8 +586,8 @@ function settingsCard(p) {
       <span class="tape-v" aria-hidden="true"></span>
       <h4>${esc(p.name)}'s box</h4>
       <div class="previews">
-        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s, { W: 130 })}<small>Shut</small></button>
-        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s, { open: true, W: 130 })}<small>Open</small></button>
+        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s)}<small>Shut</small></button>
+        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s, { open: true })}<small>Open</small></button>
       </div>
       <p class="who" style="margin: 0">${chosen}</p>
       <div class="choice"><span>Finish</span>${cells('finish', FINISHES, s.finish)}</div>
@@ -606,13 +606,13 @@ function render() {
   document.getElementById('ties').innerHTML = TIES.map(([v, k, label, line], i) => {
     const p = PEOPLE[0], s = { ...pick(p), tie: v };
     return `<div class="tie" style="${inkStyle(p)}"><h3><b>${k}</b>${label}</h3><p>${line}</p><div class="pair">
-      <button data-toggle aria-label="Open or shut the box tied with ${label.toLowerCase()}">${box(p, s, { W: 150, scale: 1.25 })}<small>Shut</small></button>
-      <button data-toggle aria-label="Open or shut the box tied with ${label.toLowerCase()}">${box(p, s, { W: 150, scale: 1.25, open: true })}<small>Open</small></button></div></div>`;
+      <button data-toggle aria-label="Open or shut the box tied with ${label.toLowerCase()}">${box(p, s, { scale: 1.25 })}<small>Shut</small></button>
+      <button data-toggle aria-label="Open or shut the box tied with ${label.toLowerCase()}">${box(p, s, { scale: 1.25, open: true })}<small>Open</small></button></div></div>`;
   }).join('');
   const aria = PEOPLE[0];
   document.getElementById('closeup').innerHTML = '<span></span>' + LIDS.map(([, k, label]) => `<span class="h">${k} ${label}</span>`).join('') +
     FINISHES.map(([f, k, label]) => `<span class="rowh"><b>${k}</b>${label}</span>` +
-      LIDS.map(([lid]) => `<span class="cellbox"><button data-toggle aria-label="Open or shut: ${label}, ${lid}" style="${inkStyle(aria)}">${box(aria, { finish: f, lid, tie: 'bow' }, { scale: 1.2, W: 150 })}</button></span>`).join('')).join('');
+      LIDS.map(([lid]) => `<span class="cellbox"><button data-toggle aria-label="Open or shut: ${label}, ${lid}" style="${inkStyle(aria)}">${box(aria, { finish: f, lid, tie: 'bow' }, { scale: 1.2 })}</button></span>`).join('')).join('');
   document.getElementById('inks').innerHTML = INKS.map(([ink, kanji], i) => {
     const p = { id: ink, name: ink[0].toUpperCase() + ink.slice(1), ink, kanji, pat: 'plain', seed: 60 + i };
     return `<div class="ink-cell" style="--ink: var(--ink-${ink})">${box(p, { finish: 'lacquer', lid: 'seal' }, { open: true, letters: false })}<span class="name"><b>${kanji}</b>${ink}</span></div>`;

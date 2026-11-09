@@ -86,6 +86,17 @@ answers below; the reorganization has started (see *Progress*).
     180 against lengths (front to back) 56, 64, 70 and 80. Once a size is chosen: build the boxes
     in the app, and give the user the SVGs (every finish, lid and tie, shut and open) for a later
     pass by hand.
+  - **Chosen (2026-11-09): 120 by 80** for every box. A persona's box is picked at random at
+    first (the same pick every time, from their id), and they can change it as a heartbeat
+    activity; you can choose for them on their page. The SVGs are in
+    [`docs/design/fumibako-svg/`](design/fumibako-svg/README.md) (120 files, made by
+    `tools/export_fumibako_svgs.js`), for the user's pass by hand.
+  - **Building them:** `Persona.letterBox` (finish, lid, tie, and who chose it; null means the
+    pick from their id, so nothing is written for existing personas); a `choose_letter_box` tool
+    that works in heartbeats, offered now and then by a heartbeat activity; the box drawn in
+    Compose to the study's shapes, with the opening animated; the letters list's rows as a box
+    and a one-line paper strip, on the phone (tapping opens the box, then the letter) and wide
+    (the open letter's box stays open); a card on the persona's page for choosing for them.
 
 ## Wide layouts: progress
 
