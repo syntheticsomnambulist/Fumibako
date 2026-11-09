@@ -370,6 +370,11 @@ The rules in CLAUDE.md hold through the move:
     there: the tours' 279 screenshots are identical.
   - **Checked:** 4 more desktop tests (55 in all): told when it arrives and not before, and once;
     not when read; still told after a restart; the scheduler hands the arrival to the notices.
+- **Handed off (2026-11-09):** four parts of step 7 that don't wait on v0.5 went to a new
+  session (session_01GW4c4HGpjvftKbAAD33J5e, branch `claude/desktop-step7`): the installers'
+  notices for the libraries they carry; smaller installers, with the Java runtime trimmed to the
+  modules Fumibako needs; a desktop section in `docs/testers.md` and the README; and a desktop
+  screenshot tour.
 
 ## Noted for later
 
