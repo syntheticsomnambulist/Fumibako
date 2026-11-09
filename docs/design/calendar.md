@@ -512,9 +512,10 @@ pieces" board. Agreed:
   the grid at its time ("Meteors?", on Saturday at 22:00) with a coloured strip at its stuck end, and
   a matching sticky note below the grid with "Add it" and "Not this time". Adding it puts the plan on
   the grid in your hand and highlighter, and the note stays beside it ("ADDED TO YOUR PLANNER").
-  **Declining peels them off** (asked for by the user): the bottom right corner folds up as a
-  triangle, showing the paler back of the paper, then the note lifts away up and to the right; the
-  tab on the grid does the same a moment later, leaving a faint mark where it was stuck that fades. A quiet line takes its place: "Taken down; Aria will hear it
+  **Declining peels them off** (asked for by the user): the bottom right corner folds back as a
+  triangle, showing the paler back of the paper, and the fold keeps going across the note until it
+  reaches the top left and the whole note has come away; then it lifts off and fades. The tab on the
+  grid does the same a moment later, leaving a faint mark where it was stuck that fades. A quiet line takes its place: "Taken down; Aria will hear it
   wasn't for this time", with "Put it back".
 - **Busy hours: a wash and a bracket, together** (agreed): a thin line down the day's edge with a
   tick at each end, and a pale wash over the hours between that ends at the ticks rather than
