@@ -111,3 +111,7 @@ From `v0.5.md`, in short:
 
 - **Step 0, the wide layouts: merged** (2026-11-09) from `claude/sharp-darwin-o3pk1g`, cleanly,
   with the desktop plan's latest from `claude/epic-davinci-rpggbc`.
+  - **Checked:** every suite passes (core 184, data 4, app 55, desktop 55). The tours, run before
+    and after the merge, show the phone's screens laid out the same (279 shots; they differ only
+    in the clock's minutes and the random tilts of tape and pictures, which change between runs),
+    and the 11 new wide shots render.
