@@ -53,6 +53,8 @@ class TurnContextBuilder(
         conversationId: String? = null,
         /** The note this context goes with, when it's a note being sent ("this note" in sticker notes). */
         currentMessageId: String? = null,
+        /** The model that will answer, so the persona is told when it isn't the one it last wrote with. */
+        profile: dev.aiharness.core.model.ModelProfile? = null,
     ): String? {
         val lines = mutableListOf<String>()
         val now = clock.nowMillis()
@@ -67,6 +69,9 @@ class TurnContextBuilder(
                 }
             }
         }
+
+        // A new model: told once, in the first letter it writes with it (unless you've said not to).
+        if (profile != null && persona.tellModelChanges) ModelChanges.contextLine(history, profile)?.let { lines += it }
 
         // Out of its usual clothes: it should know, for how it describes itself and its pictures.
         persona.outfit?.takeIf { it.isNotBlank() }?.let { lines += "You're wearing: $it (not your usual clothes)." }

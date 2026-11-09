@@ -1,5 +1,6 @@
 package dev.aiharness.app.ui.personas
 
+import dev.aiharness.app.ui.openFromList
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -83,10 +84,10 @@ fun PersonasScreen(nav: NavController) {
                 pair.forEachIndexed { index, persona ->
                     Box(Modifier.weight(1f)) {
                         if (persona == null) {
-                            NewPolaroid { nav.navigate(Routes.personaPage(Routes.NEW)) }
+                            NewPolaroid { nav.openFromList(Routes.personaPage(Routes.NEW), Routes.PERSONAS) }
                         } else {
                             val latest = conversations.filter { it.personaId == persona.id }.maxByOrNull { it.updatedAt }
-                            GalleryPolaroid(persona, latest, memoryCounts[persona.id], index) { nav.navigate(Routes.personaPage(persona.id)) }
+                            GalleryPolaroid(persona, latest, memoryCounts[persona.id], index) { nav.openFromList(Routes.personaPage(persona.id), Routes.PERSONAS) }
                         }
                     }
                 }

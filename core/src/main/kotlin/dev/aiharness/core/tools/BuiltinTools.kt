@@ -134,6 +134,7 @@ class MemorySearchTool(private val memory: MemoryService) : AgentTool {
             add(e.level.label.lowercase())
             feelingNote(e)?.let { add(it) }
             if (e.isCore) add("always in mind")
+            if (e.wontFade) add("won't fade")
             if (e.isReplaced) add("replaced by ${e.replacedById?.take(8)}")
         }
         return "- [${notes.joinToString(" | ")}] ${e.content}"

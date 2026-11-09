@@ -64,6 +64,7 @@ import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.Routes
 import dev.aiharness.app.ui.letterTime
 import dev.aiharness.app.ui.onMain
+import dev.aiharness.app.ui.openFromList
 import dev.aiharness.app.ui.paper.MoodWord
 import dev.aiharness.app.ui.paper.PersonaPortrait
 import dev.aiharness.app.ui.paper.PortraitDot
@@ -152,7 +153,7 @@ fun ChatsScreen(nav: NavController) {
                     persona,
                     now,
                     modifier = Modifier.combinedClickable(
-                        onClick = { nav.navigate(Routes.chat(conversation.id)) },
+                        onClick = { nav.openFromList(Routes.chat(conversation.id), Routes.CHATS) },
                         onLongClick = { deleting = conversation },
                         onLongClickLabel = "Delete",
                     ).onRightClick { deleting = conversation },
@@ -177,7 +178,7 @@ fun ChatsScreen(nav: NavController) {
                                     picking = false
                                     scope.launch {
                                         val conversation = harness.createConversation(persona.id)
-                                        onMain { nav.navigate(Routes.chat(conversation.id)) }
+                                        onMain { nav.openFromList(Routes.chat(conversation.id), Routes.CHATS) }
                                     }
                                 })
                                 .padding(vertical = 8.dp, horizontal = 4.dp),

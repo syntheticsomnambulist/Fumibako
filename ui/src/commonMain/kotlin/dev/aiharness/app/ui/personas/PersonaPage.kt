@@ -41,6 +41,7 @@ import androidx.navigation.NavController
 import dev.aiharness.app.platform.scrollbar
 import dev.aiharness.app.ui.paper.PaperChoice
 import dev.aiharness.app.ui.LocalAppContainer
+import dev.aiharness.app.ui.LocalBesideList
 import dev.aiharness.app.ui.Routes
 import dev.aiharness.app.ui.SwitchRow
 import dev.aiharness.app.ui.activityPhrase
@@ -173,7 +174,7 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item {
-            PageBar(onBack = back) {
+            PageBar(onBack = back, showBack = editing || !LocalBesideList.current) {
                 if (editing) {
                     Text("EDITING", style = PaperType.meta, color = ink)
                     PaperButton("Done", ink = ink, enabled = p.name.isNotBlank()) { save() }

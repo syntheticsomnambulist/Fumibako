@@ -17,7 +17,8 @@ enum class MemoryAge { FRESH, FADING, WORN }
  * - **Salience** (how much a memory stands out): its level, plus a little for a strong feeling, plus
  *   a little when the user wrote, edited or confirmed it.
  * - **Strength** (how present it still is): halves over a time set by its level, lengthened by a
- *   strong feeling and by real use. Memories that matter deeply, and ones always in mind, don't fade.
+ *   strong feeling and by real use. Memories that matter deeply, ones always in mind, and ones you've
+ *   marked "Won't fade" (lore comes so), don't fade.
  * - **Dormant**: weak and old. Out of automatic recall, still searchable, never deleted.
  */
 object MemoryWeights {
@@ -40,7 +41,7 @@ object MemoryWeights {
 
     /** Days for a memory's strength to halve, or null when it doesn't fade. */
     fun halfLifeDays(entry: MemoryEntry, feeling: Feeling?): Double? {
-        if (entry.isCore || entry.level == MemoryLevel.MATTERS_DEEPLY) return null
+        if (entry.wontFade || entry.isCore || entry.level == MemoryLevel.MATTERS_DEEPLY) return null
         var days = when (entry.level) {
             MemoryLevel.IN_PASSING -> 7.0
             else -> 30.0

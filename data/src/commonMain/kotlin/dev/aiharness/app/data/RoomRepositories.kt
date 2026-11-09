@@ -4,6 +4,7 @@ import dev.aiharness.app.data.db.ActivityEntity
 import dev.aiharness.app.data.db.ConversationEntity
 import dev.aiharness.app.data.db.CredentialEntity
 import dev.aiharness.app.data.db.HarnessDao
+import dev.aiharness.app.data.db.LetterWordsEntity
 import dev.aiharness.app.data.db.MarkEntity
 import dev.aiharness.app.data.db.MemoryEntity
 import dev.aiharness.app.data.db.MemoryVectorEntity
@@ -13,6 +14,7 @@ import dev.aiharness.app.data.db.PersonaEntity
 import dev.aiharness.app.data.db.StickerArtEntity
 import dev.aiharness.app.data.db.StickerEntity
 import dev.aiharness.app.data.db.UserPersonaEntity
+import dev.aiharness.core.letters.LetterWords
 import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.ChatMessage
@@ -92,6 +94,7 @@ class RoomConversationRepository(private val dao: HarnessDao) : ConversationRepo
     override suspend fun delete(id: String) {
         dao.deleteStickersFor(id)
         dao.deleteMarksFor(id)
+        dao.deleteLetterWordsFor(id)
         dao.deleteMessagesFor(id)
         dao.deleteConversation(id)
     }
@@ -100,12 +103,38 @@ class RoomConversationRepository(private val dao: HarnessDao) : ConversationRepo
         dao.observeMessages(conversationId).map { rows -> rows.map { m.decode(it.json) } }
 
     override suspend fun getMessages(conversationId: String) = dao.messages(conversationId).map { m.decode(it.json) }
-    override suspend fun appendMessage(message: ChatMessage) = dao.upsertMessage(message.toEntity())
-    override suspend fun updateMessage(message: ChatMessage) = dao.upsertMessage(message.toEntity())
+    override suspend fun appendMessage(message: ChatMessage) = put(message)
+    override suspend fun updateMessage(message: ChatMessage) = put(message)
     override suspend fun deleteMessages(ids: Collection<String>) {
         if (ids.isEmpty()) return
         dao.deleteStickersOn(ids.toList())
+        dao.deleteLetterWords(ids.toList())
         dao.deleteMessages(ids.toList())
+    }
+
+    override suspend fun searchLetters(terms: List<String>, matchAll: Boolean, personaId: String?, limit: Int): List<ChatMessage> {
+        if (terms.isEmpty()) return emptyList()
+        return dao.searchLetters(LetterWords.matchQuery(terms, matchAll), personaId, limit).map { m.decode(it.json) }
+    }
+
+    override suspend fun indexLetters(): Int {
+        var count = 0
+        while (true) {
+            val batch = dao.unindexedMessages(INDEX_BATCH)
+            if (batch.isEmpty()) return count
+            batch.forEach { row -> dao.putLetterWords(LetterWordsEntity(row.rowid, runCatching { LetterWords.of(m.decode(row.json)) }.getOrDefault(""))) }
+            count += batch.size
+        }
+    }
+
+    /** The message, then its words in the index under the same rowid. */
+    private suspend fun put(message: ChatMessage) {
+        dao.upsertMessage(message.toEntity())
+        dao.messageRowid(message.id)?.let { dao.putLetterWords(LetterWordsEntity(it, LetterWords.of(message))) }
+    }
+
+    private companion object {
+        const val INDEX_BATCH = 200
     }
 
     private fun ChatMessage.toEntity() = MessageEntity(id, conversationId, createdAt, m.encode(this))
