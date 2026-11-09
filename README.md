@@ -58,7 +58,12 @@ The desktop installers (`.msi`, `.dmg`, `.deb`) are built on Windows, macOS and 
 apps take their version from `gradle.properties`.
 
 **Stored data:** database changes come with migrations, so letters survive updates. A phone whose
-database is older than the migrations kept starts fresh, re-creating the sample persona.
+database is older than the migrations kept starts fresh, re-creating the sample persona. Pictures
+and attachments are files in the `blobs` folder (`data/.../Stores.kt`). Deleting a letter leaves its
+files; Settings, Media, Storage finds the ones nothing refers to and clears them on request
+(`data/.../BlobSweep.kt`: it searches every table's text, the drafts and the settings for their
+refs). On the phone, videos are kept as a 720p copy and lossless songs as AAC instead of the
+originals (`app/media/Shrinker.kt`).
 
 ## Architecture
 

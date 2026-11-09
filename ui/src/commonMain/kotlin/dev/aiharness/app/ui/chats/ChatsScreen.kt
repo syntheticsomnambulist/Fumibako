@@ -208,6 +208,8 @@ fun ChatsScreen(nav: NavController) {
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch { harness.conversations.delete(conversation.id) }
+                    // Its unsent note goes too, as when it's deleted from the letter itself.
+                    container.drafts.discard(conversation.id)
                     deleting = null
                 }) { Text("Delete") }
             },

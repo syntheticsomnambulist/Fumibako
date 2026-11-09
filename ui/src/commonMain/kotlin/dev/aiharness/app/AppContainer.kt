@@ -1,5 +1,6 @@
 package dev.aiharness.app
 
+import dev.aiharness.app.data.BlobSweep
 import dev.aiharness.app.data.DataStoreSettingsRepository
 import dev.aiharness.app.data.FileBlobStore
 import dev.aiharness.app.data.PhoneCalendarsSwitch
@@ -79,6 +80,11 @@ class AppContainer(val platform: AppPlatform) {
         phoneCalendars = phoneCalendars,
         log = platform::log,
     )
+
+    /** What the letters' files take up, and clearing the ones nothing refers to (Settings, Storage). */
+    val storage = BlobSweep(database, blobStore, elsewhere = {
+        drafts.texts() + HarnessJson.encodeToString(AppSettings.serializer(), harness.settings.current())
+    })
 
     val generation = GenerationManager(harness, appScope) { conversationId, at -> platform.heartbeats.letterArrives(conversationId, at) }
 
