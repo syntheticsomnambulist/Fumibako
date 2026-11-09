@@ -75,6 +75,13 @@ answers below; the reorganization has started (see *Progress*).
     ties, shut and open: a bow, tied crosswise with a flat knot, mizuhiki in an awaji knot (slips
     off whole), and a cord with a tassel (swings aside). Personas choose their tie with the rest
     of their box (the study's fourth version).
+  - **All four ties stay; the strip is one line** (2026-11-09). Untied cords redrawn to fall
+    where they would: the cord up the box's front stays, the cord on the lid goes with it, and
+    the ends lie on the table at the box's foot; the crosswise loop slips down to the foot;
+    mizuhiki is laid on its side in front; the tassel drops to the table. Widths side by side
+    (120, 150, 180, 210, and an assorted list where each persona's box is its own length). The
+    boxes are inline SVG drawn by the study's script (box, tie, bow, lidMark); the user may do a
+    pass on them by hand, from SVGs exported with the colors filled in.
 
 ## Wide layouts: progress
 
