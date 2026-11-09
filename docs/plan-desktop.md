@@ -287,6 +287,8 @@ The rules in CLAUDE.md hold through the move:
   compared pixel by pixel, and every test passes.
 - **CI:** today's job, plus a desktop job on Windows, macOS and Linux runners that runs the desktop
   tests and packages an installer for each (`.msi`, `.dmg`, `.deb`), uploaded beside the APK.
+  *Changed 2026-11-08:* builds run on request only (Actions minutes ran out), with the tests and
+  the Windows installer by default and macOS and Linux when asked for (CLAUDE.md, "Checks").
 - **Unsigned for friends:** Windows SmartScreen and macOS Gatekeeper warn about unsigned apps, and
   [`docs/testers.md`](testers.md) gets the steps past them on each system, Windows first. Signing (an Apple
   Developer ID with notarization, a Windows code-signing certificate) costs money and can wait for
@@ -448,7 +450,8 @@ The rules in CLAUDE.md hold through the move:
     scrollbar widening and dragging, a sticker dragged from the tray onto a letter, sized and
     turned with the wheel, and moved, selected or not.
   - **Noticed:** Escape with the sticker tray open leaves the letter, as the phone's back gesture
-    does; told the build session.
+    does; told the build session. Fixed in 0.4.5: Escape puts the tray away first (checked in a
+    real window).
 - **The icons, after the first install on Windows (2026-11-08):** the installers and the window
   showed the default icon, and the tray's seal was tiny (it was the launcher's layer, the seal
   under half its square). Now the installers, the Start menu and the window have the whole icon,
@@ -467,6 +470,11 @@ The rules in CLAUDE.md hold through the move:
     there: the tours' 279 screenshots are identical.
   - **Checked:** 4 more desktop tests (55 in all): told when it arrives and not before, and once;
     not when read; still told after a restart; the scheduler hands the arrival to the notices.
+- **Handed off (2026-11-09):** four parts of step 7 that don't wait on v0.5 went to a new
+  session (session_01GW4c4HGpjvftKbAAD33J5e, branch `claude/desktop-step7`): the installers'
+  notices for the libraries they carry; smaller installers, with the Java runtime trimmed to the
+  modules Fumibako needs; a desktop section in `docs/testers.md` and the README; and a desktop
+  screenshot tour.
 
 ## Noted for later
 
