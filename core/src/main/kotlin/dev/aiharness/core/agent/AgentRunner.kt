@@ -269,7 +269,7 @@ class AgentRunner(private val h: Harness) {
             turn.toolCalls.forEach { call ->
                 emit(AgentEvent.ToolStarted(call.name, call.argumentsJson))
                 val outcome = h.tools.execute(LlmToolCall(call.id, call.name, call.argumentsJson), toolContext)
-                resultParts += ContentPart.ToolResult(call.id, call.name, outcome.content, outcome.isError)
+                resultParts += ContentPart.ToolResult(call.id, call.name, outcome.content, outcome.isError, outcome.foundLetters)
                 resultParts += outcome.attachments
                 emit(AgentEvent.ToolFinished(call.name, outcome))
             }

@@ -79,6 +79,16 @@ interface ConversationRepository {
 
     /** Deletes the messages, and the stickers on them where they're kept together. */
     suspend fun deleteMessages(ids: Collection<String>)
+
+    /**
+     * Messages whose words ([dev.aiharness.core.letters.LetterWords]) have each of [terms] at the start
+     * of a word, or with [matchAll] false any of them; in [personaId]'s conversations, or everyone's
+     * for null. Newest first, at most [limit]. Callers check each one again (the index only narrows).
+     */
+    suspend fun searchLetters(terms: List<String>, matchAll: Boolean, personaId: String?, limit: Int): List<ChatMessage>
+
+    /** Puts letters the word index doesn't have yet into it (those from before it existed); returns how many. */
+    suspend fun indexLetters(): Int = 0
 }
 
 interface MemoryRepository {

@@ -119,6 +119,10 @@ class AppContainer(val platform: AppPlatform) {
     fun start() {
         appScope.launch { seedDefaultsOnce() }
         appScope.launch {
+            // Letters from before the word index existed (v0.5) go into it, so searches find them too.
+            runCatching { harness.conversations.indexLetters() }.onFailure { platform.warn("Couldn't index letters for search", it) }
+        }
+        appScope.launch {
             // Reschedule when the heartbeat settings, or any persona's own rhythm, change.
             combine(harness.settings.settings.map { it.heartbeat }, harness.personas.observeAll()) { heartbeat, personas ->
                 heartbeat to harness.heartbeat.shortestIntervalMinutes(personas, heartbeat.rhythm)

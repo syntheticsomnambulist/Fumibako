@@ -285,6 +285,8 @@ sealed interface ContentPart {
         val name: String,
         val content: String,
         val isError: Boolean = false,
+        /** Letters a search found (message ids, best first): `letter_search`'s P.S. and the index card open them. */
+        val foundLetters: List<String> = emptyList(),
     ) : ContentPart
 
     /** Displayable reasoning summary. Never sent back to providers as text. */

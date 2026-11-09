@@ -1,5 +1,6 @@
 package dev.aiharness.core.storage.inmemory
 
+import dev.aiharness.core.letters.LetterWords
 import dev.aiharness.core.storage.MarkRepository
 import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.ActivityEntry
@@ -109,6 +110,18 @@ class InMemoryConversationRepository : ConversationRepository {
 
     override suspend fun deleteMessages(ids: Collection<String>) =
         messages.update { list -> list.filterNot { it.id in ids } }
+
+    override suspend fun searchLetters(terms: List<String>, matchAll: Boolean, personaId: String?, limit: Int): List<ChatMessage> {
+        val inThread = personaId?.let { id -> conversations.all().filter { it.personaId == id }.map { it.id }.toSet() }
+        return messages.value
+            .filter { inThread == null || it.conversationId in inThread }
+            .filter { message ->
+                val found = LetterWords.termsIn(LetterWords.of(message), terms)
+                if (matchAll) found.size == terms.size else found.isNotEmpty()
+            }
+            .sortedByDescending { it.createdAt }
+            .take(limit)
+    }
 }
 
 class InMemoryMemoryRepository : MemoryRepository {

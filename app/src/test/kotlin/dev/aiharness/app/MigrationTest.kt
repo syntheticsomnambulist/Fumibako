@@ -126,6 +126,49 @@ class MigrationTest {
         assertFalse(wiped, "a version 4 database migrates instead of starting fresh")
     }
 
+    @Test
+    fun versionFiveGainsTheWordIndexAndItsLettersCanBeFound() {
+        context.deleteDatabase(name)
+        createFromSchema(5) { db ->
+            db.execSQL("INSERT INTO conversations (id, personaId, updatedAt, json) VALUES ('c1', 'p1', 1, '$CONVERSATION')")
+            db.execSQL("INSERT INTO messages (id, conversationId, createdAt, json) VALUES ('m1', 'c1', 5, '$LETTER')")
+            db.execSQL("INSERT INTO messages (id, conversationId, createdAt, json) VALUES ('m2', 'c1', 6, '$REPLY')")
+        }
+
+        var wiped = false
+        val database = HarnessDatabase.create(context, onWiped = { wiped = true }, name = name)
+        try {
+            runBlocking {
+                val letters = RoomConversationRepository(database.dao())
+                assertEquals(emptyList(), letters.searchLetters(listOf("hello"), matchAll = true, personaId = null, limit = 10), "not indexed yet")
+                assertEquals(2, letters.indexLetters(), "the letters already there go into the index")
+                assertEquals(0, letters.indexLetters(), "once")
+                assertEquals(listOf("m1"), letters.searchLetters(listOf("hel"), matchAll = true, personaId = "p1", limit = 10).map { it.id })
+                assertEquals(emptyList(), letters.searchLetters(listOf("hello"), matchAll = true, personaId = "p2", limit = 10))
+                assertEquals(listOf("m2", "m1"), letters.searchLetters(listOf("hello", "cafe"), matchAll = false, personaId = null, limit = 10).map { it.id })
+
+                // New letters are indexed as they're written; edited ones again; deleted ones leave it.
+                val note = dev.aiharness.core.model.ChatMessage(
+                    "m3", "c1", dev.aiharness.core.model.MessageRole.USER,
+                    listOf(dev.aiharness.core.model.ContentPart.Text("Kinako on toast")), createdAt = 7,
+                )
+                letters.appendMessage(note)
+                assertEquals(listOf("m3"), letters.searchLetters(listOf("kinako"), matchAll = true, personaId = null, limit = 10).map { it.id })
+                letters.updateMessage(note.copy(parts = listOf(dev.aiharness.core.model.ContentPart.Text("Honey on toast"))))
+                assertEquals(emptyList(), letters.searchLetters(listOf("kinako"), matchAll = true, personaId = null, limit = 10))
+                assertEquals(listOf("m3"), letters.searchLetters(listOf("honey"), matchAll = true, personaId = null, limit = 10).map { it.id })
+                letters.deleteMessages(listOf("m3"))
+                assertEquals(emptyList(), letters.searchLetters(listOf("toast"), matchAll = true, personaId = null, limit = 10))
+                letters.delete("c1")
+                assertEquals(emptyList(), letters.searchLetters(listOf("hello"), matchAll = false, personaId = null, limit = 10))
+                assertEquals(0, letters.indexLetters(), "nothing left behind")
+            }
+        } finally {
+            database.close()
+        }
+        assertFalse(wiped, "a version 5 database migrates instead of starting fresh")
+    }
+
     /** Builds the database as Room would have at [version], from its exported schema, then lets [fill] add rows. */
     private fun createFromSchema(version: Int, fill: (SQLiteDatabase) -> Unit) {
         val schema = Json.parseToJsonElement(File("../data/schemas/${HarnessDatabase::class.java.name}/$version.json").readText())
@@ -151,5 +194,7 @@ class MigrationTest {
         const val TADA = """{"id":"s1","conversationId":"c1","target":{"kind":"MESSAGE","id":"m1"},"ref":{"type":"emoji","emoji":"🎉","name":"tada"},"x":0.8,"y":0.6,"createdAt":9}"""
         const val PUNCHED = """{"attachmentId":"song1","kind":"PUNCHED","conversationId":"c1","at":12}"""
         const val LETTER = """{"id":"m1","conversationId":"c1","role":"USER","parts":[{"type":"text","text":"Hello"}],"createdAt":5}"""
+        const val REPLY = """{"id":"m2","conversationId":"c1","role":"ASSISTANT","parts":[{"type":"text","text":"Greetings from the café! [mood: sunny]"}],"createdAt":6}"""
+        const val CONVERSATION = """{"id":"c1","personaId":"p1","title":"Aria","createdAt":1,"updatedAt":1}"""
     }
 }

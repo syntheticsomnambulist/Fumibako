@@ -128,6 +128,9 @@ class Harness(
             ShareLinkTool(links),
         ),
     )
+    val letterSearch = dev.aiharness.core.letters.LetterSearch(conversations, clock).also { search ->
+        tools.register(dev.aiharness.core.letters.LetterSearchTool(search, userPersonas, clock))
+    }
     val prompts = PromptAssembler()
     val planner: dev.aiharness.core.planner.Planner = dev.aiharness.core.planner.Planner(plannerEntries, clock, phoneCalendars, settings).also { planner ->
         tools.register(dev.aiharness.core.planner.PlannerLookTool(planner, clock))

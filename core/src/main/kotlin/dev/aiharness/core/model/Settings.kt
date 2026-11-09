@@ -115,6 +115,8 @@ data class HeartbeatRhythm(
 data class MemorySettings(
     val enabled: Boolean = true,
     val memoryToolsEnabled: Boolean = true,
+    /** Personas look through your past letters with them (`letter_search`). */
+    val letterSearch: Boolean = true,
     val retrievalTopK: Int = 6,
     /** Minimum relevance (0..1) for a memory to be recalled into a turn. */
     val minRelevance: Double = 0.12,
