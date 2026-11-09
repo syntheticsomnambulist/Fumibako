@@ -470,7 +470,11 @@ The rules in CLAUDE.md hold through the move:
 - The installers' notices for the libraries they carry: JavaFX (GPL-2.0 with the Classpath
   Exception), jaudiotagger (LGPL-2.1), PDFBox (Apache 2.0), FileKit and java-keyring (MIT, BSD).
 - The burn shader on Skia.
-- Wider layouts for the planner and Settings, a menu bar, and more keyboard shortcuts.
+- Wider layouts for the planner and Settings, a menu bar, and more keyboard shortcuts. The planner was
+  redrawn for v0.5 (`calendar.md`, "Third pass", on the design branch): the header holds the
+  navigation and the Week and Month switch, and nothing hangs off the page's right edge any more,
+  which leaves a wide planner easier to lay out when its turn comes. Design questions go to the
+  design session working from `docs/design/handoff.md`.
 - Signing, notarization, and updates that install themselves.
 - A friendlier installer: the Windows installer's banner and dialog pictures, a background for
   the Mac's disk image.
