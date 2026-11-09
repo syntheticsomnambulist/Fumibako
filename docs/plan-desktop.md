@@ -54,6 +54,15 @@ answers below; the reorganization has started (see *Progress*).
     gold), with the latest lines or only the name (as a list or a shelf), and the lining in all
     fourteen inks. The lining follows madoromi's ink ramps, deep where ink pools, paler in the
     middle; boxes keep day inks at night, as stickers do.
+  - **Your answers (2026-11-09):** each persona picks their own box; the night's inks at night;
+    and the study redrawn flat, in the writing desk's look (`activities.md` on the design branch:
+    fills of ink mixed into the paper, thin lines for cords and seals, no gradients, the soft
+    shadow, boxes from above like the desk's trays). Added: a box with only their seal, and one
+    with the name engraved. The study now has a card per persona for picking their box (a finish:
+    lacquer, washi, paulownia; a lid: name, seal, engraved, kanji), the list three ways (the words
+    beside the box, on the box, or only the boxes), and the phone's list as today's cards beside
+    the same list as boxes, all shut. Still to choose: which finishes and lids to keep, the list's
+    form, and boxes on the phone or not.
 
 ## Wide layouts: progress
 
