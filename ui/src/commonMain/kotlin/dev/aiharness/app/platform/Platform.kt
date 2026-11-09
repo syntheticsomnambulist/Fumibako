@@ -126,6 +126,12 @@ interface AboutApp {
 
     fun clearCrashReport()
 
+    /**
+     * The libraries the app carries, their licenses and notices, as the build lists them
+     * (buildSrc/LibraryNotices.kt): `licenses/libraries.txt`, or null if the build left it out.
+     */
+    fun libraryNotices(): String?
+
     /** The app's icon (the seal). */
     @Composable
     fun icon(): Painter

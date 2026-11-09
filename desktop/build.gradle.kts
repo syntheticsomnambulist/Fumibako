@@ -46,6 +46,31 @@ tasks.test {
     }
 }
 
+// The notices for the libraries the app carries (buildSrc/LibraryNotices.kt): in the app, for
+// About, and beside it in the installed app's resources folder.
+val libraryNotices = libraryNotices("libraryNotices", "runtimeClasspath") {
+    audience.set("computers")
+    appVersion.set(versionName)
+    // Its POM says only "LGPL"; its license file (license.txt in its source) is the LGPL 2.1.
+    licenseOf.put("net.jthink:jaudiotagger", "LGPL-2.1")
+    notes.put(
+        "net.jthink:jaudiotagger",
+        "Used unmodified, as its own jar (jaudiotagger-3.0.1-….jar in the app's lib/app or app folder), as the LGPL 2.1 " +
+            "allows: it can be replaced with another build of the library. Its source: https://bitbucket.org/ijabz/jaudiotagger",
+    )
+    extra.add(
+        "The installers also carry a Java runtime (OpenJDK, GPL 2.0 with the Classpath Exception), whose own " +
+            "notices are in its legal folder in the app's folder: lib/runtime/legal on Linux, runtime\\legal on Windows, " +
+            "Contents/runtime/Contents/Home/legal on a Mac.",
+    )
+}
+sourceSets.main { resources.srcDir(libraryNotices.map { it.outputDir }) }
+val besideTheApp = tasks.register<Sync>("libraryNoticesBesideTheApp") {
+    from(libraryNotices.map { it.outputDir })
+    // The packaging's resources folder takes files for every system from common/.
+    into(layout.buildDirectory.dir("generated/appResources/common"))
+}
+
 compose.desktop {
     application {
         mainClass = "dev.aiharness.desktop.MainKt"
@@ -59,6 +84,8 @@ compose.desktop {
             vendor = "Fumibako"
             // The whole runtime for now; trimmed to the modules it needs once packaging is tried on each system.
             includeAllModules = true
+            // licenses/libraries.txt beside the app (in its resources folder), as well as inside it.
+            appResourcesRootDir.set(layout.dir(besideTheApp.map { it.destinationDir.parentFile }))
 
             // The installers' icons, drawn by tools/make_icon.py (docs/design/icon.md).
             windows {

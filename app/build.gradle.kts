@@ -117,6 +117,19 @@ androidComponents {
 }
 
 
+// The notices for the libraries the phone carries (buildSrc/LibraryNotices.kt), in its assets
+// for About. The APK leaves out the libraries' own META-INF license files (packaging, above); this
+// list carries their texts and notices instead.
+androidComponents {
+    onVariants { variant ->
+        val notices = libraryNotices("${variant.name}LibraryNotices", "${variant.name}RuntimeClasspath") {
+            audience.set("the phone")
+            appVersion.set(providers.gradleProperty("fumibako.versionName"))
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(notices, LibraryNotices::outputDir)
+    }
+}
+
 // The screenshot tours run only with HARNESS_SCREENSHOTS_DIR set (ScreenshotTour). Such a run always
 // really runs: never "up to date" and never from the build cache, which would pass it without
 // drawing a single picture.
