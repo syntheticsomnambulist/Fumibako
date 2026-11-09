@@ -70,6 +70,11 @@ answers below; the reorganization has started (see *Progress*).
     chubby boxes with a lid top, a deeper band for the lid's edge and the box below, a filled
     bow, and the opening animated (the study's third version). Still to choose: a paper strip or
     a tag tied on, which lids and finishes to keep, and whether the drawing is ready to build.
+  - **Almost there (2026-11-09):** a wider box (150, with 112 and 180 to compare) so the paper
+    strip, now the name row and one line, is thinner than the box and tucked beneath it; and more
+    ties, shut and open: a bow, tied crosswise with a flat knot, mizuhiki in an awaji knot (slips
+    off whole), and a cord with a tassel (swings aside). Personas choose their tie with the rest
+    of their box (the study's fourth version).
 
 ## Wide layouts: progress
 

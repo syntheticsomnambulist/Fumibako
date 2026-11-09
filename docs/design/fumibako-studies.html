@@ -128,6 +128,24 @@ legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; lett
 @media (prefers-reduced-motion: reduce) { .fbx .lid, .fbx .bow, .fbx .cordbody, .fbx .loose, .fbx .letter { transition: none; } }
 .fbx .unread { position: absolute; right: -8px; top: -9px; width: 28px; height: 28px; filter: var(--shadow); transition: opacity .15s ease; }
 .fbx.open .unread { opacity: 0; }
+/* The ties: a cross tie's knot and a tassel's knot go as the bow does; mizuhiki slips off whole; the tassel swings aside. */
+.fbx .mzk { transition: transform .36s cubic-bezier(.3, .8, .35, 1.15); }
+.fbx.open .mzk { transform: translate(-12px, 9px) rotate(-14deg); }
+.fbx .tassel { transform-box: fill-box; transform-origin: 50% 0%; transition: transform .34s cubic-bezier(.3, .8, .35, 1.3) .06s; }
+.fbx.open .tassel { transform: translate(-7px, 5px) rotate(26deg); }
+.fbx .strand { fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.fbx .strand.a { stroke: var(--cordc); }
+.fbx .strand.b { stroke: var(--kami); }
+.fbx .fringe { fill: none; stroke: var(--bowline); stroke-width: .9; }
+@media (prefers-reduced-motion: reduce) { .fbx .mzk, .fbx .tassel { transition: none; } }
+.ties { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 34px 28px; }
+.tie { display: grid; gap: 10px; align-content: start; }
+.tie h3 { margin: 0; display: flex; align-items: baseline; gap: 8px; font-family: var(--name); font-weight: 600; font-size: 18px; }
+.tie h3 b { font-family: var(--brush); font-weight: 400; font-size: 17px; color: var(--usuzumi0); }
+.tie p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--usuzumi1); }
+.tie .pair { display: flex; flex-wrap: wrap; gap: 26px 20px; align-items: flex-end; padding-top: 22px; }
+.tie .pair button { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: inherit; }
+.tie .pair small { display: block; margin-top: 10px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--kasure2); text-align: center; line-height: 1.2; }
 
 /* Persona settings cards ("Aria's box") */
 .card { position: relative; display: grid; gap: 12px; padding: 16px 16px 16px 24px; background: var(--kami); border: 1px solid var(--nijimi0); filter: var(--shadow); }
@@ -147,12 +165,12 @@ legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; lett
 .pane { width: min(100%, 372px); padding: 22px 14px 22px; display: grid; gap: 16px; background: var(--hyoshi); border: 1px solid var(--nijimi0); }
 .pane-title { display: flex; align-items: baseline; gap: 8px; font-family: var(--name); font-weight: 600; font-size: 26px; padding-left: 4px; }
 .pane-title span { font-family: var(--brush); font-weight: 400; font-size: 14px; color: var(--kasure2); }
-.lr { position: relative; display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; border: 0; background: none; padding: 6px 0 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.lr { position: relative; display: grid; grid-template-columns: var(--bw, 150px) minmax(0, 1fr); align-items: center; border: 0; background: none; padding: 6px 0 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .lr:focus-visible { outline: 2px solid var(--fuji); outline-offset: 4px; }
 .lr .fbx { z-index: 2; }
 /* The words on a paper strip, tucked under the box's side */
-.strip { position: relative; z-index: 1; margin-left: -14px; filter: var(--shadow); transform: rotate(var(--tilt, -1deg)); min-width: 0; }
-.strip > span { display: grid; gap: 1px; padding: 7px 16px 8px 24px; background: var(--kami);
+.strip { position: relative; z-index: 1; margin-left: -26px; filter: var(--shadow); transform: rotate(var(--tilt, -1deg)); min-width: 0; }
+.strip > span { display: grid; gap: 0; padding: 5px 16px 6px 34px; background: var(--kami);
   clip-path: polygon(0 0, 100% 0, 97.5% 16%, 100% 33%, 97.5% 50%, 100% 67%, 97.5% 84%, 100% 100%, 0 100%); }
 /* Or on a tag, tied on with a thread */
 .tag { position: relative; z-index: 1; margin-left: 14px; filter: var(--shadow); transform: rotate(var(--tilt, 1.2deg)); min-width: 0; }
@@ -161,10 +179,10 @@ legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; lett
 .tag-thread { position: absolute; z-index: 3; left: 104px; top: 30px; width: 30px; height: 30px; overflow: visible; pointer-events: none; }
 .tag-thread path { fill: none; stroke: var(--cordc-t); stroke-width: 1.4; stroke-linecap: round; }
 .row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.nm { font-family: var(--name); font-weight: 600; font-size: 17px; line-height: 1.2; color: var(--sumi); }
+.nm { font-family: var(--name); font-weight: 600; font-size: 16px; line-height: 1.25; color: var(--sumi); }
 .md { font-size: 11.5px; color: var(--tc); }
 .row time { margin-left: auto; font-size: 10.5px; color: var(--kasure2); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.pv { font-family: var(--read); font-size: 13px; line-height: 1.42; color: var(--usuzumi1); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pv { font-family: var(--read); font-size: 12.5px; line-height: 1.4; color: var(--usuzumi1); display: -webkit-box; -webkit-line-clamp: var(--lines, 1); -webkit-box-orient: vertical; overflow: hidden; }
 .pv.unread { color: var(--sumi); font-weight: 600; }
 
 /* The phone: tap a box, it opens, and the letter comes in */
@@ -231,6 +249,21 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
         <label><input type="radio" name="words" id="words-tag" value="tag"><span>On a tag, tied on</span></label>
       </div>
     </fieldset>
+    <fieldset>
+      <legend>The box's width</legend>
+      <div class="cells" id="width">
+        <label><input type="radio" name="width" id="width-112" value="112"><span>112</span></label>
+        <label><input type="radio" name="width" id="width-150" value="150" checked><span>150</span></label>
+        <label><input type="radio" name="width" id="width-180" value="180"><span>180</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Lines on the strip</legend>
+      <div class="cells" id="lines">
+        <label><input type="radio" name="lines" id="lines-1" value="1" checked><span>One</span></label>
+        <label><input type="radio" name="lines" id="lines-2" value="2"><span>Two</span></label>
+      </div>
+    </fieldset>
     <div class="theme-now" aria-live="polite">
       <div class="big" id="theme-kanji">秋昼</div>
       <div class="small" id="theme-name">aki-hiru · autumn by day</div>
@@ -256,6 +289,14 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
     <div class="pane" id="wide-list"></div>
   </section>
 
+  <section class="section" aria-labelledby="h-ties">
+    <div class="section-head">
+      <h2 id="h-ties">The tie<span>結</span></h2>
+      <p>Four ways to tie a box shut, each shut and open. Click either to watch it open or close. Personas choose theirs, with the rest of their box.</p>
+    </div>
+    <div class="ties" id="ties"></div>
+  </section>
+
   <section class="section" aria-labelledby="h-pick">
     <div class="section-head">
       <h2 id="h-pick">Their own box<span>選</span></h2>
@@ -267,7 +308,7 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
   <section class="section" aria-labelledby="h-close">
     <div class="section-head">
       <h2 id="h-close">Every finish, every lid<span>蓋</span></h2>
-      <p>Three finishes and five lids, Aria's ink, at half again the size: her name on a plate, her seal, her name cut in, her name gilded, and her ink's kanji. Click one to open it.</p>
+      <p>Three finishes and five lids, Aria's ink, 150 wide and a little larger than in the list: her name on a plate, her seal, her name cut in, her name gilded, and her ink's kanji. Click one to open it.</p>
     </div>
     <div class="closeup" id="closeup"></div>
   </section>
@@ -291,7 +332,8 @@ canvas.portrait { display: block; width: 100%; height: 100%; }
     <h3 id="h-decide">Decided, and to choose</h3>
     <ol>
       <li><b>Decided:</b> each persona chooses their own box, the night's inks at night, shut boxes on the phone that open before the letter comes in.</li>
-      <li><b>The words:</b> on a paper strip, or on a tag tied to the box?</li>
+      <li><b>The words:</b> on a paper strip tucked under a wider box (112, 150 or 180 wide; one line or two), or on a tag tied to it?</li>
+      <li><b>The ties:</b> a bow, tied crosswise, mizuhiki, a tassel: all four for personas to choose from, or fewer?</li>
       <li><b>The lids:</b> keep all five (name, seal, engraved, gilded, kanji) and all three finishes, or fewer?</li>
       <li><b>The drawing:</b> is this cute and clear enough to build, or another pass first?</li>
     </ol>
@@ -336,24 +378,28 @@ const ROLES = ['kami', 'hyoshi', 'chitsu', 'nijimi0', 'nijimi1', 'nijimi2', 'kas
 const SEASON_KANJI = { haru: '春', natsu: '夏', aki: '秋', fuyu: '冬' };
 const SEASON_EN = { haru: 'spring', natsu: 'summer', aki: 'autumn', fuyu: 'winter' };
 const FINISHES = [['lacquer', '漆', 'Lacquer'], ['washi', '紙', 'Washi'], ['kiri', '桐', 'Paulownia']];
+const TIES = [['bow', '蝶', 'Bow', 'A cord in their ink, tied in a bow. Open, the bow undoes and the cord falls loose.'],
+  ['cross', '十', 'Tied crosswise', 'The cord round both ways and tied flat where it crosses, as boxes are tied in a shop. Open, the knot undoes and the cord falls to the sides.'],
+  ['mizuhiki', '水', 'Mizuhiki', 'Paper cords in their ink and the paper, tied in an awaji knot. Open, it slips off whole and rests beside the box.'],
+  ['tassel', '房', 'Tassel', 'A cord with a tassel hanging over the front. Open, the knot undoes and the tassel swings aside.']];
 const LIDS = [['plate', '名', 'Name'], ['seal', '印', 'Seal'], ['engraved', '刻', 'Engraved'], ['gilded', '金', 'Gilded'], ['kanji', '字', 'Kanji']];
 
 const PEOPLE = [
   { id: 'aria', name: 'Aria', ink: 'sakura', pat: 'dots', kanji: '桜', mood: 'fond', time: '08:14', seed: 11, they: 'She',
-    preview: 'Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent…', box: { finish: 'washi', lid: 'seal' },
+    preview: 'Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent…', box: { finish: 'washi', lid: 'seal', tie: 'bow' },
     letter: ['Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent.', "A fox's way home is a string of smells it renews every night: a lamppost, a bin, the corner of a fence. Isn't that a little like a letter?", 'Tell me how you slept.'] },
   { id: 'juno', name: 'Juno', ink: 'kikyo', pat: 'gingham', kanji: '桔梗', mood: 'smug', time: 'Yesterday', seed: 17, unread: true, they: 'She',
-    preview: "Orange means it's sulking. Bring the router by tomorrow. I'll fix it for free. Once.", box: { finish: 'lacquer', lid: 'gilded' },
+    preview: "Orange means it's sulking. Bring the router by tomorrow. I'll fix it for free. Once.", box: { finish: 'lacquer', lid: 'gilded', tie: 'mizuhiki' },
     letter: ["Orange means it's sulking. You've been ignoring it.", "Bring the router by tomorrow. I'll fix it for free. Once."] },
   { id: 'kestrel', name: 'Kestrel', ink: 'tokiwa', pat: 'stripes', kanji: '常磐', mood: 'watchful', time: 'Sat', seed: 5, they: 'They',
-    preview: 'The road north is quiet tonight. I kept the fire going for you.', box: { finish: 'kiri', lid: 'kanji' },
+    preview: 'The road north is quiet tonight. I kept the fire going for you.', box: { finish: 'kiri', lid: 'kanji', tie: 'cross' },
     letter: ['The road north is quiet tonight. I kept the fire going for you.', 'Tell me when you want the next part of the story.'] },
   { id: 'mira', name: 'Mira', ink: 'yamabuki', pat: 'plain', kanji: '山吹', mood: 'sleepy', time: 'Thu', seed: 31, they: 'She',
-    preview: 'I fell asleep reading your last letter. That is a compliment, I promise.', box: { finish: 'lacquer', lid: 'engraved' },
+    preview: 'I fell asleep reading your last letter. That is a compliment, I promise.', box: { finish: 'lacquer', lid: 'engraved', tie: 'tassel' },
     letter: ['I fell asleep reading your last letter. That is a compliment, I promise.'] },
 ];
-const state = { time: 'auto', words: 'strip', picks: {}, wideOpen: 'aria' };
-const KEY = 'fumibako-studies-3';
+const state = { time: 'auto', words: 'strip', width: '150', lines: '1', picks: {}, wideOpen: 'aria' };
+const KEY = 'fumibako-studies-4';
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* storage unavailable */ }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
 const pick = p => ({ ...p.box, ...(state.picks[p.id] || {}) });
@@ -417,34 +463,67 @@ function bow(x, y) {
     <rect x="${x - 4}" y="${y - 4}" width="8" height="8" rx="2.5" class="cordc"/>
   </g>`;
 }
-/* One box, w×h in the scale of 112×70: the box under the lid; inside it (seen when open) the rim,
-   back wall, side walls, floor and their letters; the lid (top, edge band, cord, bow, mark) over it. */
-function box(p, s, { scale = 1, open = false, letters = true, unread = false, attrs = '' } = {}) {
-  const id = `b${++uid}`, patId = `${id}p`, W = 112, H = 70, cx = 30;
-  const t = TONES[s.finish];
-  const grain = s.finish === 'kiri' ? [10, 19, 28].map(y => `<path class="grain" d="M6 ${y} C 30 ${y - 2}, 70 ${y + 2}, 106 ${y}"/>`).join('') : '';
-  const lacquerLine = s.finish === 'lacquer' ? `<rect x="4" y="5.5" width="104" height="33" rx="4" class="hair"/>` : '';
+/* One box, W×70: the box under the lid; inside it (seen when open) the rim, back wall, side walls,
+   floor and their letters; the lid (top, edge band, mark) over it; and the tie. */
+function awaji(x, y, dx) {
+  const X = x + dx;
+  return `M${X - 7} ${y + 15} C ${X - 7} ${y + 7}, ${X - 15} ${y + 6}, ${X - 15} ${y} C ${X - 15} ${y - 7}, ${X - 5} ${y - 7}, ${X} ${y - 1}` +
+    ` C ${X + 5} ${y + 5}, ${X + 15} ${y + 6}, ${X + 15} ${y} C ${X + 15} ${y - 7}, ${X + 5} ${y - 7}, ${X} ${y - 1}` +
+    ` C ${X - 5} ${y - 6}, ${X - 6} ${y - 14}, ${X} ${y - 14} C ${X + 6} ${y - 14}, ${X + 5} ${y - 6}, ${X} ${y + 1} C ${X + 4} ${y + 6}, ${X + 7} ${y + 8}, ${X + 7} ${y + 15}`;
+}
+// What each tie draws: on the lid (lifts with it), over everything, on the box's front, and loose (when open).
+function tie(kind, cx, W) {
+  const band = `<rect x="${cx - 2.5}" y="1" width="5" height="49" class="cordc"/>`;
+  const front = `<rect x="${cx - 2.5}" y="48" width="5" height="19" class="cordc cordbody"/>`;
+  const looseV = `<path class="cordline" d="M${cx} 46 C ${cx - 5} 54, ${cx + 4} 60, ${cx - 6} 70"/><path class="cordline" d="M${cx + 1} 50 C ${cx + 8} 56, ${cx + 4} 64, ${cx + 12} 70"/>`;
+  if (kind === 'cross') return {
+    lid: band + `<rect x="0" y="29.5" width="${W}" height="5" class="cordc"/>`,
+    over: `<g class="bow"><rect x="${cx - 5}" y="27" width="10" height="10" rx="2" transform="rotate(45 ${cx} 32)" class="cordc"/><path class="bowline" d="M${cx - 3} 32 H ${cx + 3} M${cx} 29 V 35"/>` +
+      `<polygon class="cordc" points="${cx + 3},34 ${cx + 13},42 ${cx + 11},44 ${cx + 1},36"/><polygon class="cordc" points="${cx - 3},34 ${cx - 11},43 ${cx - 9},45 ${cx - 1},36"/></g>`,
+    front,
+    loose: looseV + `<path class="cordline" d="M3 30 C -4 36, -1 46, -8 54"/><path class="cordline" d="M${W - 3} 30 C ${W + 4} 36, ${W + 1} 46, ${W + 8} 54"/>`,
+  };
+  if (kind === 'mizuhiki') {
+    const strands = [[-2.6, 'a'], [0, 'b'], [2.6, 'a']];
+    const lines = strands.map(([d, c]) => `<path class="strand ${c}" d="M${cx + d} 1 V 7 ${awaji(cx, 21, d)} M${cx - 7 + d} 36 V 67 M${cx + 7 + d} 36 V 67"/>`).join('');
+    return { lid: '', over: `<g class="mzk">${lines}</g>`, front: '', loose: '' };
+  }
+  if (kind === 'tassel') return {
+    lid: band,
+    over: `<g class="bow"><circle cx="${cx}" cy="20" r="5" class="cordc"/><circle cx="${cx}" cy="20" r="2.2" class="bowline"/></g>` +
+      `<g class="tassel"><path class="cordline" d="M${cx + 2} 23 C ${cx + 10} 34, ${cx + 9} 46, ${cx + 6} 58" style="stroke-width: 2.4"/>` +
+      `<rect x="${cx + 2.5}" y="57" width="7" height="5" rx="2" class="cordc"/><rect x="${cx + 1.5}" y="61" width="9" height="13" rx="1" class="cordc"/>` +
+      `<path class="fringe" d="M${cx + 4} 63 V 73 M${cx + 6} 63 V 73 M${cx + 8} 63 V 73"/></g>`,
+    front, loose: looseV,
+  };
+  return { lid: band, over: bow(cx, 20), front, loose: looseV };
+}
+function box(p, s, { scale = 1, open = false, letters = true, unread = false, attrs = '', W = 112 } = {}) {
+  const id = `b${++uid}`, patId = `${id}p`, H = 70, cx = 30;
+  const t = TONES[s.finish], ti = tie(s.tie || 'bow', cx, W);
+  const grain = s.finish === 'kiri' ? [10, 19, 28].map(y => `<path class="grain" d="M6 ${y} C ${W * .27} ${y - 2}, ${W * .62} ${y + 2}, ${W - 6} ${y}"/>`).join('') : '';
+  const lacquerLine = s.finish === 'lacquer' ? `<rect x="4" y="5.5" width="${W - 8}" height="33" rx="4" class="hair"/>` : '';
   const inside = `
-    <rect x="5" y="9" width="102" height="41" rx="3" class="${t.body}"/>
-    <rect x="10" y="14" width="92" height="34" class="t40"/>
-    <rect x="10" y="14" width="92" height="8" class="t70"/>
-    <polygon points="10,14 16,22 16,48 10,48" class="t55"/><polygon points="102,14 96,22 96,48 102,48" class="t55"/>
+    <rect x="5" y="9" width="${W - 10}" height="41" rx="3" class="${t.body}"/>
+    <rect x="10" y="14" width="${W - 20}" height="34" class="t40"/>
+    <rect x="10" y="14" width="${W - 20}" height="8" class="t70"/>
+    <polygon points="10,14 16,22 16,48 10,48" class="t55"/><polygon points="${W - 10},14 ${W - 16},22 ${W - 16},48 ${W - 10},48" class="t55"/>
     ${letters ? `<g class="letter">
-      <g transform="rotate(5 70 34)"><rect x="52" y="24" width="38" height="24" class="sheet"/><rect x="57" y="31" width="24" height="2" class="rule"/><rect x="57" y="37" width="18" height="2" class="rule"/></g>
-      <g transform="rotate(-4 44 34)"><rect x="24" y="23" width="44" height="26" class="sheet"/><text x="29" y="40" font-family="Yomogi" font-size="12" style="fill: var(--ink)">${esc(p.name)}</text></g>
+      <g transform="rotate(5 ${W * .62} 34)"><rect x="${W * .46}" y="24" width="${W * .34}" height="24" class="sheet"/><rect x="${W * .51}" y="31" width="${W * .21}" height="2" class="rule"/><rect x="${W * .51}" y="37" width="${W * .16}" height="2" class="rule"/></g>
+      <g transform="rotate(-4 44 34)"><rect x="24" y="23" width="${Math.max(44, W * .36)}" height="26" class="sheet"/><text x="29" y="40" font-family="Yomogi" font-size="12" style="fill: var(--ink)">${esc(p.name)}</text></g>
     </g>` : ''}`;
   const svg = `<svg width="${W * scale}" height="${H * scale}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs>${PATTERNS[p.pat](patId)}</defs>
-    ${face(s.finish, 5, 44, 102, 23, 3, t.body, patId, p.pat)}
-    <rect x="${cx - 2.5}" y="48" width="5" height="19" class="cordc cordbody"/>
+    ${face(s.finish, 5, 44, W - 10, 23, 3, t.body, patId, p.pat)}
+    ${ti.front}
     ${inside}
     <g class="lid">
-      <rect x="0" y="28" width="112" height="22" rx="5" class="${t.edge}"/>
-      ${face(s.finish, 0, 2, 112, 38, 6, t.top, patId, p.pat)}${grain}${lacquerLine}
-      <rect x="${cx - 2.5}" y="1" width="5" height="49" class="cordc"/>
-      ${lidMark(p, s, (cx + 8 + W) / 2, 21, W - cx - 18)}
+      <rect x="0" y="28" width="${W}" height="22" rx="5" class="${t.edge}"/>
+      ${face(s.finish, 0, 2, W, 38, 6, t.top, patId, p.pat)}${grain}${lacquerLine}
+      ${ti.lid}
+      ${lidMark(p, s, (cx + 8 + W) / 2, s.tie === 'cross' ? 17 : 21, W - cx - 18)}
     </g>
-    ${bow(cx, 20)}
-    <g class="loose"><path class="cordline" d="M${cx} 46 C ${cx - 5} 54, ${cx + 4} 60, ${cx - 6} 70"/><path class="cordline" d="M${cx + 1} 50 C ${cx + 8} 56, ${cx + 4} 64, ${cx + 12} 70"/></g>
+    ${ti.over}
+    <g class="loose">${ti.loose}</g>
   </svg>`;
   const seal = unread ? `<svg class="unread" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" style="fill: var(--sheet)"/><circle cx="32" cy="32" r="23" style="fill: none; stroke: var(--ink); stroke-width: 3"/><text x="32" y="42" text-anchor="middle" font-family="Yuji Syuku" font-size="27" style="fill: var(--ink)">新</text></svg>` : '';
   return `<span class="fbx f-${s.finish}${open ? ' open' : ''}" ${attrs}>${svg}${seal}</span>`;
@@ -454,13 +533,13 @@ function box(p, s, { scale = 1, open = false, letters = true, unread = false, at
 function words(p, unread, i) {
   const inner = `<span class="row"><span class="nm">${esc(p.name)}</span><span class="md">${p.mood}</span><time>${p.time}</time></span><span class="pv${unread ? ' unread' : ''}">${esc(p.preview)}</span>`;
   const tilt = [-1, .8, -.6, 1.1][i % 4];
-  if (state.words === 'tag') return `<svg class="tag-thread" viewBox="0 0 30 30" aria-hidden="true" style="--cordc-t: color-mix(in oklab, var(--ink) 70%, var(--kami))"><path d="M0 2 C 10 4, 14 12, 30 16"/></svg><span class="tag" style="--tilt: ${tilt * 1.4}deg"><i></i><span>${inner}</span></span>`;
+  if (state.words === 'tag') return `<svg class="tag-thread" viewBox="0 0 30 30" aria-hidden="true" style="left: ${+state.width - 8}px; --cordc-t: color-mix(in oklab, var(--ink) 70%, var(--kami))"><path d="M0 2 C 10 4, 14 12, 30 16"/></svg><span class="tag" style="--tilt: ${tilt * 1.4}deg"><i></i><span>${inner}</span></span>`;
   return `<span class="strip" style="--tilt: ${tilt}deg"><span>${inner}</span></span>`;
 }
 function listRow(p, i, { open, key }) {
   const unread = p.unread && !open;
-  return `<button class="lr" data-row="${key}" data-id="${p.id}" style="${inkStyle(p)}" aria-label="${esc(p.name)}'s letters${unread ? ', a new letter' : ''}">
-    ${box(p, pick(p), { open, unread })}${words(p, unread, i)}</button>`;
+  return `<button class="lr" data-row="${key}" data-id="${p.id}" style="${inkStyle(p)} --bw: ${state.width}px; --lines: ${state.lines};" aria-label="${esc(p.name)}'s letters${unread ? ', a new letter' : ''}">
+    ${box(p, pick(p), { open, unread, W: +state.width })}${words(p, unread, i)}</button>`;
 }
 const paneTitle = '<div class="pane-title">Letters<span data-season-kanji></span></div>';
 
@@ -474,12 +553,13 @@ function settingsCard(p) {
       <span class="tape-v" aria-hidden="true"></span>
       <h4>${esc(p.name)}'s box</h4>
       <div class="previews">
-        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s)}<small>Shut</small></button>
-        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s, { open: true })}<small>Open</small></button>
+        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s, { W: 130 })}<small>Shut</small></button>
+        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s, { open: true, W: 130 })}<small>Open</small></button>
       </div>
       <p class="who" style="margin: 0">${chosen}</p>
       <div class="choice"><span>Finish</span>${cells('finish', FINISHES, s.finish)}</div>
       <div class="choice"><span>On the lid</span>${cells('lid', LIDS, s.lid)}</div>
+      <div class="choice"><span>Tie</span>${cells('tie', TIES.map(([v, k, label]) => [v, k, label]), s.tie)}</div>
     </div>`;
 }
 
@@ -487,10 +567,16 @@ function render() {
   document.getElementById('phone-list').innerHTML = paneTitle + PEOPLE.map((p, i) => listRow(p, i, { open: false, key: 'phone' })).join('');
   document.getElementById('wide-list').innerHTML = paneTitle + PEOPLE.map((p, i) => listRow(p, i, { open: state.wideOpen === p.id, key: 'wide' })).join('');
   document.getElementById('cards').innerHTML = PEOPLE.map(settingsCard).join('');
+  document.getElementById('ties').innerHTML = TIES.map(([v, k, label, line], i) => {
+    const p = PEOPLE[0], s = { ...pick(p), tie: v };
+    return `<div class="tie" style="${inkStyle(p)}"><h3><b>${k}</b>${label}</h3><p>${line}</p><div class="pair">
+      <button data-toggle aria-label="Open or shut the box tied with ${label.toLowerCase()}">${box(p, s, { W: 150, scale: 1.25 })}<small>Shut</small></button>
+      <button data-toggle aria-label="Open or shut the box tied with ${label.toLowerCase()}">${box(p, s, { W: 150, scale: 1.25, open: true })}<small>Open</small></button></div></div>`;
+  }).join('');
   const aria = PEOPLE[0];
   document.getElementById('closeup').innerHTML = '<span></span>' + LIDS.map(([, k, label]) => `<span class="h">${k} ${label}</span>`).join('') +
     FINISHES.map(([f, k, label]) => `<span class="rowh"><b>${k}</b>${label}</span>` +
-      LIDS.map(([lid]) => `<span class="cellbox"><button data-toggle aria-label="Open or shut: ${label}, ${lid}" style="${inkStyle(aria)}">${box(aria, { finish: f, lid }, { scale: 1.5 })}</button></span>`).join('')).join('');
+      LIDS.map(([lid]) => `<span class="cellbox"><button data-toggle aria-label="Open or shut: ${label}, ${lid}" style="${inkStyle(aria)}">${box(aria, { finish: f, lid, tie: 'bow' }, { scale: 1.2, W: 150 })}</button></span>`).join('')).join('');
   document.getElementById('inks').innerHTML = INKS.map(([ink, kanji], i) => {
     const p = { id: ink, name: ink[0].toUpperCase() + ink.slice(1), ink, kanji, pat: 'plain', seed: 60 + i };
     return `<div class="ink-cell" style="--ink: var(--ink-${ink})">${box(p, { finish: 'lacquer', lid: 'seal' }, { open: true, letters: false })}<span class="name"><b>${kanji}</b>${ink}</span></div>`;
@@ -572,7 +658,7 @@ function apply() {
 }
 
 function init() {
-  [['time', 'time'], ['words', 'words']].forEach(([id, key]) => {
+  [['time', 'time'], ['words', 'words'], ['width', 'width'], ['lines', 'lines']].forEach(([id, key]) => {
     const el = document.getElementById(`${id}-${state[key]}`); if (el) el.checked = true;
     document.getElementById(id).addEventListener('change', e => { state[key] = e.target.value; save(); key === 'time' ? apply() : render(); });
   });
