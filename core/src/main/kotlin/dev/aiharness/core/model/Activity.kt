@@ -50,6 +50,9 @@ enum class ActivityKind {
 
     /** Wrote a haiku in your planner on a new season's first day ([ActivityEntry.note]: the microseason). */
     WROTE_HAIKU,
+
+    /** Chose a new box for its letters ([ActivityEntry.note]: the box in words). */
+    CHOSE_LETTER_BOX,
     ;
 
     /** Kinds that mark a heartbeat having happened. */

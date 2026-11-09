@@ -121,6 +121,7 @@ class Harness(
             MemoryForgetTool(memory),
             GenerateImageTool(images, personas),
             ChangeOutfitTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
+            dev.aiharness.core.tools.ChooseLetterBoxTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
             PlaceStickerTool(stickerService, personas, conversations, { id, kind, conversationId, note -> logActivity(id, kind, conversationId, note = note) }, { planner }, clock),
             PeelStickerTool(stickerService, personas, conversations),
             DrawStickerTool(stickerMaker, personas, stickers),
