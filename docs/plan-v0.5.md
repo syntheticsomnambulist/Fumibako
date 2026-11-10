@@ -184,3 +184,23 @@ From `v0.5.md`, in short:
 - **The gallery's mark for the open persona** (2026-11-10, 01b282c, a fast-forward): in a wide
   window, the open persona's polaroid has its corner folded down (your choice). Phone screens are
   unchanged. Suites and tours pass (299 shots).
+- **Step 3, searching letters on screen: done.**
+  - **Search letters:** a loupe at the right of the Letters title (the title stays where it was),
+    and "Search these letters" in a thread's ⋯ menu, which starts on that persona's letters. The
+    page has an index-card field ("A word, a name, a place"), whose letters (Everyone, or a
+    persona with their portrait) and what kind (Everything, Their letters, Your notes, Pictures),
+    and recent searches while the field is empty (the last six, kept on the device). Results come
+    newest first as slips with the writer's tape, who and when ("You to Aria, Tue 10 Nov"; "Aria's
+    picture, ..."), and the sentences around the first match with the words marked like a
+    highlighter in the writer's ink; a picture shows a small polaroid. "Nothing in the letters
+    says “...”." when nothing does.
+  - **Found in the letters:** a result opens its thread at that letter, with a strip under the
+    header: “tea” · 1 of 2 with Aria, older and newer, and Done. Every match in the thread is
+    marked, the current one darker and ringed in her ink; a match only in a picture says what it
+    held ("Found in the picture: “...”").
+  - **Settings, Memory:** "Letter search: Personas look through your past letters with them."
+  - **Tests:** the tours open the search, type "tea", and open a result (305 shots).
+  - **A test fix:** `LettersInThePostScreenTest` stalled now and then because it blocked the main
+    thread with `runBlocking` while the open thread was marking letters read on the main
+    dispatcher inside `updateConversation`'s lock. Its writes now run off the main thread while
+    the looper keeps going. The app never blocks its main thread this way.

@@ -116,6 +116,8 @@ fun LetterSheet(
     handling: StickerHandling? = null,
     /** A letter its P.S. or index card names, to open the thread there. */
     onOpenLetter: (FoundLetter) -> Unit = {},
+    /** A search being stepped through: its words marked, and a ring when this holds the current match. */
+    find: FindView? = null,
 ) {
     val s = stationery
     val ink = s.ink(persona?.ink)
@@ -148,6 +150,7 @@ fun LetterSheet(
     ) {
         Column(
             Modifier
+                .matchRing(find?.ringed == true, ink)
                 .washiStrip(Tape(ink, persona?.tapePattern ?: TapePattern.DOTS), tiltDegrees = -0.7f, overhang = 8.dp)
                 .paperCard()
                 .fillMaxWidth()
@@ -171,7 +174,7 @@ fun LetterSheet(
 
             letter?.blocks?.forEach { block ->
                 when (block) {
-                    is LetterBlock.Words -> StickerText(block.text, ink, PaperType.letterBody, paper.sumi)
+                    is LetterBlock.Words -> StickerText(block.text, ink, PaperType.letterBody, paper.sumi, find?.marks)
                     // Photos in letters are polaroids taped in the persona's ink; attachments get their frames.
                     is LetterBlock.Picture -> FramedPictures(
                         listOf(block.image), s.dayColors.ink(persona?.ink), persona?.tapePattern ?: TapePattern.DOTS, 1f,
@@ -188,6 +191,7 @@ fun LetterSheet(
                 if (text.isNotBlank()) StickerText(text, ink, PaperType.letterBody, paper.sumi)
                 Text(writing.status.ifBlank { "writing…" }, style = PaperType.postscript, color = paper.kasure2)
             }
+            find?.inPicture?.takeIf { find.ringed }?.let { Text(it, style = PaperType.meta.copy(fontSize = 11.sp, letterSpacing = 0.sp, lineHeight = 15.sp), color = paper.usuzumi0) }
             letter?.errors?.forEach { Text(it, style = PaperType.postscript, color = s.ink("beni")) }
             if (letter?.fromHeartbeat == true) {
                 Text("Written while you were away", style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp), color = ink)
@@ -251,6 +255,7 @@ fun NoteSlip(
     persona: Persona? = null,
     stickerName: (Sticker) -> String? = { null },
     handling: StickerHandling? = null,
+    find: FindView? = null,
 ) {
     val s = stationery
     val you = user?.ink?.let { s.ink(it) } ?: s.you
@@ -267,6 +272,7 @@ fun NoteSlip(
         ) {
             Column(
                 Modifier
+                    .matchRing(find?.ringed == true, s.ink(persona?.ink))
                     .washiStrip(Tape(you, pattern), side = TapeSide.End, tiltDegrees = 0.9f, overhang = 7.dp)
                     .paperCard(color = lerp(s.colors.kami, you, 0.06f))
                     .combinedClickable(onClick = {}, onLongClick = onLongPress, onLongClickLabel = "Note options")
@@ -280,7 +286,7 @@ fun NoteSlip(
                     color = you,
                 )
                 if (message.displayText.isNotBlank()) {
-                    StickerText(message.displayText, you, PaperType.noteBody, paper.usuzumi1)
+                    StickerText(message.displayText, you, PaperType.noteBody, paper.usuzumi1, find?.marks)
                 }
                 val noteInk = s.dayColors.ink(user?.ink ?: "sora")
                 val notePaper = lerp(s.colors.kami, you, 0.06f)
@@ -289,6 +295,7 @@ fun NoteSlip(
                 FramedPictures(
                     message.images, noteInk, pattern, 0.86f, handling, { stickerInk(it, s, persona, user) }, stickerName, onImage, Alignment.CenterStart,
                 )
+                find?.inPicture?.takeIf { find.ringed }?.let { Text(it, style = PaperType.meta.copy(fontSize = 11.sp, letterSpacing = 0.sp, lineHeight = 15.sp), color = paper.usuzumi0) }
                 if (message.images.isNotEmpty()) reader?.let { MediaSupport.cantSee(it.profile, it.name, message.images.size > 1) }?.let { CantTakeIn(it) }
                 message.attachments.forEach { attachment ->
                     FramedAttachment(attachment, noteInk, notePaper, inNote = true, handling = handling, inkOf = { stickerInk(it, s, persona, user) }, nameOf = stickerName, alignment = Alignment.CenterStart)
@@ -313,14 +320,15 @@ private fun CantTakeIn(text: String) {
 /** Stickers that can be written inline as `:name:` here (the persona's own and the shared ones), by name. */
 val LocalInlineStickers = staticCompositionLocalOf<Map<String, StickerArt>> { emptyMap() }
 
-/** Letter text with its `:name:` stickers drawn inline at the text's height. */
+/** Letter text with its `:name:` stickers drawn inline at the text's height, and a search's words marked. */
 @Composable
-fun StickerText(text: String, accent: Color, style: androidx.compose.ui.text.TextStyle, color: Color) {
+fun StickerText(text: String, accent: Color, style: androidx.compose.ui.text.TextStyle, color: Color, marks: Marks? = null) {
     val stickers = LocalInlineStickers.current
     val formatted = formatChatText(text, accent, stickers.keys)
     val used = stickers.filterKeys { formatted.text.isNotEmpty() && text.contains(":$it:") }
-    Text(
+    MarkedText(
         formatted,
+        marks,
         style = style,
         color = color,
         inlineContent = used.mapKeys { STICKER_PREFIX + it.key }.mapValues { (_, art) ->

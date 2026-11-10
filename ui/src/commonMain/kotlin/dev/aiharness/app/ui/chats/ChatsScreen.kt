@@ -49,6 +49,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -157,7 +159,13 @@ fun ChatsScreen(nav: NavController) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Every row has a key, so the list keeps its place as rows come and go.
-            item(key = "title") { ScreenTitle("Letters", Modifier.statusBarsPadding()) }
+            item(key = "title") {
+                ScreenTitle("Letters", Modifier.statusBarsPadding()) {
+                    IconButton(onClick = { nav.navigate(Routes.SEARCH) }) {
+                        Icon(dev.aiharness.app.ui.paper.StationeryIcons.Loupe, "Search letters", tint = paper.usuzumi0)
+                    }
+                }
+            }
             if (profiles?.isEmpty() == true) {
                 item(key = "getting-started") { GettingStarted(nav) }
             }
@@ -252,7 +260,8 @@ fun ChatsScreen(nav: NavController) {
 /** Big display title with the current season and time in brush kanji beside it. */
 @Composable
 fun ScreenTitle(title: String, modifier: Modifier = Modifier, trailing: @Composable (() -> Unit)? = null) {
-    Row(modifier.fillMaxWidth().padding(top = 22.dp, bottom = 2.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    // A 48 dp button beside the title stands 16 dp taller than its line: taken from the space above, so the title stays put.
+    Row(modifier.fillMaxWidth().padding(top = if (trailing != null) 6.dp else 22.dp, bottom = 2.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(title, style = PaperType.screenTitle, color = paper.sumi)
         Text(seasonKanji(paper.key), style = PaperType.seasonKanji, color = paper.kasure2, modifier = Modifier.padding(bottom = 3.dp))
         Spacer(Modifier.weight(1f))

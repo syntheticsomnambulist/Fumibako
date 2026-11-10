@@ -19,6 +19,9 @@ import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.util.newId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
@@ -69,13 +72,17 @@ class LettersInThePostScreenTest {
         assertTrue(shown("reply is on its way"))
         assertTrue(!shown(reply))
 
-        // It arrives a moment from now instead: then it's there, and the postmark is gone.
+        // It arrives a moment from now instead: then it's there, and the postmark is gone. (Written off
+        // the main thread while its looper keeps going: the open thread marks it read on the main
+        // dispatcher inside updateConversation's lock, so blocking the main thread here could wait on
+        // that lock forever.)
         val soon = System.currentTimeMillis() + 1_500
-        runBlocking {
+        val update = CoroutineScope(Dispatchers.IO).launch {
             val held = h.conversations.getMessages(conversationId).first { it.id == "reply" }
             h.conversations.updateMessage(held.copy(deliverAt = soon))
             h.updateConversation(conversationId) { it.copy(lastAgentMessageAt = soon) }
         }
+        compose.waitUntil(10_000) { update.isCompleted }
         Thread.sleep((soon - System.currentTimeMillis() + 300).coerceAtLeast(0))
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(2))
         compose.waitUntil(10_000) { shown(reply) }

@@ -1,5 +1,10 @@
 package dev.aiharness.app.ui.chat
 
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.foundation.layout.heightIn
 import dev.aiharness.app.ui.LocalBesideList
 import dev.aiharness.app.ui.LocalReadingSides
 import dev.aiharness.app.ui.WideLayout
@@ -268,19 +273,46 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     LaunchedEffect(messages.size, writing != null) {
         if (messages.isNotEmpty() && focusHere == null) listState.animateScrollToItem(0)
     }
+    // A search being stepped through here (from Search letters): its matches, newest first, and the one shown.
+    var finding by remember(conversationId) { mutableStateOf<LetterFocus.Find?>(null) }
+    var findAt by remember(conversationId) { mutableStateOf(0) }
+    val leading = (if (arriving != null || (generation.active && postage.travels)) 1 else 0) + (if (writing != null && writingInto == null) 1 else 0)
+    fun rowIndexOf(messageId: String) = rows.asReversed().indexOfFirst { row ->
+        when (row) {
+            is ThreadRow.Note -> row.message.id == messageId
+            is ThreadRow.Letter -> row.messages.any { it.id == messageId }
+            else -> false
+        }
+    }
     LaunchedEffect(focusHere, rows) {
         val request = focusHere ?: return@LaunchedEffect
-        val index = rows.asReversed().indexOfFirst { row ->
-            when (row) {
-                is ThreadRow.Note -> row.message.id == request.messageId
-                is ThreadRow.Letter -> row.messages.any { it.id == request.messageId }
-                else -> false
-            }
-        }
+        val index = rowIndexOf(request.messageId)
         if (index < 0) return@LaunchedEffect
-        val leading = (if (arriving != null || (generation.active && postage.travels)) 1 else 0) + (if (writing != null && writingInto == null) 1 else 0)
+        request.find?.let { find ->
+            finding = find
+            findAt = find.matches.indexOf(request.messageId).coerceAtLeast(0)
+        }
         listState.animateScrollToItem(index + leading)
         container.letterFocus.done(request)
+    }
+    fun stepTo(at: Int) {
+        val find = finding ?: return
+        val id = find.matches.getOrNull(at) ?: return
+        findAt = at
+        val index = rowIndexOf(id)
+        if (index >= 0) scope.launch { listState.animateScrollToItem(index + leading) }
+    }
+    val findTerms = remember(finding) { finding?.let { dev.aiharness.core.letters.LetterWords.terms(it.query) }.orEmpty() }
+    val currentMatch = finding?.matches?.getOrNull(findAt)
+    val kamiColor = paper.kami
+    val personaDayInk = stationery.dayColors.ink(header.persona?.ink)
+    val youDayInk = stationery.dayColors.ink(header.userPersona?.ink ?: "sora")
+    fun findFor(messages: List<ChatMessage>, byYou: Boolean): FindView? {
+        val find = finding ?: return null
+        if (messages.none { it.id in find.matches }) return null
+        val current = messages.any { it.id == currentMatch }
+        val ink = androidx.compose.ui.graphics.lerp(kamiColor, if (byYou) youDayInk else personaDayInk, if (current) 0.55f else 0.28f)
+        return FindView(Marks(findTerms, ink), current, foundInPicture(messages, findTerms))
     }
     val openLetter: (FoundLetter) -> Unit = { found ->
         container.letterFocus.open(found.conversationId, found.messageId)
@@ -304,6 +336,17 @@ fun ChatScreen(nav: NavController, conversationId: String) {
             onDelete = { confirmDelete = true },
             nav = nav,
         )
+        finding?.let { find ->
+            FindStrip(
+                query = find.query,
+                at = findAt,
+                total = find.matches.size,
+                personaName = personaName,
+                onOlder = { stepTo(findAt + 1) },
+                onNewer = { stepTo(findAt - 1) },
+                onDone = { finding = null },
+            )
+        }
 
         val inlineStickers = remember(stickerArt, persona?.id) {
             stickerArt.values.filter { it.ownerPersonaId == null || it.ownerPersonaId == persona?.id }.associateBy { it.name }
@@ -380,6 +423,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                             persona = persona,
                             stickerName = stickerName,
                             handling = handling,
+                            find = findFor(listOf(row.message), byYou = true),
                         )
                         is ThreadRow.Letter -> LetterSheet(
                             row,
@@ -392,6 +436,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                             stickerName = stickerName,
                             handling = handling,
                             onOpenLetter = openLetter,
+                            find = findFor(row.messages, byYou = false),
                         )
                         is ThreadRow.ModelChange -> ModelChangeNotice(
                             row,
@@ -694,6 +739,7 @@ private fun LettersTopBar(
             DropdownMenu(expanded = menu == "more", onDismissRequest = { menu = null }) {
                 DropdownMenuItem(text = { Text("Rewrite the last letter") }, onClick = { menu = null; vm.regenerate() })
                 persona?.let { p ->
+                    DropdownMenuItem(text = { Text("Search these letters") }, onClick = { menu = null; nav.navigate(Routes.searchFor(p.id)) })
                     DropdownMenuItem(text = { Text("${p.name}'s page") }, onClick = { menu = null; nav.navigate(Routes.personaPage(p.id)) })
                     DropdownMenuItem(text = { Text("${p.name}'s memories") }, onClick = { menu = null; nav.navigate(Routes.memory(p.id)) })
                 }
@@ -929,3 +975,45 @@ private data class Watching(val video: ContentPart.Attachment, val ink: androidx
 
 /** A persona's song playing in its service's embedded player. */
 private data class Embedding(val song: ContentPart.Attachment, val embed: String, val ink: androidx.compose.ui.graphics.Color)
+
+/**
+ * The strip under the header while a search's matches are stepped through: the words, which one
+ * this is ("2 of 3 in your letters with Aria"), older and newer, and Done.
+ */
+@Composable
+private fun FindStrip(query: String, at: Int, total: Int, personaName: String, onOlder: () -> Unit, onNewer: () -> Unit, onDone: () -> Unit) {
+    val colors = paper
+    val rule = androidx.compose.ui.graphics.lerp(colors.kami, stationery.ink("beni"), 0.4f)
+    val card = if (colors.isNight) androidx.compose.ui.graphics.lerp(colors.kami, colors.hyoshi, 0.3f) else androidx.compose.ui.graphics.lerp(colors.kami, androidx.compose.ui.graphics.Color.White, 0.45f)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(card)
+            .drawBehind {
+                drawLine(rule, Offset(0f, 3.dp.toPx()), Offset(size.width, 3.dp.toPx()), 1.5.dp.toPx())
+                drawLine(colors.nijimi0, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx())
+            }
+            .semantics(mergeDescendants = false) { contentDescription = "Matches in these letters" }
+            .padding(start = 14.dp, end = 4.dp, top = 4.dp)
+            .heightIn(min = 48.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(StationeryIcons.Loupe, null, tint = colors.usuzumi0, modifier = Modifier.size(16.dp))
+        Text("“$query”", style = PaperType.preview.copy(fontSize = 15.sp), color = colors.sumi, modifier = Modifier.padding(start = 8.dp))
+        Text(
+            "${at + 1} of $total with $personaName",
+            style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp),
+            color = colors.usuzumi0,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).padding(start = 8.dp),
+        )
+        IconButton(onClick = onOlder, enabled = at < total - 1) {
+            Icon(Icons.Default.KeyboardArrowUp, "Older match", tint = colors.sumi.copy(alpha = if (at < total - 1) 1f else 0.35f))
+        }
+        IconButton(onClick = onNewer, enabled = at > 0) {
+            Icon(Icons.Default.KeyboardArrowDown, "Newer match", tint = colors.sumi.copy(alpha = if (at > 0) 1f else 0.35f))
+        }
+        TextButton(onClick = onDone) { Text("Done", style = PaperType.label.copy(letterSpacing = 0.sp, fontSize = 12.5.sp), color = stationery.you) }
+    }
+}

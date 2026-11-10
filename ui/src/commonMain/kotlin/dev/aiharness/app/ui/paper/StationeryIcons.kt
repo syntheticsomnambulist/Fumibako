@@ -54,6 +54,15 @@ object StationeryIcons {
         close()
     }
 
+    /** A loupe: search the letters. */
+    val Loupe: ImageVector = icon("Loupe") {
+        line(1.7f) { circle(10f, 10f, 6.2f) }
+        line(2.1f) {
+            moveTo(14.7f, 14.7f)
+            lineTo(19.8f, 19.8f)
+        }
+    }
+
     /** A fountain pen nib: which model writes the letters. */
     val Nib: ImageVector = icon("Nib") {
         group(rotate = 18f, pivotX = 12f, pivotY = 12f) {

@@ -85,6 +85,9 @@ object Routes {
     const val TYPICAL_WEEK = "planner/week"
     fun plannerDay(date: String) = "planner/day/$date"
     fun chat(id: String) = "chat/$id"
+    const val SEARCH = "search"
+    /** Search letters, starting on one persona's ("Search these letters" in a thread). */
+    fun searchFor(personaId: String) = "search/$personaId"
     fun personaPage(id: String) = "page/$id"
     fun personaHeartbeat(id: String) = "page/$id/heartbeat"
     fun personaStickers(id: String) = "page/$id/stickers"
@@ -160,6 +163,8 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
                     NavHost(nav, startDestination = Routes.CHATS, modifier = Modifier.padding(bottom = padding.calculateBottomPadding())) {
                         screen(Routes.CHATS) { ChatsScreen(nav) }
                         screen("chat/{id}") { entry -> ChatScreen(nav, entry.arg("id")) }
+                        screen(Routes.SEARCH) { dev.aiharness.app.ui.search.SearchLettersScreen(nav, null) }
+                        screen("search/{id}") { entry -> dev.aiharness.app.ui.search.SearchLettersScreen(nav, entry.arg("id")) }
                         screen(Routes.PERSONAS) { PersonasScreen(nav) }
                         screen("page/{id}/heartbeat") { entry -> PersonaHeartbeatScreen(nav, entry.arg("id")) }
                         screen("page/{id}/stickers") { entry -> dev.aiharness.app.ui.personas.PersonaStickersScreen(nav, entry.arg("id")) }
@@ -197,7 +202,7 @@ private val personaRoutes = setOf("page/{id}", "page/{id}/heartbeat", "page/{id}
 
 private fun tabOf(route: String?): String? = when {
     route == null -> null
-    route == Routes.CHATS || route.startsWith("chat/") -> Routes.CHATS
+    route == Routes.CHATS || route.startsWith("chat/") || route.startsWith(Routes.SEARCH) -> Routes.CHATS
     route == Routes.PERSONAS || route == Routes.USER_PERSONAS || listOf("page/", "memory/", "you/").any { route.startsWith(it) } -> Routes.PERSONAS
     route.startsWith(Routes.PLANNER) -> Routes.PLANNER
     else -> Routes.SETTINGS

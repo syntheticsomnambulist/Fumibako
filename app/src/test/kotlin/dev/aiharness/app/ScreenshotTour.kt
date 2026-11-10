@@ -292,6 +292,24 @@ class ScreenshotTour {
         back()
         waitFor("Kestrel")
 
+        // v0.5: Search letters, from the loupe by the title; a result opens its thread at the match,
+        // with the strip for stepping through the others.
+        compose.onNodeWithContentDescription("Search letters").performClick()
+        waitFor("A word, a name, a place")
+        compose.onNode(hasSetTextAction()).performTextInput("tea")
+        waitFor("found · newest first")
+        pause()
+        shot("${prefix}_01c_search_letters")
+        compose.onAllNodes(hasClickActionLabel("Open ", substring = true)).onFirst().performClick()
+        waitFor("with Aria")
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Older match"), 10_000)
+        pause()
+        shot("${prefix}_01d_found_in_the_letters")
+        click("Done")
+        back()
+        back()
+        waitFor("Kestrel")
+
         click("Aria")
         waitFor("actually sleep")
         // Stickers bake in the background; wait until the ones on screen are drawn (with large text,

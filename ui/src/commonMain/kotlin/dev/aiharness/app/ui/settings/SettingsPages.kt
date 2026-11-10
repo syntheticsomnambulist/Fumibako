@@ -261,6 +261,7 @@ internal fun SettingsCards.memoryPage(s: AppSettings, update: Update) {
         SwitchRow("Long-term memory", m.enabled, { v -> memory { it.copy(enabled = v) } }, subtitle = "Personas keep and recall memories between letters.")
         if (m.enabled) {
             SwitchRow("Memory tools", m.memoryToolsEnabled, { v -> memory { it.copy(memoryToolsEnabled = v) } }, subtitle = "Personas keep, search and change their own memories.")
+            SwitchRow("Letter search", m.letterSearch, { v -> memory { it.copy(letterSearch = v) } }, subtitle = "Personas look through your past letters with them.")
             StepperRow("Memories brought into each letter", m.retrievalTopK, { n -> memory { it.copy(retrievalTopK = n) } }, 0..20)
             StepperRow("Write up conversation every", m.episodeEveryMessages, { n -> memory { it.copy(episodeEveryMessages = n) } }, 10..200, step = 10, describe = { "$it msgs" })
         }
