@@ -5,44 +5,9 @@ when we work through them.
 
 ## Roadmap
 
-Updated 2026-11-10.
-
-- **Shipped on the build branch:** v0.1 to v0.3.5, and **v0.4, the planner** (0.4.0, then 0.4.1 with
-  a new signing key and the GPL-3.0-or-later licence, and 0.4.2). Friends last had **v0.2.2**; the
-  next tester build is **v0.5**. See `docs/plan-v0.4.md` and `docs/testers.md` on the build branch.
-- **Desktop, alongside v0.5** (`docs/plan-desktop.md` on the build branch): Fumibako on Windows,
-  macOS and Linux, shipping with v0.5. The screens and storage have moved into shared modules and
-  a first desktop shell runs. Wide layouts come with v0.5 too (the user, 2026-11-08): index tabs
-  down the left, the letters list beside the open letter as little Fumibako boxes, and the gallery
-  beside the open page, its polaroid's corner folded down. The margins beside a letter come later
-  (below).
-- **v0.5: in a letter, letter search, import and export, the stationery update, fonts, and the
-  planner redrawn** (added 2026-11-09; the third pass in [`calendar.md`](calendar.md)). Designed
-  ([`v0.5.md`](v0.5.md)), nothing left open; the build starts after the desktop move.
-- **v0.6: activities** ([`activities.md`](activities.md)): the writing desk in a 机 Desk tab with
-  your desk beside it (trinket dish, a scrapbook), today's activities moved onto the desk,
-  shiritori, trinkets, pen pals ([`pen-pals.md`](pen-pals.md)), the drawer and rearranging her
-  desk, "What she does" in her settings, and labels, stickers you can write on (designed in
-  [`v0.5.md`](v0.5.md)). Being designed.
-- **v0.6.5:** another batch of activities, with more games (candidates in
-  [`activities.md`](activities.md)).
-- **v0.7: the outdoor update:** seasons, and what it means for a persona to live in a place of its
-  own (often fictional) with its own weather; weather events for personas (below). It will feed
-  back into the "going out" activities.
-- **v0.95: the settings, redesigned top-down** (the user, 2026-11-06): persona settings (where
-  "What she does" moves in v0.6) and the app's Settings, as menus, before 1.0.
-- **Storage optimizations, unscheduled** (the user, 2026-11-10): taken up when storage needs it,
-  between versions. Already in place on the storage branch (`ccr-af685712-68atlu`, headed for the
-  build branch): clearing unused files (Settings, Media, Storage), and on the phone, new videos
-  kept at 720p and lossless songs as AAC. Still to do, in order of the space saved: deleting the
-  copies made for models once they're described, scaling link pictures, drawn pictures as lossless
-  WebP, tidying the database, and clearing unused files on its own. None of them changes what
-  plays, shows or saves. Details in `docs/storage.md` on the storage branch.
-- **The margins beside a wide letter, unscheduled** (the user, 2026-11-10): in a wide window a
-  letter keeps a reading width of about 640, and the room on each side is wanted for things. Ideas
-  drawn in the wide-layout study (`docs/design/wide-studies.html` on the build branch): the day
-  beside its first letter, what she kept as a slip, her index card of what she had in mind, and
-  today's planner page. Which ones is still to choose.
+The roadmap lives in [`docs/roadmap.md`](../roadmap.md), kept by Sashigane, the Architect
+session (the user, 2026-11-10). Roadmap changes go to Sashigane; the rest of this note is the
+design session's.
 
 ## Name and icon
 
@@ -144,8 +109,8 @@ Ideas only: [Fieldwork](https://github.com/4thkira/fieldworkharness) is GPL-3.0,
   these (see [`activities.md`](activities.md)).
 - **Promises and reminders with dates:** memories that wait until a date or come due. They show
   in the persona's planner. (Proposed for v0.4, in [`calendar.md`](calendar.md).)
-- **Thinking lines** (v0.5): the persona chooses what shows while it writes ("Aria is chewing her
-  pen").
+- **Her lines on the postmark** (v0.5, once thinking lines): the persona chooses what the 〒
+  postmark says while her reply is on its way ("she's looking for a stamp").
 - **Searching past letters** (v0.5): exact wording across conversations, not only memories.
 - **Notes to the builder** (the persona reports something broken, confusing or missing): useful
   for debugging, probably not in the final build.

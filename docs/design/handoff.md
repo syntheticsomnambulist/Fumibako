@@ -16,8 +16,9 @@ notes) and the notes for the version in hand. Prose and quoted app text both use
 - **v0.6 (activities) is being designed** ([`activities.md`](activities.md),
   [`pen-pals.md`](pen-pals.md)): the Desk tab, the writing desk, shiritori, trinkets, pen pals, the
   drawer, and labels (designed in [`v0.5.md`](v0.5.md)). What's left is below.
-- **The roadmap** is in [`ideas.md`](ideas.md), with the ideas parked for later. It belongs to
-  Sashigane, the Architect session, from 2026-11-10: leave its Roadmap section alone.
+- **The roadmap** is in [`docs/roadmap.md`](../roadmap.md), kept by Sashigane, the Architect
+  session (from 2026-11-10): send it roadmap changes rather than writing them. The ideas parked
+  for later stay in [`ideas.md`](ideas.md).
 
 ## Upcoming designs
 
