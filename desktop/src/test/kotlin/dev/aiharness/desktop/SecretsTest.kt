@@ -96,4 +96,27 @@ class SecretsTest {
         assertNull(store.get("cred1"))
         assertNull(KeychainSecretStore(dir) { keychain }.get("cred2"))
     }
+
+    /**
+     * The real Secret Service, where the session has one (FUMIBAKO_REAL_KEYCHAIN=1; it writes an
+     * item of its own, "API keys (test)", and removes it): a key kept, read back by a new holder as
+     * the next launch would, and the API keys it encrypts readable again.
+     */
+    @Test
+    fun theSecretServiceKeepsTheKey() = runBlocking {
+        org.junit.Assume.assumeTrue(System.getenv("FUMIBAKO_REAL_KEYCHAIN") == "1")
+        val account = "API keys (test)"
+        try {
+            val holder = SecretServiceKeyHolder.open(account)
+            kotlin.test.assertNotNull(holder, "a Secret Service in this session")
+            val store = KeychainSecretStore(dir) { holder }
+            store.put("cred1", "sk-ant-secret")
+            assertEquals("a key kept in your computer's keychain", store.encryptedWith)
+            assertFalse(File(dir, "secrets.key").exists(), "no key file beside the Secret Service")
+            val again = KeychainSecretStore(dir) { SecretServiceKeyHolder.open(account) }
+            assertEquals("sk-ant-secret", again.get("cred1"))
+        } finally {
+            SecretServiceKeyHolder.forget(account)
+        }
+    }
 }

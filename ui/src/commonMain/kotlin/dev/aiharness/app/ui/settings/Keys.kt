@@ -109,7 +109,7 @@ fun KeysScreen(nav: NavController) {
         item("title") {
             Column {
                 Text("Keys", style = PaperType.screenTitle, color = paper.sumi)
-                Text("KEPT ENCRYPTED ON THIS PHONE", style = PaperType.meta, color = paper.kasure2)
+                Text("KEPT ENCRYPTED ON THIS ${dev.aiharness.app.platform.deviceNoun.uppercase()}", style = PaperType.meta, color = paper.kasure2)
             }
         }
         item("keys") {

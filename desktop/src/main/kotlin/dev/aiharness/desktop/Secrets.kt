@@ -27,10 +27,10 @@ interface KeyHolder {
     fun write(value: String)
 }
 
-/** The system's keychain: Windows Credential Manager, the macOS Keychain, the Secret Service on Linux. */
+/** The system's keychain: Windows Credential Manager or the macOS Keychain (java-keyring). */
 class KeychainKeyHolder private constructor(private val keyring: Keyring) : KeyHolder {
     override val kind = KIND
-    override val description = "a key kept in your computer's keychain"
+    override val description = DESCRIPTION
 
     override fun read(): String? = runCatching { keyring.getPassword(SERVICE, ACCOUNT) }.getOrNull()?.takeIf { it.isNotBlank() }
 
@@ -38,11 +38,47 @@ class KeychainKeyHolder private constructor(private val keyring: Keyring) : KeyH
 
     companion object {
         const val KIND = "keychain"
-        private const val SERVICE = "Fumibako"
-        private const val ACCOUNT = "API keys"
+        const val DESCRIPTION = "a key kept in your computer's keychain"
+        internal const val SERVICE = "Fumibako"
+        internal const val ACCOUNT = "API keys"
 
-        /** The keychain, or null if this computer has none Fumibako can reach. */
-        fun open(): KeyHolder? = runCatching { KeychainKeyHolder(Keyring.create()) }.getOrNull()
+        /** The keychain (on Linux, the Secret Service), or null if this computer has none Fumibako can reach. */
+        fun open(): KeyHolder? =
+            if (isLinux()) SecretServiceKeyHolder.open()
+            else runCatching { KeychainKeyHolder(Keyring.create()) }.getOrNull()
+
+        private fun isLinux() = System.getProperty("os.name").lowercase().let { "win" !in it && "mac" !in it }
+    }
+}
+
+/**
+ * The Secret Service on Linux (SecretService.kt), in its default collection: an item labeled
+ * "Fumibako" with the attributes service=Fumibako and account=API keys. The same kind as the other
+ * keychains, so the keys stay readable whichever reaches them.
+ */
+class SecretServiceKeyHolder private constructor(account: String) : KeyHolder {
+    override val kind = KeychainKeyHolder.KIND
+    override val description = KeychainKeyHolder.DESCRIPTION
+
+    private val attributes = attributesFor(account)
+
+    override fun read(): String? = runCatching {
+        SecretService.with { it.find(attributes) }?.toString(Charsets.UTF_8)
+    }.getOrNull()?.takeIf { it.isNotBlank() }
+
+    override fun write(value: String) = SecretService.with { it.store(LABEL, attributes, value.toByteArray(Charsets.UTF_8)) }
+
+    companion object {
+        private const val LABEL = "Fumibako"
+
+        private fun attributesFor(account: String) = mapOf("service" to KeychainKeyHolder.SERVICE, "account" to account)
+
+        /** The Secret Service, or null where the session has none (no D-Bus, or nothing serving it). [account] is for tests. */
+        fun open(account: String = KeychainKeyHolder.ACCOUNT): KeyHolder? =
+            SecretService.open()?.use { SecretServiceKeyHolder(account) }
+
+        /** Removes [account]'s item (tests clean up after themselves). */
+        internal fun forget(account: String) = runCatching { SecretService.with { it.forget(attributesFor(account)) } }
     }
 }
 
