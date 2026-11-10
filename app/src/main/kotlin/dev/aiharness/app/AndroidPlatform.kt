@@ -51,6 +51,8 @@ class AndroidPlatform(private val app: Application) : AppPlatform {
             CrashReport.file(app).delete()
         }
 
+        override fun libraryNotices(): String? = runCatching { app.assets.open("licenses/libraries.txt").use { it.readBytes().decodeToString() } }.getOrNull()
+
         @Composable
         override fun icon(): Painter = painterResource(R.drawable.ic_launcher_foreground)
     }

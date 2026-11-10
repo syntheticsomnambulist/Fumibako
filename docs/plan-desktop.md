@@ -502,6 +502,29 @@ The rules in CLAUDE.md hold through the move:
   modules Fumibako needs; a desktop section in `docs/testers.md` and the README; and a desktop
   screenshot tour.
 
+- **Step 7: the libraries' notices, from the build (2026-11-09).** `buildSrc/LibraryNotices.kt`
+  makes the list for each app from its runtime libraries: every library's license from its Maven
+  POM (or its parent's), the NOTICE files its jar passes on, and the license texts (the standard
+  ones from `buildSrc/src/main/resources/licenses`, plus any extra license files inside the jars,
+  such as PDFBox's for what it includes). A license the build doesn't know stops the build, so a
+  new library gets read before it ships; jaudiotagger's POM says only "LGPL", so the desktop's
+  build names it LGPL 2.1, from its own license file.
+  - **Where it shows:** About, "Thanks and licenses", **Read the libraries' licenses** opens it
+    in a dialog, on the phone and the computer alike (your answer). On a computer it's also
+    beside the app: `lib/app/resources/licenses/libraries.txt` in the .deb (checked by
+    unpacking it); on Windows it should be `app\resources\licenses\libraries.txt` in the install
+    folder (to check from the first Windows installer). The Java runtime's own
+    notices stay in its `legal` folder, which the list points to.
+  - **What's in it:** 117 libraries on the computer (101 Apache 2.0; MIT, LGPL 2.1, GPL 2.0 with
+    the Classpath Exception, BSD), about 140 KB; 191 on the phone, about 56 KB, including Google's
+    ML Kit and Play Services (for the sticker cutter), which are under Google's terms rather than
+    an open license, and are listed with a link to them.
+  - **Checked:** in a real window (the dialog opens at once and scrolls a paragraph at a time).
+    The phone's only change is the new link on About (`first_02_about`). The tours aren't
+    pixel-identical from one run to the next any more: the seeded personas get random ids, which
+    choose their tilts and blobs, so two runs of the same code differ in about 180 of 279
+    pictures. Of the 98 that hold still, only About changed.
+
 ## Noted for later
 
 - The margins beside a letter in a wide window (ideas drawn in the study: the day beside its first
@@ -515,8 +538,6 @@ The rules in CLAUDE.md hold through the move:
   draws frames into the window, but it needs Kotlin 2.4); a camera.
 - A smaller copy of a big or unusual song for models that hear songs, as the phone makes; FLAC and
   Ogg songs playing in the app.
-- The installers' notices for the libraries they carry: JavaFX (GPL-2.0 with the Classpath
-  Exception), jaudiotagger (LGPL-2.1), PDFBox (Apache 2.0), FileKit and java-keyring (MIT, BSD).
 - The burn shader on Skia.
 - Wider layouts for the planner and Settings, a menu bar, and more keyboard shortcuts. The planner was
   redrawn for v0.5 (`calendar.md`, "Third pass", on the design branch): the header holds the
