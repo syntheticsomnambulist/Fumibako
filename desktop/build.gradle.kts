@@ -32,8 +32,8 @@ dependencies {
     // dbus-java 4 and can't run on the dbus-java 5 that FileKit's dialogs bring, so it's left out:
     // on Linux, SecretService.kt talks to the Secret Service through dbus-java 5 (MIT) itself.
     implementation(libs.java.keyring) { exclude(group = "de.swiesend", module = "secret-service") }
-    implementation("com.github.hypfvieh:dbus-java-core:5.2.0")
-    implementation("com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.0")
+    implementation(libs.dbus.java.core)
+    implementation(libs.dbus.java.unixsocket)
     implementation(libs.pdfbox)
     implementation(libs.jaudiotagger)
 

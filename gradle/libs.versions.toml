@@ -40,6 +40,8 @@ javafx = "21.0.13"
 jaudiotagger = "3.0.1"
 # The system's own Open and Save dialogs on the desktop; built with this Kotlin (later ones need 2.4).
 filekit = "0.14.1"
+# The Linux keychain (desktop/.../SecretService.kt): the same dbus-java FileKit's dialogs bring.
+dbusJava = "5.2.0"
 
 [libraries]
 mlkit-subject-segmentation = { module = "com.google.android.gms:play-services-mlkit-subject-segmentation", version = "16.0.0-beta1" }
@@ -105,6 +107,8 @@ java-keyring = { module = "com.github.javakeyring:java-keyring", version.ref = "
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 jaudiotagger = { module = "net.jthink:jaudiotagger", version.ref = "jaudiotagger" }
 filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref = "filekit" }
+dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbusJava" }
+dbus-java-unixsocket = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket", version.ref = "dbusJava" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
