@@ -12,18 +12,18 @@ redesigns. The code lives in `ui/.../ui/paper` (tape, paper, polaroids) and `ui/
 
 **Goal:** character-focused, nice to look at, not generic. Bullet-journal stationery more than chat app.
 
-## Colour: madoromi
+## Color: madoromi
 
 - The palette is [madoromi](https://madoromi.moonwit.ch/) by samhain: eight themes made from Pilot
   Iroshizuku fountain-pen inks, one per season (haru, natsu, aki, fuyu), by day (hiru) and by night (yoru).
   Values are in `madoromi-palette.json` (MPL-2.0; keep its notice, and give any Kotlin palette file
-  derived from it the same licence header).
+  derived from it the same license header).
 - UI roles follow madoromi's style guide: `kami` paper background, `hyoshi` bars, `chitsu` deepest
   surface, `nijimi` surfaces and borders, `kasure` subtle text, `sumi` body text, `usuzumi` secondary
   text, `fuji` accent.
 - **Auto theme:** follow the real season and switch day/night by the clock. The user can pin a theme.
 - **Inks as identity:** each persona has a signature ink (one of the 14 accent inks), and so does the
-  user. Inks colour names, actions in text, tape and accents.
+  user. Inks color names, actions in text, tape and accents.
 - Stickers are "printed objects": they use the season's day inks even at night.
 
 ## Letters (chat)
@@ -54,9 +54,9 @@ redesigns. The code lives in `ui/.../ui/paper` (tape, paper, polaroids) and `ui/
   inline in message text, by the user and by personas.
 - **Placement:** anywhere on a message (over the text too, not only the edge) and on the user's draft
   before sending. Move, resize and rotate (handle in the mockup; pinch and twist in the app).
-- **Outline:** a hard die-cut outline on every sticker, emoji included. White by default, recolourable
+- **Outline:** a hard die-cut outline on every sticker, emoji included. White by default, recolorable
   in settings. It must be rounded (blur-and-threshold, not a square dilate) so points aren't clipped.
-  In the app, bake the outline once when a sticker is added or recoloured rather than per frame.
+  In the app, bake the outline once when a sticker is added or recolored rather than per frame.
 - **Personas place stickers whenever they like**, on the user's notes or their own letters, through a
   tool, choosing by `:name:` (models read names, not pictures).
 - **Personas see stickers:** stickers the user places or peels reach the persona on its next turn as
@@ -91,10 +91,10 @@ redesigns. The code lives in `ui/.../ui/paper` (tape, paper, polaroids) and `ui/
   portrait, mood word, time, and the last line in the book face. An unread letter wears the
   persona's own **unread mark**, chosen per persona: a seal (Aria's 新), an emoji (Juno's 💌) or any
   sticker from its pack, with the usual die-cut outline. A "While you were away" card at the top
-  summarises heartbeat activity (kept). A "New letter" button in the user's ink.
+  summarizes heartbeat activity (kept). A "New letter" button in the user's ink.
 - **Personas gallery (loved):** personas as polaroids taped into the page (their ink and tape
   pattern, slight tilts), with mood and memory count; a dashed "New persona" polaroid. Polaroids
-  have **thick frames in the sticker outline colour** by default (setting: match stickers, or paper). Below, the user's
+  have **thick frames in the sticker outline color** by default (setting: match stickers, or paper). Below, the user's
   own personas ("Writing as"), each with their own ink and tape.
 - **A persona's page:** a journal page with the persona's polaroid, mood, ink, tape and model,
   then taped entries: about, memory book (core memories taped down, dated episodes, reflections
@@ -114,7 +114,7 @@ redesigns. The code lives in `ui/.../ui/paper` (tape, paper, polaroids) and `ui/
 ### Tape rules
 
 - Tape is fully opaque. Text written on tape uses whichever of the theme's darkest or lightest
-  colours reads on that ink.
+  colors reads on that ink.
 
 - Corner tape always comes in pairs on opposing corners (upper left and lower right).
 - Placements: a strip on the left or right edge, opposing corners, one piece at the top, or two
