@@ -34,9 +34,9 @@ class SingleInstanceTest {
         val first = SingleInstance(dir)
         assertTrue(first.claim(onOpen = { handed.set(it) }) { shown.countDown() })
 
-        assertFalse(SingleInstance(dir).claim(listOf(backup)) { error("the second shouldn't listen") })
+        assertFalse(SingleInstance(dir).claim(listOf(backup, java.io.File(dir, "not-there.fumibako"))) { error("the second shouldn't listen") })
         assertTrue(shown.await(5, TimeUnit.SECONDS), "the first was asked to show its window")
-        kotlin.test.assertEquals(listOf(backup.absoluteFile), handed.get(), "and given the file, spaces and all")
+        kotlin.test.assertEquals(listOf(backup.absoluteFile), handed.get(), "and given the file, spaces and all (not one that isn't there)")
         first.release()
     }
 
