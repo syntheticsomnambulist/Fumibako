@@ -13,6 +13,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -750,11 +751,11 @@ class ScreenshotTour {
         compose.waitForIdle()
         compose.onNode(hasContentDescription("Your bookmark", substring = true)).performTouchInput { longClick() }
         compose.waitForIdle()
-        compose.onNodeWithContentDescription("Back to this week").performClick()
+        compose.onNodeWithContentDescription("The week before").performClick()
         compose.waitUntilAtLeastOneExists(hasContentDescription("Your bookmark, on the week of", substring = true), 10_000)
         compose.onNode(hasContentDescription("Your bookmark, on the week of", substring = true)).performClick()
         compose.waitUntilAtLeastOneExists(hasContentDescription("Your bookmark, on this page"), 10_000)
-        compose.onNodeWithContentDescription("Back to this week").performClick()
+        compose.onNodeWithContentDescription("The week before").performClick()
         compose.onNode(hasContentDescription("Your bookmark", substring = true)).performTouchInput { longClick() }
         compose.waitUntilAtLeastOneExists(hasContentDescription("Your bookmark, on this page"), 10_000)
         compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
@@ -768,6 +769,8 @@ class ScreenshotTour {
         compose.onAllNodesWithText("Close").onFirst().performClick()
         compose.waitForIdle()
         // A tap just under a short plan still picks it (an hour is small to aim at), not its day.
+        // (From the top of the hours, so nothing scrolled to lands under the days laid over them.)
+        weekToTop()
         compose.onNodeWithContentDescription("Call Grandma", substring = true).performScrollTo()
             .performTouchInput { click(androidx.compose.ui.geometry.Offset(center.x, height + 6.dp.toPx())) }
         waitFor("Done")
@@ -793,9 +796,11 @@ class ScreenshotTour {
         compose.onNodeWithContentDescription("Lift the done stamp").performClick()
         compose.waitUntilAtLeastOneExists(hasContentDescription("Jo's birthday", substring = true) and hasContentDescription("all day. Tap", substring = true), 10_000)
         // The sleep hours open, and fold again.
+        weekToTop()
         compose.onAllNodes(hasClickActionLabel("Unfold your sleep hours")).onFirst().performScrollTo().performClick()
         compose.waitForIdle()
         shot("${prefix}_24d_planner_unfolded")
+        weekToTop()
         compose.onAllNodes(hasClickActionLabel("Fold your sleep hours")).onFirst().performScrollTo().performClick()
         // The メモ area, with Aria's slips, and a plan's card.
         compose.onNodeWithText("Add to my planner").performScrollTo()
@@ -817,8 +822,8 @@ class ScreenshotTour {
         val friday = java.time.LocalDate.now().with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).plusDays(4)
         compose.onAllNodes(hasClickActionLabel("Open ${friday.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.US)} ${friday.dayOfMonth}", substring = true)).onFirst().performClick()
         waitFor("Add a plan")
-        // Its stickers button keeps its place beside a long title ("Add a plan" is on the week too,
-        // so this is also the wait for the day page to have come in).
+        // The sheet's corner for the day's stickers ("Add a plan" is on the week too, so this is
+        // also the wait for the day page to have come in).
         compose.waitUntil(10_000) { runCatching { compose.onNode(hasClickActionLabel("Stick stickers on this day")).assertIsDisplayed() }.isSuccess }
         shot("${prefix}_24h_planner_day")
         back()
@@ -829,6 +834,13 @@ class ScreenshotTour {
         shot("${prefix}_24j_planner_month")
         compose.onNode(hasClickActionLabel("Open the Week page")).performClick()
         compose.waitUntilAtLeastOneExists(hasContentDescription("Week, the page you're on"), 10_000)
+    }
+
+    /** The week's hours scrolled back to midnight. */
+    private fun weekToTop() {
+        compose.onAllNodes(androidx.compose.ui.test.hasScrollAction() and androidx.compose.ui.test.hasAnyDescendant(hasClickActionLabel("Open ", substring = true))).onFirst()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.ScrollBy) { it(0f, -100_000f) }
+        compose.waitForIdle()
     }
 
     private fun hasClickActionLabel(label: String, substring: Boolean = false) = androidx.compose.ui.test.SemanticsMatcher("has click label $label") { node ->
