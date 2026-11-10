@@ -35,6 +35,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.compose.mp.ui.test.junit4)
+    // The screenshot tour points Dispatchers.Main at its own thread (DesktopScreenshotTour).
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 tasks.test {
