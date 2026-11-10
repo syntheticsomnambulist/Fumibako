@@ -889,7 +889,7 @@ private fun Memo(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 // A box to tick, in your ink; the 済 stamp lands beside it when it's done.
-                Box(Modifier.size(12.dp).border(1.3.dp, ink, RoundedCornerShape(2.dp)))
+                PlanTick(e.state == EntryState.DONE, ink)
                 Text(
                     e.title.ifBlank { "A plan" },
                     style = handText(17.sp, crossed = e.state == EntryState.CANCELLED),

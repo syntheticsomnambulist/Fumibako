@@ -340,7 +340,7 @@ private fun AnyTimeRow(o: Occurrence, timeWidth: Dp, actions: DayActions) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         TimeCell("any time", timeWidth)
-        Box(Modifier.size(12.dp).border(1.3.dp, ink, RoundedCornerShape(2.dp)))
+        PlanTick(done, ink)
         Text(e.title.ifBlank { "A plan" }, style = handText(18.sp, 20.sp, crossed = e.state == EntryState.CANCELLED), color = lerp(ink, colors.sumi, 0.45f), modifier = Modifier.weight(1f, fill = false))
         stampOf(e)?.let { Stamp(it, ink, size = 22.dp) }
     }
