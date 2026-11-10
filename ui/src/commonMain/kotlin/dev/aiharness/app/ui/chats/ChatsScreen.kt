@@ -127,6 +127,7 @@ fun ChatsScreen(nav: NavController) {
     val profiles by remember { harness.profiles.observeAll() }.collectAsStateWithLifecycle(null)
     val activity by remember { container.awaySince.flatMapLatest { harness.activity.observeSince(it) } }.collectAsStateWithLifecycle(emptyList())
     var picking by remember { mutableStateOf(false) }
+    val importCard = dev.aiharness.app.ui.transfer.rememberOpenFile(nav)
     var deleting by remember { mutableStateOf<Conversation?>(null) }
     // Opening a letter opens its box first. On the phone the letter's page comes once the box is open,
     // and coming back the box shuts behind you; wide, the open letter's box stays open beside it.
@@ -236,7 +237,12 @@ fun ChatsScreen(nav: NavController) {
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { picking = false; nav.navigate(Routes.personaPage(Routes.NEW)) }) { Text("New persona") } },
+            confirmButton = {
+                Row {
+                    TextButton(onClick = { picking = false; importCard() }) { Text("Import a card…") }
+                    TextButton(onClick = { picking = false; nav.navigate(Routes.personaPage(Routes.NEW)) }) { Text("New persona") }
+                }
+            },
             dismissButton = { TextButton(onClick = { picking = false }) { Text("Cancel") } },
         )
     }

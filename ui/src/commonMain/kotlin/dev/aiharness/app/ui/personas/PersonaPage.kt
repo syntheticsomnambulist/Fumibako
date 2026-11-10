@@ -186,6 +186,15 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
                     Text("EDITING", style = PaperType.meta, color = ink)
                     PaperButton("Done", ink = ink, enabled = p.name.isNotBlank()) { save() }
                 } else {
+                    if (!isNew) {
+                        Box {
+                            var menu by remember { mutableStateOf(false) }
+                            androidx.compose.material3.IconButton(onClick = { menu = true }) { androidx.compose.material3.Icon(dev.aiharness.app.ui.paper.StationeryIcons.InkDots, "More", tint = paper.usuzumi0) }
+                            androidx.compose.material3.DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                                androidx.compose.material3.DropdownMenuItem(text = { Text("Export ${p.name}…") }, onClick = { menu = false; nav.navigate(Routes.export(p.id)) })
+                            }
+                        }
+                    }
                     PaperButton("Edit") {
                         draft = stored
                         original = stored
@@ -319,13 +328,26 @@ private fun Hero(p: Persona, mood: String?, editing: Boolean, model: String?, on
 
 private fun LazyListScope.viewCards(p: Persona, nav: NavController, mode: HeartbeatMode?) {
     val layouts = tapeLayouts("page-${p.id}", 4)
-    if (p.description.isNotBlank() || p.personality.isNotBlank() || p.currentOutfit.isNotBlank()) {
+    if (p.description.isNotBlank() || p.personality.isNotBlank() || p.currentOutfit.isNotBlank() || p.fromCard != null || p.moodPortraits.isNotEmpty()) {
         item {
             PageCard(p, layouts[0], "about") {
                 CardTitle("About")
                 listOf(p.description, p.personality).filter { it.isNotBlank() }.forEach { Text(it.trim(), style = PaperType.prose, color = paper.sumi) }
                 p.currentOutfit.takeIf { it.isNotBlank() }?.let { outfit ->
                     Text("Wearing: $outfit", style = PaperType.prose.copy(fontStyle = FontStyle.Italic, fontSize = 13.5.sp), color = paper.usuzumi1)
+                }
+                if (p.moodPortraits.isNotEmpty()) MoodPortraits(p)
+                p.fromCard?.let { card ->
+                    val by = listOfNotNull(card.creator.takeIf { it.isNotBlank() }?.let { "by $it" }, card.version.takeIf { it.isNotBlank() }?.let { "version $it" })
+                    Text(
+                        (listOf("From a character card") + by).joinToString(" · "),
+                        style = PaperType.meta.copy(letterSpacing = 0.sp),
+                        color = paper.kasure2,
+                    )
+                    if (card.creatorNotes.isNotBlank()) {
+                        Text("From the card's creator: " + card.creatorNotes.trim(), style = PaperType.noteBody.copy(fontSize = 13.sp, lineHeight = 19.sp), color = paper.usuzumi1)
+                        Text("Shown to you only; never sent to ${p.words.them}.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
+                    }
                 }
             }
         }
@@ -449,6 +471,16 @@ private fun LazyListScope.editCards(
         PageCard(p, layouts[2], "writes") {
             CardTitle(if (named) "How ${p.name} writes" else "How they write")
             IndexCardField("First letter", p.greeting, { v -> onChange(p.copy(greeting = v)) }, ink = ink, style = PaperType.prose, minLines = 2, placeholder = "Hi {{user}}! … (optional)")
+            p.alternateGreetings.forEachIndexed { i, other ->
+                IndexCardField("Another first letter", other, { v -> onChange(p.copy(alternateGreetings = p.alternateGreetings.toMutableList().also { it[i] = v })) }, ink = ink, style = PaperType.prose, minLines = 2)
+                InkLink("Take this one out", ink) { onChange(p.copy(alternateGreetings = p.alternateGreetings.filterIndexed { j, _ -> j != i })) }
+            }
+            if (p.greeting.isNotBlank()) {
+                InkLink("Add another first letter", ink) { onChange(p.copy(alternateGreetings = p.alternateGreetings + "")) }
+                if (p.alternateGreetings.isNotEmpty()) {
+                    Text("A new thread starts with the first; you can read another instead before you write.", style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
+                }
+            }
             IndexCardField("Example letters", p.exampleDialogue, { v -> onChange(p.copy(exampleDialogue = v)) }, ink = ink, style = PaperType.prose, minLines = 2, placeholder = "A few lines in ${if (named && p.pronouns != null) p.words(2).their else "their"} voice (optional)")
         }
     }
@@ -505,6 +537,15 @@ private fun LazyListScope.editCards(
                 style = PaperType.noteBody,
                 minLines = 2,
                 placeholder = "Replaces the generated character section; memory and context notes are still added",
+            )
+            IndexCardField(
+                "After each letter's context (advanced)",
+                p.postHistoryInstructions.orEmpty(),
+                { v -> onChange(p.copy(postHistoryInstructions = v.ifBlank { null })) },
+                ink = ink,
+                style = PaperType.noteBody,
+                minLines = 2,
+                placeholder = "Goes last in each turn's context, like a card's post-history instructions",
             )
         }
     }
@@ -697,4 +738,24 @@ private fun modelSinceLine(since: Long, previous: String?): String {
     }
     val time = dev.aiharness.app.ui.planner.AppClock.format.time(at.hour * 60 + at.minute)
     return "Since $day, $time" + (previous?.let { " · was $it" } ?: "")
+}
+
+/** Her mood portraits, beside her portrait: small polaroids named for their moods. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MoodPortraits(p: Persona) {
+    androidx.compose.foundation.layout.FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        p.moodPortraits.forEach { mood ->
+            Column(
+                Modifier.background(paper.kami, dev.aiharness.app.ui.paper.PaperCorner).padding(start = 4.dp, end = 4.dp, top = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                dev.aiharness.app.ui.BlobImage(mood.ref, Modifier.size(56.dp, 68.dp), maxSize = 256, placeholder = paper.chitsu, description = "${p.name}, ${mood.name}")
+                Text(mood.name.replace('_', ' '), style = PaperType.meta.copy(letterSpacing = 0.sp, fontSize = 10.sp), color = paper.usuzumi0, maxLines = 1, modifier = Modifier.padding(vertical = 2.dp))
+            }
+        }
+    }
 }

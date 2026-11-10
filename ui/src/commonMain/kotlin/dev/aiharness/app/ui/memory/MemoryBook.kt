@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -87,6 +88,7 @@ import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.TapePattern
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -250,6 +252,15 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
     val scopedUsers = users.filter { u -> all.any { it.aboutUserPersonaId == u.id } }
 
     val sheet by remember(personaId) { harness.stickers.observeArt() }.collectAsStateWithLifecycle(emptyList())
+    var lorebook by remember { mutableStateOf<dev.aiharness.core.transfer.Lorebook?>(null) }
+    val openLorebook = dev.aiharness.app.ui.transfer.rememberOpenFile(nav) { lorebook = it }
+    val loreScope = rememberCoroutineScope()
+    lorebook?.let { book ->
+        AddLoreDialog(name, book, ink, onAdd = { wontFade ->
+            lorebook = null
+            loreScope.launch { harness.cards.addLore(personaId, book, wontFade) }
+        }, onDismiss = { lorebook = null })
+    }
 
     KeepsakeHost(personaId, persona, name) { below ->
     CompositionLocalProvider(LocalFeelingStickers provides sheet.filter { it.ownerPersonaId == personaId }) {
@@ -271,6 +282,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
                         if (!searching) query = ""
                     },
                     onAdd = if (canEdit) ({ nav.navigate(Routes.memoryCard(personaId, Routes.NEW)) }) else null,
+                    onAddLore = if (canEdit) openLorebook else null,
                 )
             }
             if (searching) {
@@ -355,7 +367,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
 }
 
 @Composable
-private fun BookBar(title: String, meta: String, searching: Boolean, onBack: () -> Unit, onSearch: () -> Unit, onAdd: (() -> Unit)?) {
+private fun BookBar(title: String, meta: String, searching: Boolean, onBack: () -> Unit, onSearch: () -> Unit, onAdd: (() -> Unit)?, onAddLore: (() -> Unit)? = null) {
     Row(Modifier.statusBarsPadding().fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = paper.usuzumi0) }
         Column(Modifier.weight(1f).padding(start = 2.dp)) {
@@ -364,7 +376,45 @@ private fun BookBar(title: String, meta: String, searching: Boolean, onBack: () 
         }
         IconButton(onClick = onSearch) { Icon(if (searching) Icons.Filled.Close else Icons.Filled.Search, if (searching) "Close search" else "Search", tint = paper.usuzumi0) }
         if (onAdd != null) IconButton(onClick = onAdd) { Icon(Icons.Filled.Add, "Add a memory", tint = paper.usuzumi0) }
+        if (onAddLore != null) {
+            Box {
+                var menu by remember { mutableStateOf(false) }
+                IconButton(onClick = { menu = true }) { Icon(dev.aiharness.app.ui.paper.StationeryIcons.InkDots, "More", tint = paper.usuzumi0) }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(text = { Text("Add lore from a lorebook…") }, onClick = { menu = false; onAddLore() })
+                }
+            }
+        }
     }
+}
+
+/** A lorebook about to go into [name]'s book: how much of it comes in, and Won't fade. */
+@Composable
+private fun AddLoreDialog(name: String, book: dev.aiharness.core.transfer.Lorebook, ink: Color, onAdd: (wontFade: Boolean) -> Unit, onDismiss: () -> Unit) {
+    var wontFade by remember { mutableStateOf(true) }
+    val entries = book.enabled
+    val off = book.entries.count { !it.enabled && it.content.isNotBlank() }
+    val always = entries.count { it.constant }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add lore to $name's book") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    listOfNotNull(
+                        "${entries.size} ${if (entries.size == 1) "entry" else "entries"}${book.name?.let { " from “$it”" }.orEmpty()} become lore memories",
+                        always.takeIf { it > 0 }?.let { "$it always in mind" },
+                        off.takeIf { it > 0 }?.let { "$it switched off, left out" },
+                    ).joinToString(" · "),
+                    style = PaperType.noteBody,
+                    color = paper.sumi,
+                )
+                dev.aiharness.app.ui.transfer.TickRowPublic("Won't fade", "Still recalled only when it's relevant", wontFade, { wontFade = it }, ink)
+            }
+        },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = { onAdd(wontFade) }, enabled = entries.isNotEmpty()) { Text("Add") } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 /**

@@ -98,6 +98,15 @@ object Routes {
     fun model(id: String) = "model/$id"
     fun imageProfile(id: String) = "image/$id"
     const val NEW = "new"
+
+    /** Import a card (a card picked to open waits in [dev.aiharness.app.ui.transfer.Transfers]). */
+    const val IMPORT_CARD = "import"
+
+    /** Open a backup (likewise). */
+    const val OPEN_BACKUP = "restore"
+    const val EXPORT = "export"
+    const val EXPORT_EVERYTHING = "export/everything"
+    fun export(personaId: String) = "export/$personaId"
 }
 
 private data class Tab(val route: String, val label: String, val kanji: String)
@@ -127,6 +136,7 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
         }
     }
     RequestNotificationPermission()
+    dev.aiharness.app.ui.transfer.IncomingFiles(nav)
 
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
@@ -182,6 +192,10 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
                         screen(Routes.SHARED_STICKERS) { dev.aiharness.app.ui.settings.SharedStickersScreen(nav) }
                         screen("image/{id}") { entry -> dev.aiharness.app.ui.settings.ImageProfileScreen(nav, entry.arg("id")) }
                         screen(Routes.USER_PERSONAS) { YouGalleryScreen(nav) }
+                        screen(Routes.IMPORT_CARD) { dev.aiharness.app.ui.transfer.ImportCardScreen(nav) }
+                        screen(Routes.OPEN_BACKUP) { dev.aiharness.app.ui.transfer.OpenBackupScreen(nav) }
+                        screen(Routes.EXPORT) { dev.aiharness.app.ui.transfer.ExportScreen(nav, null) }
+                        screen("export/{id}") { entry -> dev.aiharness.app.ui.transfer.ExportScreen(nav, entry.arg("id")) }
                     }
                 }
             }
@@ -203,7 +217,7 @@ private val personaRoutes = setOf("page/{id}", "page/{id}/heartbeat", "page/{id}
 private fun tabOf(route: String?): String? = when {
     route == null -> null
     route == Routes.CHATS || route.startsWith("chat/") || route.startsWith(Routes.SEARCH) -> Routes.CHATS
-    route == Routes.PERSONAS || route == Routes.USER_PERSONAS || listOf("page/", "memory/", "you/").any { route.startsWith(it) } -> Routes.PERSONAS
+    route == Routes.PERSONAS || route == Routes.USER_PERSONAS || route == Routes.IMPORT_CARD || listOf("page/", "memory/", "you/").any { route.startsWith(it) } -> Routes.PERSONAS
     route.startsWith(Routes.PLANNER) -> Routes.PLANNER
     else -> Routes.SETTINGS
 }

@@ -57,6 +57,9 @@ class AppContainer(val platform: AppPlatform) {
     /** Where a thread should open at one of its letters (a P.S., the index card, a search). */
     val letterFocus = dev.aiharness.app.ui.chat.LetterFocus()
 
+    /** Cards and backups being imported, exported or opened (files waiting in the cache). */
+    val transfers = dev.aiharness.app.ui.transfer.Transfers()
+
     private val secrets = platform.secrets
     val blobStore = FileBlobStore(File(platform.filesDir, "blobs"))
     val media: MediaImporter = platform.mediaImporter(blobStore)
@@ -128,6 +131,7 @@ class AppContainer(val platform: AppPlatform) {
 
     fun start() {
         appScope.launch { seedDefaultsOnce() }
+        appScope.launch(Dispatchers.IO) { runCatching { transfers.clear() } }
         appScope.launch {
             // Letters from before the word index existed (v0.5) go into it, so searches find them too.
             runCatching { harness.conversations.indexLetters() }.onFailure { platform.warn("Couldn't index letters for search", it) }

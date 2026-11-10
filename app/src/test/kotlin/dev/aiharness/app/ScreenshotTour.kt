@@ -610,6 +610,113 @@ class ScreenshotTour {
         shot("${prefix}_32_keys")
         back()
         back()
+
+        transferTour(prefix)
+    }
+
+    /**
+     * v0.5, 十一 Import and export: the settings page; Export (her backup, as a card, everything,
+     * locked); a card coming in, as if opened from a file manager; and backups opened (hers while
+     * she's here, a locked one, everything).
+     */
+    private fun transferTour(prefix: String) {
+        val app = ApplicationProvider.getApplicationContext<HarnessApp>().container
+        val dir = File(ApplicationProvider.getApplicationContext<HarnessApp>().cacheDir, "tour-files").apply { mkdirs() }
+        fun incoming(file: File) = compose.runOnIdle { app.transfers.incoming.value = dev.aiharness.app.platform.Picked(android.net.Uri.fromFile(file).toString()) }
+
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasClickActionLabel("Open Import and export"))
+        compose.onNode(hasClickActionLabel("Open Import and export")).performClick()
+        waitFor("Open a file…")
+        shot("${prefix}_19_settings_transfer")
+        click("Export…")
+        waitFor("Your letters with")
+        compose.waitUntil(20_000) { compose.onAllNodes(hasText(" · …", substring = true)).fetchSemanticsNodes().isEmpty() }
+        compose.waitUntilAtLeastOneExists(hasText("about ", substring = true), 10_000)
+        shot("${prefix}_19a_export_persona")
+        click("A character card")
+        waitFor("as the lorebook")
+        shot("${prefix}_19b_export_card")
+        click("Everything")
+        waitFor("Settings and models")
+        // Its counts and sizes, once everything has been measured.
+        compose.waitUntil(20_000) { compose.onAllNodes(hasText(" · …", substring = true)).fetchSemanticsNodes().isEmpty() }
+        compose.waitUntilAtLeastOneExists(hasText("fumibako-", substring = true), 10_000)
+        scrollTo("Lock it with a password")
+        click("Lock it with a password")
+        waitFor("THE SAME AGAIN")
+        scrollTo("can't be recovered")
+        shot("${prefix}_19c_export_everything_locked")
+        back()
+        waitFor("Open a file…")
+
+        // A card coming in.
+        val card = File(dir, "mira_keeper.png").apply { writeBytes(tourCard()) }
+        incoming(card)
+        waitFor("Character Card V2")
+        pause()
+        shot("${prefix}_19d_import_card")
+        click("See them")
+        scrollTo("The card's own prompts")
+        shot("${prefix}_19e_import_card_lore_and_prompts")
+        scrollTo("tokens of", exact = false)
+        shot("${prefix}_19f_import_card_ink")
+        click("Cancel")
+        waitFor("Open a file…")
+
+        // Her backup, opened while she's here; locked; and everything.
+        val aria = runBlocking { app.harness.personas.getAll().first { it.name == "Aria" } }
+        val hers = File(dir, "aria-2026-11-06.fumibako")
+        val locked = File(dir, "aria-2026-11-06-locked.fumibako")
+        val everything = File(dir, "fumibako-2026-11-06.fumibako")
+        runBlocking {
+            hers.outputStream().use { app.harness.backups.write(dev.aiharness.core.transfer.BackupRequest.OnePersona(aria.id), it, app = "0.5.0") }
+            locked.outputStream().use { app.harness.backups.write(dev.aiharness.core.transfer.BackupRequest.OnePersona(aria.id), it, app = "0.5.0", password = "kinako".toCharArray(), iterations = 1_000) }
+            everything.outputStream().use { app.harness.backups.write(dev.aiharness.core.transfer.BackupRequest.Everything(), it, app = "0.5.0") }
+        }
+        incoming(hers)
+        waitFor("Aria is already here")
+        shot("${prefix}_19g_open_backup")
+        click("Replace her")
+        scrollTo("Replace Aria")
+        shot("${prefix}_19h_open_backup_replace")
+        click("Cancel")
+        waitFor("Open a file…")
+        incoming(locked)
+        waitFor("This backup is locked")
+        shot("${prefix}_19i_open_backup_locked")
+        back()
+        waitFor("Open a file…")
+        incoming(everything)
+        waitFor("It replaces what's here")
+        shot("${prefix}_19j_open_backup_everything")
+        click("Cancel")
+        waitFor("Open a file…")
+        back()
+    }
+
+    /** A character card as another app makes them: V2 in a PNG, with lore, greetings and its own prompts. */
+    private fun tourCard(): ByteArray {
+        val json = """{"spec":"chara_card_v2","spec_version":"2.0","data":{
+            "name":"Mira",
+            "description":"Keeps a lighthouse nobody asked her to keep. Writes long letters on the night shift, mostly about weather and ships that didn't come.",
+            "personality":"Wry, patient, a little lonely.", "scenario":"Gull Point, the off season.",
+            "first_mes":"Hello from the light. The lamp's lit, the kettle's on.",
+            "alternate_greetings":["The ferry's late again.","Storm tonight. Write to me?","Found a bottle on the rocks today."],
+            "mes_example":"<START>\n{{char}}: The lamp's lit. Tell me something true.",
+            "creator_notes":"Mira starts out not knowing you. Let her warm up; she's at her best a few letters in. Lore covers the island and the ferry timetable.",
+            "system_prompt":"You are {{char}} in a never-ending roleplay with {{user}}. Write 3 paragraphs per reply. Never speak for {{user}}.",
+            "post_history_instructions":"Stay in character.",
+            "tags":["slice of life","cozy","seaside","slow burn"], "creator":"tidepool", "character_version":"1.2",
+            "extensions":{},
+            "character_book":{"name":"Gull Point","entries":[
+                {"id":0,"keys":["lighthouse","Gull Point","the light"],"content":"Gull Point light was switched off in 1998. Mira keeps it lit anyway, on oil she buys from the ferry.","enabled":true,"constant":true,"insertion_order":0,"extensions":{}},
+                {"id":1,"keys":["Tomas","ferry","Tuesday"],"content":"Old Tomas runs the ferry on Tuesdays and Fridays, and owes Mira a favor he won't talk about.","enabled":true,"insertion_order":1,"extensions":{}},
+                {"id":2,"keys":["telescope","mother"],"content":"Mira's mother left her a brass telescope with a cracked lens. She won't have it mended.","enabled":true,"insertion_order":2,"extensions":{}},
+                {"id":3,"keys":["storm"],"content":"An old storm entry.","enabled":false,"insertion_order":3,"extensions":{}}
+            ]}
+        }}"""
+        val portrait = dev.aiharness.core.transfer.Png.plain(96, 128, 0x2973B0)
+        return dev.aiharness.core.transfer.Png.withTexts(portrait, listOf("chara" to java.util.Base64.getEncoder().encodeToString(json.toByteArray()))) { false }
     }
 
     /** 帳 Planner: the week with Sam's typical week and plans, a plan's stamps, moving one, a day, a plan's card, the typical week. */

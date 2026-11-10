@@ -232,6 +232,13 @@ class BackupsTest {
     @Test
     fun everythingReplacesAllOfIt() = runTest {
         val home = phone()
+        val survey = home.backups.survey(BackupRequest.Everything())
+        assertEquals(2, survey.count(BackupPart.PERSONAS))
+        assertEquals(1, survey.count(BackupPart.YOUR_PERSONAS))
+        assertEquals(2, survey.count(BackupPart.MEMORIES))
+        assertEquals(2, survey.count(BackupPart.LETTERS))
+        assertEquals(1, survey.count(BackupPart.PLANNER))
+        assertTrue(survey.total(BackupRequest.Everything()) > survey.total(BackupRequest.Everything(letters = false, pictures = false)))
         val file = home.backUp(BackupRequest.Everything())
         val manifest = assertIs<BackupPeek.Open>(home.backups.peek(file)).manifest
         assertTrue(manifest.everything)

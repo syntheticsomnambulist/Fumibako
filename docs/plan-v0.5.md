@@ -75,20 +75,23 @@ From `v0.5.md`, in short:
 
 ## Who does what
 
-Updated 2026-11-10.
+Updated 2026-11-10 (later).
 
 - **This session (Kanna):** parts 1 to 6, written once in `ui` and `core`, so they reach the desktop.
-- **The Architect session (Sashigane):** `main`, the roadmap (`docs/roadmap.md`), and merging
-  finished branches; where conflicts between sessions get settled.
-- **The computer's side of each part** (save and open dialogs for import and export, Japanese fonts
-  downloaded to the app-data folder; desktop step 6 in `docs/plan-desktop.md`): the desktop
-  session that had it is archived, and the Architect is asking you who takes it.
-- **The desktop installers session** (`claude/desktop-installers`): the rest of desktop step 7
-  (smaller installers, the testers' guide and README for the computer, a desktop tour).
+  When a part needs something from the platform, its declaration goes in `ui/.../platform` as part
+  of the step, with a minimal computer side so the desktop still builds.
+- **The Architect session (Sashigane):** `main`, the roadmap (`docs/roadmap.md`), and merging.
+  `main` follows the build branch a step at a time: when a step is reported done and checked, the
+  Architect runs the checks on it and moves `main` there.
+- **The computer's side of each part** (desktop step 6 in `docs/plan-desktop.md`): the desktop
+  installers session (`claude/desktop-installers`), once the part is in `main`, starting with import
+  and export. It asks this session before adding or changing a declaration in `ui/.../platform`.
+  It also fixes the Keys page's "on this phone" subtitle (`ui/.../settings/Keys.kt`) and the Linux
+  keychain.
 - **The desktop layout session** (`claude/sharp-darwin-o3pk1g`, archived): the wide layouts and the
   Fumibako boxes, both merged.
-- **The design session** (from `docs/design/handoff.md` on the design branch): thinking lines, and
-  any questions found while building.
+- **The design session, Shitae** (the design branch): settled thinking lines (her lines move to
+  the postmark; see *To build next* below), and any questions found while building.
 
 ## Data and migrations
 
@@ -228,3 +231,65 @@ Updated 2026-11-10.
   installers, the desktop screenshot tour, the testers' guide for computers). No conflicts. Every
   suite passes (core 208, data 7, app 60, desktop 60), and the desktop tour renders its 54 shots,
   the index card and the search loupe among them.
+- **Step 4, import and export: done** (2026-11-10).
+  - **Cards in** (`core/transfer`): V1, V2 and V3 from PNG (`chara` and `ccv3`; V3 wins), JSON and
+    `.charx`, with the portrait and the V3 `emotion` assets (embedded in the zip, in PNG chunks or
+    as data URIs; links aren't fetched). SillyTavern World Info files read as lorebooks. What comes
+    in follows the ticks: greetings (the first, and the others to pick from), example dialogue, lore
+    as lore memories (Won't fade on; `constant` entries always in mind; `keys` as recall words;
+    switched-off entries left out and counted), mood portraits, and the card's `system_prompt` and
+    `post_history_instructions` (off, readable first). The card's JSON is kept as a file beside
+    her (`fromCard.cardRef`), and a Fumibako card brings back her ink, tape, pronouns and picture
+    prompts from `extensions.fumibako`. Her ink is suggested from the portrait (its vivid pixels'
+    hue against the inks'). Post-history instructions go last in each turn's context, under
+    "Your card's instructions:", and the index card shows them.
+  - **Cards out:** her portrait (a plain one in her ink when she has none) with a V3 card and a V2
+    copy, her lore as the lorebook, her other memories as plain entries when ticked, mood
+    portraits as `chara-ext-asset_` chunks. What she came with goes back as it came: other apps'
+    extensions, the lorebook's settings, each entry's own fields, and entries the card had off.
+  - **Backups:** a zip (`manifest.json` first: format 1, app version, when, what's inside; the
+    records as JSON, letters a file per thread; the files under `files/`). One persona (herself,
+    her stickers and models always; memories, pictures and letters ticked) or everything. Locked:
+    a plain header (format, app, salt, settings), then AES-256-GCM in 1 MB segments (a random
+    nonce prefix, the segment's number and a last flag), the header as each segment's associated
+    data, the key from PBKDF2-HMAC-SHA256 at 600,000 rounds. A changed header or a wrong password
+    fails the first segment; a file cut short fails at its end. Keys never go.
+  - **Opening one:** too new (or older than format 1) is refused before the password. One
+    persona comes in beside her ("Aria (6 Nov)", every id new, references inside letters,
+    stickers and memories changed with them) or in her place (her page, memories and stickers
+    become the backup's; your letters stay, and letters the backup has that aren't here are
+    added). Everything replaces all of it in one database transaction (`Transactor`; Room's on the
+    phone and the computer), keeping the keys. Models come back as the same profile, or the same
+    model at the same place, or the backup's with this phone's key of its kind; image profiles'
+    and embeddings' keys likewise. Files come back under their own names.
+  - **Choices of mine where the design left room** (to look at with the test build):
+    - "Her pictures" means every picture file her records point to (portrait, mood portraits,
+      memories' photos, and the letters' when they go). Her stickers always go, as part of her.
+      Songs and videos go with the memories or letters that hold them.
+    - "Already here" means the same persona, or one of the same name.
+    - A locked file's name ends in `-locked` (`aria-2026-11-06-locked.fumibako`).
+    - Everything without settings keeps this phone's settings and models.
+  - **Pages:** Import a card, Export (one persona as a backup or a card, or everything; the lock),
+    Open a backup (locked, hers while she's here, everything, too old or new). Reached from
+    "Import a card…" beside New persona (the gallery and Write to…), her page's ⋯ (Export Aria…),
+    her memory book's ⋯ (Add lore from a lorebook…, which takes a card's lorebook too), and
+    Settings › 十一 Import and export (Open a file…, Export…). Files opened or shared into the app
+    on the phone (VIEW and SEND) open their pages too. A new thread holding only her first letter
+    shows "First letter 1 of 4 · Another" until you write. Her page shows where she came from, the
+    creator's notes, her mood portraits, and (when editing) her other first letters and the
+    post-history instructions.
+  - **Platform:** Save as (Android's save dialog, the computer's), sharing a file (the phone),
+    copying a picked file without reading it into memory, and PNG encoding for portraits. The
+    computer's sides are minimal (FileKit's save dialog; no sharing): see *Who does what*.
+  - **Tests:** cards (8), backups (8, with the Everything survey), greetings (1) and the portrait
+    ink (4) in core; on the desktop's SQLite, a failed restore leaving nothing behind and an
+    Everything backup coming back on another install with its files and word index (2). The
+    tours add the settings page, Export three ways, a card coming in, and four backups opened.
+- **To build next: her lines on the way** (settled with the design session, 2026-11-10; design
+  branch 90b0856, "Her lines on the way" and "Her page: On its way"). While a reply is in the post,
+  the 〒 postmark reads "Aria's reply is on its way · she's looking for a stamp", one of her lines in
+  her ink and hand, picked when the reply is kept back; the same line on her card in the letters
+  list. Straight away: a plain "Aria is writing…". No lines per tool. Her page's card is On its
+  way: lines, + Add a line, Let Aria write her own (under 1,000 tokens), "yours" marks; she may
+  rewrite hers at most weekly when she reflects. Heartbeat letters have no postmark.
+
