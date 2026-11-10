@@ -524,6 +524,10 @@ The rules in CLAUDE.md hold through the move:
     pixel-identical from one run to the next any more: the seeded personas get random ids, which
     choose their tilts and blobs, so two runs of the same code differ in about 180 of 279
     pictures. Of the 98 that hold still, only About changed.
+- **Step 6, v0.5 on the computer: taken by the desktop installers session** (the user,
+  2026-11-10), part by part after the build session lands each, on `claude/desktop-installers`.
+  With it, the session fixes the Linux keychain and the Keys page's "this phone" (step 7,
+  "Found").
 - **Step 7, the rest: done (2026-11-10),** by the desktop installers session
   (session_01GW4c4K7manrhf58LhsT5bS, branch `claude/desktop-installers`), merged into `main` by
   the Architect session.

@@ -24,24 +24,25 @@ Updated 2026-11-10.
   `ccr-df8f1763-ihe4q4`; the plan and progress are in [`plan-v0.5.md`](plan-v0.5.md), the design in
   `v0.5.md` and the planner's third pass in `calendar.md` *(design branch)*.
   - Done: the wide layouts (merged first), step 1 (the engine: letter search, model changes, lore
-    memories, Won't fade), step 2 (in a letter, bar thinking lines), the Fumibako boxes, and the
-    gallery's folded corner for the open persona.
-  - Next: steps 3 to 8 (searching letters on screen, import and export, the stationery update,
-    fonts, the planner redrawn, then polish, tests and 0.5.0 for the phone and the computer).
+    memories, Won't fade), step 2 (in a letter, bar thinking lines), the Fumibako boxes, the
+    gallery's folded corner for the open persona, and step 3 (searching letters on screen).
+  - Next: steps 4 to 8 (import and export, the stationery update, fonts, the planner redrawn, then
+    polish, tests and 0.5.0 for the phone and the computer).
   - Waiting on the design session: thinking lines ("While she writes"), since letters in the post
     leave little time to see them (the user, 2026-11-09).
 - **Desktop, shipping with v0.5** ([`plan-desktop.md`](plan-desktop.md)): Fumibako on Windows, macOS
   and Linux, with the wide layouts (the user, 2026-11-08). Steps 1 to 5 (the spike, the move, the
   shell, the desktop's services, mouse and keyboard) are done.
   - Step 6, v0.5 on the computer: the computer's side of each v0.5 part as it lands (save and open
-    dialogs for import and export, Japanese fonts in the app-data folder). No owner since the
-    desktop session was archived.
+    dialogs for import and export, Japanese fonts in the app-data folder). Taken by the desktop
+    installers session, part by part after Kanna lands each (the user, 2026-11-10).
   - Step 7, done: the libraries' notices, from the build (About, and beside the installed app);
     smaller installers (the Java runtime trimmed to the modules Fumibako uses); a desktop section
     in `testers.md` and the README; and a desktop screenshot tour (2026-11-10, the desktop
     installers session). Windows and macOS packaging are still to check, from a CI build.
-  - Found: the Linux keychain isn't used (a dbus-java version clash, `plan-desktop.md`, step 7),
-    so keys there are encrypted with a key in an owner-only file. Not scheduled yet.
+  - Being fixed by the desktop installers session (the user, 2026-11-10): the Linux keychain isn't
+    used (a dbus-java version clash, `plan-desktop.md`, step 7), so keys there are encrypted with a
+    key in an owner-only file; and the Keys page says "this phone" on a computer.
 - **Storage** ([`storage.md`](storage.md)): in place since 2026-11-10 (in `main`, reaching v0.5 by
   merge): clearing unused files (Settings, Media, Storage), and on the phone, new videos kept at
   720p and lossless songs as AAC.
