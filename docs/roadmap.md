@@ -35,7 +35,9 @@ Updated 2026-11-10.
     computer).
   - Found, for step 8: the large-text phone tour fails now and then at different steps (3 of 7 runs
     on 2026-11-10), and on a computer the Export and Open a backup pages light the side rail's
-    Settings tab even when reached from Personas.
+    Settings tab even when reached from Personas. The desktop tour doesn't visit the import and
+    export pages yet: in the test harness, Open a backup's preview card failed to show in 2 or 3
+    of 5 runs (it shows every time in a real window), so that part waits.
   - The stationery update goes in whole, as designed, with no changes until friends have installed
     and explored the test build (the user, 2026-11-10, relayed by the build session).
   - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
