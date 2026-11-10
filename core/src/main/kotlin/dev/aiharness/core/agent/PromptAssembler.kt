@@ -1,10 +1,13 @@
 package dev.aiharness.core.agent
 
+import dev.aiharness.core.memory.keptNote
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.pronounsForPrompt
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.stickers.StickerShelf
 
 /**
  * Builds the system prompt for a context epoch. Output depends only on its inputs (no clock), so the
@@ -19,6 +22,7 @@ class PromptAssembler {
         coreMemories: List<MemoryEntry>,
         summary: String?,
         toolNames: Set<String>,
+        stickers: StickerShelf? = null,
     ): String {
         val userName = userPersona?.name?.takeIf { it.isNotBlank() } ?: "the user"
         val sections = mutableListOf<String>()
@@ -26,9 +30,11 @@ class PromptAssembler {
         val override = persona.systemPromptOverride?.takeIf { it.isNotBlank() }
         if (override != null) {
             sections += override
+            persona.pronounsForPrompt?.let { sections += it }
         } else {
             sections += buildString {
                 append("You are ${persona.name}, talking with $userName.")
+                persona.pronounsForPrompt?.let { append(' ').append(it) }
                 persona.description.ifNotBlank { append("\n\n").append(it) }
                 persona.personality.ifNotBlank { append("\n\n## Personality\n").append(it) }
                 persona.scenario.ifNotBlank { append("\n\n## Scenario\n").append(it) }
@@ -52,10 +58,10 @@ class PromptAssembler {
                             "matters or how you feel about it, and memory_forget to let one go. Don't save trivia or repeats.",
                     )
                 }
-                append(" Memories come with how you felt about them; let that colour how you speak of them.")
+                append(" Memories come with how you felt about them; let that color how you speak of them.")
                 if (coreMemories.isNotEmpty()) {
                     append("\n\nThings you always keep in mind:\n")
-                    coreMemories.forEach { append("- ").append(it.content).append('\n') }
+                    coreMemories.forEach { append("- ").append(it.content).append(it.keptNote).append('\n') }
                 }
             }.trimEnd()
         }
@@ -80,6 +86,23 @@ class PromptAssembler {
             }
             if ("generate_image" in toolNames) {
                 append(" You can show images with generate_image when it fits the moment or $userName asks.")
+            }
+        }
+
+        if ("place_sticker" in toolNames) {
+            sections += buildString {
+                append("## Stickers\n")
+                append("You can stick stickers on $userName's notes and on your own letters with place_sticker, and peel your own off ")
+                append("with peel_sticker. In your letters you can also write a sticker inline as :name:, like an emoji. ")
+                append("They're for play and feeling: use one when the moment calls for it, not every time.")
+                if (stickers != null && !stickers.isEmpty) {
+                    if (stickers.own.isNotEmpty()) {
+                        append("\n\nYour stickers: ")
+                        append(stickers.own.joinToString(", ") { art -> ":${art.name}:" + (art.feeling?.let { " ($it)" } ?: "") })
+                    }
+                    if (stickers.shared.isNotEmpty()) append("\nShared stickers: ").append(stickers.shared.joinToString(", ") { ":${it.name}:" })
+                }
+                append("\nAny emoji works too, by name like :tada: or as the emoji itself.")
             }
         }
 

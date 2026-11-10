@@ -54,12 +54,14 @@ class ThemeClockTest {
 
     @Test
     fun seasonsFollowTheCalendarAndFlipSouthOfTheEquator() {
-        assertEquals(Season.HARU, ThemeClock.seasonFor(LocalDate.of(2026, 3, 1), null))
-        assertEquals(Season.NATSU, ThemeClock.seasonFor(LocalDate.of(2026, 8, 31), 40.0))
-        assertEquals(Season.FUYU, ThemeClock.seasonFor(LocalDate.of(2026, 12, 1), 40.0))
-        assertEquals(Season.FUYU, ThemeClock.seasonFor(LocalDate.of(2026, 2, 28), null))
-        assertEquals(Season.FUYU, ThemeClock.seasonFor(LocalDate.of(2026, 7, 1), -33.9))
-        assertEquals(Season.HARU, ThemeClock.seasonFor(LocalDate.of(2026, 10, 1), -33.9))
+        val utc = ZoneId.of("UTC")
+        fun at(lat: Double?) = ThemeSettings(latitude = lat)
+        assertEquals(Season.HARU, ThemeClock.seasonFor(LocalDate.of(2026, 3, 1), at(null), utc))
+        assertEquals(Season.NATSU, ThemeClock.seasonFor(LocalDate.of(2026, 8, 31), at(40.0), utc))
+        assertEquals(Season.FUYU, ThemeClock.seasonFor(LocalDate.of(2026, 12, 1), at(40.0), utc))
+        assertEquals(Season.FUYU, ThemeClock.seasonFor(LocalDate.of(2026, 2, 28), at(null), utc))
+        assertEquals(Season.FUYU, ThemeClock.seasonFor(LocalDate.of(2026, 7, 1), at(-33.9), utc))
+        assertEquals(Season.HARU, ThemeClock.seasonFor(LocalDate.of(2026, 10, 1), at(-33.9), utc))
     }
 
     @Test

@@ -1,6 +1,8 @@
 package dev.aiharness.core.memory
 
+import dev.aiharness.core.letters.LetterWords
 import dev.aiharness.core.model.ChatMessage
+import dev.aiharness.core.model.Keepsake
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.MemoryKind
 import dev.aiharness.core.model.MemoryLevel
@@ -80,9 +82,20 @@ class MemoryService(
             .filter { it.isCore && !it.isReplaced && inScope(it, userPersonaId) }
             .sortedWith(compareByDescending<MemoryEntry> { it.level.ordinal }.thenBy { it.createdAt })
 
+    /** You mark a memory "Won't fade", or take the mark off (the persona can't). */
+    suspend fun setWontFade(id: String, on: Boolean): MemoryEntry? {
+        val entry = repo.get(id) ?: return null
+        if (entry.wontFade == on) return entry
+        // Coming off, it fades from now, not from when it was last used.
+        val now = clock.nowMillis()
+        val updated = entry.copy(wontFade = on, userTouched = true, updatedAt = now, lastUsedAt = if (on) entry.lastUsedAt else now)
+        repo.upsert(updated)
+        return updated
+    }
+
     /** How many memories the persona keeps at "matters deeply". */
     suspend fun deepCount(personaId: String): Int =
-        repo.listForPersona(personaId).count { it.level == MemoryLevel.MATTERS_DEEPLY && !it.isReplaced }
+        repo.listForPersona(personaId).count { it.level == MemoryLevel.MATTERS_DEEPLY && !it.isReplaced && it.kind != MemoryKind.LORE }
 
     /**
      * Keeps a memory. A near-duplicate of an existing memory is merged into it (which counts as the
@@ -102,6 +115,9 @@ class MemoryService(
         feltMoodChosen: Boolean = false,
         replaces: String? = null,
         userTouched: Boolean = false,
+        keepsakes: List<Keepsake> = emptyList(),
+        wontFade: Boolean = false,
+        recallWords: List<String> = emptyList(),
     ): SaveResult {
         val now = clock.nowMillis()
         val clean = content.trim()
@@ -120,6 +136,7 @@ class MemoryService(
                 updatedAt = now,
                 lastUsedAt = now,
                 useCount = existing.useCount + 1,
+                keepsakes = (existing.keepsakes + keepsakes).distinctBy { it.key },
             )
         } else {
             MemoryEntry(
@@ -140,6 +157,9 @@ class MemoryService(
                 updatedAt = now,
                 lastAccessedAt = now,
                 lastUsedAt = now,
+                keepsakes = keepsakes.distinctBy { it.key },
+                wontFade = wontFade,
+                recallWords = recallWords.map { it.trim() }.filter { it.isNotEmpty() }.distinct(),
             )
         }
         repo.upsert(entry)
@@ -163,6 +183,10 @@ class MemoryService(
         pinned: Boolean? = null,
         tags: List<String>? = null,
         byUser: Boolean = false,
+        /** Keepsakes to add (ones already kept stay). */
+        keep: List<Keepsake> = emptyList(),
+        /** Keepsakes to take out, by key. */
+        unkeep: Set<String> = emptySet(),
     ): MemoryEntry? {
         val current = repo.get(id) ?: return null
         val now = clock.nowMillis()
@@ -171,6 +195,7 @@ class MemoryService(
             level = level ?: current.level,
             pinned = pinned ?: current.pinned,
             tags = tags ?: current.tags,
+            keepsakes = (current.keepsakes + keep).distinctBy { it.key }.filter { it.key !in unkeep },
             userTouched = current.userTouched || byUser,
             updatedAt = now,
             lastUsedAt = if (byUser) now else current.lastUsedAt,
@@ -270,14 +295,19 @@ class MemoryService(
         }
         if (candidates.isEmpty()) return emptyList()
 
-        val keyword = KeywordIndex(candidates.associate { it.id to it.content + " " + it.tags.joinToString(" ") })
+        val keyword = KeywordIndex(candidates.associate { it.id to it.content + " " + it.tags.joinToString(" ") + " " + it.recallWords.joinToString(" ") })
             .normalizedScore(query)
         val semantic = semanticScores(personaId, query, candidates)
+        val queryWords = " " + LetterWords.terms(query).joinToString(" ") + " "
 
         val scored = candidates.mapNotNull { entry ->
             val kw = keyword[entry.id] ?: 0.0
             val sem = semantic[entry.id]
-            val relevance = if (sem != null) 0.7 * sem + 0.3 * kw else kw
+            var relevance = if (sem != null) 0.7 * sem + 0.3 * kw else kw
+            // A recall word in the letter brings it to mind, as a lorebook's keys do.
+            if (entry.recallWords.any { word -> LetterWords.terms(word).joinToString(" ").let { it.isNotEmpty() && " $it " in queryWords } }) {
+                relevance = maxOf(relevance, RECALL_WORD_RELEVANCE)
+            }
             if (relevance < minRelevance) return@mapNotNull null
             val f = feeling(entry)
             val score = 0.65 * relevance + 0.20 * MemoryWeights.salience(entry, f) + 0.15 * MemoryWeights.strength(entry, now, f)
@@ -355,6 +385,9 @@ class MemoryService(
 
     companion object {
         private const val DUPLICATE_THRESHOLD = 0.8
+
+        /** How relevant a memory is when one of its recall words is in the letter. */
+        private const val RECALL_WORD_RELEVANCE = 0.9
         private const val REVISION_GAP_MILLIS = 7L * 86_400_000L
         private const val FRESH_WINDOW_MILLIS = 6L * 3_600_000L
 

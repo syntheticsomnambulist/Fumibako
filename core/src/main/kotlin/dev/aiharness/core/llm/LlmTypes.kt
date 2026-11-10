@@ -8,12 +8,20 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.last
 import kotlinx.serialization.json.JsonObject
 
-/** A function tool offered to the model. [parameters] is a JSON Schema object. */
+/**
+ * A function tool offered to the model. [parameters] is a JSON Schema object. A tool with a
+ * [server] counterpart is sent as that provider-hosted tool where the provider has one (Claude's
+ * web fetch for `open_link`), and as this function tool elsewhere.
+ */
 data class ToolSpec(
     val name: String,
     val description: String,
     val parameters: JsonObject,
+    val server: ServerTool? = null,
 )
+
+/** Tools a provider can run on its own servers in place of ours. */
+enum class ServerTool { WEB_FETCH }
 
 /** Provider-neutral conversation message. Providers translate these to their wire format. */
 sealed interface LlmMessage {
@@ -35,6 +43,24 @@ sealed interface LlmMessage {
 sealed interface LlmPart {
     data class Text(val text: String) : LlmPart
     data class Image(val bytes: ByteArray, val mimeType: String) : LlmPart
+
+    /**
+     * A PDF, a song or a video, sent whole to a model that takes it in (see `MediaSupport`). The
+     * context builder only makes these for providers that can send them; others drop them.
+     */
+    data class Media(
+        val bytes: ByteArray,
+        val mimeType: String,
+        val name: String? = null,
+        /** For a video too long to send whole: only its first this many seconds are watched (Gemini's clipping). */
+        val endSeconds: Int? = null,
+    ) : LlmPart
+
+    /**
+     * A video the provider fetches itself from its address: a YouTube link, which Gemini watches
+     * (pictures and sound). Cut to its first [endSeconds] when set. Only made for Gemini.
+     */
+    data class LinkedVideo(val uri: String, val endSeconds: Int? = null) : LlmPart
 }
 
 data class LlmToolCall(val id: String, val name: String, val argumentsJson: String)
@@ -63,6 +89,8 @@ data class LlmTurnResult(
     val replay: String? = null,
     val refusal: RefusalInfo? = null,
     val modelId: String? = null,
+    /** Pages the provider opened itself this turn (Claude's web fetch), by address. */
+    val opened: List<String> = emptyList(),
 )
 
 sealed interface LlmEvent {

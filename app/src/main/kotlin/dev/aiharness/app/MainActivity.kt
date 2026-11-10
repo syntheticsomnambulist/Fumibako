@@ -14,8 +14,10 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.aiharness.app.ui.AppNavigation
 import dev.aiharness.app.ui.LocalAppContainer
+import dev.aiharness.app.ui.stickers.LocalStickerSettings
 import dev.aiharness.app.ui.theme.HarnessTheme
 import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.core.model.StickerSettings
 import dev.aiharness.core.model.TapePattern
 import dev.aiharness.core.model.ThemeSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,7 +53,10 @@ class MainActivity : ComponentActivity() {
                     isAppearanceLightNavigationBars = !night
                 }
             }
-            content()
+            CompositionLocalProvider(
+                LocalStickerSettings provides (settings?.stickers ?: StickerSettings()),
+                dev.aiharness.app.ui.media.LocalMediaSettings provides (settings?.media ?: dev.aiharness.core.model.MediaSettings()),
+            ) { content() }
         }
     }
 

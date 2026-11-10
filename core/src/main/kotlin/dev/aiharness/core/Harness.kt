@@ -9,13 +9,20 @@ import dev.aiharness.core.agent.TurnContextBuilder
 import dev.aiharness.core.agent.TurnSetup
 import dev.aiharness.core.image.ImageGenerator
 import dev.aiharness.core.image.ImageService
-import dev.aiharness.core.image.NovelAiImageGenerator
+import dev.aiharness.core.image.HostImageGenerator
 import dev.aiharness.core.llm.LlmException
 import dev.aiharness.core.llm.LlmProvider
 import dev.aiharness.core.llm.ProviderRegistry
 import dev.aiharness.core.llm.anthropic.AnthropicProvider
 import dev.aiharness.core.llm.gemini.GeminiProvider
 import dev.aiharness.core.llm.openai.OpenAiCompatibleProvider
+import dev.aiharness.core.media.LinkPreviews
+import dev.aiharness.core.media.MusicSearch
+import dev.aiharness.core.media.MediaDescriber
+import dev.aiharness.core.memory.KeepsakeFinder
+import dev.aiharness.core.tools.LinkReading
+import dev.aiharness.core.tools.OpenLinkTool
+import dev.aiharness.core.tools.ShareLinkTool
 import dev.aiharness.core.memory.EmbedderFactory
 import dev.aiharness.core.memory.MemoryService
 import dev.aiharness.core.model.ActivityEntry
@@ -36,13 +43,22 @@ import dev.aiharness.core.storage.ModelProfileRepository
 import dev.aiharness.core.storage.PersonaRepository
 import dev.aiharness.core.storage.SecretStore
 import dev.aiharness.core.storage.SettingsRepository
+import dev.aiharness.core.storage.MarkRepository
+import dev.aiharness.core.storage.StickerRepository
+import dev.aiharness.core.stickers.StickerCutter
+import dev.aiharness.core.stickers.StickerMaker
+import dev.aiharness.core.stickers.StickerService
 import dev.aiharness.core.storage.UserPersonaRepository
 import dev.aiharness.core.tools.AgentTool
+import dev.aiharness.core.tools.ChangeOutfitTool
+import dev.aiharness.core.tools.DrawStickerTool
 import dev.aiharness.core.tools.GenerateImageTool
 import dev.aiharness.core.tools.MemoryForgetTool
 import dev.aiharness.core.tools.MemorySaveTool
 import dev.aiharness.core.tools.MemorySearchTool
 import dev.aiharness.core.tools.MemoryUpdateTool
+import dev.aiharness.core.tools.PeelStickerTool
+import dev.aiharness.core.tools.PlaceStickerTool
 import dev.aiharness.core.tools.ToolRegistry
 import dev.aiharness.core.util.Clock
 import dev.aiharness.core.util.SystemClock
@@ -75,27 +91,56 @@ class Harness(
     val settings: SettingsRepository,
     val blobs: BlobStore,
     val activity: ActivityRepository,
+    val stickers: StickerRepository,
+    val marks: MarkRepository,
+    val plannerEntries: dev.aiharness.core.storage.PlannerRepository,
     val clock: Clock = SystemClock,
     val providers: ProviderRegistry = defaultProviders(),
-    imageGenerator: ImageGenerator = NovelAiImageGenerator(),
+    imageGenerator: ImageGenerator = HostImageGenerator(),
     embedderFactory: EmbedderFactory? = null,
+    /** Cuts drawn stickers out of their white background; the app supplies one (this default leaves them as drawn). */
+    stickerCutter: StickerCutter = StickerCutter { it },
+    /** The phone's calendars, read-only; the app supplies them (none here). */
+    phoneCalendars: dev.aiharness.core.planner.PhoneCalendars? = null,
     val log: (String) -> Unit = {},
 ) {
     val memory = MemoryService(memories, settings, embedderFactory ?: EmbedderFactory.default(::apiKey), clock, log)
     val images = ImageService(imageGenerator, blobs, ::apiKey)
-    val tools = ToolRegistry(
+    val stickerService = StickerService(stickers, settings, clock)
+    val stickerMaker = StickerMaker(images, blobs, stickers, stickerCutter, clock)
+    val links = LinkPreviews(blobs, log = log)
+    val music = MusicSearch(blobs, log = log)
+    val holidays = dev.aiharness.core.planner.Holidays(settings, clock, log = log)
+    val linkReading = LinkReading(conversations, marks, clock)
+    val keepsakeFinder = KeepsakeFinder(conversations, clock)
+    val tools: ToolRegistry = ToolRegistry(
         listOf(
-            MemorySaveTool(memory),
+            MemorySaveTool(memory, keepsakeFinder),
             MemorySearchTool(memory),
-            MemoryUpdateTool(memory),
+            MemoryUpdateTool(memory, keepsakeFinder),
             MemoryForgetTool(memory),
-            GenerateImageTool(images),
+            GenerateImageTool(images, personas),
+            ChangeOutfitTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
+            dev.aiharness.core.tools.ChooseLetterBoxTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
+            PlaceStickerTool(stickerService, personas, conversations, { id, kind, conversationId, note -> logActivity(id, kind, conversationId, note = note) }, { planner }, clock),
+            PeelStickerTool(stickerService, personas, conversations),
+            DrawStickerTool(stickerMaker, personas, stickers),
+            OpenLinkTool(links, linkReading),
+            ShareLinkTool(links),
         ),
     )
+    val letterSearch = dev.aiharness.core.letters.LetterSearch(conversations, clock).also { search ->
+        tools.register(dev.aiharness.core.letters.LetterSearchTool(search, userPersonas, clock))
+    }
     val prompts = PromptAssembler()
-    val turnContext = TurnContextBuilder(memory, clock)
+    val planner: dev.aiharness.core.planner.Planner = dev.aiharness.core.planner.Planner(plannerEntries, clock, phoneCalendars, settings).also { planner ->
+        tools.register(dev.aiharness.core.planner.PlannerLookTool(planner, clock))
+        tools.register(dev.aiharness.core.planner.PlannerWriteTool(planner, plannerEntries, personas, clock, stickerService))
+    }
+    val turnContext = TurnContextBuilder(memory, clock, stickerService, planner)
     val contextBuilder = ContextBuilder(prompts, memory, blobs, clock, log)
     val summarizer = LlmSummarizer(this)
+    val describer = MediaDescriber(this)
     val locks = ConversationLocks()
     val agent = AgentRunner(this)
     val heartbeat = HeartbeatEngine(this)
@@ -117,8 +162,15 @@ class Harness(
         updateConversation(conversationId) { if ((it.lastReadAt ?: 0L) >= now) it else it.copy(lastReadAt = now) }
     }
 
-    suspend fun logActivity(personaId: String, kind: ActivityKind, conversationId: String? = null, count: Int = 1) {
-        activity.add(ActivityEntry(newId(), personaId, kind, clock.nowMillis(), conversationId, count))
+    suspend fun logActivity(
+        personaId: String,
+        kind: ActivityKind,
+        conversationId: String? = null,
+        count: Int = 1,
+        note: String? = null,
+        tags: List<String> = emptyList(),
+    ) {
+        activity.add(ActivityEntry(newId(), personaId, kind, clock.nowMillis(), conversationId, count, note, tags))
     }
 
     suspend fun apiKey(credentialId: String?): String? =
@@ -204,7 +256,7 @@ class Harness(
             it.copy(
                 preview = reply?.let { r -> Conversation.previewOf(r.displayText) },
                 previewFromHeartbeat = reply?.origin == MessageOrigin.HEARTBEAT,
-                lastAgentMessageAt = reply?.createdAt,
+                lastAgentMessageAt = reply?.arrivedAt,
             )
         }
     }

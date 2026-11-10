@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import kotlin.test.assertTrue
 
-/** Before 1.0 an older database is recreated empty, and the app is told so it can start fresh. */
+/** A database older than the kept migrations is recreated empty, and the app is told so it can start fresh. */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [35])
 class DatabaseWipeTest {

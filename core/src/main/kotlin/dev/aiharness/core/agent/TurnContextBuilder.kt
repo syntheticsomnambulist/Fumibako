@@ -1,5 +1,6 @@
 package dev.aiharness.core.agent
 
+import dev.aiharness.core.memory.keptNote
 import dev.aiharness.core.memory.MemoryAge
 import dev.aiharness.core.memory.MemoryService
 import dev.aiharness.core.memory.MemoryWeights
@@ -10,6 +11,9 @@ import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.seasons.Seasons
+import dev.aiharness.core.theme.ThemeClock
+import dev.aiharness.core.stickers.StickerService
 import dev.aiharness.core.tools.feelingNote
 import dev.aiharness.core.util.Clock
 import dev.aiharness.core.util.humanizeDuration
@@ -17,15 +21,26 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 /**
- * Builds the `<context>` block attached to a user turn: current time, elapsed time, and memories
- * recalled for this moment. It is computed once when the turn is sent and stored on the message, so
- * replays are byte-identical.
+ * Builds the `<context>` block attached to a user turn: current time, elapsed time, memories
+ * recalled for this moment, and stickers stuck or peeled since the persona's last turn. It is
+ * computed once when the turn is sent and stored on the message, so replays are byte-identical.
  */
 class TurnContextBuilder(
     private val memory: MemoryService,
     private val clock: Clock,
+    private val stickers: StickerService? = null,
+    private val planner: dev.aiharness.core.planner.Planner? = null,
 ) {
     private val timeFormat = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy, HH:mm")
+
+    /** "Season: 立冬 (winter begins), camellias open." */
+    private fun seasonLine(settings: AppSettings, now: Long): String {
+        val zone = clock.zone
+        val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+        val micro = Seasons.microOn(today, zone, ThemeClock.hemisphere(settings.theme, zone))
+        fun lower(text: String) = text.replaceFirstChar { it.lowercase() }
+        return "$SEASON ${micro.term.kanji} (${lower(micro.term.english)}), ${lower(micro.english)}."
+    }
     private val dateFormat = DateTimeFormatter.ofPattern("d MMM yyyy")
 
     suspend fun build(
@@ -35,6 +50,11 @@ class TurnContextBuilder(
         history: List<ChatMessage>,
         query: String,
         epoch: ContextState?,
+        conversationId: String? = null,
+        /** The note this context goes with, when it's a note being sent ("this note" in sticker notes). */
+        currentMessageId: String? = null,
+        /** The model that will answer, so the persona is told when it isn't the one it last wrote with. */
+        profile: dev.aiharness.core.model.ModelProfile? = null,
     ): String? {
         val lines = mutableListOf<String>()
         val now = clock.nowMillis()
@@ -50,6 +70,38 @@ class TurnContextBuilder(
             }
         }
 
+        // A new model: told once, in the first letter it writes with it (unless you've said not to).
+        if (profile != null && persona.tellModelChanges) ModelChanges.contextLine(history, profile)?.let { lines += it }
+
+        // Out of its usual clothes: it should know, for how it describes itself and its pictures.
+        persona.outfit?.takeIf { it.isNotBlank() }?.let { lines += "You're wearing: $it (not your usual clothes)." }
+
+        // What's on in your planner, when the two of you share it (here, not the system prompt, so the cache holds).
+        planner?.contextFor(persona, userPersona, settings)?.let { lines += it }
+
+        // The season, once in each letter as each microseason begins; like the time, only with time awareness.
+        if (settings.planner.seasonBand && settings.heartbeat.mode != HeartbeatMode.OFF) {
+            val line = seasonLine(settings, now)
+            val told = history.lastOrNull { it.role == MessageRole.USER && it.turnContext?.contains(SEASON) == true }
+                ?.turnContext?.lines()?.firstOrNull { it.startsWith(SEASON) }
+            if (line != told) lines += line
+        }
+
+        if (stickers != null && conversationId != null) {
+            val lastTurn = history.lastOrNull { it.role == MessageRole.ASSISTANT }?.createdAt ?: 0L
+            val userName = userPersona?.name?.takeIf { it.isNotBlank() } ?: "The user"
+            lines += stickers.notesSince(conversationId, lastTurn, history, currentMessageId, userName)
+            // And on the planner the two of you share.
+            if (planner != null && userPersona != null && planner.shared(persona, userPersona, settings)) {
+                lines += stickers.plannerNotesSince(userPersona.id, lastTurn, userName) { target -> planner.describeTarget(target) }
+            }
+            if (persona.stickers.sticks) {
+                // Stickers added since this epoch's system prompt named them.
+                val fresh = stickers.newSince(persona.id, maxOf(epoch?.startedAt ?: Long.MAX_VALUE, lastTurn))
+                if (fresh.isNotEmpty()) lines += "New stickers you can use: " + fresh.joinToString(", ") { ":${it.name}:" + (it.feeling?.let { f -> " ($f)" } ?: "") } + "."
+            }
+        }
+
         if (settings.memory.enabled) {
             val core = memory.core(persona.id, userPersona?.id)
             // Core memories created after this epoch's system prompt was frozen aren't in it yet.
@@ -58,7 +110,7 @@ class TurnContextBuilder(
             val freshCore = core.filter { it.updatedAt > maxOf(sinceEpoch, previousUserTurn) }
             if (freshCore.isNotEmpty()) {
                 lines += "Recently updated core memories:"
-                freshCore.forEach { lines += "- ${it.content}" }
+                freshCore.forEach { lines += "- ${it.content}${it.keptNote}" }
             }
 
             val lastAssistant = history.lastOrNull { it.role == MessageRole.ASSISTANT && !it.hidden }?.text.orEmpty()
@@ -79,7 +131,7 @@ class TurnContextBuilder(
                         feelingNote(entry)?.let { add(it) }
                         if (MemoryWeights.age(entry, now, memory.feelingOf(entry)) == MemoryAge.FADING) add("a little hazy")
                     }
-                    lines += "- (${notes.joinToString(", ")}) ${entry.content}"
+                    lines += "- (${notes.joinToString(", ")}) ${entry.content}${entry.keptNote}"
                 }
             }
         }
@@ -88,6 +140,8 @@ class TurnContextBuilder(
     }
 
     companion object {
+        private const val SEASON = "Season:"
+
         fun wrap(context: String): String = "<context>\n$context\n</context>"
     }
 }

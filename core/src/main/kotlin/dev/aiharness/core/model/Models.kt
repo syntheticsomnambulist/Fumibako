@@ -100,18 +100,70 @@ data class Persona(
     val exampleDialogue: String = "",
     /** Replaces the generated role section of the system prompt. Supports {{char}} / {{user}}. */
     val systemPromptOverride: String? = null,
-    /** Image-model tags describing how this persona looks (used by image generation). */
-    val appearanceTags: String = "",
+    /** The body and traits that never change (hair, eyes, build, glasses), as image tags. */
+    @SerialName("appearanceTags")
+    val selfPrompt: String = "",
+    /** What the persona usually wears, as image tags. */
+    val defaultOutfit: String = "",
+    /** What it's wearing now, when that isn't [defaultOutfit]; you or the persona can change it. */
+    val outfit: String? = null,
+    /** Artist and style tags for its pictures; null uses the default in Settings, Pictures. */
+    val stylePrompt: String? = null,
+    /** The image profile its pictures are drawn with; null uses the default. */
+    val imageProfileId: String? = null,
     val avatarRef: String? = null,
     val defaultModelProfileId: String? = null,
     val heartbeatEnabled: Boolean = true,
+    /** This persona's own heartbeat rhythm; null follows the usual settings. */
+    val ownHeartbeat: HeartbeatRhythm? = null,
+    /** A model for this persona's heartbeats (e.g. a stronger one for tending memories); null uses its letters' model. */
+    val heartbeatModelProfileId: String? = null,
     /** Signature ink: one of the madoromi accent ink names (see `docs/design`). */
     val ink: String = "sakura",
     val tapePattern: TapePattern = TapePattern.DOTS,
-    /** What an unread letter from this persona wears; null is the default seal. Stickers come in v0.2. */
+    /**
+     * What an unread letter from this persona wears: the id of one of its stickers, or null for its
+     * "hello" sticker (the seal when it has none).
+     */
     val unreadMark: String? = null,
+    /** The box its letters are kept in, in the letters list; null until chosen (see [LetterBoxes.of]). */
+    val letterBox: LetterBox? = null,
+    val stickers: PersonaStickers = PersonaStickers(),
+    /** Its pronouns; null until chosen (the app then uses its name, and the model isn't told). */
+    val pronouns: Pronouns? = null,
+    /** More sets of pronouns beside [pronouns] (she/they): the persona is told all of them. */
+    val alsoPronouns: List<Pronouns> = emptyList(),
+    /** How the app's own sentences pick between several sets. */
+    val pronounsMix: PronounMix = PronounMix.TAKE_TURNS,
+    /** It sees the planner of the persona of yours it writes to (when that one shares it). */
+    val seesPlanner: Boolean = true,
+    /** Its seal and marks in the planner, and whether it writes season haiku. */
+    val planner: PersonaPlanner = PersonaPlanner(),
+    /** How long its replies take to reach you; null follows Settings (letters in the post). */
+    val letterTravel: LetterTravel? = null,
+    /** Told in its next letter when its model changes ("Your model changed: ..."). The thread shows the change either way. */
+    val tellModelChanges: Boolean = true,
+    /** When its model was last changed on its page, and what it was before, for "Since today, 15:40 · was ...". */
+    val modelSince: Long? = null,
+    val previousModelName: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
+) {
+    /** What the persona is wearing: the outfit it changed into, or its usual one. */
+    val currentOutfit: String get() = outfit ?: defaultOutfit
+}
+
+/** How a persona uses stickers. Peeling is each side's own by default. */
+@Serializable
+data class PersonaStickers(
+    /** Draws new stickers for its sheet now and then in a heartbeat (one activity, however many it draws). */
+    val draws: Boolean = true,
+    /** Sticks stickers on your notes and its own letters. */
+    val sticks: Boolean = true,
+    /** You can peel off its stickers. */
+    val youCanPeel: Boolean = false,
+    /** It can peel off yours. */
+    val canPeelYours: Boolean = false,
 )
 
 /** Who the user is presenting as. Swappable per conversation. */
@@ -121,11 +173,23 @@ data class UserPersona(
     val name: String,
     val description: String = "",
     val avatarRef: String? = null,
+    /** How you look in pictures (body and traits that don't change), as image tags. */
+    val selfPrompt: String = "",
+    /** What you wear in pictures, as image tags. */
+    val outfit: String = "",
     val ink: String = "sora",
     val tapePattern: TapePattern = TapePattern.STRIPES,
+    /**
+     * Whether personas see this one's planner: null follows the rule, which shares your default
+     * persona's (the one you write as) and not the others', which may be fictional.
+     */
+    val sharesPlanner: Boolean? = null,
     val createdAt: Long,
     val updatedAt: Long,
-)
+) {
+    /** Whether personas see its planner, by [sharesPlanner] or the rule. */
+    fun sharesPlanner(settings: AppSettings): Boolean = sharesPlanner ?: (id == settings.activeUserPersonaId)
+}
 
 // ---------------------------------------------------------------------------
 // Conversations
@@ -159,6 +223,12 @@ data class Conversation(
 ) {
     val hasUnread: Boolean
         get() = lastAgentMessageAt != null && lastAgentMessageAt > (lastReadAt ?: 0L)
+
+    /** A reply in the post that hasn't reached you by [now] (its arrival is the conversation's latest letter). */
+    fun onItsWay(now: Long): Boolean = lastAgentMessageAt != null && lastAgentMessageAt > now
+
+    /** Unread at [now]: a letter came since you last read, and it has arrived. */
+    fun unreadAt(now: Long): Boolean = hasUnread && !onItsWay(now)
 
     companion object {
         /** One line of [text] for a preview. */
@@ -200,7 +270,16 @@ sealed interface ContentPart {
 
     @Serializable
     @SerialName("image")
-    data class Image(val ref: String, val mimeType: String = "image/png", val caption: String? = null) : ContentPart
+    data class Image(
+        val ref: String,
+        val mimeType: String = "image/png",
+        /** For a picture a persona drew, what it asked for. */
+        val caption: String? = null,
+        /** A short description written when it arrived, which later context epochs carry instead of the picture. */
+        val description: String? = null,
+        /** When [description] was written: epochs that began after it send the description. */
+        val describedAt: Long? = null,
+    ) : ContentPart
 
     @Serializable
     @SerialName("tool_call")
@@ -213,12 +292,213 @@ sealed interface ContentPart {
         val name: String,
         val content: String,
         val isError: Boolean = false,
+        /** Letters a search found, best first: `letter_search`'s P.S. and the index card open them. */
+        val foundLetters: List<FoundLetter> = emptyList(),
     ) : ContentPart
 
     /** Displayable reasoning summary. Never sent back to providers as text. */
     @Serializable
     @SerialName("reasoning")
     data class Reasoning(val text: String) : ContentPart
+
+    /**
+     * Something sent with a letter or note besides its text and pictures (photos stay [Image]s): a
+     * file, a song, a playlist, a video or a link. It carries what its frame shows, and a
+     * [description] written when it arrives, which later context epochs send instead of the file.
+     */
+    @Serializable
+    @SerialName("attachment")
+    data class Attachment(
+        val id: String,
+        val kind: AttachmentKind,
+        /** The file, copied into the app's storage; null for a link or a song that lives elsewhere. */
+        val ref: String? = null,
+        val mimeType: String? = null,
+        /** The file's name as it was picked. */
+        val name: String? = null,
+        val sizeBytes: Long? = null,
+        /** A PDF's pages. */
+        val pages: Int? = null,
+        /** A song's or playlist's title, a video's or document's own title, or a link's headline. */
+        val title: String? = null,
+        /** Who made it: a song's artist, a video's maker, a document's author, a link's channel or writer. */
+        val artist: String? = null,
+        val album: String? = null,
+        /** A song's year, from its tags. */
+        val year: Int? = null,
+        val lengthMs: Long? = null,
+        /** When a video was recorded, from the file itself. */
+        val recordedAt: Long? = null,
+        /** A video's size as it shows (turned the right way up), so its shape: portrait or landscape. */
+        val width: Int? = null,
+        val height: Int? = null,
+        /** Whether a video has sound: a model seeing only its frames can't tell. */
+        val hasSound: Boolean? = null,
+        /** The file is the song's 30-second preview (picked from a music search); the whole song is at [url]. */
+        val previewOnly: Boolean = false,
+        /** A playlist's songs, in order. */
+        val tracks: List<Track> = emptyList(),
+        /** The line beneath a playlist's title ("for Aria, from Sam"). */
+        val subtitle: String? = null,
+        /** A link's address, or where a song can be heard. */
+        val url: String? = null,
+        /** A link's site name, from its page. */
+        val site: String? = null,
+        /** A link's description, from its page. */
+        val snippet: String? = null,
+        /** A link's picture, a song's cover, or a video's poster. */
+        val pictureRef: String? = null,
+        /** An official embeddable player for it, from its page (a Bandcamp song plays in one). */
+        val embed: String? = null,
+        /** A video's three frames (what a model that can't watch it receives). */
+        val frameRefs: List<String> = emptyList(),
+        /** A small picture of it for lists and the memory book. */
+        val thumbRef: String? = null,
+        /**
+         * A smaller copy made on the phone for models that take it whole (a video at 360p, a song as
+         * compact AAC), so it fits in a request; the original still plays and saves.
+         */
+        val modelRef: String? = null,
+        val modelMimeType: String? = null,
+        val modelSizeBytes: Long? = null,
+        /** The smaller copy's length when it holds only the video's first part (a long video); null when it's all of it. */
+        val modelLengthMs: Long? = null,
+        /** A short description written when it arrived, which later context epochs carry instead of the file. */
+        val description: String? = null,
+        /** When [description] was written: epochs that began after it send the description. */
+        val describedAt: Long? = null,
+    ) : ContentPart {
+        /** What a model that can't take it in reads, and the handle it knows it by: `[ticket: October Walk by Hana Sato, 3:42]`. */
+        val standIn: String
+            get() = "[" + when (kind) {
+                AttachmentKind.FILE -> "tag: " + listOfNotNull(name ?: "a file", documentLine(), fileFacts()).joinToString(", ")
+                AttachmentKind.SONG -> "ticket: " + listOfNotNull(songLine(title, artist), albumLine(), lengthMs?.let(::clock)).joinToString(", ")
+                AttachmentKind.PLAYLIST -> "cassette: " + listOfNotNull(
+                    title ?: "a mix",
+                    subtitle,
+                    "${tracks.size} songs".takeIf { tracks.isNotEmpty() },
+                    tracks.takeIf { it.isNotEmpty() }?.joinToString("; ") { songLine(it.title ?: it.name, it.artist) },
+                ).joinToString(", ")
+                AttachmentKind.VIDEO -> "film: " + listOfNotNull(
+                    listOfNotNull(title ?: name ?: "a video", artist?.let { "by $it" }).joinToString(" "),
+                    // Its file's name too, when it has a title of its own.
+                    name?.takeIf { title != null && it.substringBeforeLast('.') != title },
+                    lengthMs?.let(::clock),
+                    shape(),
+                    hasSound?.let { if (it) "with sound" else "silent" },
+                    recordedAt?.let { "recorded " + RECORDED.format(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault())) },
+                ).joinToString(", ")
+                AttachmentKind.LINK -> "cutting: " + listOfNotNull(title, artist?.let { "by $it" }, lengthMs?.let(::clock), site, url).joinToString(", ")
+            } + "]"
+
+        /** A document's own title and author: `"Quarterly Review" by Ana Ruiz`. */
+        private fun documentLine(): String? = when {
+            title != null -> "\"$title\"" + (artist?.let { " by $it" } ?: "")
+            artist != null -> "by $artist"
+            else -> null
+        }
+
+        /** A video's shape: "portrait", "landscape" or "square". */
+        private fun shape(): String? {
+            val w = width?.takeIf { it > 0 } ?: return null
+            val h = height?.takeIf { it > 0 } ?: return null
+            return when {
+                h > w * 1.1 -> "portrait"
+                w > h * 1.1 -> "landscape"
+                else -> "square"
+            }
+        }
+
+        /** `from Whenever You Need Somebody (1987)`. */
+        private fun albumLine(): String? = album?.let { "from $it" + (year?.let { y -> " ($y)" } ?: "") } ?: year?.toString()
+
+        private fun fileFacts(): String? = listOfNotNull(
+            mimeType?.substringAfter('/')?.uppercase()?.takeIf { it.length <= 12 },
+            pages?.let { if (it == 1) "1 page" else "$it pages" },
+            sizeBytes?.let(::humanSize),
+        ).joinToString(", ").ifEmpty { null }
+    }
+}
+
+@Serializable
+enum class AttachmentKind { FILE, SONG, PLAYLIST, VIDEO, LINK }
+
+/**
+ * Something kept with a memory (docs/design/keepsakes.md): a copy of a picture or attachment from
+ * the letter or note it came from, so the book can show it whatever happens to the letter. Its
+ * stickers stay stuck: they belong to the attachment's id, which the copy keeps.
+ */
+@Serializable
+data class Keepsake(
+    /** The letter or note it came from. */
+    val messageId: String? = null,
+    /** A [ContentPart.Image] or [ContentPart.Attachment]. */
+    val part: ContentPart,
+    val keptAt: Long,
+    /** It came in your note (it's in your ink), rather than the persona's letter. */
+    val fromYou: Boolean = true,
+) {
+    /** The attachment's id, or a picture's ref: what stickers on it belong to. */
+    val key: String get() = (part as? ContentPart.Attachment)?.id ?: (part as? ContentPart.Image)?.ref.orEmpty()
+
+    /** What the persona reads of it when the memory comes up: its stand-in, not the file. */
+    val label: String
+        get() = when (val p = part) {
+            is ContentPart.Attachment -> p.standIn
+            is ContentPart.Image -> "[photo" + (p.description ?: p.caption)?.let { ": ${it.take(80)}" }.orEmpty() + "]"
+            else -> "[something]"
+        }
+}
+
+/** One song on a playlist. */
+@Serializable
+data class Track(
+    val ref: String? = null,
+    val mimeType: String? = null,
+    val title: String? = null,
+    val artist: String? = null,
+    val album: String? = null,
+    val year: Int? = null,
+    val lengthMs: Long? = null,
+    /** The file's name, for songs without tags. */
+    val name: String? = null,
+    /** Where the whole song is, for one picked from a music search (its file is the preview). */
+    val url: String? = null,
+    val previewOnly: Boolean = false,
+    /** Its cover. */
+    val pictureRef: String? = null,
+) {
+    /** This song as a ticket of its own. */
+    fun ticket(id: String): ContentPart.Attachment = ContentPart.Attachment(
+        id, AttachmentKind.SONG, ref = ref, mimeType = mimeType, name = name, title = title, artist = artist, album = album, year = year,
+        lengthMs = lengthMs, url = url, previewOnly = previewOnly, pictureRef = pictureRef,
+    )
+}
+
+/** A ticket's song as a track on a mix. */
+fun ContentPart.Attachment.asTrack(): Track = Track(
+    ref = ref, mimeType = mimeType, title = title, artist = artist, album = album, year = year, lengthMs = lengthMs, name = name,
+    url = url, previewOnly = previewOnly, pictureRef = pictureRef,
+)
+
+/** The day a video was recorded, as the persona's context writes days: "3 Nov 2026". */
+private val RECORDED = java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy", java.util.Locale.US)
+
+private fun songLine(title: String?, artist: String?): String =
+    listOfNotNull(title ?: "a song", artist?.let { "by $it" }).joinToString(" ")
+
+/** "3:42", or "1:02:10". */
+fun clock(ms: Long): String {
+    val s = ms / 1000
+    return if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) else "%d:%02d".format(s / 60, s % 60)
+}
+
+/** "2.4 MB". */
+fun humanSize(bytes: Long): String = when {
+    bytes >= 1_000_000_000 -> "%.1f GB".format(bytes / 1e9)
+    bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1e6)
+    bytes >= 1_000 -> "${bytes / 1_000} KB"
+    else -> "$bytes bytes"
 }
 
 @Serializable
@@ -227,7 +507,11 @@ data class TokenUsage(
     val outputTokens: Long? = null,
     val cacheReadTokens: Long? = null,
     val cacheWriteTokens: Long? = null,
-)
+) {
+    /** Every token the model read: Anthropic counts cached ones apart from its input, the others within it. */
+    fun read(provider: ProviderType?): Long =
+        (inputTokens ?: 0) + if (provider == ProviderType.ANTHROPIC) (cacheReadTokens ?: 0) + (cacheWriteTokens ?: 0) else 0
+}
 
 @Serializable
 data class ChatMessage(
@@ -247,12 +531,19 @@ data class ChatMessage(
     val replay: String? = null,
     /** Not shown in the chat UI (e.g. heartbeat prompts). */
     val hidden: Boolean = false,
+    /**
+     * A reply in the post: written at [createdAt], it reaches you then and isn't shown before
+     * (see [LetterSettings]). Null for everything that comes straight away.
+     */
+    val deliverAt: Long? = null,
     /** Kept for the record but never sent to a model (e.g. refusals, failed turns). */
     val excludedFromContext: Boolean = false,
     val errorMessage: String? = null,
     val usage: TokenUsage? = null,
     /** Mood the persona chose for this message, parsed from its `[mood: ...]` tag. */
     val mood: String? = null,
+    /** The model it was written with (a persona's letters), for noticing when its model changes. */
+    val writtenWith: WrittenWith? = null,
 ) {
     /** The text as stored and replayed to the model, including any mood tag. */
     val text: String
@@ -261,6 +552,13 @@ data class ChatMessage(
     /** The text as shown to the user: mood tags removed. */
     val displayText: String
         get() = MoodTags.strip(text)
+
+    /** Whether it has reached you by [now]: a reply in the post only once it arrives. */
+    fun arrived(now: Long): Boolean = deliverAt == null || deliverAt <= now
+
+    /** When it reached (or reaches) you: its arrival, or when it was written. */
+    val arrivedAt: Long
+        get() = deliverAt ?: createdAt
 
     val toolCalls: List<ContentPart.ToolCall>
         get() = parts.filterIsInstance<ContentPart.ToolCall>()
@@ -271,8 +569,26 @@ data class ChatMessage(
     val images: List<ContentPart.Image>
         get() = parts.filterIsInstance<ContentPart.Image>()
 
+    val attachments: List<ContentPart.Attachment>
+        get() = parts.filterIsInstance<ContentPart.Attachment>()
+
     val reasoning: String?
         get() = parts.filterIsInstance<ContentPart.Reasoning>().joinToString("\n") { it.text }.ifBlank { null }
+}
+
+/** A letter `letter_search` found: where it is, who wrote it, when it arrived, and the passage that came back. */
+@Serializable
+data class FoundLetter(val messageId: String, val conversationId: String, val byYou: Boolean, val at: Long, val passage: String)
+
+/** The model a persona's letter was written with: its profile's name, provider and model then. */
+@Serializable
+data class WrittenWith(val name: String, val provider: ProviderType, val modelId: String) {
+    /** The same model, whatever the profile is called. */
+    fun sameModel(other: WrittenWith) = provider == other.provider && modelId == other.modelId
+
+    companion object {
+        fun of(profile: ModelProfile) = WrittenWith(profile.name, profile.provider, profile.modelId)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -292,6 +608,13 @@ enum class MemoryKind {
 
     /** The persona's own thoughts and conclusions (often written during heartbeats). */
     REFLECTION,
+
+    /**
+     * Lore: what the persona knows of its world, from a card's lorebook (v0.5). Not felt, never
+     * offered back to revisit, and not counted among what matters deeply; recalled by its
+     * [MemoryEntry.recallWords] as well as its words.
+     */
+    LORE,
 }
 
 /** How much a memory matters, chosen by the persona in words. */
@@ -353,6 +676,8 @@ data class MemoryEntry(
     val replacedAt: Long? = null,
     /** The user wrote, edited or confirmed this memory. */
     val userTouched: Boolean = false,
+    /** Last time a heartbeat offered it back to the persona to revisit (a cooldown). */
+    val revisitedAt: Long? = null,
     val createdAt: Long,
     val updatedAt: Long,
     /** Last time it came up at all, including automatic recall into a letter. */
@@ -361,6 +686,15 @@ data class MemoryEntry(
     /** Last real use (searched for, cited in a reflection, kept again, edited): this keeps it strong. */
     val lastUsedAt: Long = createdAt,
     val useCount: Int = 0,
+    /** Things kept with the memory from its letter or note: a cassette, a photo, a cutting. */
+    val keepsakes: List<Keepsake> = emptyList(),
+    /**
+     * Won't fade (the 永 seal): it never weakens or goes dormant, but is still recalled only when it's
+     * relevant. Only you set it (lore comes in with it on); "matters deeply" is the persona's own.
+     */
+    val wontFade: Boolean = false,
+    /** Words that bring it to mind whenever a letter has them (a lorebook entry's keys). */
+    val recallWords: List<String> = emptyList(),
 ) {
     val isCore: Boolean get() = pinned || kind == MemoryKind.CORE
     val isReplaced: Boolean get() = replacedById != null

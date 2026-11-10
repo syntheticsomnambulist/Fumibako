@@ -51,7 +51,22 @@ class GeminiProvider(
     private fun baseUrl(profile: ModelProfile) =
         (profile.baseUrl?.takeIf { it.isNotBlank() } ?: DEFAULT_BASE_URL).trimEnd('/')
 
+    /**
+     * A request with a YouTube link Gemini won't take (a private or removed video, say) is sent
+     * again once without its links, each said not to have come through, so the letter still comes.
+     */
     override fun stream(request: LlmRequest): Flow<LlmEvent> = flow {
+        var started = false
+        try {
+            streamOnce(request).collect { started = true; emit(it) }
+        } catch (e: LlmException) {
+            val code = e.statusCode
+            if (started || code == null || code !in 400..499 || code == 401 || code == 429 || !hasLinkedVideos(request)) throw e
+            streamOnce(withoutLinkedVideos(request)).collect { emit(it) }
+        }
+    }
+
+    private fun streamOnce(request: LlmRequest): Flow<LlmEvent> = flow {
         val profile = request.profile
         val url = "${baseUrl(profile)}/models/${profile.modelId.removePrefix("models/")}:streamGenerateContent"
             .toHttpUrl().newBuilder().addQueryParameter("alt", "sse").build()
@@ -202,6 +217,39 @@ class GeminiProvider(
         }
     }
 
+    private fun inlineData(mimeType: String, bytes: ByteArray, endSeconds: Int? = null) = buildJsonObject {
+        put(
+            "inlineData",
+            buildJsonObject {
+                put("mimeType", mimeType)
+                put("data", Base64.getEncoder().encodeToString(bytes))
+            },
+        )
+        endSeconds?.let { put("videoMetadata", clip(it)) }
+    }
+
+    /** A YouTube video by its address, which Gemini fetches and watches. */
+    private fun linkedVideo(part: LlmPart.LinkedVideo) = buildJsonObject {
+        put("fileData", buildJsonObject { put("fileUri", part.uri) })
+        part.endSeconds?.let { put("videoMetadata", clip(it)) }
+    }
+
+    /** Only the first [seconds] of a video. */
+    private fun clip(seconds: Int) = buildJsonObject {
+        put("startOffset", "0s")
+        put("endOffset", "${seconds}s")
+    }
+
+    private fun hasLinkedVideos(request: LlmRequest): Boolean =
+        request.messages.any { m -> m is LlmMessage.User && m.parts.any { it is LlmPart.LinkedVideo } }
+
+    internal fun withoutLinkedVideos(request: LlmRequest): LlmRequest = request.copy(
+        messages = request.messages.map { m ->
+            if (m !is LlmMessage.User) m
+            else m.copy(parts = m.parts.map { p -> if (p is LlmPart.LinkedVideo) LlmPart.Text("(The video didn't come through this time.)") else p })
+        },
+    )
+
     private fun buildContents(request: LlmRequest): JsonArray {
         val contents = mutableListOf<Pair<String, MutableList<JsonElement>>>()
         fun add(role: String, parts: List<JsonElement>) {
@@ -216,19 +264,10 @@ class GeminiProvider(
                     message.parts.mapNotNull { part ->
                         when (part) {
                             is LlmPart.Text -> buildJsonObject { put("text", part.text) }
-                            is LlmPart.Image -> if (request.profile.supportsVision) {
-                                buildJsonObject {
-                                    put(
-                                        "inlineData",
-                                        buildJsonObject {
-                                            put("mimeType", part.mimeType)
-                                            put("data", Base64.getEncoder().encodeToString(part.bytes))
-                                        },
-                                    )
-                                }
-                            } else {
-                                null
-                            }
+                            // Every Gemini model sees pictures; the context builder decides what else goes (MediaSupport).
+                            is LlmPart.Image -> inlineData(part.mimeType, part.bytes)
+                            is LlmPart.Media -> inlineData(part.mimeType, part.bytes, part.endSeconds)
+                            is LlmPart.LinkedVideo -> linkedVideo(part)
                         }
                     },
                 )

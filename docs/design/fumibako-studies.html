@@ -1,0 +1,729 @@
+<title>Fumibako box studies</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;600&family=Literata:ital,wght@0,400;0,600;1,400&family=Zen+Kaku+Gothic+New:wght@400;700&family=Yomogi&family=Yuji+Syuku&display=swap">
+<style>
+/* Layout: the writing desk's look (activities.md on the design branch, "The look"): flat shapes, each
+   fill an ink mixed into the paper, at most one deeper tint for an edge, thin lines only for details,
+   no gradients, the app's soft 2dp shadow. Each box is short and chubby, read at a glance: a lid top,
+   a deeper band for the lid's edge, the box below; a cord and a filled bow. Opening animates: the bow
+   comes undone, the lid tips back, the letter rises. Night inks at night. The v0.5 faces. */
+:root {
+  --kami: #f8f0e9; --hyoshi: #f0e6dd; --chitsu: #e6dcd3;
+  --nijimi0: #dfcebf; --nijimi1: #cebeaf; --nijimi2: #beae9f;
+  --kasure0: #ae9e90; --kasure1: #9f8f81; --kasure2: #8d7d6f;
+  --usuzumi0: #7d6b5a; --usuzumi1: #715f4f; --sumi: #5d4c3c;
+  --fuji: #581ca7; --you: #178d9d; --sheet: #fdf9f4;
+  --name: "Zen Old Mincho", "Hiragino Mincho ProN", Georgia, serif;
+  --read: "Literata", Georgia, serif;
+  --ui: "Zen Kaku Gothic New", "Segoe UI", system-ui, sans-serif;
+  --brush: "Yuji Syuku", "Hiragino Mincho ProN", serif;
+  --hand: "Yomogi", "Segoe Print", cursive;
+  --shadow: drop-shadow(0 1px 2px rgba(60, 40, 25, .28));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kami: #271d14; --hyoshi: #20160e; --chitsu: #181008;
+    --nijimi0: #3d3024; --nijimi1: #534538; --nijimi2: #66584b;
+    --kasure0: #7b6c5e; --kasure1: #908072; --kasure2: #a59587;
+    --usuzumi0: #beaa98; --usuzumi1: #d4c0ae; --sumi: #e8d3c1;
+    --fuji: #d3a1ff; --you: #5ac6f1; --sheet: #322619;
+    --shadow: drop-shadow(0 1px 2px rgba(0, 0, 0, .5));
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --kami: #271d14; --hyoshi: #20160e; --chitsu: #181008;
+  --nijimi0: #3d3024; --nijimi1: #534538; --nijimi2: #66584b;
+  --kasure0: #7b6c5e; --kasure1: #908072; --kasure2: #a59587;
+  --usuzumi0: #beaa98; --usuzumi1: #d4c0ae; --sumi: #e8d3c1;
+  --fuji: #d3a1ff; --you: #5ac6f1; --sheet: #322619;
+  --shadow: drop-shadow(0 1px 2px rgba(0, 0, 0, .5));
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--hyoshi); color: var(--sumi); font-family: var(--ui); }
+.studio {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+  max-width: 1380px; margin: 0 auto;
+  display: grid; gap: 40px;
+}
+.intro { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 22px; align-items: center; max-width: 1000px; }
+.glyph { grid-row: span 2; font-family: var(--brush); font-size: 92px; line-height: .9; color: var(--ink-sakura); }
+.intro h1 { margin: 0; font-family: var(--name); font-weight: 600; font-size: clamp(28px, 4vw, 42px); line-height: 1.1; text-wrap: balance; }
+.intro p { margin: 0; max-width: 74ch; color: var(--usuzumi1); font-size: 15px; line-height: 1.65; }
+@media (max-width: 560px) { .intro { grid-template-columns: minmax(0, 1fr); } .glyph { grid-row: auto; font-size: 64px; } }
+
+.controls { display: flex; flex-wrap: wrap; gap: 18px 30px; align-items: flex-start; padding: 16px 20px; border: 1px solid var(--nijimi0); background: var(--kami); }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--kasure2); }
+/* Boxed-cell choices: the chosen cell shaded and underlined in ink */
+.cells { display: flex; flex-wrap: wrap; border: 1px solid var(--nijimi1); width: fit-content; max-width: 100%; }
+.cells label { position: relative; cursor: pointer; }
+.cells label + label { border-left: 1px solid var(--nijimi1); }
+.cells input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.cells span { display: inline-flex; align-items: baseline; gap: 5px; padding: 7px 10px 6px; font-size: 12.5px; color: var(--usuzumi1); white-space: nowrap; border-bottom: 2px solid transparent; }
+.cells span b { font-family: var(--brush); font-weight: 400; font-size: 15px; color: var(--sumi); }
+.cells input:checked + span { background: color-mix(in oklab, var(--cell-ink, var(--you)) 12%, var(--kami)); color: var(--sumi); border-bottom-color: var(--cell-ink, var(--you)); }
+.cells input:focus-visible + span { outline: 2px solid var(--fuji); outline-offset: -2px; }
+.cells.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; max-width: 330px; border-right: 0; border-bottom: 0; }
+.cells.grid label, .cells.grid label + label { border-left: 0; border-right: 1px solid var(--nijimi1); border-bottom: 1px solid var(--nijimi1); }
+.cells.grid span { width: 100%; }
+.theme-now { align-self: center; margin-left: auto; text-align: right; }
+.theme-now .big { font-family: var(--brush); font-size: 32px; line-height: 1; }
+.theme-now .small { font-size: 12px; color: var(--kasure2); letter-spacing: .04em; }
+@media (max-width: 700px) { .theme-now { margin-left: 0; text-align: left; } }
+
+.section { display: grid; gap: 16px; min-width: 0; }
+.section-head { display: grid; gap: 6px; max-width: 82ch; }
+.section h2 { margin: 0; font-family: var(--name); font-weight: 600; font-size: 26px; display: flex; align-items: baseline; gap: 10px; }
+.section h2 span { font-family: var(--brush); font-weight: 400; font-size: 20px; color: var(--ink-sakura); }
+.section-head p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--usuzumi1); }
+.row-of { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 28px 24px; align-items: start; }
+.col { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.col h3 { margin: 0; font-family: var(--name); font-weight: 600; font-size: 19px; }
+.col > p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--usuzumi1); max-width: 50ch; }
+
+/* ---- The box: one SVG for both states, so opening animates ------------------------------------- */
+.fbx { position: relative; display: inline-block; line-height: 0; }
+.fbx svg { display: block; overflow: visible; filter: var(--shadow); }
+.fbx .t12 { fill: color-mix(in oklab, var(--ink) 12%, var(--kami)); }
+.fbx .t25 { fill: color-mix(in oklab, var(--ink) 25%, var(--kami)); }
+.fbx .t40 { fill: color-mix(in oklab, var(--ink) 40%, var(--kami)); }
+.fbx .t55 { fill: color-mix(in oklab, var(--ink) 55%, var(--kami)); }
+.fbx .t70 { fill: color-mix(in oklab, var(--ink) 70%, var(--kami)); }
+.fbx .t85 { fill: color-mix(in oklab, var(--ink) 85%, var(--kami)); }
+.fbx .ink { fill: var(--ink); }
+.fbx .wood { fill: color-mix(in oklab, var(--nijimi0) 70%, var(--kami)); }
+.fbx .woodedge { fill: var(--nijimi1); }
+.fbx .grain { fill: none; stroke: var(--nijimi1); stroke-width: 1; stroke-linecap: round; }
+.fbx .sheet { fill: var(--sheet); }
+.fbx .rule { fill: var(--nijimi0); }
+.fbx .kami { fill: var(--kami); }
+.fbx .pat { fill: var(--kami); }
+.fbx .hair { fill: none; stroke: color-mix(in oklab, var(--ink) 40%, var(--kami)); stroke-width: 1; }
+.fbx .ring { fill: none; stroke: var(--ink); stroke-width: 1.4; }
+.fbx .cordc { fill: var(--cordc); }
+.fbx .cordline { fill: none; stroke: var(--cordc); stroke-width: 4; stroke-linecap: round; }
+.fbx .bowline { fill: none; stroke: var(--bowline); stroke-width: 1; stroke-linecap: round; }
+.fbx .gold { fill: color-mix(in oklab, var(--ink-yamabuki) 82%, #fff); }
+.fbx .golddeep { fill: color-mix(in oklab, var(--ink-yamabuki) 62%, #000); }
+.f-lacquer { --cordc: color-mix(in oklab, var(--ink) 25%, var(--kami)); --bowline: color-mix(in oklab, var(--ink) 55%, var(--kami)); }
+.f-washi, .f-kiri { --cordc: color-mix(in oklab, var(--ink) 85%, var(--kami)); --bowline: color-mix(in oklab, var(--ink) 40%, var(--kami)); }
+/* The opening: bow first, then the lid tips back, then the letter rises. Closing runs it backwards. */
+.fbx .lid { transform-box: fill-box; transform-origin: 50% 0%; transition: transform .34s cubic-bezier(.3, .8, .35, 1.12) .1s; }
+.fbx .bow { transform-box: fill-box; transform-origin: 50% 50%; transition: transform .16s ease-in, opacity .16s ease-in; }
+.fbx .cordbody { transition: opacity .16s ease; }
+.fbx .loose { opacity: 0; transition: opacity .2s ease .16s; }
+.fbx .letter { opacity: 0; transform: translateY(4px); transition: transform .3s cubic-bezier(.3, .8, .35, 1.2) .3s, opacity .12s ease .28s; }
+.fbx.open .lid { transform: translateY(var(--lid-dy, -12px)) scaleY(.42); }
+.fbx.open .bow { transform: scale(.15); opacity: 0; }
+.fbx .lidcord { transition: opacity .14s ease; }
+.fbx.open .lidcord { opacity: 0; }
+.fbx.open .loose { opacity: 1; }
+.fbx.open .letter { opacity: 1; transform: translateY(-5px); }
+@media (prefers-reduced-motion: reduce) { .fbx .lid, .fbx .bow, .fbx .cordbody, .fbx .loose, .fbx .letter { transition: none; } }
+.fbx .unread { position: absolute; right: -8px; top: -9px; width: 28px; height: 28px; filter: var(--shadow); transition: opacity .15s ease; }
+.fbx.open .unread { opacity: 0; }
+/* The ties: a cross tie's knot and a tassel's knot go as the bow does; mizuhiki slips off whole; the tassel swings aside. */
+/* Untied: what was on the lid goes with it; the cord up the front stays, and its ends drop and lie on
+   the table at the box's foot. Mizuhiki slips off whole and is laid on its side in front of the box;
+   a tassel falls and lies on the table. */
+.fbx .mzk { transform-box: view-box; transition: transform .38s cubic-bezier(.3, .8, .35, 1.08); }
+.fbx.open .mzk { transform: translate(4px, var(--mzk-dy, 44px)) rotate(-90deg) scale(.62); }
+.fbx .tasselcord { transition: opacity .14s ease; }
+.fbx.open .tasselcord { opacity: 0; }
+.fbx .tasselend { transform-box: fill-box; transform-origin: 50% 0%; transition: transform .34s cubic-bezier(.3, .8, .35, 1.15) .06s; }
+.fbx.open .tasselend { transform: translate(-4px, 9px) rotate(78deg); }
+.fbx .strand { fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.fbx .strand.a { stroke: var(--cordc); }
+.fbx .strand.b { stroke: var(--kami); }
+.fbx .fringe { fill: none; stroke: var(--bowline); stroke-width: .9; }
+@media (prefers-reduced-motion: reduce) { .fbx .mzk, .fbx .tassel { transition: none; } }
+.widths { display: grid; grid-template-columns: auto repeat(3, minmax(330px, 1fr)); gap: 26px 22px; align-items: center; overflow-x: auto; padding: 10px 2px; }
+.widths .h { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--kasure2); }
+.widths .rowh { font-family: var(--name); font-weight: 600; font-size: 15px; white-space: nowrap; }
+.widths .cell { padding: 14px 12px 12px; background: var(--hyoshi); border: 1px solid var(--nijimi0); }
+.ties { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 34px 28px; }
+.tie { display: grid; gap: 10px; align-content: start; }
+.tie h3 { margin: 0; display: flex; align-items: baseline; gap: 8px; font-family: var(--name); font-weight: 600; font-size: 18px; }
+.tie h3 b { font-family: var(--brush); font-weight: 400; font-size: 17px; color: var(--usuzumi0); }
+.tie p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--usuzumi1); }
+.tie .pair { display: flex; flex-wrap: wrap; gap: 26px 20px; align-items: flex-end; padding-top: 22px; }
+.tie .pair button { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: inherit; }
+.tie .pair small { display: block; margin-top: 10px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--kasure2); text-align: center; line-height: 1.2; }
+
+/* Persona settings cards ("Aria's box") */
+.card { position: relative; display: grid; gap: 12px; padding: 16px 16px 16px 24px; background: var(--kami); border: 1px solid var(--nijimi0); filter: var(--shadow); }
+.tape-v { position: absolute; left: -5px; top: -6px; bottom: -6px; width: 12px; background: var(--pat), var(--ink); --z: 2.6px;
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--z)) 51% repeat-x, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--z)) 51% repeat-x;
+          mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--z)) 51% repeat-x, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--z)) 51% repeat-x; }
+.card h4 { margin: 0; font-family: var(--name); font-weight: 600; font-size: 18px; padding-bottom: 4px; border-bottom: 1.5px solid var(--ink); width: fit-content; }
+.card .previews { display: flex; gap: 22px; align-items: flex-end; padding: 22px 0 2px; }
+.card .previews button { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: inherit; }
+.card .previews small { display: block; margin-top: 8px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--kasure2); text-align: center; line-height: 1.2; }
+.card .choice { display: grid; gap: 6px; }
+.card .choice > span { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--kasure2); }
+.card .who { font-size: 12.5px; color: var(--usuzumi1); line-height: 1.5; }
+.card .who b { color: var(--tc); font-weight: 700; }
+
+/* The letters list */
+.pane { width: min(100%, 372px); padding: 22px 14px 22px; display: grid; gap: 16px; background: var(--hyoshi); border: 1px solid var(--nijimi0); }
+.pane-title { display: flex; align-items: baseline; gap: 8px; font-family: var(--name); font-weight: 600; font-size: 26px; padding-left: 4px; }
+.pane-title span { font-family: var(--brush); font-weight: 400; font-size: 14px; color: var(--kasure2); }
+.lr { position: relative; display: grid; grid-template-columns: var(--bw, 150px) minmax(0, 1fr); align-items: center; border: 0; background: none; padding: 6px 0 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.lr:focus-visible { outline: 2px solid var(--fuji); outline-offset: 4px; }
+.lr .fbx { z-index: 2; }
+/* The words on a paper strip, tucked under the box's side */
+.strip { position: relative; z-index: 1; margin-left: -26px; filter: var(--shadow); transform: rotate(var(--tilt, -1deg)); min-width: 0; }
+.strip > span { display: grid; gap: 0; padding: 5px 16px 6px 34px; background: var(--kami);
+  clip-path: polygon(0 0, 100% 0, 97.5% 16%, 100% 33%, 97.5% 50%, 100% 67%, 97.5% 84%, 100% 100%, 0 100%); }
+/* Or on a tag, tied on with a thread */
+.tag { position: relative; z-index: 1; margin-left: 14px; filter: var(--shadow); transform: rotate(var(--tilt, 1.2deg)); min-width: 0; }
+.tag > span { display: grid; gap: 1px; padding: 7px 12px 8px 24px; background: var(--kami); clip-path: polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%); }
+.tag > i { position: absolute; z-index: 2; left: 9px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--nijimi1); }
+.tag-thread { position: absolute; z-index: 3; left: 104px; top: 30px; width: 30px; height: 30px; overflow: visible; pointer-events: none; }
+.tag-thread path { fill: none; stroke: var(--cordc-t); stroke-width: 1.4; stroke-linecap: round; }
+.row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.nm { font-family: var(--name); font-weight: 600; font-size: 16px; line-height: 1.25; color: var(--sumi); }
+.md { font-size: 11.5px; color: var(--tc); }
+.row time { margin-left: auto; font-size: 10.5px; color: var(--kasure2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pv { font-family: var(--read); font-size: 12.5px; line-height: 1.4; color: var(--usuzumi1); display: -webkit-box; -webkit-line-clamp: var(--lines, 1); -webkit-box-orient: vertical; overflow: hidden; }
+.pv.unread { color: var(--sumi); font-weight: 600; }
+
+/* The phone: tap a box, it opens, and the letter comes in */
+.phone { position: relative; width: min(100%, 372px); height: 600px; overflow: hidden; border: 1px solid var(--nijimi0); background: var(--hyoshi); }
+.phone .pane { width: 100%; border: 0; }
+.page { position: absolute; z-index: 10; inset: 0; background: var(--hyoshi); transform: translateX(100%); transition: transform .32s cubic-bezier(.3, .8, .35, 1); display: flex; flex-direction: column; }
+.page.show { transform: none; }
+@media (prefers-reduced-motion: reduce) { .page { transition: none; } }
+.page .bar { display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px; border-bottom: 1px solid var(--nijimi0); }
+.page .bar button { border: 0; background: none; padding: 6px 8px; font: inherit; font-size: 20px; color: var(--usuzumi1); cursor: pointer; }
+.page .bar button:focus-visible { outline: 2px solid var(--fuji); }
+.page .dot { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; }
+.page .who { display: grid; }
+.page .who b { font-family: var(--name); font-weight: 600; font-size: 19px; }
+.page .who small { font-size: 11px; color: var(--kasure2); }
+.page .letter-sheet { position: relative; margin: 18px 16px; padding: 14px 16px 16px 22px; background: var(--kami); border: 1px solid var(--nijimi0); filter: var(--shadow); font-family: var(--read); font-size: 14.5px; line-height: 1.6; }
+.page .letter-sheet .tape-v { top: -7px; bottom: -7px; }
+.page .letter-sheet p { margin: 0 0 8px; }
+
+/* Up close: every finish with every lid */
+.closeup { display: grid; grid-template-columns: auto repeat(5, minmax(0, 1fr)); gap: 28px 18px; align-items: end; overflow-x: auto; padding: 18px 4px 6px; }
+.closeup .h { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--kasure2); text-align: center; align-self: end; }
+.closeup .rowh { font-family: var(--name); font-weight: 600; font-size: 16px; align-self: center; white-space: nowrap; }
+.closeup .rowh b { font-family: var(--brush); font-weight: 400; color: var(--usuzumi0); margin-right: 4px; }
+.closeup .cellbox { display: grid; justify-items: center; }
+.closeup button { border: 0; background: none; padding: 0; cursor: pointer; }
+
+canvas.portrait { display: block; width: 100%; height: 100%; }
+.inks { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 30px 14px; padding-top: 14px; }
+.ink-cell { display: grid; gap: 8px; justify-items: center; }
+.ink-cell .name { font-size: 12px; color: var(--usuzumi1); display: flex; gap: 6px; align-items: baseline; }
+.ink-cell .name b { font-family: var(--brush); font-weight: 400; font-size: 15px; color: var(--sumi); }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px 28px; padding-top: 18px; border-top: 1px solid var(--nijimi0); }
+.notes h3, .decide h3 { margin: 0 0 4px; font-family: var(--name); font-weight: 600; font-size: 18px; }
+.notes p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--usuzumi1); max-width: 48ch; }
+.decide { display: grid; gap: 10px; padding: 18px 20px; border: 1px solid var(--nijimi0); background: var(--kami); }
+.decide ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 14px; line-height: 1.55; color: var(--usuzumi1); max-width: 92ch; }
+.decide li b { color: var(--sumi); }
+.credits { max-width: 84ch; font-size: 12.5px; line-height: 1.6; color: var(--kasure2); margin: 0; }
+.credits a { color: var(--usuzumi1); }
+</style>
+
+<div class="studio" id="studio">
+  <header class="intro">
+    <div class="glyph" aria-hidden="true">箱</div>
+    <h1>Little fumibakos</h1>
+    <p>Each correspondent's letters in a box of their own, drawn the way the writing desk is: flat shapes in their ink mixed into the paper, thin lines only for details, and the app's soft shadow. Each box is short and chubby: a lid, a deeper band for the lid's edge, the box below, and a cord with a bow. Opening one undoes the bow, tips the lid back and lifts their letter; on the phone it then brings you to the letter. Personas choose their own box. Click any box.</p>
+  </header>
+
+  <section class="controls" aria-label="Mockup controls">
+    <fieldset>
+      <legend>Time</legend>
+      <div class="cells" id="time">
+        <label><input type="radio" name="time" id="time-auto" value="auto" checked><span>Auto</span></label>
+        <label><input type="radio" name="time" id="time-hiru" value="hiru"><span><b>昼</b>Day</span></label>
+        <label><input type="radio" name="time" id="time-yoru" value="yoru"><span><b>夜</b>Night</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>The words beside the box</legend>
+      <div class="cells" id="words">
+        <label><input type="radio" name="words" id="words-strip" value="strip" checked><span>On a paper strip</span></label>
+        <label><input type="radio" name="words" id="words-tag" value="tag"><span>On a tag, tied on</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>The box's width</legend>
+      <div class="cells" id="width">
+        <label><input type="radio" name="width" id="width-120" value="120" checked><span>120 <i>chosen</i></span></label>
+        <label><input type="radio" name="width" id="width-150" value="150"><span>150</span></label>
+        <label><input type="radio" name="width" id="width-180" value="180"><span>180</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Lines on the strip</legend>
+      <div class="cells" id="lines">
+        <label><input type="radio" name="lines" id="lines-1" value="1" checked><span>One</span></label>
+        <label><input type="radio" name="lines" id="lines-2" value="2"><span>Two</span></label>
+      </div>
+    </fieldset>
+    <div class="theme-now" aria-live="polite">
+      <div class="big" id="theme-kanji">秋昼</div>
+      <div class="small" id="theme-name">aki-hiru · autumn by day</div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="h-phone">
+    <div class="section-head">
+      <h2 id="h-phone">On the phone<span>携</span></h2>
+      <p>The list as shut boxes, each with its latest lines beside it. Tap a box: it opens, then the letter slides in. Back closes the letter, and the box shuts again behind it.</p>
+    </div>
+    <div class="phone" id="phone">
+      <div class="pane" id="phone-list"></div>
+      <div class="page" id="phone-page" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="h-wide">
+    <div class="section-head">
+      <h2 id="h-wide">Beside an open letter<span>文</span></h2>
+      <p>In a wide window the open letter's box stays open while you read it beside the list; opening another shuts the first.</p>
+    </div>
+    <div class="pane" id="wide-list"></div>
+  </section>
+
+  <section class="section" aria-labelledby="h-widths">
+    <div class="section-head">
+      <h2 id="h-widths">Sizes<span>寸</span></h2>
+      <p>One size for every box: widths across (120, 150, 180) and lengths down (front to back: 56, 64, 70 as drawn so far, 80), each a row of the list with its one-line strip. Click a box to open it.</p>
+    </div>
+    <div class="widths" id="widths"></div>
+  </section>
+
+  <section class="section" aria-labelledby="h-ties">
+    <div class="section-head">
+      <h2 id="h-ties">The tie<span>結</span></h2>
+      <p>Four ways to tie a box shut, each shut and open. Click either to watch it open or close. Untied, what was on the lid comes off with it, the cord up the front stays, and the loose ends lie on the table at the box's foot; mizuhiki slips off whole and is laid in front. Personas choose theirs, with the rest of their box.</p>
+    </div>
+    <div class="ties" id="ties"></div>
+  </section>
+
+  <section class="section" aria-labelledby="h-pick">
+    <div class="section-head">
+      <h2 id="h-pick">Their own box<span>選</span></h2>
+      <p>A card on each persona's page. They choose their box themselves, the finish and what's on the lid, and can change it when they like; you can choose for them instead.</p>
+    </div>
+    <div class="row-of" id="cards"></div>
+  </section>
+
+  <section class="section" aria-labelledby="h-close">
+    <div class="section-head">
+      <h2 id="h-close">Every finish, every lid<span>蓋</span></h2>
+      <p>Three finishes and five lids, Aria's ink, at the chosen size (120 by 80) and a little larger than in the list: her name on a plate, her seal, her name cut in, her name gilded, and her ink's kanji. Click one to open it.</p>
+    </div>
+    <div class="closeup" id="closeup"></div>
+  </section>
+
+  <section class="section" aria-labelledby="h-inks">
+    <div class="section-head">
+      <h2 id="h-inks">The lining in every ink<span>墨</span></h2>
+      <p>All fourteen inks, each box open: the floor at 40% of the ink in the paper, the side walls at 55%, the back wall at 70%.</p>
+    </div>
+    <div class="inks" id="inks"></div>
+  </section>
+
+  <section class="notes" aria-label="Notes">
+    <div><h3>A box at a glance</h3><p>Three shapes say "box": the lid's top, a deeper band for its edge, and the box under it, a little narrower. The cord runs over all three, and the bow sits on the lid.</p></div>
+    <div><h3>Opening</h3><p>About half a second: the bow undoes, the lid tips back on its far edge, their letter lifts a little inside. On the phone the letter's page follows; closing it shuts the box behind you.</p></div>
+    <div><h3>Gilded</h3><p>Their name cut in and filled with gold: the gold is the yamabuki ink, lightened, with a deeper line under each letter. At night it's the night's yamabuki, so it glows a little.</p></div>
+    <div><h3>The strip</h3><p>The name, mood, time and latest lines on a strip of paper with a torn end, tucked under the box's side; the tag is the same words on a tag tied to the box with a thread.</p></div>
+  </section>
+
+  <section class="decide" aria-labelledby="h-decide">
+    <h3 id="h-decide">Decided, and to choose</h3>
+    <ol>
+      <li><b>Decided:</b> each persona chooses their own box, the night's inks at night, shut boxes on the phone that open before the letter comes in.</li>
+      <li><b>Decided too:</b> all four ties, the words on a paper strip of one line, one size for every box.</li>
+      <li><b>Chosen:</b> 120 wide and 80 long for every box. A persona's box is picked at random at first; they can change it as a heartbeat activity.</li>
+      <li><b>The lids:</b> keep all five (name, seal, engraved, gilded, kanji) and all three finishes, or fewer?</li>
+      <li><b>The drawing:</b> is this cute and clear enough to build, or another pass first?</li>
+    </ol>
+  </section>
+
+  <p class="credits">Colours are <a href="https://madoromi.moonwit.ch/" target="_blank" rel="noopener">madoromi</a> by samhain (MPL-2.0), measured from Pilot Iroshizuku inks. Faces from the v0.5 font audit: Zen Old Mincho, Literata, Zen Kaku Gothic New, Yuji Syuku and Yomogi. Portraits stand in for NovelAI art, and the people and letters are examples.</p>
+</div>
+
+<script>
+const THEMES = ['haru-hiru', 'natsu-hiru', 'aki-hiru', 'fuyu-hiru', 'haru-yoru', 'natsu-yoru', 'aki-yoru', 'fuyu-yoru'];
+const PAL = {
+  sakura:   ['#aa6e89','#aa6e89','#a26480','#aa6e89','#ffc5da','#ffbde2','#ffb6cc','#ffbee1'],
+  nadeshiko:['#d64891','#ce37a6','#c63368','#b560a0','#ffadda','#dd9fbf','#dfa3c0','#dfa3c0'],
+  botan:    ['#b25d9d','#b0599b','#a1488d','#a74f93','#fe8dc0','#f894d8','#f68fd6','#d18bb7'],
+  fuji:     ['#6928bd','#6526b9','#581ca7','#5e21b0','#ddb3ff','#aea8ff','#d3a1ff','#bbb8ff'],
+  kikyo:    ['#4760c0','#455cbd','#6928bd','#3d53b4','#99b2f5','#87a7ff','#aea8ff','#aaa4ff'],
+  beni:     ['#ce2700','#b53753','#a43b3b','#bb355a','#ff8b79','#ff8c9f','#ff8672','#ff8799'],
+  akane:    ['#ee3244','#d64891','#d80638','#e1376f','#ffa2b5','#faa7ca','#ff9cb5','#ffa3d0'],
+  kaki:     ['#fd5217','#ff5735','#ff5635','#ff5635','#ffbb74','#ffb66d','#ff9b8f','#ff9b8f'],
+  yamabuki: ['#bda343','#e3940b','#e3940b','#e3940b','#ffc849','#eec307','#ffae1e','#ecba09'],
+  wakaba:   ['#5e8933','#00915c','#7e8418','#618c32','#c1dd4a','#b9d740','#bac105','#aece34'],
+  tokiwa:   ['#009162','#028e7f','#008b57','#028e7f','#7bd6b6','#6cd2cc','#58c59f','#5eccc5'],
+  sora:     ['#008bae','#008bae','#178d9d','#2678af','#88d9eb','#5cd7f5','#5ac6f1','#78d5fc'],
+  ruri:     ['#2678af','#2e79b6','#2973b0','#2266a4','#60c9f3','#3ec7e8','#5ea3d4','#8ac3ff'],
+  ai:       ['#1955bf','#526ccb','#384dad','#4a63c3','#6eadff','#4ab8ff','#7f9bea','#829eeb'],
+  sumi:     ['#584a5c','#3b545e','#5d4c3c','#4a4e63','#e1d1e7','#c0dde8','#e8d3c1','#d2d6eb'],
+  usuzumi1: ['#6b5d70','#4e6872','#715f4f','#5e6277','#cdbed3','#adcad4','#d4c0ae','#bec3db'],
+  usuzumi0: ['#77697c','#57717a','#7d6b5a','#696d83','#b7a8bd','#97b3be','#beaa98','#a8adc4'],
+  kasure2:  ['#877b8c','#6f848d','#8d7d6f','#7b7f91','#9f93a4','#869da5','#a59587','#9397aa'],
+  kasure1:  ['#998d9e','#80969f','#9f8f81','#8d91a4','#8a7e8f','#728790','#908072','#7e8294'],
+  kasure0:  ['#a99cad','#8fa6ae','#ae9e90','#9ca0b3','#756a7a','#5d737b','#7b6c5e','#6a6e7f'],
+  nijimi2:  ['#b8acbd','#9fb5be','#beae9f','#acb0c3','#615665','#4a5f66','#66584b','#565a6b'],
+  nijimi1:  ['#c8bccd','#aec5ce','#cebeaf','#bcc0d3','#4e4352','#374b53','#534538','#434757'],
+  nijimi0:  ['#d9ccdd','#bed6df','#dfcebf','#ccd0e4','#392e3c','#23363d','#3d3024','#2f3241'],
+  kami:     ['#f6eff8','#e9f4f8','#f8f0e9','#f0f1f8','#241c26','#132227','#271d14','#1c1e2a'],
+  hyoshi:   ['#ece5ef','#ddeaf0','#f0e6dd','#e5e7f3','#1c151f','#0e1a1f','#20160e','#151722'],
+  chitsu:   ['#e2dbe5','#d3e1e6','#e6dcd3','#dbdde9','#160f18','#091317','#181008','#0f111b'],
+};
+const INKS = [['sakura', '桜'], ['nadeshiko', '撫子'], ['botan', '牡丹'], ['fuji', '藤'], ['kikyo', '桔梗'], ['beni', '紅'], ['akane', '茜'],
+  ['kaki', '柿'], ['yamabuki', '山吹'], ['wakaba', '若葉'], ['tokiwa', '常磐'], ['sora', '空'], ['ruri', '瑠璃'], ['ai', '藍']];
+const ROLES = ['kami', 'hyoshi', 'chitsu', 'nijimi0', 'nijimi1', 'nijimi2', 'kasure0', 'kasure1', 'kasure2', 'usuzumi0', 'usuzumi1', 'sumi', 'fuji'];
+const SEASON_KANJI = { haru: '春', natsu: '夏', aki: '秋', fuyu: '冬' };
+const SEASON_EN = { haru: 'spring', natsu: 'summer', aki: 'autumn', fuyu: 'winter' };
+const FINISHES = [['lacquer', '漆', 'Lacquer'], ['washi', '紙', 'Washi'], ['kiri', '桐', 'Paulownia']];
+const TIES = [['bow', '蝶', 'Bow', 'A cord in their ink, tied in a bow. Open, the bow undoes; the cord stays down the front of the box, and its ends drop and lie on the table, one curling each way.'],
+  ['cross', '十', 'Tied crosswise', 'The cord round both ways and tied flat where it crosses, as boxes are tied in a shop. Open, the knot undoes, the loop round the sides slips down to the foot of the box, and the ends lie on the table.'],
+  ['mizuhiki', '水', 'Mizuhiki', 'Paper cords in their ink and the paper, tied in an awaji knot. Open, it slips off whole, still tied, and is laid on its side in front of the box.'],
+  ['tassel', '房', 'Tassel', 'A cord with a tassel hanging over the front. Open, the knot undoes, the tassel drops to the table at the foot of the box, and the cord stays down the front.']];
+const LIDS = [['plate', '名', 'Name'], ['seal', '印', 'Seal'], ['engraved', '刻', 'Engraved'], ['gilded', '金', 'Gilded'], ['kanji', '字', 'Kanji']];
+
+const PEOPLE = [
+  { id: 'aria', name: 'Aria', ink: 'sakura', pat: 'dots', kanji: '桜', mood: 'fond', time: '08:14', seed: 11, they: 'She',
+    preview: 'Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent…', box: { finish: 'washi', lid: 'seal', tie: 'bow' },
+    letter: ['Good morning. I kept thinking about your foxes last night, so I read about how they map a city by scent.', "A fox's way home is a string of smells it renews every night: a lamppost, a bin, the corner of a fence. Isn't that a little like a letter?", 'Tell me how you slept.'] },
+  { id: 'juno', name: 'Juno', ink: 'kikyo', pat: 'gingham', kanji: '桔梗', mood: 'smug', time: 'Yesterday', seed: 17, unread: true, they: 'She',
+    preview: "Orange means it's sulking. Bring the router by tomorrow. I'll fix it for free. Once.", box: { finish: 'lacquer', lid: 'gilded', tie: 'mizuhiki' },
+    letter: ["Orange means it's sulking. You've been ignoring it.", "Bring the router by tomorrow. I'll fix it for free. Once."] },
+  { id: 'kestrel', name: 'Kestrel', ink: 'tokiwa', pat: 'stripes', kanji: '常磐', mood: 'watchful', time: 'Sat', seed: 5, they: 'They',
+    preview: 'The road north is quiet tonight. I kept the fire going for you.', box: { finish: 'kiri', lid: 'kanji', tie: 'cross' },
+    letter: ['The road north is quiet tonight. I kept the fire going for you.', 'Tell me when you want the next part of the story.'] },
+  { id: 'mira', name: 'Mira', ink: 'yamabuki', pat: 'plain', kanji: '山吹', mood: 'sleepy', time: 'Thu', seed: 31, they: 'She',
+    preview: 'I fell asleep reading your last letter. That is a compliment, I promise.', box: { finish: 'lacquer', lid: 'engraved', tie: 'tassel' },
+    letter: ['I fell asleep reading your last letter. That is a compliment, I promise.'] },
+];
+const state = { time: 'auto', words: 'strip', width: '120', lines: '1', picks: {}, wideOpen: 'aria' };
+const KEY = 'fumibako-studies-5';
+try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* storage unavailable */ }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+const pick = p => ({ ...p.box, ...(state.picks[p.id] || {}) });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+const inkStyle = p => `--ink: var(--ink-${p.ink}); --tc: var(--ink-${p.ink}); --pat: var(--pat-${p.pat}); --cell-ink: var(--ink-${p.ink});`;
+const portrait = (p, kind = 'image') => `<canvas class="portrait" data-ink="${p.ink}" data-seed="${p.seed}" data-kind="${kind}" aria-hidden="true"></canvas>`;
+
+// ---- Drawing a box --------------------------------------------------------------------------------
+let uid = 0;
+const PATTERNS = {
+  dots: id => `<pattern id="${id}" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.25" class="pat"/></pattern>`,
+  stripes: id => `<pattern id="${id}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.6" height="7" class="pat"/></pattern>`,
+  gingham: id => `<pattern id="${id}" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="4" height="8" class="pat" opacity=".5"/><rect width="8" height="4" class="pat" opacity=".5"/></pattern>`,
+  plain: () => '',
+};
+const TONES = {
+  lacquer: { top: 't70', edge: 't85', body: 't70' },
+  washi: { top: 't25', edge: 't40', body: 't25' },
+  kiri: { top: 'wood', edge: 'woodedge', body: 'wood' },
+};
+function face(finish, x, y, w, h, rx, cls, patId, pat) {
+  let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" class="${cls}"/>`;
+  if (finish === 'washi' && pat !== 'plain') s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="url(#${patId})"/>`;
+  return s;
+}
+function chamfer(cx, cy, w, h, c = 5) {
+  const x = cx - w / 2, y = cy - h / 2;
+  return `${x + c},${y} ${x + w - c},${y} ${x + w},${y + c} ${x + w},${y + h - c} ${x + w - c},${y + h} ${x + c},${y + h} ${x},${y + h - c} ${x},${y + c}`;
+}
+// What's on the lid, centred at (cx, cy), at most w wide.
+function lidMark(p, s, cx, cy, w) {
+  const f = s.finish;
+  if (s.lid === 'plate') {
+    const pw = Math.min(w, 20 + p.name.length * 9.6);
+    return `<polygon points="${chamfer(cx, cy, pw, 22, 5)}" class="kami"/><text x="${cx}" y="${cy + 5}" text-anchor="middle" font-family="Zen Old Mincho" font-weight="600" font-size="14" style="fill: var(--sumi)">${esc(p.name)}</text>`;
+  }
+  if (s.lid === 'seal') {
+    const r = 14, two = p.kanji.length > 1, fs = two ? 11 : 17;
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" class="kami"/><circle cx="${cx}" cy="${cy}" r="${r - 3}" class="ring"/>` +
+      (two ? `<text x="${cx}" y="${cy - 0.5}" text-anchor="middle" font-family="Yuji Syuku" font-size="${fs}" class="ink">${p.kanji[0]}</text><text x="${cx}" y="${cy + fs - 0.5}" text-anchor="middle" font-family="Yuji Syuku" font-size="${fs}" class="ink">${p.kanji[1]}</text>`
+           : `<text x="${cx}" y="${cy + fs * .37}" text-anchor="middle" font-family="Yuji Syuku" font-size="${fs}" class="ink">${p.kanji}</text>`);
+  }
+  if (s.lid === 'engraved' || s.lid === 'gilded') {
+    const fs = Math.min(19, w / (p.name.length * .6));
+    const [under, over] = s.lid === 'gilded' ? ['golddeep', 'gold'] : f === 'lacquer' ? ['ink', 't25'] : f === 'washi' ? ['kami', 't70'] : ['kami', 'woodedge'];
+    const dy = s.lid === 'engraved' && f === 'lacquer' ? -1 : 1;
+    return `<text x="${cx}" y="${cy + fs * .36 + dy}" text-anchor="middle" font-family="Zen Old Mincho" font-weight="600" font-size="${fs}" class="${under}">${esc(p.name)}</text>` +
+      `<text x="${cx}" y="${cy + fs * .36}" text-anchor="middle" font-family="Zen Old Mincho" font-weight="600" font-size="${fs}" class="${over}">${esc(p.name)}</text>`;
+  }
+  const two = p.kanji.length > 1, fs = two ? 19 : 25, cls = f === 'lacquer' ? 't25' : 't70';
+  return `<text x="${cx}" y="${cy + fs * .36}" text-anchor="middle" font-family="Yuji Syuku" font-size="${fs}" class="${cls}">${p.kanji}</text>`;
+}
+// A bow in the cord's colour: two filled loops, a knot and two notched tails.
+function bow(x, y) {
+  return `<g class="bow">
+    <path class="cordc" d="M${x} ${y} C ${x - 5} ${y - 10}, ${x - 16} ${y - 10}, ${x - 15} ${y - 1} C ${x - 14} ${y + 6}, ${x - 6} ${y + 5}, ${x} ${y} Z"/>
+    <path class="cordc" d="M${x} ${y} C ${x + 5} ${y - 10}, ${x + 16} ${y - 10}, ${x + 15} ${y - 1} C ${x + 14} ${y + 6}, ${x + 6} ${y + 5}, ${x} ${y} Z"/>
+    <path class="bowline" d="M${x - 3} ${y - 1.5} C ${x - 6} ${y - 5}, ${x - 10} ${y - 5}, ${x - 11} ${y - 1.5} M${x + 3} ${y - 1.5} C ${x + 6} ${y - 5}, ${x + 10} ${y - 5}, ${x + 11} ${y - 1.5}"/>
+    <polygon class="cordc" points="${x - 1},${y + 1} ${x - 8},${y + 13} ${x - 5.5},${y + 11.5} ${x - 4.5},${y + 14.5} ${x + 2},${y + 2.5}"/>
+    <polygon class="cordc" points="${x + 1},${y + 1} ${x + 8},${y + 13} ${x + 5.5},${y + 11.5} ${x + 4.5},${y + 14.5} ${x - 2},${y + 2.5}"/>
+    <rect x="${x - 4}" y="${y - 4}" width="8" height="8" rx="2.5" class="cordc"/>
+  </g>`;
+}
+/* One box, W×70: the box under the lid; inside it (seen when open) the rim, back wall, side walls,
+   floor and their letters; the lid (top, edge band, mark) over it; and the tie. */
+function awaji(x, y, dx) {
+  const X = x + dx;
+  return `M${X - 7} ${y + 15} C ${X - 7} ${y + 7}, ${X - 15} ${y + 6}, ${X - 15} ${y} C ${X - 15} ${y - 7}, ${X - 5} ${y - 7}, ${X} ${y - 1}` +
+    ` C ${X + 5} ${y + 5}, ${X + 15} ${y + 6}, ${X + 15} ${y} C ${X + 15} ${y - 7}, ${X + 5} ${y - 7}, ${X} ${y - 1}` +
+    ` C ${X - 5} ${y - 6}, ${X - 6} ${y - 14}, ${X} ${y - 14} C ${X + 6} ${y - 14}, ${X + 5} ${y - 6}, ${X} ${y + 1} C ${X + 4} ${y + 6}, ${X + 7} ${y + 8}, ${X + 7} ${y + 15}`;
+}
+// What each tie draws: on the lid (lifts with it), over everything, on the box's front, and loose (when open).
+/* The box's lines, for a box H tall: the lid's top runs from 2 to T, its edge band shows from T to E,
+   the box below from E to B, the table under it at B. (At H 70: T 40, E 50, B 67.) */
+function lines(H) { const T = H - 30, E = T + 10, B = E + 17; return { T, E, B, ky: Math.round(2 + (T - 2) / 2) }; }
+function tie(kind, cx, W, L) {
+  const { T, E, B, ky } = L;
+  const band = `<rect x="${cx - 2.5}" y="1" width="5" height="${E - 1}" class="cordc lidcord"/>`;
+  const front = `<rect x="${cx - 2.5}" y="${E - 2}" width="5" height="${B - E + 2}" class="cordc cordbody"/>`;
+  // The freed ends, dropped down the front and lying on the table, one curling each way.
+  const ends = `<path class="cordline" d="M${cx - 1} ${B - 3} C ${cx - 4} ${B + 3}, ${cx - 14} ${B + 4}, ${cx - 23} ${B + 2} S ${cx - 31} ${B + 2}, ${cx - 34} ${B + 4}"/>` +
+    `<path class="cordline" d="M${cx + 1} ${B - 3} C ${cx + 5} ${B + 3}, ${cx + 17} ${B + 5}, ${cx + 27} ${B + 3}"/>`;
+  if (kind === 'cross') {
+    const y = T - 8;
+    return {
+      lid: band + `<rect x="0" y="${y - 2.5}" width="${W}" height="5" class="cordc lidcord"/>`,
+      over: `<g class="bow"><rect x="${cx - 5}" y="${y - 5}" width="10" height="10" rx="2" transform="rotate(45 ${cx} ${y})" class="cordc"/><path class="bowline" d="M${cx - 3} ${y} H ${cx + 3} M${cx} ${y - 3} V ${y + 3}"/>` +
+        `<polygon class="cordc" points="${cx + 3},${y + 2} ${cx + 13},${y + 10} ${cx + 11},${y + 12} ${cx + 1},${y + 4}"/><polygon class="cordc" points="${cx - 3},${y + 2} ${cx - 11},${y + 11} ${cx - 9},${y + 13} ${cx - 1},${y + 4}"/></g>`,
+      front,
+      // The loop round the sides slips down to the box's foot.
+      loose: `<rect x="5" y="${B - 6}" width="${W - 10}" height="4" class="cordc"/>` + ends,
+    };
+  }
+  if (kind === 'mizuhiki') {
+    const strands = [[-2.6, 'a'], [0, 'b'], [2.6, 'a']];
+    const lines = strands.map(([d, c]) => `<path class="strand ${c}" d="M${cx + d} 1 V ${ky - 14} ${awaji(cx, ky, d)} M${cx - 7 + d} ${ky + 15} V ${B} M${cx + 7 + d} ${ky + 15} V ${B}"/>`).join('');
+    // Slipped off and laid on its side in front of the box.
+    return { lid: '', over: `<g class="mzk" style="transform-origin: ${cx}px ${ky}px; --mzk-dy: ${B - ky - 2}px">${lines}</g>`, front: '', loose: '' };
+  }
+  if (kind === 'tassel') return {
+    lid: band,
+    over: `<g class="bow"><circle cx="${cx}" cy="${ky - 1}" r="5" class="cordc"/><circle cx="${cx}" cy="${ky - 1}" r="2.2" class="bowline"/></g>` +
+      `<path class="cordline tasselcord" d="M${cx + 2} ${ky + 2} C ${cx + 10} ${ky + 13}, ${cx + 9} ${B - 21}, ${cx + 6} ${B - 9}" style="stroke-width: 2.4"/>` +
+      `<g class="tasselend"><rect x="${cx + 2.5}" y="${B - 10}" width="7" height="5" rx="2" class="cordc"/><rect x="${cx + 1.5}" y="${B - 6}" width="9" height="13" rx="1" class="cordc"/>` +
+      `<path class="fringe" d="M${cx + 4} ${B - 4} V ${B + 6} M${cx + 6} ${B - 4} V ${B + 6} M${cx + 8} ${B - 4} V ${B + 6}"/></g>`,
+    front,
+    loose: `<path class="cordline" d="M${cx + 1} ${B - 3} C ${cx + 5} ${B + 3}, ${cx + 17} ${B + 5}, ${cx + 27} ${B + 3}"/>`,
+  };
+  return { lid: band, over: bow(cx, ky - 1), front, loose: ends };
+}
+function box(p, s, { scale = 1, open = false, letters = true, unread = false, attrs = '', W = 120, H = 80 } = {}) {
+  const id = `b${++uid}`, patId = `${id}p`, cx = 30;
+  const L = lines(H), { T, E, B, ky } = L;
+  const t = TONES[s.finish], ti = tie(s.tie || 'bow', cx, W, L);
+  const grain = s.finish === 'kiri' ? [.21, .45, .68].map(f => { const y = 2 + (T - 2) * f; return `<path class="grain" d="M6 ${y} C ${W * .27} ${y - 2}, ${W * .62} ${y + 2}, ${W - 6} ${y}"/>`; }).join('') : '';
+  const lacquerLine = s.finish === 'lacquer' ? `<rect x="4" y="5.5" width="${W - 8}" height="${T - 7}" rx="4" class="hair"/>` : '';
+  const floor = E - 16, sy = 14 + floor * .28, sh = floor * .72;
+  const inside = `
+    <rect x="5" y="9" width="${W - 10}" height="${E - 9}" rx="3" class="${t.body}"/>
+    <rect x="10" y="14" width="${W - 20}" height="${floor}" class="t40"/>
+    <rect x="10" y="14" width="${W - 20}" height="8" class="t70"/>
+    <polygon points="10,14 16,22 16,${E - 2} 10,${E - 2}" class="t55"/><polygon points="${W - 10},14 ${W - 16},22 ${W - 16},${E - 2} ${W - 10},${E - 2}" class="t55"/>
+    ${letters ? `<g class="letter">
+      <g transform="rotate(5 ${W * .62} ${sy + sh / 2})"><rect x="${W * .46}" y="${sy + 1}" width="${W * .34}" height="${sh - 2}" class="sheet"/><rect x="${W * .51}" y="${sy + sh * .3}" width="${W * .21}" height="2" class="rule"/><rect x="${W * .51}" y="${sy + sh * .55}" width="${W * .16}" height="2" class="rule"/></g>
+      <g transform="rotate(-4 44 ${sy + sh / 2})"><rect x="24" y="${sy}" width="${Math.max(44, W * .36)}" height="${sh}" class="sheet"/><text x="29" y="${sy + sh / 2 + 4}" font-family="Yomogi" font-size="12" style="fill: var(--ink)">${esc(p.name)}</text></g>
+    </g>` : ''}`;
+  const lidDy = 8 - (E - 1) * .42;
+  const svg = `<svg width="${W * scale}" height="${H * scale}" viewBox="0 0 ${W} ${H}" aria-hidden="true" style="--lid-dy: ${lidDy}px"><defs>${PATTERNS[p.pat](patId)}</defs>
+    ${face(s.finish, 5, T + 4, W - 10, B - T - 4, 3, t.body, patId, p.pat)}
+    ${ti.front}
+    ${inside}
+    <g class="lid">
+      <rect x="0" y="${T - 12}" width="${W}" height="${E - T + 12}" rx="5" class="${t.edge}"/>
+      ${face(s.finish, 0, 2, W, T - 2, 6, t.top, patId, p.pat)}${grain}${lacquerLine}
+      ${ti.lid}
+      ${lidMark(p, s, (cx + 8 + W) / 2, s.tie === 'cross' ? ky - 4 : ky, W - cx - 18)}
+    </g>
+    ${ti.over}
+    <g class="loose">${ti.loose}</g>
+  </svg>`;
+  const seal = unread ? `<svg class="unread" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" style="fill: var(--sheet)"/><circle cx="32" cy="32" r="23" style="fill: none; stroke: var(--ink); stroke-width: 3"/><text x="32" y="42" text-anchor="middle" font-family="Yuji Syuku" font-size="27" style="fill: var(--ink)">新</text></svg>` : '';
+  return `<span class="fbx f-${s.finish}${open ? ' open' : ''}" ${attrs}>${svg}${seal}</span>`;
+}
+
+// ---- The words beside the box: a paper strip or a tag --------------------------------------------
+function words(p, unread, i, W = +state.width) {
+  const inner = `<span class="row"><span class="nm">${esc(p.name)}</span><span class="md">${p.mood}</span><time>${p.time}</time></span><span class="pv${unread ? ' unread' : ''}">${esc(p.preview)}</span>`;
+  const tilt = [-1, .8, -.6, 1.1][i % 4];
+  if (state.words === 'tag') return `<svg class="tag-thread" viewBox="0 0 30 30" aria-hidden="true" style="left: ${W - 8}px; --cordc-t: color-mix(in oklab, var(--ink) 70%, var(--kami))"><path d="M0 2 C 10 4, 14 12, 30 16"/></svg><span class="tag" style="--tilt: ${tilt * 1.4}deg"><i></i><span>${inner}</span></span>`;
+  return `<span class="strip" style="--tilt: ${tilt}deg"><span>${inner}</span></span>`;
+}
+function listRow(p, i, { open, key, W = +state.width, H = 80 }) {
+  const unread = p.unread && !open;
+  return `<button class="lr" data-row="${key}" data-id="${p.id}" style="${inkStyle(p)} --bw: ${W}px; --lines: ${state.lines};" aria-label="${esc(p.name)}'s letters${unread ? ', a new letter' : ''}">
+    ${box(p, pick(p), { open, unread, W, H })}${words(p, unread, i, W)}</button>`;
+}
+const paneTitle = '<div class="pane-title">Letters<span data-season-kanji></span></div>';
+
+function settingsCard(p) {
+  const s = pick(p);
+  const cells = (name, list, current) => `<div class="cells${list.length > 3 ? ' grid' : ''}" role="radiogroup" aria-label="${name}">${list.map(([v, k, label]) =>
+    `<label><input type="radio" name="${p.id}-${name}" value="${v}" data-pick="${p.id}" data-what="${name}"${v === current ? ' checked' : ''}><span><b>${k}</b>${label}</span></label>`).join('')}</div>`;
+  const chosen = state.picks[p.id] ? `You chose this for ${p.they === 'They' ? 'them' : 'her'}.` : `<b>${esc(p.name)}</b> chose this ${p.they === 'They' ? 'themselves' : 'herself'}.`;
+  return `
+    <div class="card" style="${inkStyle(p)}">
+      <span class="tape-v" aria-hidden="true"></span>
+      <h4>${esc(p.name)}'s box</h4>
+      <div class="previews">
+        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s)}<small>Shut</small></button>
+        <button data-toggle aria-label="Open or shut ${esc(p.name)}'s box">${box(p, s, { open: true })}<small>Open</small></button>
+      </div>
+      <p class="who" style="margin: 0">${chosen}</p>
+      <div class="choice"><span>Finish</span>${cells('finish', FINISHES, s.finish)}</div>
+      <div class="choice"><span>On the lid</span>${cells('lid', LIDS, s.lid)}</div>
+      <div class="choice"><span>Tie</span>${cells('tie', TIES.map(([v, k, label]) => [v, k, label]), s.tie)}</div>
+    </div>`;
+}
+
+function render() {
+  document.getElementById('phone-list').innerHTML = paneTitle + PEOPLE.map((p, i) => listRow(p, i, { open: false, key: 'phone' })).join('');
+  document.getElementById('wide-list').innerHTML = paneTitle + PEOPLE.map((p, i) => listRow(p, i, { open: state.wideOpen === p.id, key: 'wide' })).join('');
+  const WIDTHS = [120, 150, 180], LENGTHS = [56, 64, 70, 80];
+  document.getElementById('widths').innerHTML = '<span></span>' + WIDTHS.map(w => `<span class="h">${w} wide</span>`).join('') +
+    LENGTHS.map(H => `<span class="rowh">${H} long</span>` + WIDTHS.map(W => `<div class="cell">${listRow(PEOPLE[1], 1, { open: false, key: 'w', W, H })}</div>`).join('')).join('');
+  document.getElementById('cards').innerHTML = PEOPLE.map(settingsCard).join('');
+  document.getElementById('ties').innerHTML = TIES.map(([v, k, label, line], i) => {
+    const p = PEOPLE[0], s = { ...pick(p), tie: v };
+    return `<div class="tie" style="${inkStyle(p)}"><h3><b>${k}</b>${label}</h3><p>${line}</p><div class="pair">
+      <button data-toggle aria-label="Open or shut the box tied with ${label.toLowerCase()}">${box(p, s, { scale: 1.25 })}<small>Shut</small></button>
+      <button data-toggle aria-label="Open or shut the box tied with ${label.toLowerCase()}">${box(p, s, { scale: 1.25, open: true })}<small>Open</small></button></div></div>`;
+  }).join('');
+  const aria = PEOPLE[0];
+  document.getElementById('closeup').innerHTML = '<span></span>' + LIDS.map(([, k, label]) => `<span class="h">${k} ${label}</span>`).join('') +
+    FINISHES.map(([f, k, label]) => `<span class="rowh"><b>${k}</b>${label}</span>` +
+      LIDS.map(([lid]) => `<span class="cellbox"><button data-toggle aria-label="Open or shut: ${label}, ${lid}" style="${inkStyle(aria)}">${box(aria, { finish: f, lid, tie: 'bow' }, { scale: 1.2 })}</button></span>`).join('')).join('');
+  document.getElementById('inks').innerHTML = INKS.map(([ink, kanji], i) => {
+    const p = { id: ink, name: ink[0].toUpperCase() + ink.slice(1), ink, kanji, pat: 'plain', seed: 60 + i };
+    return `<div class="ink-cell" style="--ink: var(--ink-${ink})">${box(p, { finish: 'lacquer', lid: 'seal' }, { open: true, letters: false })}<span class="name"><b>${kanji}</b>${ink}</span></div>`;
+  }).join('');
+  apply();
+}
+
+// ---- The phone's letter page --------------------------------------------------------------------------
+function openOnPhone(row) {
+  const p = PEOPLE.find(x => x.id === row.dataset.id);
+  const fbx = row.querySelector('.fbx');
+  fbx.classList.add('open');
+  const page = document.getElementById('phone-page');
+  page.setAttribute('style', inkStyle(p));
+  page.innerHTML = `<div class="bar"><button data-back aria-label="Back to the letters">←</button><span class="dot">${portrait(p, 'avatar')}</span><span class="who"><b>${esc(p.name)}</b><small>${p.mood} · ${p.time}</small></span></div>
+    <div class="letter-sheet"><span class="tape-v" aria-hidden="true"></span>${p.letter.map(t => `<p>${esc(t)}</p>`).join('')}</div>`;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(() => { page.classList.add('show'); page.setAttribute('aria-hidden', 'false'); requestAnimationFrame(redraw); page.querySelector('[data-back]').focus(); }, reduce ? 0 : 620);
+  page.dataset.from = p.id;
+}
+function backOnPhone() {
+  const page = document.getElementById('phone-page');
+  page.classList.remove('show'); page.setAttribute('aria-hidden', 'true');
+  const row = document.querySelector(`#phone-list [data-id="${page.dataset.from}"]`);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(() => { if (row) { row.querySelector('.fbx').classList.remove('open'); row.focus(); } }, reduce ? 0 : 340);
+}
+
+// ---- Ink-wash portrait placeholders -------------------------------------------------------------------
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function drawPortrait(c) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+  c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const inkHex = css(`--ink-${c.dataset.ink}`) || '#a26480', paper = css('--kami');
+  const r = rng(+c.dataset.seed * 9973 + 1);
+  g.fillStyle = paper; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 6; i++) {
+    const x = w * (0.15 + r() * 0.7), y = h * (0.1 + r() * 0.75), rad = Math.max(w, h) * (0.3 + r() * 0.4);
+    const grad = g.createRadialGradient(x, y, 0, x, y, rad);
+    grad.addColorStop(0, hexA(inkHex, 0.55)); grad.addColorStop(1, hexA(inkHex, 0));
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  }
+}
+const redraw = () => document.querySelectorAll('canvas.portrait').forEach(drawPortrait);
+
+// ---- Theme: the night's inks at night -----------------------------------------------------------------
+function viewerDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t === 'dark') return true;
+  if (t === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function seasonNow() { const m = new Date().getMonth(); return m >= 2 && m <= 4 ? 'haru' : m >= 5 && m <= 7 ? 'natsu' : m >= 8 && m <= 10 ? 'aki' : 'fuyu'; }
+function apply() {
+  const season = seasonNow();
+  const time = state.time === 'auto' ? (viewerDark() ? 'yoru' : 'hiru') : state.time;
+  const idx = THEMES.indexOf(`${season}-${time}`);
+  const root = document.documentElement.style;
+  ROLES.forEach(role => root.setProperty(`--${role}`, PAL[role][idx]));
+  INKS.forEach(([name]) => root.setProperty(`--ink-${name}`, PAL[name][idx]));
+  root.setProperty('--you', PAL.sora[idx]);
+  root.setProperty('--sheet', time === 'yoru' ? '#322619' : '#fdf9f4');
+  root.setProperty('--shadow', time === 'yoru' ? 'drop-shadow(0 1px 2px rgba(0, 0, 0, .5))' : 'drop-shadow(0 1px 2px rgba(60, 40, 25, .28))');
+  const pats = { dots: 'radial-gradient(circle, var(--kami) 0 1.3px, transparent 1.6px) 0 0 / 7px 7px',
+    stripes: 'repeating-linear-gradient(135deg, var(--kami) 0 2.5px, transparent 2.5px 7px)',
+    gingham: 'linear-gradient(90deg, color-mix(in oklab, var(--kami) 50%, transparent) 50%, transparent 0) 0 0 / 8px 8px, linear-gradient(color-mix(in oklab, var(--kami) 50%, transparent) 50%, transparent 0) 0 0 / 8px 8px',
+    plain: 'linear-gradient(transparent, transparent)' };
+  Object.entries(pats).forEach(([k, v]) => root.setProperty(`--pat-${k}`, v));
+  root.setProperty('color-scheme', time === 'yoru' ? 'dark' : 'light');
+  const kanji = SEASON_KANJI[season] + (time === 'hiru' ? '昼' : '夜');
+  document.getElementById('theme-kanji').textContent = kanji;
+  document.getElementById('theme-name').textContent = `${season}-${time} · ${SEASON_EN[season]} by ${time === 'hiru' ? 'day' : 'night'}`;
+  document.querySelectorAll('[data-season-kanji]').forEach(el => { el.textContent = kanji; });
+  requestAnimationFrame(redraw);
+}
+
+function init() {
+  [['time', 'time'], ['words', 'words'], ['width', 'width'], ['lines', 'lines']].forEach(([id, key]) => {
+    const el = document.getElementById(`${id}-${state[key]}`); if (el) el.checked = true;
+    document.getElementById(id).addEventListener('change', e => { state[key] = e.target.value; save(); key === 'time' ? apply() : render(); });
+  });
+  document.addEventListener('change', e => {
+    const el = e.target.closest('[data-pick]'); if (!el) return;
+    const id = el.dataset.pick;
+    state.picks = { ...state.picks, [id]: { ...(state.picks[id] || {}), [el.dataset.what]: el.value } };
+    save(); render();
+    const again = document.querySelector(`[data-pick="${id}"][data-what="${el.dataset.what}"][value="${el.value}"]`); if (again) again.focus();
+  });
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-back]')) { backOnPhone(); return; }
+    const row = e.target.closest('[data-row]');
+    if (row && row.dataset.row === 'phone') { openOnPhone(row); return; }
+    if (row && row.dataset.row === 'wide') {
+      document.querySelectorAll('#wide-list .fbx').forEach(b => b.classList.remove('open'));
+      row.querySelector('.fbx').classList.add('open');
+      row.querySelectorAll('.pv').forEach(pv => pv.classList.remove('unread'));
+      state.wideOpen = row.dataset.id; save(); return;
+    }
+    if (row && row.dataset.row === 'w') { row.querySelector('.fbx').classList.toggle('open'); return; }
+    const t = e.target.closest('[data-toggle]');
+    if (t) t.querySelector('.fbx').classList.toggle('open');
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+  new MutationObserver(apply).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  let r; window.addEventListener('resize', () => { clearTimeout(r); r = setTimeout(redraw, 150); });
+  render();
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(render);
+}
+init();
+</script>

@@ -1,5 +1,7 @@
 package dev.aiharness.core.storage
 
+import dev.aiharness.core.model.PlannerEntry
+import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.ChatMessage
@@ -8,6 +10,8 @@ import dev.aiharness.core.model.Credential
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.Sticker
+import dev.aiharness.core.model.StickerArt
 import dev.aiharness.core.model.UserPersona
 import kotlinx.coroutines.flow.Flow
 
@@ -63,6 +67,8 @@ interface ConversationRepository {
     suspend fun get(id: String): Conversation?
     suspend fun getAll(): List<Conversation>
     suspend fun upsert(conversation: Conversation)
+
+    /** Deletes the conversation with its messages, and the stickers on them where they're kept together. */
     suspend fun delete(id: String)
 
     fun observeMessages(conversationId: String): Flow<List<ChatMessage>>
@@ -70,7 +76,19 @@ interface ConversationRepository {
     suspend fun getMessages(conversationId: String): List<ChatMessage>
     suspend fun appendMessage(message: ChatMessage)
     suspend fun updateMessage(message: ChatMessage)
+
+    /** Deletes the messages, and the stickers on them where they're kept together. */
     suspend fun deleteMessages(ids: Collection<String>)
+
+    /**
+     * Messages whose words ([dev.aiharness.core.letters.LetterWords]) have each of [terms] at the start
+     * of a word, or with [matchAll] false any of them; in [personaId]'s conversations, or everyone's
+     * for null. Newest first, at most [limit]. Callers check each one again (the index only narrows).
+     */
+    suspend fun searchLetters(terms: List<String>, matchAll: Boolean, personaId: String?, limit: Int): List<ChatMessage>
+
+    /** Puts letters the word index doesn't have yet into it (those from before it existed); returns how many. */
+    suspend fun indexLetters(): Int = 0
 }
 
 interface MemoryRepository {
@@ -93,8 +111,67 @@ interface MemoryRepository {
 /** Background activity log (heartbeat outcomes, upkeep), newest last. */
 interface ActivityRepository {
     fun observeSince(since: Long): Flow<List<ActivityEntry>>
+
+    /** One persona's entries since [since], oldest first. */
+    suspend fun forPersona(personaId: String, since: Long): List<ActivityEntry>
     suspend fun add(entry: ActivityEntry)
     suspend fun deleteBefore(time: Long)
+}
+
+/** Stickers stuck on things, and the pictures they can be (persona sheets and the shared library). */
+/** Marks on attachments (a punched ticket, a read stamp), apart from the messages they're in. */
+interface MarkRepository {
+    fun observeAll(): Flow<List<AttachmentMark>>
+    suspend fun forAttachment(attachmentId: String): List<AttachmentMark>
+
+    /** Keeps the first mark of each kind and person: marking again changes nothing. */
+    suspend fun add(mark: AttachmentMark)
+    suspend fun deleteForConversation(conversationId: String)
+}
+
+/** Planner entries, each in one of your personas' planners. */
+interface PlannerRepository {
+    fun observe(plannerId: String): Flow<List<PlannerEntry>>
+    suspend fun forPlanner(plannerId: String): List<PlannerEntry>
+    suspend fun get(id: String): PlannerEntry?
+    suspend fun upsert(entry: PlannerEntry)
+    /** An entry, and the stickers on it. */
+    suspend fun delete(id: String)
+
+    /** One of your personas is gone: its planner goes with it, stickers and all. */
+    suspend fun deletePlanner(plannerId: String)
+
+    /** A persona is gone: what it wrote in your planners goes too. */
+    suspend fun deleteWrittenBy(personaId: String)
+
+    /** Everything [personaId] has written, in any of your planners. */
+    suspend fun writtenBy(personaId: String): List<PlannerEntry>
+
+    /** What all personas have written (for their reminders' wakeups). */
+    fun observeWrittenByPersonas(): Flow<List<PlannerEntry>>
+}
+
+interface StickerRepository {
+    /** A conversation's stickers, peeled ones included (callers show only those still stuck). */
+    fun observeForConversation(conversationId: String): Flow<List<Sticker>>
+    suspend fun forConversation(conversationId: String): List<Sticker>
+    suspend fun get(id: String): Sticker?
+
+    /** Stuck, moved or peeled after [since], oldest first: what a persona hears about on its next turn. */
+    suspend fun changedSince(conversationId: String, since: Long): List<Sticker>
+    suspend fun upsert(sticker: Sticker)
+    suspend fun delete(id: String)
+
+    /** Peeled stickers last changed before [time], once there's no one left to tell. */
+    suspend fun deletePeeledBefore(time: Long)
+
+    fun observeArt(): Flow<List<StickerArt>>
+
+    /** A persona's sheet, or the shared library for null. */
+    suspend fun art(ownerPersonaId: String?): List<StickerArt>
+    suspend fun getArt(id: String): StickerArt?
+    suspend fun upsertArt(art: StickerArt)
+    suspend fun deleteArt(id: String)
 }
 
 interface SettingsRepository {

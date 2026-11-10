@@ -1,7 +1,10 @@
 package dev.aiharness.core.agent
 
+import dev.aiharness.core.stickers.StickerShelf
 import dev.aiharness.core.llm.LlmMessage
 import dev.aiharness.core.llm.LlmPart
+import dev.aiharness.core.media.MediaParts
+import dev.aiharness.core.media.MediaSupport
 import dev.aiharness.core.llm.LlmToolCall
 import dev.aiharness.core.llm.LlmToolResult
 import dev.aiharness.core.llm.ToolSpec
@@ -14,6 +17,7 @@ import dev.aiharness.core.model.MemoryKind
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.pronounsForPrompt
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.storage.BlobStore
 import dev.aiharness.core.util.Clock
@@ -38,6 +42,8 @@ data class ContextInput(
     val settings: AppSettings,
     val profile: ModelProfile,
     val tools: List<ToolSpec>,
+    /** The stickers the persona can use, when it can stick them (named in a new epoch's system prompt). */
+    val stickers: StickerShelf? = null,
     /** Full conversation history in order, including the newest user turn. */
     val history: List<ChatMessage>,
     /** Compaction only happens at the start of a turn, never between tool rounds. */
@@ -72,6 +78,8 @@ class ContextBuilder(
     private val clock: Clock,
     private val log: (String) -> Unit = {},
 ) {
+    private val media = MediaParts(blobs)
+
     suspend fun prepare(input: ContextInput): PreparedContext {
         val previous = input.conversation.context
         val userName = input.userPersona?.name?.takeIf { it.isNotBlank() } ?: "User"
@@ -93,9 +101,9 @@ class ContextBuilder(
             val window = eligible.subList(windowStart, eligible.size)
             val budget = budgetFor(input.profile)
             val systemEstimate = TokenEstimator.estimate(previous?.systemPrompt ?: provisionalPrompt(input, summary))
-            val total = systemEstimate + window.sumOf(TokenEstimator::estimate)
+            val total = systemEstimate + window.sumOf { TokenEstimator.estimate(it, input.profile) }
             if (total > budget) {
-                val keepFrom = chooseCut(window, (budget * TAIL_FRACTION).toInt())
+                val keepFrom = chooseCut(window, (budget * TAIL_FRACTION).toInt(), input.profile)
                 if (keepFrom > 0) {
                     val chunk = window.subList(0, keepFrom)
                     val chunkSummary = summarizeChunk(input, chunk, userName)
@@ -121,6 +129,7 @@ class ContextBuilder(
                     coreMemories = if (input.settings.memory.enabled) memory.core(input.persona.id, input.userPersona?.id) else emptyList(),
                     summary = summary,
                     toolNames = input.tools.map { it.name }.toSet(),
+                    stickers = input.stickers,
                 ),
                 configFingerprint = configFp,
                 toolFingerprint = toolFp,
@@ -148,11 +157,11 @@ class ContextBuilder(
      * Picks the first index to keep verbatim: the tail fits in [tailTokens] and starts at a user turn,
      * so a tool round (assistant tool call + results) is never split.
      */
-    internal fun chooseCut(window: List<ChatMessage>, tailTokens: Int): Int {
+    internal fun chooseCut(window: List<ChatMessage>, tailTokens: Int, profile: ModelProfile? = null): Int {
         var acc = 0
         var cut = window.size
         for (j in window.indices.reversed()) {
-            acc += TokenEstimator.estimate(window[j])
+            acc += TokenEstimator.estimate(window[j], profile)
             if (acc > tailTokens) break
             cut = j
         }
@@ -216,20 +225,14 @@ class ContextBuilder(
 
     private suspend fun toLlmMessages(window: List<ChatMessage>, state: ContextState, profile: ModelProfile): List<LlmMessage> {
         val out = mutableListOf<LlmMessage>()
+        val plan = media.plan(window, state.startedAt, profile)
         window.forEachIndexed { index, message ->
             when (message.role) {
                 MessageRole.USER -> {
                     val parts = mutableListOf<LlmPart>()
                     message.turnContext?.takeIf { it.isNotBlank() }?.let { parts += LlmPart.Text(TurnContextBuilder.wrap(it)) }
                     if (message.text.isNotBlank()) parts += LlmPart.Text(message.text)
-                    message.images.forEach { image ->
-                        val bytes = if (profile.supportsVision) blobs.get(image.ref) else null
-                        parts += if (bytes != null) {
-                            LlmPart.Image(bytes, image.mimeType)
-                        } else {
-                            LlmPart.Text("[Image${image.caption?.let { ": $it" } ?: ""}]")
-                        }
-                    }
+                    parts += media.parts(message, plan, state.startedAt, profile)
                     if (parts.isNotEmpty()) out += LlmMessage.User(parts)
                 }
                 MessageRole.ASSISTANT -> {
@@ -237,7 +240,8 @@ class ContextBuilder(
                         message.epochId == state.epochId &&
                         message.providerType == profile.provider
                     val calls = message.toolCalls.map { LlmToolCall(it.id, it.name, it.argumentsJson) }
-                    val imageNotes = message.images.joinToString("\n") { "[Image you sent: ${it.caption.orEmpty()}]" }
+                    val imageNotes = (message.images.map { "[Image you sent: ${it.caption.orEmpty()}]" } + message.attachments.map { "(you sent ${it.standIn})" })
+                        .joinToString("\n")
                     val text = listOf(message.text, imageNotes).filter { it.isNotBlank() }.joinToString("\n")
                     if (text.isBlank() && calls.isEmpty() && !replayValid) return@forEachIndexed
                     out += LlmMessage.Assistant(text, calls, if (replayValid) message.replay else null)
@@ -276,6 +280,7 @@ class ContextBuilder(
         input.persona.scenario,
         input.persona.exampleDialogue,
         input.persona.systemPromptOverride,
+        input.persona.pronounsForPrompt,
         input.userPersona?.id,
         input.userPersona?.name,
         input.userPersona?.description,
@@ -319,10 +324,35 @@ class ContextBuilder(
 object TokenEstimator {
     fun estimate(text: String): Int = (text.length / 3.6).toInt() + 1
 
-    fun estimate(message: ChatMessage): Int =
+    /** About what [message] costs, its pictures and attachments as [profile]'s model would take them. */
+    fun estimate(message: ChatMessage, profile: ModelProfile? = null): Int =
         6 + estimate(message.text) +
             (message.turnContext?.let(::estimate) ?: 0) +
             message.toolCalls.sumOf { estimate(it.argumentsJson) + 10 } +
             message.toolResults.sumOf { estimate(it.content) + 10 } +
-            message.images.size * 800
+            if (message.role == MessageRole.USER) media(message, profile) else 0
+
+    /**
+     * Pictures and attachments at what they cost whole, or by their description once there is one
+     * (what a new epoch would send, which is what compaction is deciding about).
+     */
+    private fun media(message: ChatMessage, profile: ModelProfile?): Int {
+        val senses = profile?.let(MediaSupport::of)
+        val pictures = message.images.sumOf { image ->
+            when {
+                image.description != null -> estimate(image.description) + 4
+                senses == null || senses.pictures -> MediaSupport.PICTURE_TOKENS
+                else -> 4
+            }
+        }
+        val attachments = message.attachments.sumOf { a ->
+            estimate(a.standIn) + when {
+                a.description != null -> estimate(a.description)
+                profile == null -> 0
+                MediaSupport.takesWhole(a, profile, senses!!) -> MediaSupport.wholeTokens(a, profile).coerceAtMost(MediaSupport.capFor(a, profile))
+                else -> MediaSupport.picturesFor(a, senses).size * MediaSupport.PICTURE_TOKENS
+            }
+        }
+        return pictures + attachments
+    }
 }

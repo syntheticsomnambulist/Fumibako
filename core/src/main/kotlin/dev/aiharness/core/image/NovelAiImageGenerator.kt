@@ -30,13 +30,21 @@ data class ImageRequest(
     val qualityToggle: Boolean,
     val ucPreset: String,
     val seed: Long? = null,
+    val host: dev.aiharness.core.model.ImageHost = dev.aiharness.core.model.ImageHost.NOVELAI,
+    /** A local server's address, or another endpoint for a hosted one. */
+    val baseUrl: String? = null,
+    /** OpenAI's quality: auto, low, medium, high. */
+    val quality: String = "auto",
+    /** ComfyUI workflow (API format) with placeholders; null uses the default. */
+    val workflow: String? = null,
 )
 
 data class GeneratedImage(val bytes: ByteArray, val mimeType: String, val seed: Long)
 
-/** Image backend. NovelAI is the built-in one; others can implement this. */
+/** Image backend. [HostImageGenerator] picks one per request's host; tests can supply their own. */
 interface ImageGenerator {
-    suspend fun generate(request: ImageRequest, apiKey: String): List<GeneratedImage>
+    /** [apiKey] is null for hosts that don't need one (local servers). */
+    suspend fun generate(request: ImageRequest, apiKey: String?): List<GeneratedImage>
 }
 
 /**
@@ -52,7 +60,8 @@ class NovelAiImageGenerator(
     private val endpoint: String = DEFAULT_ENDPOINT,
 ) : ImageGenerator {
 
-    override suspend fun generate(request: ImageRequest, apiKey: String): List<GeneratedImage> {
+    override suspend fun generate(request: ImageRequest, apiKey: String?): List<GeneratedImage> {
+        if (apiKey.isNullOrBlank()) throw LlmException("No NovelAI key for this image profile")
         val seed = request.seed ?: Random.nextLong(1, MAX_SEED)
         val json = buildRequestJson(request, seed)
         val body = MultipartBody.Builder()
@@ -60,7 +69,7 @@ class NovelAiImageGenerator(
             .addFormDataPart("request", "blob", json.toString().toRequestBody("application/json".toMediaType()))
             .build()
         val httpRequest = Request.Builder()
-            .url("${endpoint.trimEnd('/')}/ai/generate-image")
+            .url("${(request.baseUrl?.takeIf { it.isNotBlank() } ?: endpoint).trimEnd('/')}/ai/generate-image")
             .header("Authorization", "Bearer $apiKey")
             .post(body)
             .build()

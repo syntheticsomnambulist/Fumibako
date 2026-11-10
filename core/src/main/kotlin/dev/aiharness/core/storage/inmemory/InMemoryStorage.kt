@@ -1,5 +1,8 @@
 package dev.aiharness.core.storage.inmemory
 
+import dev.aiharness.core.letters.LetterWords
+import dev.aiharness.core.storage.MarkRepository
+import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.ActivityEntry
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.ChatMessage
@@ -8,6 +11,8 @@ import dev.aiharness.core.model.Credential
 import dev.aiharness.core.model.MemoryEntry
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.Sticker
+import dev.aiharness.core.model.StickerArt
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.storage.ActivityRepository
 import dev.aiharness.core.storage.BlobStore
@@ -18,6 +23,7 @@ import dev.aiharness.core.storage.ModelProfileRepository
 import dev.aiharness.core.storage.PersonaRepository
 import dev.aiharness.core.storage.SecretStore
 import dev.aiharness.core.storage.SettingsRepository
+import dev.aiharness.core.storage.StickerRepository
 import dev.aiharness.core.storage.UserPersonaRepository
 import dev.aiharness.core.util.newId
 import kotlinx.coroutines.flow.Flow
@@ -104,6 +110,18 @@ class InMemoryConversationRepository : ConversationRepository {
 
     override suspend fun deleteMessages(ids: Collection<String>) =
         messages.update { list -> list.filterNot { it.id in ids } }
+
+    override suspend fun searchLetters(terms: List<String>, matchAll: Boolean, personaId: String?, limit: Int): List<ChatMessage> {
+        val inThread = personaId?.let { id -> conversations.all().filter { it.personaId == id }.map { it.id }.toSet() }
+        return messages.value
+            .filter { inThread == null || it.conversationId in inThread }
+            .filter { message ->
+                val found = LetterWords.termsIn(LetterWords.of(message), terms)
+                if (matchAll) found.size == terms.size else found.isNotEmpty()
+            }
+            .sortedByDescending { it.createdAt }
+            .take(limit)
+    }
 }
 
 class InMemoryMemoryRepository : MemoryRepository {
@@ -149,8 +167,41 @@ class InMemoryActivityRepository : ActivityRepository {
     override fun observeSince(since: Long): Flow<List<ActivityEntry>> =
         entries.map { list -> list.filter { it.createdAt > since }.sortedBy { it.createdAt } }
 
+    override suspend fun forPersona(personaId: String, since: Long): List<ActivityEntry> =
+        entries.value.filter { it.personaId == personaId && it.createdAt > since }.sortedBy { it.createdAt }
+
     override suspend fun add(entry: ActivityEntry) = entries.update { it + entry }
     override suspend fun deleteBefore(time: Long) = entries.update { list -> list.filter { it.createdAt >= time } }
+}
+
+class InMemoryStickerRepository : StickerRepository {
+    private val stickers = Table<Sticker> { it.id }
+    private val arts = Table<StickerArt> { it.id }
+
+    override fun observeForConversation(conversationId: String): Flow<List<Sticker>> =
+        stickers.state.map { m -> m.values.filter { it.conversationId == conversationId }.sortedBy { it.createdAt } }
+
+    override suspend fun forConversation(conversationId: String): List<Sticker> =
+        stickers.all().filter { it.conversationId == conversationId }.sortedBy { it.createdAt }
+
+    override suspend fun get(id: String): Sticker? = stickers.get(id)
+
+    override suspend fun changedSince(conversationId: String, since: Long): List<Sticker> =
+        stickers.all().filter { it.conversationId == conversationId && it.updatedAt > since }.sortedBy { it.updatedAt }
+
+    override suspend fun upsert(sticker: Sticker) = stickers.upsert(sticker)
+    override suspend fun delete(id: String) = stickers.delete(id)
+
+    override suspend fun deletePeeledBefore(time: Long) =
+        stickers.all().filter { it.isPeeled && it.updatedAt < time }.forEach { stickers.delete(it.id) }
+
+    override fun observeArt(): Flow<List<StickerArt>> = arts.state.map { m -> m.values.sortedBy { it.createdAt } }
+    override suspend fun art(ownerPersonaId: String?): List<StickerArt> =
+        arts.all().filter { it.ownerPersonaId == ownerPersonaId }.sortedBy { it.createdAt }
+
+    override suspend fun getArt(id: String): StickerArt? = arts.get(id)
+    override suspend fun upsertArt(art: StickerArt) = arts.upsert(art)
+    override suspend fun deleteArt(id: String) = arts.delete(id)
 }
 
 class InMemorySettingsRepository(initial: AppSettings = AppSettings()) : SettingsRepository {
@@ -170,4 +221,25 @@ class InMemoryBlobStore : BlobStore {
 
     override suspend fun get(ref: String): ByteArray? = blobs.value[ref]
     override suspend fun delete(ref: String) = blobs.update { it - ref }
+}
+
+class InMemoryPlannerRepository : dev.aiharness.core.storage.PlannerRepository {
+    private val entries = MutableStateFlow<Map<String, dev.aiharness.core.model.PlannerEntry>>(emptyMap())
+    override fun observe(plannerId: String) = entries.map { all -> all.values.filter { it.plannerId == plannerId }.sortedBy { it.createdAt } }
+    override suspend fun forPlanner(plannerId: String) = entries.value.values.filter { it.plannerId == plannerId }.sortedBy { it.createdAt }
+    override suspend fun get(id: String) = entries.value[id]
+    override suspend fun upsert(entry: dev.aiharness.core.model.PlannerEntry) = entries.update { it + (entry.id to entry) }
+    override suspend fun delete(id: String) = entries.update { it - id }
+    override suspend fun deletePlanner(plannerId: String) = entries.update { all -> all.filterValues { it.plannerId != plannerId } }
+    override suspend fun deleteWrittenBy(personaId: String) = entries.update { all -> all.filterValues { it.byPersonaId != personaId } }
+    override suspend fun writtenBy(personaId: String) = entries.value.values.filter { it.byPersonaId == personaId }.sortedBy { it.createdAt }
+    override fun observeWrittenByPersonas() = entries.map { all -> all.values.filter { it.byPersonaId != null }.sortedBy { it.createdAt } }
+}
+
+class InMemoryMarkRepository : MarkRepository {
+    private val marks = MutableStateFlow<Map<String, AttachmentMark>>(emptyMap())
+    override fun observeAll(): Flow<List<AttachmentMark>> = marks.map { it.values.sortedBy(AttachmentMark::at) }
+    override suspend fun forAttachment(attachmentId: String) = marks.value.values.filter { it.attachmentId == attachmentId }.sortedBy { it.at }
+    override suspend fun add(mark: AttachmentMark) = marks.update { if (mark.id in it) it else it + (mark.id to mark) }
+    override suspend fun deleteForConversation(conversationId: String) = marks.update { all -> all.filterValues { it.conversationId != conversationId } }
 }

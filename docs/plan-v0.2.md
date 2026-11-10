@@ -14,6 +14,48 @@ Stickers (including per-persona unread marks and emotion stickers) move to v0.3.
   the nine-family word list, derived salience and strength, dormant and replaced memories, links
   to the source letter, the updated tools, and recall that tells the persona how it felt. Tested
   with unit tests and a four-month fixture.
+- **Step 2, heartbeat: done.** A list of activities (episodes, reflect, revisit, settle, sort
+  feelings) feeding one private moment that only happens when something is due or the persona may
+  write; per-persona rhythm and heartbeat model; scheduling at the shortest interval; every wakeup
+  logged (including why it rested). The heartbeat settings now live under a "rhythm", so the
+  installed app's heartbeat timings reset to the defaults once.
+- **Steps 3 to 5, controls, settings, your personas, persona pages: done.**
+  - Controls: index-card fields with ruled lines under the text, steppers you can type into,
+    square selects, and tape placements that never repeat on neighbouring cards.
+  - Settings is a contents page (一 to 八) with a page per section.
+  - Personas edit in place: **Edit** on the page, **Done** to keep. Back while editing leaves
+    edit mode, asking first if anything changed. Each persona has a heartbeat page of its own.
+  - Your personas have a gallery and a page each: about you, what each persona remembers about
+    you, letters written as you, and the default for new letters. Tapping a "Writing as" card
+    opens its page; switching happens there or inside a letter.
+  - The old one-screen editors are gone. The keys screen keeps its old look until step 7.
+- **Step 6, memory book, memory card, ageing, burn: done.**
+  - The memory book is a scrapbook. Tabs by kind; filters by feeling family and by who a memory
+    is about; search. The always-in-mind memories sit on an index card at the top. Each day gets
+    a date stamp and a small collage: the day's picture, a line quoted from the letter a memory
+    came from, label slips for facts, torn notes for thoughts, taped pages for what happened.
+    Earlier months are tucked into envelopes (only the V flap shows).
+  - Strong feelings get an ink stamp: the family's icon in a double ring, pressed a little
+    unevenly. Mild ones get no mark; the card shows the word either way.
+  - Ageing: fading memories go pale, worn (dormant) ones go brown with a coffee ring, and
+    replaced ones are struck through with what replaced them on a slip.
+  - One memory opens as a card: how it felt when kept and how it feels now (with the persona's
+    reason), how much it matters, who it's about, where it came from, how often it came up.
+    With editing allowed, **Edit** opens the same card for editing, and it can be forgotten:
+    it burns away and **Undo** stays until you leave the page.
+  - The burn runs as an AGSL shader on Android 13 and later and on the CPU below that, both
+    from one definition (`BurnShape`) that the unit tests check.
+  - Not yet: a memory the persona lets go on its own doesn't burn in front of you; the
+    heartbeat log counts it ("let a memory go").
+- **Step 7, polish: done.**
+  - The memory book's tabs are pieces of washi tape folded over the page edge, one ink each
+    (yours for About you); the chosen one stands up further and shows its pattern.
+  - Envelopes open: the flap folds up and back, a few notes peek out, and the month's days slide
+    out of the envelope one after another.
+  - The model profile and keys screens are stationery pages now; a new model profile starts from
+    a preset (it opened a blank page before). "Manage models" goes to Settings, Models and keys.
+  - Memory slips on the persona page open their memory; the last old-style text fields are gone.
+  - Version 0.2.0.
 
 ## What v0.2 includes
 
@@ -92,6 +134,14 @@ From the research recommendations, adjusted to your answers:
   4. tidy (merge near-duplicates, keep "matters deeply" within its limit);
   5. decide whether to write to you (exists today).
 
+  **Activity limit:** a heartbeat may take at most 3 meaningful actions in the persona's own
+  voice (`HeartbeatRhythm.activityLimit`, adjustable in the usual settings and a persona's own).
+  Writing to you uses one; reflecting, revisiting, tidying and upkeep (episodes, embeddings,
+  sorting feeling words) are free. There's no fixed order: the persona is told how many it has
+  left and chooses, and the engine counts them (`Beat.takeSlot`). An activity that acts outside
+  the private moment (pen pals, later) takes its slot the same way. In v0.2 only the letter uses
+  one, so the limit starts to matter with the next such activity.
+
   New activities can be added later without touching the rest. This is where the persistent
   "agent home" grows: more things personas do while you're away, each showing up in "While you
   were away" and on their page. The activity log becomes per-activity rather than a fixed list.
@@ -117,17 +167,29 @@ Each step ends with its tests green and a push.
 7. **Polish and test pass:** screenshot tours (day, night, large text) for every new screen, the
    smoke test, a release build, and an APK to your phone with a checklist.
 
-The database version is bumped once for the schema changes; per the pre-1.0 rule, installed data
-is wiped on update.
+No table changed in v0.2 (rows are JSON, and new fields have defaults), so the database version
+stays and installed data is kept on update; only the heartbeat timings reset once (step 2).
 
 ## Testing
 
 - **Automated:** unit tests for levels and parsing, salience, fading, dormant and replaced,
   revision limits, the word list, per-persona scheduling and each heartbeat activity; Robolectric
   tests for the new screens; screenshot tours.
-- **On your phone:** a checklist like v0.1's, plus: memories keep their feelings and show "felt
-  then, feels now"; the memory book collage looks right with real letters; burning and undo; a
-  persona with its own heartbeat; editing memories off and on.
+- **On your phone (v0.2.0):**
+  1. Install over v0.1; letters, personas and memories are still there.
+  2. Persona page: Edit, change the look and words, Done; back while editing asks before
+     discarding. Change the picture from the polaroid.
+  3. A persona's heartbeat page: switch to its own rhythm, change it, "Run one now", and see the
+     result under Recent heartbeats.
+  4. Settings: each contents line opens its page; steppers take a typed number; Activities per
+     heartbeat is in the Rhythm card.
+  5. Your personas: add one, write a letter as it, make it the default.
+  6. Memory book with real letters: tabs, the feeling filter, search; days look right; open and
+     close an earlier month's envelope (only once a month has passed).
+  7. A memory's card: read-only at first; turn on "Let me edit memories" (Settings, Memory), then
+     Edit, change the feeling, Done; Forget, watch it burn, Undo.
+  8. A heartbeat that writes: the letter arrives and the log says so.
+  9. Models and keys: add a profile from a preset, Fetch models, Send a test message; add a key.
 
 ## Risks
 
@@ -145,3 +207,15 @@ is wiped on update.
    persona's own sticker) comes with stickers in v0.3.
 2. **Level names:** "In passing", "Worth keeping", "Matters deeply".
 3. **The burn:** the canvas prototype is the one to build.
+4. **Heartbeat activity limit** (2026-11-06): at most 3 activities per heartbeat by default,
+   adjustable. Only meaningful actions in the persona's own voice use a slot; in v0.2 that is
+   writing to you. Reflecting, revisiting, tidying and upkeep are free. The persona sees what is
+   due and how many slots it has left, and chooses; the engine enforces the count. The setting
+   lives on the rhythm, so a persona with its own heartbeat can change it too.
+
+## Noted for later (from testing v0.2)
+
+- **Pictures** (self, outfit and style prompts; more image hosts): agreed for the start of v0.3,
+  see [design/pictures.md](design/pictures.md).
+- **The letter's top bar icons** (persona, writing as, picture, menu) are stock Material icons;
+  they should become stationery ones.

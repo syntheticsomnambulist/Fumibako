@@ -1,0 +1,577 @@
+# Desktop plan: Fumibako on a computer
+
+Started 2026-11-06, after v0.4.0, by the desktop session (branch `claude/epic-davinci-rpggbc`),
+beside the build session's v0.5. **Friends get a desktop build with v0.5**, the next tester build,
+so the desktop work runs alongside v0.5 and ships with it. Agreed on 2026-11-07, with your
+answers below; the reorganization has started (see *Progress*).
+
+## Your answers (2026-11-07)
+
+- **All three systems:** Windows, macOS and Linux. You have a Windows PC, so Windows is tried
+  first and most; the macOS and Linux builds come from CI and get tried more slowly.
+- **The window in v0.5:** the phone's layouts in a resizable window. Wider layouts are wanted,
+  designed later, for a later version. *Changed 2026-11-08, below.*
+- **Phone and computer:** two separate Fumibakos, with v0.5's backups to move a persona or
+  everything between them. Sync, if ever, is a feature of its own.
+- **The move** lands before the build session starts v0.5.
+- **Closing the window** keeps Fumibako in the tray, so heartbeats go on (on by default, and the
+  first close says so). Starting at login stays off until you turn it on.
+
+## Your answers (2026-11-08): wide layouts in v0.5
+
+- **Wide layouts come in v0.5,** in friends' first desktop build, not later. A third session (the
+  desktop-layout session, branch `claude/sharp-darwin-o3pk1g`) draws and builds them.
+- **Letters and Personas first:** the letters list beside the open thread, and the personas
+  gallery beside a persona's page. The planner and Settings keep the phone's layouts for now.
+- **Chosen by the window's width, anywhere:** a window wide enough gets the wide layout, the phone
+  app included (a tablet, a phone on its side). A phone held upright never is, so it stays as it
+  is.
+- **Mockups first:** drawn in the app's look for you to choose from, and the choices written into
+  this plan before any code. The study is [`docs/design/wide-studies.html`](design/wide-studies.html)
+  (also a private claude.ai artifact: https://claude.ai/artifact/TbgAxSY8pUXZwDxfvvdc19).
+- **Chosen from the study:**
+  - **Index tabs down the left** in place of the bar along the bottom, so long letters get the
+    window's full height. Room for a fifth tab (机 Desk, v0.6).
+  - **Letters at a reading width,** about 640, in the middle of the right side. The margins a
+    wider window leaves are wanted for things (ideas drawn in the study: the day beside its first
+    letter, what she kept as a slip, her index card of what she had in mind, today's planner
+    page). **Left for a future version** (your answer, 2026-11-10), and noted for the roadmap.
+    Narrower, each stays where it is on the phone.
+  - **Letters opens on the letter you last had open,** and Personas on the page you last opened,
+    with the gallery beside it.
+  - **A new window opens 1180 × 780,** smaller on a small screen. A window you've already sized
+    keeps its size.
+  - **How the open letter or persona is marked:** not the tab or the raised card first drawn. Of
+    the second set (a paper clip, a folded corner, a highlighter stroke, the card left as an
+    outline, no mark) the folded corner is your favorite, and you asked for the letters list's
+    cards to be **little fumibakos**, the open one opened: drawn in the study (lacquer tied with a
+    cord in their ink, or covered in their washi; the open box with its lid leaning behind it and
+    the letter inside). Still to settle: the finish, whether the phone's list gets boxes too, and
+    the gallery's mark. **The gallery's mark: the folded corner** (your answer, 2026-11-10).
+  - **The fumibakos it is** (2026-11-08), with the lining in their ink too. A closer pass is in
+    [`docs/design/fumibako-studies.html`](design/fumibako-studies.html) (private artifact:
+    https://claude.ai/artifact/9krTn2vam1SDMUWGSUsU4L): five boxes (lacquer in their ink, black
+    lacquer with their ink inside, paulownia, covered in their washi, maki-e with their kanji in
+    gold), with the latest lines or only the name (as a list or a shelf), and the lining in all
+    fourteen inks. The lining follows madoromi's ink ramps, deep where ink pools, paler in the
+    middle; boxes keep day inks at night, as stickers do.
+  - **Your answers (2026-11-09):** each persona picks their own box; the night's inks at night;
+    and the study redrawn flat, in the writing desk's look (`activities.md` on the design branch:
+    fills of ink mixed into the paper, thin lines for cords and seals, no gradients, the soft
+    shadow, boxes from above like the desk's trays). Added: a box with only their seal, and one
+    with the name engraved. The study now has a card per persona for picking their box (a finish:
+    lacquer, washi, paulownia; a lid: name, seal, engraved, kanji), the list three ways (the words
+    beside the box, on the box, or only the boxes), and the phone's list as today's cards beside
+    the same list as boxes, all shut. Still to choose: which finishes and lids to keep, the list's
+    form, and boxes on the phone or not.
+  - **Your answers (2026-11-09, later):** the phone's list becomes shut boxes too; tapping one plays
+    the opening (the bow undoes, the lid tips back, the letter rises) and then goes to the letter.
+    Personas choose their own box, the lid included. Engraved names in gold as well. The latest
+    lines go on a paper strip. And a further pass on the drawing, cuter and clearer: now short,
+    chubby boxes with a lid top, a deeper band for the lid's edge and the box below, a filled
+    bow, and the opening animated (the study's third version). Still to choose: a paper strip or
+    a tag tied on, which lids and finishes to keep, and whether the drawing is ready to build.
+  - **Almost there (2026-11-09):** a wider box (150, with 112 and 180 to compare) so the paper
+    strip, now the name row and one line, is thinner than the box and tucked beneath it; and more
+    ties, shut and open: a bow, tied crosswise with a flat knot, mizuhiki in an awaji knot (slips
+    off whole), and a cord with a tassel (swings aside). Personas choose their tie with the rest
+    of their box (the study's fourth version).
+  - **All four ties stay; the strip is one line** (2026-11-09). Untied cords redrawn to fall
+    where they would: the cord up the box's front stays, the cord on the lid goes with it, and
+    the ends lie on the table at the box's foot; the crosswise loop slips down to the foot;
+    mizuhiki is laid on its side in front; the tassel drops to the table. Widths side by side
+    (120, 150, 180, 210, and an assorted list where each persona's box is its own length). The
+    boxes are inline SVG drawn by the study's script (box, tie, bow, lidMark); the user may do a
+    pass on them by hand, from SVGs exported with the colors filled in.
+  - **One size for every box** (2026-11-09): the study's Sizes grid shows widths 120, 150 and
+    180 against lengths (front to back) 56, 64, 70 and 80. Once a size is chosen: build the boxes
+    in the app, and give the user the SVGs (every finish, lid and tie, shut and open) for a later
+    pass by hand.
+  - **Chosen (2026-11-09): 120 by 80** for every box. A persona's box is picked at random at
+    first (the same pick every time, from their id), and they can change it as a heartbeat
+    activity; you can choose for them on their page. The SVGs are in
+    [`docs/design/fumibako-svg/`](design/fumibako-svg/README.md) (120 files, made by
+    `tools/export_fumibako_svgs.js`), for the user's pass by hand.
+  - **Building them:** `Persona.letterBox` (finish, lid, tie, and who chose it; null means the
+    pick from their id, so nothing is written for existing personas); a `choose_letter_box` tool
+    that works in heartbeats, offered now and then by a heartbeat activity; the box drawn in
+    Compose to the study's shapes, with the opening animated; the letters list's rows as a box
+    and a one-line paper strip, on the phone (tapping opens the box, then the letter) and wide
+    (the open letter's box stays open); a card on the persona's page for choosing for them.
+
+## Wide layouts: progress
+
+- **First build (2026-11-08), on `claude/sharp-darwin-o3pk1g`:** from 840 wide, the index tabs
+  down the left; Letters' list (360) beside the open letter, which keeps a reading width of 640
+  with the thread scrolling from the side's edges; Personas' gallery (400) beside the open page,
+  whose memory book, heartbeat and sticker pages open beside it with their back arrows; other
+  screens in the phone's layout, centered beside the tabs. The open side shows what's on top of the
+  back stack, so a window crossing 840 only changes how it's drawn. Letters and Personas open on
+  the letter and page you last had open (kept in app state); with nothing open, a quiet desk. A
+  new desktop window opens 1180 × 780, smaller on a small screen.
+  - Code: `ui/.../ui/WideLayout.kt` (the widths, `openFromList`), `AppNavigation.kt` (the rail,
+    the sides, `Placed`, `LastOpen`), small changes in `ChatScreen`, `ChatsScreen`, `Gallery`,
+    `PersonaPage` and `PageBar`, and the desktop window in `desktop/.../Main.kt`.
+  - **The phone is laid out as before.** (Corrected 2026-11-10: this said its tour screenshots
+    were identical pixel for pixel, but the comparison was broken: Pillow's `getbbox()` on an RGBA
+    difference looks only at the alpha channel, so opaque pictures always came out "identical".
+    The tours can't match pixel for pixel anyway: the seed uses new ids and the real clock, so
+    tape, portraits and times change from run to run. Compared by eye, and by the build session
+    after its merge, the phone's screens are laid out as before.) Two new tours, `wideTour`
+    (1180 × 780) and `wideNightTour` (1600 × 900), render the wide layouts.
+  - **The open persona's mark (2026-11-10):** the polaroid of the persona open beside the gallery
+    (their page, memory book, heartbeat or stickers) has its bottom right corner folded down, as
+    drawn in the study: the desk shows where the corner was, and the flap is the frame turned over,
+    tinted with your ink (at night too, since the frame stays light). The phone's gallery has no
+    mark. Code: `foldedCorner` on `Polaroid` and `PolaroidFrame` (`ui/.../paper/Paper.kt`),
+    `LocalOpenPersona` (`WideLayout.kt`), provided beside the gallery in `AppNavigation.kt`.
+  - **For a future version:** the margins beside a wide letter (above).
+- **The boxes (2026-11-09):** every persona has a box (`Persona.letterBox`; until one is chosen,
+  the pick from their id). Each letter in the list is the persona's box with a one-line paper
+  strip tucked beneath it. On the phone, tapping plays the box's opening (the tie comes undone,
+  the lid lifts) and then opens the letter; it's shut again when you come back. Wide, the box of
+  the letter open beside the list stays open, which is the open one's mark. The persona's page
+  has a Letter box card (who chose it, and finish, lid and tie to choose for them); in a
+  heartbeat, a persona is offered `choose_letter_box` now and then (not within 12 days of the
+  last offer, or 30 of a choice), and the offer never brings a heartbeat about on its own.
+  - Code: `core/.../model/LetterBox.kt`, `core/.../tools/LetterBoxTool.kt`,
+    `core/.../agent/LetterBoxActivity.kt` (and `optional` invitations in `HeartbeatEngine`),
+    `ui/.../ui/chats/LetterBox.kt` (the drawing and opening), `ChatsScreen` (the rows) and
+    `PersonaPage` (the card).
+  - **Checked:** 6 core tests (`LetterBoxTest`), the five tours (the tours seed set boxes for
+    Aria, Kestrel and Juno), and `LetterBoxGalleryTest`, which draws every finish, lid and tie,
+    shut and open, by day and by night (with `HARNESS_SCREENSHOTS_DIR`, it keeps the pictures).
+
+## The aim
+
+- **The same Fumibako on a computer:** the same personas, letters, memory book, planner, stickers
+  and heartbeat, in the same look.
+- **One set of screens.** The Compose screens move into a module both apps build, with Compose
+  Multiplatform, so each screen is written once and v0.5's new screens reach both.
+- **The same version on both:** 0.5.0 on the phone and on the computer, from one version number in
+  the build. A v0.5 backup opens in its own version or a later one (a backup from a newer version
+  is refused until you update), so with matching versions, v0.5's import and export moves a
+  persona (or everything) either way between phone and computer.
+- **The phone app doesn't change** because of the move: the same app id, database file, settings
+  file and key alias, so testers' letters survive the update (see *Data and migrations*).
+
+## What the code allows
+
+- **`core` runs on a computer as it is.** It's plain Kotlin/JVM: the providers (the Anthropic SDK,
+  Gemini, OpenAI-compatible, NovelAI), memory, context epochs, the heartbeat engine, the planner,
+  seasons, holidays, image hosts, link previews and music search. Its tests run on any JVM.
+- **The app** is 78 Kotlin files, about 20,800 lines:
+  - **26 files (5,300 lines) don't touch Android** (paper, tape, letters, the thread, the trays,
+    the month page, the planner's pieces, the palette, die-cut stickers, the repositories,
+    `GenerationManager`). They move as they are.
+  - **14 files (5,500 lines) use only lifecycle and navigation** (view models,
+    `collectAsStateWithLifecycle`, `NavController`), which have multiplatform builds at the
+    versions the app uses (JetBrains' lifecycle 2.11.0 and navigation 2.10.0). They move with
+    their imports changed.
+  - **26 screen files (8,200 lines) touch Android in a few places each:** `LocalContext`, pickers
+    and permission launchers, `android.text.format.DateFormat` for the phone's clock setting,
+    `Toast`, bitmaps, the time picker dialog, WebView and Custom Tabs, and fonts and icons from
+    `res/`. They move with those calls put behind small interfaces that each platform fills in. A
+    few keep an Android part: ML Kit's photo cutter, the video viewer, the in-app browser, the
+    burn shader.
+  - **12 shell files (1,800 lines) are Android's by nature:** the activity and application, the
+    Keystore, DataStore's Android factory, Room's Android setup, WorkManager, notifications and
+    their actions, media3 (playback, its session service, the video shrinker) and
+    `CalendarContract`. The database and the blob store move to the shared side; the rest stays in
+    `app`.
+- **The versions line up** (checked 2026-11-06): the app's Compose BOM (2026.09.00) resolves to
+  Compose 1.12.1, and Compose Multiplatform 1.12 is built on Compose 1.12 (1.12.2 is its current
+  stable release). Room 2.8.5 (and `room-testing`), the bundled SQLite driver and DataStore 1.3.0
+  all have JVM builds.
+
+## How it's laid out
+
+```
+core/      unchanged: plain Kotlin/JVM, all agent logic
+data/      new, multiplatform (Android and desktop): the Room database, its migrations and
+           exported schemas (moved from app/), the repositories, the settings store, the blob store
+ui/        new, multiplatform: every Compose screen, the theme, the view models, GenerationManager,
+           AppContainer (seeding Aria, recent stickers, "While you were away"), and platform/:
+           what screens need from the platform, with the phone's code in ui/src/androidMain
+           (pickers, the video and web players, ML Kit's cutter, bitmaps, the fonts as R.font)
+           and the desktop's in ui/src/desktopMain
+app/       the Android shell: MainActivity, AndroidPlatform (the services AppContainer is
+           handed), the WorkManager heartbeat, notifications, media3 import and playback, the
+           Keystore, phone calendars
+desktop/   new, the desktop shell: main(), the window, DesktopPlatform, the desktop's services
+```
+
+- **Underneath, Android stays as it is.** On Android, Compose Multiplatform is Jetpack Compose,
+  so the phone draws what it draws today. `data` and `ui` build their Android side with AGP 9's
+  Android-KMP library plugin; `app` stays a plain Android application.
+- **The database is Room on both.** The phone keeps its own SQLite (`AndroidSQLiteDriver`); the
+  desktop bundles SQLite (`BundledSQLiteDriver`). One schema and one `MIGRATIONS`, written once
+  against `SQLiteConnection`, as multiplatform Room requires.
+- **Platform interfaces** (built; `ui/src/commonMain/.../platform`): `AppPlatform`, the services
+  the container is handed (folders, secrets, settings, app state, media import, playback,
+  heartbeats, About), and expect declarations for what screens draw or launch (pickers, the camera,
+  back, permissions, the clock's default, links and files, decoding pictures, the video player, the
+  web embed, song previews). The bundled fonts, sticker drawing, the photo cutters and the burn are
+  expect declarations beside their screens. Each Android actual is the phone's own code, moved from
+  the screen it was in.
+- **The package names** stay `dev.aiharness.*`, as the app's do now.
+
+## What's different on a computer
+
+| | On the phone (today) | On a computer (v0.5) |
+| --- | --- | --- |
+| Where data lives | The app's private storage | The user's app-data folder (`%APPDATA%\Fumibako`, `~/Library/Application Support/Fumibako`, `~/.local/share/Fumibako`), outside the install folder, so updates and reinstalls keep your letters |
+| API keys | Encrypted with a Keystore key | Encrypted with a key kept in the system's keychain (Windows Credential Manager, the macOS Keychain, the Linux Secret Service) |
+| Heartbeats | WorkManager, even with the app closed | While Fumibako runs. Closing the window keeps it in the tray (the menu bar on macOS), so personas go on writing; **Quit** stops them. A heartbeat missed while the computer slept or Fumibako was quit runs once on waking or at the next launch, not once per missed hour. **Start Fumibako when I log in**, off by default |
+| A reminder that wakes a persona | A one-off WorkManager job | A timer in the running app; a missed one runs at launch, or is missed after half a day, as on the phone |
+| Notifications | With "Busy for an hour", "Till tonight", "Till tomorrow" | The system's notifications, through the tray; a click opens the letter. "Busy for now" moves to the tray's menu, since notifications from a Java app have no buttons. A reply in the post is told when it arrives (one that came while Fumibako was quit, at its next start) unless you've read it; a letter counts as read while the window is in front of you, not while it waits in the tray or sits behind another window |
+| Photos and files | The photo picker, the camera, Files | A file dialog, dragging onto your note, or pasting a picture. No camera |
+| PDFs | The first page, from Android's renderer | The first page, from PDFBox (Apache 2.0) |
+| Songs | Tags and artwork from the file; ExoPlayer with a media session | Tags and artwork from the file (jaudiotagger, LGPL); songs and previews play in the app through JavaFX's player (MP3, AAC, WAV, AIFF), and other formats in the computer's own player |
+| Videos | Three frames for models that can't watch; shrunk to fit | Sent whole where the model takes them (Gemini), else by their label. No frames and no shrinking in v0.5; they play in the computer's own player |
+| Links | Custom Tabs, and a WebView for players | The default browser |
+| A sticker from a photo | ML Kit cuts out the subject | The plain-background cutter (a photo on a plain background), which the phone also has |
+| Phone calendars | Read-only, through `CalendarContract` | None in v0.5; Settings, Planner leaves the section out |
+| Sunrise and sunset | The phone's coarse location, or a latitude and longitude typed in | A latitude and longitude typed in |
+| The clock | The phone's 12/24-hour setting | The system's time format, from its locale |
+| The burn, in the memory book | A GPU shader on Android 13 and later, else the simpler fallback | The fallback first; the shader ported to Skia later |
+| One at a time | One app | One Fumibako per user on a computer: opening it again brings the open window forward |
+
+## Mouse, keyboard and the window
+
+The screens are designed for a phone held upright. For v0.5:
+
+- **The phone's layouts in a resizable window**, about 440 by 860 at first. In a wider window the
+  content stays centered at a phone-like width, except Letters and Personas, which get wide
+  layouts (see *Your answers (2026-11-08)*).
+- **A long press becomes a right-click, or a plain drag** where it starts one: dragging a sticker
+  from the tray, moving the bookmark, a plan's stamps.
+- **Stickers:** drag to move; the scroll wheel (or the handles) to resize and Shift with the
+  wheel to turn, in place of pinch and twist.
+- **Writing:** Enter starts a new line, since letters are long; Ctrl+Enter (Cmd+Enter on a Mac)
+  sends. Escape goes back, like the phone's back gesture.
+- **Scrollbars** on long pages, and a hover state on what can be clicked (the ripple's shade; no
+  hand pointer, as native buttons on Windows keep the arrow).
+- **Wider layouts:** the letters list beside a thread and the personas gallery beside a page come
+  in v0.5 (2026-11-08). A week with room to breathe, and Settings, come later.
+
+## v0.5 on both: notes for the build session
+
+v0.5's design (`docs/design/v0.5.md`, on the design session's branch, `ccr-09dbf6b8-2c3jno`) was
+written for the phone. Built this way, each part works on the computer too:
+
+- **Import and export go in `core`:** reading and writing cards (PNG chunks, `.charx`, JSON), the
+  `.fumibako` zip and its manifest, lorebooks, and locking backups (AES-256-GCM and
+  PBKDF2-HMAC-SHA256 are in the JDK, not only in Android). The app only picks or saves the file:
+  **Save the file…** is Android's save dialog on the phone and a save dialog on the computer;
+  **Share…** is the phone's alone.
+- **Searching letters:** the FTS4 word index lives in Room, and the desktop's bundled SQLite has
+  FTS4 as well. Use a tokenizer both SQLites have, and run the search tests on both.
+- **Fonts:** the bundled Latin subsets go into Compose resources and serve both. Japanese
+  "through Android's downloadable fonts" is the phone's way; the computer downloads the same Google
+  Fonts files on first use into its app-data folder, with **Download Japanese fonts now** as on the
+  phone. The per-character chain from a Latin face to its Japanese companion
+  (`Typeface.CustomFallbackBuilder` on Android) needs its desktop equivalent, checked in step 1.
+- **Your own font files** load from a file on both, with the same 20 MB limit and the same plain
+  refusal for a file that won't load.
+- **The context slip, thinking lines, the model-change notice, the tapes and the month
+  envelopes** are shared screens with nothing per platform.
+- **New screens go in `ui`** once the move has landed. What a screen needs from the platform, it
+  asks for through an interface, never `LocalContext`; `ui`'s shared code can't see Android, so the
+  compiler keeps to this.
+
+## Data and migrations
+
+The rules in CLAUDE.md hold through the move:
+
+- **Every kept step stays.** 2→3, 3→4 and 4→5 move to `data`, rewritten against
+  `SQLiteConnection` with the same SQL, and stay until friends have v0.5 (their phones still have
+  database version 2). The test that opens a version 2 database stays, and runs twice: on Android
+  (Robolectric, the phone's SQLite) and on the JVM (the desktop's).
+- **The phone's files stay where they are:** the database's name, DataStore's `settings` file, the
+  `app_state` and `secrets` preferences and the Keystore alias, so v0.4 to v0.5 is an ordinary
+  update over the top.
+- **The desktop starts at v0.5's database version,** with nothing older to migrate, and from then
+  on takes the same steps as the phone: one `MIGRATIONS` and one set of tests for both.
+- **The schemas move** from `app/schemas` to `data/schemas`, with CLAUDE.md and the README
+  updated in the same change.
+- **Model fields and settings** work as now: defaults, no fallbacks. Settings that mean nothing on
+  a computer (phone calendars and their stamps) stay in `AppSettings` and go unused there, so an
+  Everything backup keeps them whichever way it travels.
+
+## Tests and builds
+
+- **Checks before pushing** gain the desktop's, for example
+  `./gradlew :core:test :data:jvmTest :ui:jvmTest :app:testDebugUnitTest :desktop:test` (the task
+  names settle in step 1), and CLAUDE.md lists them.
+- **Much of what Robolectric runs today can run on a plain JVM:** the Room repositories and the
+  migration test with the bundled driver, and UI tests with Compose's desktop test rules, which
+  are quicker. The Robolectric tests stay for what's Android's own.
+- **A desktop screenshot tour** renders offscreen (no display needed), visiting the phone tour's
+  screens at the desktop window's size. The phone's tour carries on.
+- **The move has its own check:** the phone's screenshot tour renders the same before and after it,
+  compared pixel by pixel, and every test passes.
+- **CI:** today's job, plus a desktop job on Windows, macOS and Linux runners that runs the desktop
+  tests and packages an installer for each (`.msi`, `.dmg`, `.deb`), uploaded beside the APK.
+  *Changed 2026-11-08:* builds run on request only (Actions minutes ran out), with the tests and
+  the Windows installer by default and macOS and Linux when asked for (CLAUDE.md, "Checks").
+- **Unsigned for friends:** Windows SmartScreen and macOS Gatekeeper warn about unsigned apps, and
+  [`docs/testers.md`](testers.md) gets the steps past them on each system, Windows first. Signing (an Apple
+  Developer ID with notarization, a Windows code-signing certificate) costs money and can wait for
+  more testers. To check in step 1: whether macOS asks for the keychain password after each
+  unsigned update.
+- **Versions:** set once and read by both builds. A macOS package can't have a version starting
+  at 0, so the `.dmg` carries its own build number; the app itself says 0.5.0 everywhere.
+
+## Order of work
+
+1. **A spike on this branch,** merged nowhere: a desktop window showing one shared screen (the
+   letters list over an in-memory harness) with this repo's toolchain (Compose Multiplatform 1.12,
+   AGP 9.5, Kotlin 2.3.21, KSP), and multiplatform Room opening a version 2 database through the
+   kept migrations with both drivers. It also settles:
+   - whether code shared by just the two JVM targets can call `java.time` and `java.io` directly
+     (the screens use `java.time` about 70 times), or needs small helpers;
+   - the font chain from Latin to Japanese faces on the desktop;
+   - the tray's notifications on each system, and the keychain library;
+   - the player for songs and previews, with a license that fits the app's GPL-3.0-or-later;
+   - whether the 26 Material icons the app uses come from Compose Multiplatform's icon artifact
+     (it stopped at 1.7.3) or are copied in as vector resources.
+2. **The move,** as one change, timed with the build session (see below): the `data` and `ui`
+   modules, the files moved with `git mv` so their history follows, the platform interfaces in
+   place of the Android calls, and `R` resources as Compose resources. The phone app behaves
+   exactly as before.
+3. **The desktop shell:** the window, the tray and its menu, the app-data folder, keys in the
+   keychain, the database and settings, one Fumibako at a time, and the first launch (Aria).
+4. **The desktop's services:** heartbeats and reminders while running, with catch-up;
+   notifications; file dialogs, drag and drop, and pasting; pictures; PDFs; songs and previews;
+   opening links; the plain-background sticker cutter.
+5. **Mouse and keyboard:** right-clicks and drags for holds, the wheel for stickers, Ctrl+Enter to
+   send, Escape for back, scrollbars, the window's size.
+6. **v0.5 on the computer,** part by part as the build session lands it: checking each on the
+   desktop and adding the desktop's side (file dialogs for import and export, the Japanese font
+   download).
+7. **Polish, tests and the installers:** the desktop screenshot tour; a desktop section in
+   `docs/testers.md` (installing, what keeps heartbeats running, where your letters live, what's not
+   there yet) and in the README; installers from CI; **0.5.0 for both**.
+
+## Working beside the build session
+
+- **The move touches every screen file,** so it should land at a quiet point: after v0.4.0 and
+  before the build session starts v0.5 (agreed). Later than that, v0.5's work and the move would
+  collide in the same files.
+- **After the move,** the build session writes each screen once in `ui` and needs to know little
+  about the desktop. When a v0.5 part needs a desktop side, the desktop session adds it.
+- **This branch** carries the desktop work. The move goes into the build branch as one change, so
+  both sessions carry on from it.
+- **Signing stays the build session's:** the move leaves `app/signing/` and the debug APK's
+  re-signing in `app/build.gradle.kts` as they are.
+
+## Progress
+
+- **2026-11-07:** your answers are in; the build and design sessions have been told.
+- **Step 1, the spike: done.** A throwaway project with this repo's versions built and ran:
+  - Shared code can use `java.time` and `java.io`: with only JVM targets, Kotlin compiles the
+    shared code once per target.
+  - Multiplatform Room migrates a version 2 database on the bundled SQLite.
+  - Compose resources reach the APK; the desktop renders offscreen for tests.
+  - Still open, for steps 3 and 4: the font chain from Latin to Japanese faces, the tray's
+    notifications on each system, the keychain library, and the in-app media player.
+  - The extended icons come from Compose Multiplatform's last build of them (1.7.3).
+- **Step 2, the move: done, on this branch** (not yet in the build branch). `data` and `ui` hold the
+  database and every screen; `app` is the Android shell; `desktop` opens the shared screens.
+  - **The phone is unchanged.** The 268 screenshots of the phone's tour are identical before and
+    after, pixel for pixel, and no AndroidX library changed version. The debug and release APKs
+    build; the release APK grew about 20 KB (14.1 MB).
+  - **Testers' letters are safe.** The kept steps (2→3, 3→4, 4→5) are the same SQL, and Room's
+    identity hash is unchanged, so an existing database opens as before. The phone's
+    MigrationTest reads `data/schemas`, and `DesktopMigrationTest` runs the same steps on the
+    desktop's SQLite.
+  - **Tests:** everything passes. `ScreenshotTour.largeTextTour` failed the same way before and
+    after the move (it waited for "THE WEEK STARTS ON"); the build session's 0.4.2 fixed it, and
+    the merged branch passes it. `nightTour` once in five runs read ExoPlayer off the main thread
+    under load (unchanged code; it passed the other four), so it's worth watching.
+  - **Merged with 0.4.2:** the build session's week-page changes came through into the moved file;
+    the tour's 276 screenshots match the build branch's, pixel for pixel.
+  - **The version** is set once, in `gradle.properties`, for both apps.
+  - **CI** also builds the desktop on Windows, macOS and Linux runners: its tests and an installer
+    for each. The Linux `.deb` builds here (164 MB with the whole Java runtime, trimmed later).
+- **Merged into the build branch** (the build session reviewed the migrations first), 2026-11-07.
+- **Step 3, the desktop shell: done.**
+  - **The tray:** the seal in the tray (the menu bar on a Mac), with Open Fumibako, Busy for now
+    (for an hour, till tonight, till tomorrow, into your planner as on the phone), Run a heartbeat
+    now, and Quit. Closing the window keeps Fumibako there, so heartbeats go on; the first close
+    says so. Where the desktop has no tray (some Linux desktops), closing quits. `--background`
+    starts it in the tray.
+  - **Settings, Heartbeat, "On this computer":** keep Fumibako in the tray (on), start it when you
+    log in (off; a Run entry in the Windows registry, a LaunchAgent on a Mac, an autostart entry
+    on Linux; only for the installed app).
+  - **API keys in the keychain:** encrypted (AES-GCM) in Fumibako's folder with one key that
+    Windows Credential Manager, the macOS Keychain or the Linux Secret Service holds. Without a
+    keychain the key is in a file only you can read, and Settings, Models and keys says so. A
+    keychain that can't be reached leaves the keys unread rather than replacing them. Keys the
+    first desktop builds kept in plain text are moved in and the plain file deleted.
+  - **One Fumibako at a time:** starting it again brings the open window forward. A click on the
+    Mac's dock icon does too.
+  - **Letters' notifications** come through the tray, by the same busy rules as the phone (now
+    shared: `ui/.../heartbeat/BusyRules.kt`, which the phone's BusyTimes uses): notified, held while
+    you're busy and told when you're free, or not notified. Held letters survive a restart.
+  - **The window** keeps its size and place.
+  - **Wording:** the shared screens say "computer" where they said "phone" (about keys, songs,
+    holidays, the clock), the phone calendars card and the camera are left out, and the Media
+    page doesn't mention Android's setting. The phone's text is unchanged.
+  - **Checked:** 15 desktop tests (keys, the login item on each system, one at a time, held
+    letters). In a real window on a virtual display with a tray: the tray and its menu, closing
+    into the tray and its notice, a second start, Busy for now landing in the planner, the
+    options card, Quit, and starting in the background.
+  - **To try on Windows and a Mac:** the tray's notifications (Java's may not show on a recent
+    macOS), and whether an unsigned Mac build asks for the keychain password after each update.
+  - **Not yet (step 4):** songs and videos playing in the app, PDFs' pages, a heartbeat as soon as
+    the computer wakes (now it comes at the next interval).
+- **Step 4, the desktop's services: done.**
+  - **Heartbeats keep to the clock:** one that came due while the computer slept comes a minute
+    after it wakes (time for the network), then the usual pace, not one per missed interval.
+    Reminders wake their persona at their time, or on waking.
+  - **Adding to a letter:** drop files on it, or paste (Ctrl+V, Command+V on a Mac) copied files
+    or a copied picture; text still pastes into the note. Pictures go together, several songs make
+    a mix, anything else goes one by one. A dashed line shows while files are dragged over.
+  - **The system's own Open and Save dialogs** (FileKit, MIT): the modern one on Windows, a Mac's,
+    and the desktop's on Linux, in place of Java's, which looked out of place.
+  - **Photos** come in turned the way the camera held them: Skia reads the EXIF orientation (now
+    tested; the earlier note that it didn't was wrong).
+  - **PDFs** come with their page count, first page (1280 wide, what a model that can't read PDFs
+    sees), a thumbnail, and their title and author, as on the phone (PDFBox, Apache 2.0).
+  - **Songs** come with their tags and cover, one as a ticket and several as a mix. They play in
+    the app with the phone's controls (next and back, shuffle, repeat), and their tickets are
+    punched. Previews in the music tray play in the app too. A format JavaFX's player doesn't
+    know (FLAC, Ogg) opens in the computer's player, with a notice.
+  - **Videos** come as film strips with their name, and their length and title for an MP4 or a
+    QuickTime file. They still play in the computer's own player.
+  - **Checked:** 45 desktop tests (heartbeats through sleep, PDFs, turned photos, song tags, the
+    player's controls, what a drop or paste hands over, the icons). In a real window: pasting a
+    picture, text, and a copied song into a letter; the Open dialog. JavaFX's player with real
+    files: MP3, M4A and WAV play, FLAC says it can't. An opt-in check, `RealAudioCheck`, plays a
+    folder of songs (set `FUMIBAKO_REAL_AUDIO`).
+  - **The phone is unchanged:** the drop-and-paste hook does nothing there, and the tour's
+    screenshots are identical.
+  - **To try on Windows:** songs and previews playing (JavaFX's player hasn't been heard on
+    Windows yet), the Open and Save dialogs, dropping and pasting, and a heartbeat after the
+    computer sleeps.
+  - **Size:** the Linux package grew about 14 MB, to 179 MB: JavaFX about 7, PDFBox, the tag
+    reader and the dialogs (with JNA) the rest.
+- **Step 5, mouse and keyboard: done.** Each hook is nothing on the phone (Expect.kt), so its screens
+  are unchanged.
+  - **A right-click does what a long press does:** a letter's options, deleting a letter from the
+    list, saving a picture, a plan's stamps, moving the bookmark, a sticker on a keepsake. Only the
+    innermost thing under the pointer answers.
+  - **Drags without holding:** a sticker comes out of the tray, and one on the paper moves, as soon
+    as the mouse moves.
+  - **The wheel:** over a selected sticker it sizes it, and with Shift turns it; in the picture
+    viewer it looks closer.
+  - **Writing:** Enter starts a new line, Ctrl+Enter (Command+Enter on a Mac) sends.
+  - **Scrollbars** on every long page and list (the letters, a letter, the planner's pages,
+    settings, personas, the memory book, the sticker tray): a thin bar at the right edge that
+    widens under the pointer; drag it, or click above or below it to move a page.
+  - **Checked:** 6 more desktop tests (51 in all). In a real window: a right-click on a letter
+    asking to delete it, Ctrl+Enter sending and Enter making a new line, the Heartbeat page's
+    scrollbar widening and dragging, a sticker dragged from the tray onto a letter, sized and
+    turned with the wheel, and moved, selected or not.
+  - **Noticed:** Escape with the sticker tray open leaves the letter, as the phone's back gesture
+    does; told the build session. Fixed in 0.4.5: Escape puts the tray away first (checked in a
+    real window).
+- **The icons, after the first install on Windows (2026-11-08):** the installers and the window
+  showed the default icon, and the tray's seal was tiny (it was the launcher's layer, the seal
+  under half its square). Now the installers, the Start menu and the window have the whole icon,
+  the seal on its envelope, and the tray has the seal filling its square. `tools/make_icon.py`
+  draws them with the phone's (docs/design/icon.md).
+- **Keeping up: letters in the post (0.4.4) on the computer (2026-11-08).** A reply held in the
+  post is told through the tray when it arrives, by the busy rules, as on the phone, and not when
+  you read it as it came. The check is shared (`ui/.../heartbeat/Arrivals.kt`; the phone's job
+  uses it too). Letters on their way are kept in the app's state, so one that arrives while
+  Fumibako is quit is told within a minute of the next start, unless it's been read.
+  - **Read only while the window is in front of you** (`inFrontOfYou()` in Expect.kt: the window
+    has the focus). Before, a letter open in a window behind others counted as read the moment a
+    reply arrived on it; now it stays unread and the tray tells you, as a computer's mail and
+    chat apps do. Hidden in the tray, the window doesn't redraw, so nothing was marked read there
+    before either (checked in a real window). The phone is always in front, so nothing changes
+    there: the tours' 279 screenshots are identical.
+  - **Checked:** 4 more desktop tests (55 in all): told when it arrives and not before, and once;
+    not when read; still told after a restart; the scheduler hands the arrival to the notices.
+- **Handed off (2026-11-09):** four parts of step 7 that don't wait on v0.5 went to a new
+  session (session_01GW4c4HGpjvftKbAAD33J5e, branch `claude/desktop-step7`): the installers'
+  notices for the libraries they carry; smaller installers, with the Java runtime trimmed to the
+  modules Fumibako needs; a desktop section in `docs/testers.md` and the README; and a desktop
+  screenshot tour.
+
+- **Step 7: the libraries' notices, from the build (2026-11-09).** `buildSrc/LibraryNotices.kt`
+  makes the list for each app from its runtime libraries: every library's license from its Maven
+  POM (or its parent's), the NOTICE files its jar passes on, and the license texts (the standard
+  ones from `buildSrc/src/main/resources/licenses`, plus any extra license files inside the jars,
+  such as PDFBox's for what it includes). A license the build doesn't know stops the build, so a
+  new library gets read before it ships; jaudiotagger's POM says only "LGPL", so the desktop's
+  build names it LGPL 2.1, from its own license file.
+  - **Where it shows:** About, "Thanks and licenses", **Read the libraries' licenses** opens it
+    in a dialog, on the phone and the computer alike (your answer). On a computer it's also
+    beside the app: `lib/app/resources/licenses/libraries.txt` in the .deb (checked by
+    unpacking it); on Windows it should be `app\resources\licenses\libraries.txt` in the install
+    folder (to check from the first Windows installer). The Java runtime's own
+    notices stay in its `legal` folder, which the list points to.
+  - **What's in it:** 117 libraries on the computer (101 Apache 2.0; MIT, LGPL 2.1, GPL 2.0 with
+    the Classpath Exception, BSD), about 140 KB; 191 on the phone, about 56 KB, including Google's
+    ML Kit and Play Services (for the sticker cutter), which are under Google's terms rather than
+    an open license, and are listed with a link to them.
+  - **Checked:** in a real window (the dialog opens at once and scrolls a paragraph at a time).
+    The phone's only change is the new link on About (`first_02_about`). The tours aren't
+    pixel-identical from one run to the next any more: the seeded personas get random ids, which
+    choose their tilts and blobs, so two runs of the same code differ in about 180 of 279
+    pictures. Of the 98 that hold still, only About changed.
+- **Step 7, the rest: done (2026-11-10),** by the desktop installers session
+  (session_01GW4c4K7manrhf58LhsT5bS, branch `claude/desktop-installers`), merged into `main` by
+  the Architect session.
+  - **Smaller installers** (702f204): `includeAllModules` gives way to `modules(...)` in
+    `desktop/build.gradle.kts`, each module with why it's there. The Linux `.deb` went from 179.6
+    to 167.9 MB, and the installed runtime from 163 to 118 MB (`jdk.localedata`, about 28 MB, stays
+    so clocks and dates follow the system's language). Checked in the container on the packaged
+    runtime (HTTPS, elliptic curves, AES-GCM and PBKDF2, charsets, the clock in other languages,
+    the bundled SQLite with FTS4, PDFs, song tags, JavaFX playing an MP3, the tray, the clipboard,
+    the Anthropic client), against a runtime missing three of the modules that failed those
+    checks, and the packaged app under Xvfb with its tray. Windows and macOS packaging aren't
+    checked yet.
+  - **The testers' guide and the README** (2567630): `docs/testers.md` has an "On a computer"
+    section (installing on each system, past SmartScreen and Gatekeeper, heartbeats and the tray,
+    where letters live, what's not there yet), and the README its own. The SmartScreen and
+    Gatekeeper steps are written from how those systems behave, not tried.
+  - **A desktop screenshot tour** (e5379fc, `DesktopScreenshotTour`): the phone tour's letters and
+    personas at a new window's size (1180 by 780), by day, by night and a first run, offscreen with
+    no display, about 45 seconds; CLAUDE.md's checks say when to run it. It navigates by pointing
+    `Dispatchers.Main` at the test's thread. Emoji draw in black and white in the container, which
+    has no color emoji font.
+  - **Found:** on Linux the keychain is never used. FileKit's dialogs bring dbus-java 5.2.0, and
+    java-keyring's Secret Service backend (secret-service 1.8.1) was built for 4.2.1, so it fails
+    (`NoSuchMethodError`) and keys are encrypted with a key in an owner-only file instead, which
+    Settings says. Windows and macOS are unaffected. Also, the Keys page says "Kept encrypted on
+    this phone" on the computer.
+
+## Noted for later
+
+- The margins beside a letter in a wide window (ideas drawn in the study: the day beside its first
+  letter, what she kept as a slip, her index card of what she had in mind, today's planner page),
+  for a future version (2026-11-10).
+- Sync between the phone and the computer.
+- Calendars on the computer: a calendar's private iCal link (Google, Outlook and iCloud each offer
+  one), read-only like the phone's.
+- Cutting a sticker's subject out of a photo on the computer (an on-device model).
+- Video frames and shrinking on the computer; videos playing in the app (Compose Media Player, MIT,
+  draws frames into the window, but it needs Kotlin 2.4); a camera.
+- A smaller copy of a big or unusual song for models that hear songs, as the phone makes; FLAC and
+  Ogg songs playing in the app.
+- The burn shader on Skia.
+- Wider layouts for the planner and Settings, a menu bar, and more keyboard shortcuts. The planner was
+  redrawn for v0.5 (`calendar.md`, "Third pass", on the design branch): the header holds the
+  navigation and the Week and Month switch, and nothing hangs off the page's right edge any more,
+  which leaves a wide planner easier to lay out when its turn comes. Design questions go to the
+  design session working from `docs/design/handoff.md`.
+- Signing, notarization, and updates that install themselves.
+- A friendlier installer: the Windows installer's banner and dialog pictures, a background for
+  the Mac's disk image.
+- The Linux keychain (step 7, "Found"): dbus-java 5.2 from FileKit against secret-service 1.8.1,
+  built for 4.2.

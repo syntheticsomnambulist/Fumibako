@@ -1,6 +1,9 @@
 package dev.aiharness.core.theme
 
 import dev.aiharness.core.model.DayNightMode
+import dev.aiharness.core.model.Hemisphere
+import dev.aiharness.core.model.SeasonsFollow
+import dev.aiharness.core.seasons.Seasons
 import dev.aiharness.core.model.Season
 import dev.aiharness.core.model.ThemeSettings
 import dev.aiharness.core.model.TimeOfDay
@@ -25,7 +28,7 @@ object ThemeClock {
         if (settings.dayNight == DayNightMode.STATIC) return ThemeChoice(settings.staticSeason, settings.staticTime, null)
         val now = Instant.ofEpochMilli(nowMillis).atZone(zone)
         val today = now.toLocalDate()
-        val season = seasonFor(today, settings.latitude)
+        val season = seasonFor(today, settings, zone)
         val nextMidnight = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
 
         val lat = settings.latitude
@@ -62,9 +65,22 @@ object ThemeClock {
         return ThemeChoice(season, if (day) TimeOfDay.HIRU else TimeOfDay.YORU, minOf(nextBoundary ?: nextMidnight, nextMidnight))
     }
 
+    /** Your side of the equator: as set, else from the saved location, else from the time zone. */
+    fun hemisphere(settings: ThemeSettings, zone: ZoneId): Hemisphere =
+        settings.hemisphere ?: settings.latitude?.let { if (it < 0) Hemisphere.SOUTH else Hemisphere.NORTH } ?: Seasons.hemisphereOf(zone)
+
+    /** The theme's season on [date]: by the weather or by the solar terms, as [settings] say, on your side of the equator. */
+    fun seasonFor(date: LocalDate, settings: ThemeSettings, zone: ZoneId): Season {
+        val hemisphere = hemisphere(settings, zone)
+        return when (settings.seasonsFollow) {
+            SeasonsFollow.WEATHER -> weatherSeason(date, hemisphere)
+            SeasonsFollow.SOLAR_TERMS -> Seasons.themeSeason(date, zone, hemisphere)
+        }
+    }
+
     /** Meteorological seasons, flipped south of the equator. */
-    fun seasonFor(date: LocalDate, latitude: Double?): Season {
-        val month = if (latitude != null && latitude < 0) (date.monthValue + 5) % 12 + 1 else date.monthValue
+    fun weatherSeason(date: LocalDate, hemisphere: Hemisphere): Season {
+        val month = if (hemisphere == Hemisphere.SOUTH) (date.monthValue + 5) % 12 + 1 else date.monthValue
         return when (month) {
             3, 4, 5 -> Season.HARU
             6, 7, 8 -> Season.NATSU

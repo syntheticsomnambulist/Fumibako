@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="288" height="216" viewBox="-12 -22 144 108">
+  <!-- Fumibako box: kiri, engraved on the lid, cross, shut. 120 x 80 (the viewBox has room for the lid and loose cords). Aria's ink (sakura), autumn by day. -->
+  <defs><pattern id="pattern" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.25" fill="#f8f0e9"></circle></pattern></defs>
+  <g id="box">
+    <rect x="5" y="54" width="110" height="23" rx="3" fill="#e6d8cb"></rect>
+    <rect x="27.5" y="58" width="5" height="19" fill="#af788f"></rect>
+    <rect x="5" y="9" width="110" height="51" rx="3" fill="#e6d8cb"></rect>
+    <rect x="10" y="14" width="100" height="44" fill="#d7b6be"></rect>
+    <rect x="10" y="14" width="100" height="8" fill="#bd8d9e"></rect>
+    <polygon points="10,14 16,22 16,58 10,58" fill="#caa1ae"></polygon>
+    <polygon points="110,14 104,22 104,58 110,58" fill="#caa1ae"></polygon>
+  </g>
+  <g id="lid">
+    <rect x="0" y="38" width="120" height="22" rx="5" fill="#cebeaf"></rect>
+    <rect x="0" y="2" width="120" height="48" rx="6" fill="#e6d8cb"></rect>
+    <path d="M6 12.08 C 32.400000000000006 10.08, 74.4 14.08, 114 12.08" fill="none" stroke="#cebeaf" stroke-width="1" stroke-linecap="round" stroke-linejoin="miter"></path>
+    <path d="M6 23.6 C 32.400000000000006 21.6, 74.4 25.6, 114 23.6" fill="none" stroke="#cebeaf" stroke-width="1" stroke-linecap="round" stroke-linejoin="miter"></path>
+    <path d="M6 34.64 C 32.400000000000006 32.64, 74.4 36.64, 114 34.64" fill="none" stroke="#cebeaf" stroke-width="1" stroke-linecap="round" stroke-linejoin="miter"></path>
+    <rect x="27.5" y="1" width="5" height="59" fill="#af788f"></rect>
+    <rect x="0" y="39.5" width="120" height="5" fill="#af788f"></rect>
+    <text x="79" y="29.84" text-anchor="middle" font-family="Zen Old Mincho" font-weight="600" font-size="19" fill="#f8f0e9">Aria</text>
+    <text x="79" y="28.84" text-anchor="middle" font-family="Zen Old Mincho" font-weight="600" font-size="19" fill="#cebeaf">Aria</text>
+  </g>
+  <g id="bow">
+    <rect x="25" y="37" width="10" height="10" rx="2" fill="#af788f" transform="matrix(0.707 0.707 -0.707 0.707 38.485 -8.912)"></rect>
+    <path d="M27 42 H 33 M30 39 V 45" fill="none" stroke="#d7b6be" stroke-width="1" stroke-linecap="round" stroke-linejoin="miter"></path>
+    <polygon points="33,44 43,52 41,54 31,46" fill="#af788f"></polygon>
+    <polygon points="27,44 19,53 21,55 29,46" fill="#af788f"></polygon>
+  </g>
+</svg>

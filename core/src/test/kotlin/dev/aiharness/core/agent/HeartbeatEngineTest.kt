@@ -80,11 +80,13 @@ class HeartbeatEngineTest {
         val provider = ScriptedProvider()
         val (env, _) = envWithChat(provider)
 
-        env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(quietHoursStart = 0, quietHoursEnd = 23)) }
+        env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(quietHoursStart = 0, quietHoursEnd = 23))) }
         assertEquals("quiet hours", (env.harness.heartbeat.run().single() as HeartbeatOutcome.Skipped).reason)
 
-        env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(quietHoursStart = null, minSilenceMinutes = 600)) }
-        assertEquals("conversation is recent", (env.harness.heartbeat.run().single() as HeartbeatOutcome.Skipped).reason)
+        // Straight away again: the persona keeps its own pace, unless forced ("Run a heartbeat now").
+        assertEquals("not time yet", (env.harness.heartbeat.run().single() as HeartbeatOutcome.Skipped).reason)
+        env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(rhythm = it.heartbeat.rhythm.copy(quietHoursStart = null, minSilenceMinutes = 600))) }
+        assertEquals("conversation is recent", (env.harness.heartbeat.run(force = true).single() as HeartbeatOutcome.Skipped).reason)
 
         env.settingsRepo.update { it.copy(heartbeat = it.heartbeat.copy(mode = HeartbeatMode.TIME_AWARENESS)) }
         assertTrue(env.harness.heartbeat.run().isEmpty())

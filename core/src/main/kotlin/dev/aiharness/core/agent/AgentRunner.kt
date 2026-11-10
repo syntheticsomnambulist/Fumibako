@@ -12,6 +12,7 @@ import dev.aiharness.core.llm.StopReason
 import dev.aiharness.core.llm.complete
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.model.ChatMessage
+import dev.aiharness.core.model.LetterTravel
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.MessageOrigin
@@ -21,6 +22,7 @@ import dev.aiharness.core.model.MoodTags
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.ToolMode
 import dev.aiharness.core.model.UserPersona
+import dev.aiharness.core.tools.SlotKeeper
 import dev.aiharness.core.tools.ToolContext
 import dev.aiharness.core.tools.ToolOutcome
 import dev.aiharness.core.util.newId
@@ -67,11 +69,15 @@ class AgentRunner(private val h: Harness) {
         conversationId: String,
         text: String,
         images: List<ContentPart.Image> = emptyList(),
+        attachments: List<ContentPart.Attachment> = emptyList(),
     ): Flow<AgentEvent> = channelFlow {
         h.locks.withLock(conversationId) {
             val setup = resolveOrFail(conversationId) { send(it) } ?: return@withLock
             val history = h.conversations.getMessages(conversationId)
             val now = h.clock.nowMillis()
+            val messageId = newId()
+            // Stickers on the draft go with the note, and the persona hears about them with it.
+            h.stickerService.sendDraft(conversationId, messageId)
             val turnContext = h.turnContext.build(
                 persona = setup.persona,
                 userPersona = setup.userPersona,
@@ -79,14 +85,18 @@ class AgentRunner(private val h: Harness) {
                 history = history,
                 query = text,
                 epoch = setup.conversation.context,
+                conversationId = conversationId,
+                currentMessageId = messageId,
+                profile = setup.profile,
             )
             val userMessage = ChatMessage(
-                id = newId(),
+                id = messageId,
                 conversationId = conversationId,
                 role = MessageRole.USER,
                 parts = buildList {
                     if (text.isNotBlank()) add(ContentPart.Text(text))
                     addAll(images)
+                    addAll(attachments)
                 },
                 createdAt = now,
                 origin = MessageOrigin.USER,
@@ -96,8 +106,11 @@ class AgentRunner(private val h: Harness) {
             val conversation = h.updateConversation(conversationId) { it.copy(updatedAt = now, lastUserMessageAt = now) }
                 ?: setup.conversation
             send(AgentEvent.UserMessageSaved(userMessage))
+            // What the persona's model can't take in, the utility model may describe before it reads the note.
+            val arrived = if (userMessage.images.isEmpty() && userMessage.attachments.isEmpty()) userMessage
+            else runCatching { h.describer.onArrival(userMessage, setup.profile, setup.settings) }.getOrDefault(userMessage)
 
-            runGuarded(setup.copy(conversation = conversation), history + userMessage) { send(it) }
+            runGuarded(setup.copy(conversation = conversation), history + arrived, arrivalFor(setup, history)) { send(it) }
         }
     }
 
@@ -113,7 +126,7 @@ class AgentRunner(private val h: Harness) {
             }
             // Removing only the tail keeps the earlier prefix intact, so replay data stays valid.
             h.conversations.deleteMessages(history.drop(lastUser + 1).map { it.id })
-            runGuarded(setup, history.take(lastUser + 1)) { send(it) }
+            runGuarded(setup, history.take(lastUser + 1), arrivalFor(setup, history.take(lastUser + 1))) { send(it) }
         }
     }
 
@@ -127,7 +140,19 @@ class AgentRunner(private val h: Harness) {
         null
     }
 
-    private suspend fun runGuarded(setup: TurnSetup, history: List<ChatMessage>, emit: suspend (AgentEvent) -> Unit) {
+    /**
+     * When a reply written now reaches you (letters in the post): after the persona's travel time,
+     * or Settings', and never before a reply already on its way. Null when it comes straight away.
+     */
+    internal fun arrivalFor(setup: TurnSetup, history: List<ChatMessage>): Long? {
+        val travel = setup.persona.letterTravel ?: setup.settings.letters.travel
+        if (travel == LetterTravel.STRAIGHT_AWAY) return null
+        val now = h.clock.nowMillis()
+        val onItsWay = history.mapNotNull { it.deliverAt }.filter { it > now }.maxOrNull()
+        return maxOf(now + travel.pick(), (onItsWay ?: 0L) + 1_000L)
+    }
+
+    private suspend fun runGuarded(setup: TurnSetup, history: List<ChatMessage>, deliverAt: Long?, emit: suspend (AgentEvent) -> Unit) {
         try {
             val outcome = runTurn(
                 setup = setup,
@@ -137,6 +162,7 @@ class AgentRunner(private val h: Harness) {
                 background = false,
                 allowCompaction = true,
                 emit = emit,
+                deliverAt = deliverAt,
             )
             emit(AgentEvent.Finished(outcome.finalText, outcome.refused))
         } catch (e: CancellationException) {
@@ -158,12 +184,16 @@ class AgentRunner(private val h: Harness) {
         background: Boolean,
         allowCompaction: Boolean,
         emit: suspend (AgentEvent) -> Unit,
+        slots: SlotKeeper? = null,
+        /** A reply in the post: when it reaches you (its messages are kept back till then). */
+        deliverAt: Long? = null,
     ): TurnOutcome {
         var conversation = setup.conversation
         val transcript = baseHistory.toMutableList()
         val produced = mutableListOf<ChatMessage>()
         val provider = h.providers.forProfile(setup.profile)
-        val specs = if (setup.profile.toolMode == ToolMode.NONE) emptyList() else h.tools.available(setup.settings).map { it.spec }
+        val specs = if (setup.profile.toolMode == ToolMode.NONE) emptyList() else h.tools.available(setup.settings, setup.persona).map { it.spec }
+        val stickerShelf = if (specs.any { it.name == "place_sticker" }) h.stickerService.shelf(setup.persona.id) else null
         var finalText = ""
 
         for (round in 0 until setup.settings.maxToolRounds.coerceAtLeast(1)) {
@@ -175,6 +205,7 @@ class AgentRunner(private val h: Harness) {
                     settings = setup.settings,
                     profile = setup.profile,
                     tools = specs,
+                    stickers = stickerShelf,
                     history = transcript,
                     allowCompaction = allowCompaction && round == 0,
                     summarize = { request -> h.summarizer.summarize(setup.profile, setup.settings, request) },
@@ -197,6 +228,8 @@ class AgentRunner(private val h: Harness) {
                 }
             }
             val turn = result ?: throw LlmException("The model stream ended without a result", retryable = true)
+            // Pages the provider opened itself (Claude's web fetch): the persona's read stamp lands on their cuttings.
+            turn.opened.forEach { url -> runCatching { h.linkReading.markRead(conversation.id, url, setup.persona.id) } }
             val refused = turn.stopReason == StopReason.REFUSAL
 
             val assistant = ChatMessage(
@@ -219,6 +252,9 @@ class AgentRunner(private val h: Harness) {
                 errorMessage = if (refused) refusalMessage(turn) else null,
                 usage = turn.usage,
                 mood = MoodTags.parse(turn.text),
+                writtenWith = dev.aiharness.core.model.WrittenWith.of(setup.profile),
+                // A refusal is said straight away, not after the wait.
+                deliverAt = deliverAt.takeUnless { refused },
             )
             sink.append(assistant)
             transcript += assistant
@@ -230,12 +266,12 @@ class AgentRunner(private val h: Harness) {
             // Don't run tools from a truncated turn: their arguments may be incomplete.
             if (turn.toolCalls.isEmpty() || turn.stopReason == StopReason.MAX_TOKENS) break
 
-            val toolContext = ToolContext(conversation, setup.persona, setup.userPersona, setup.settings, background, messageId = assistant.id)
+            val toolContext = ToolContext(conversation, setup.persona, setup.userPersona, setup.settings, background, messageId = assistant.id, slots = slots)
             val resultParts = mutableListOf<ContentPart>()
             turn.toolCalls.forEach { call ->
                 emit(AgentEvent.ToolStarted(call.name, call.argumentsJson))
                 val outcome = h.tools.execute(LlmToolCall(call.id, call.name, call.argumentsJson), toolContext)
-                resultParts += ContentPart.ToolResult(call.id, call.name, outcome.content, outcome.isError)
+                resultParts += ContentPart.ToolResult(call.id, call.name, outcome.content, outcome.isError, outcome.foundLetters)
                 resultParts += outcome.attachments
                 emit(AgentEvent.ToolFinished(call.name, outcome))
             }
@@ -247,6 +283,7 @@ class AgentRunner(private val h: Harness) {
                 createdAt = h.clock.nowMillis(),
                 origin = origin,
                 epochId = prepared.state.epochId,
+                deliverAt = deliverAt,
             )
             sink.append(toolMessage)
             transcript += toolMessage
@@ -278,7 +315,8 @@ class AgentRunner(private val h: Harness) {
         h.updateConversation(conversationId) {
             it.copy(
                 updatedAt = now,
-                lastAgentMessageAt = reply?.createdAt ?: it.lastAgentMessageAt,
+                // A reply in the post counts from when it arrives (the letters list says it's on its way till then).
+                lastAgentMessageAt = reply?.arrivedAt ?: it.lastAgentMessageAt,
                 mood = reply?.mood ?: it.mood,
                 preview = reply?.let { r -> Conversation.previewOf(r.displayText) } ?: it.preview,
                 previewFromHeartbeat = reply?.let { r -> r.origin == MessageOrigin.HEARTBEAT } ?: it.previewFromHeartbeat,
@@ -312,6 +350,20 @@ class LlmSummarizer(private val h: Harness) {
                 apiKey = key,
                 system = "You write concise, faithful memory summaries.",
                 messages = listOf(LlmMessage.User(listOf(LlmPart.Text("$instruction\n\n<transcript>\n${request.transcript}\n</transcript>")))),
+            ),
+        )
+        return result.text.takeIf { result.stopReason != StopReason.REFUSAL }
+    }
+
+    /** A short behind-the-scenes question for the utility model (e.g. sorting mood words). */
+    suspend fun ask(fallbackProfile: ModelProfile, settings: AppSettings, system: String, prompt: String): String? {
+        val profile = settings.utilityModelProfileId?.let { h.profiles.get(it) } ?: fallbackProfile
+        val result = h.providers.forProfile(profile.copy(toolMode = ToolMode.NONE)).complete(
+            LlmRequest(
+                profile = profile.copy(maxOutputTokens = profile.maxOutputTokens.coerceAtMost(2_000)),
+                apiKey = h.apiKey(profile.credentialId),
+                system = system,
+                messages = listOf(LlmMessage.User(listOf(LlmPart.Text(prompt)))),
             ),
         )
         return result.text.takeIf { result.stopReason != StopReason.REFUSAL }

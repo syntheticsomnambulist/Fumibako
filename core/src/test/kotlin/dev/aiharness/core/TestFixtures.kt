@@ -18,6 +18,8 @@ import dev.aiharness.core.storage.inmemory.InMemoryMemoryRepository
 import dev.aiharness.core.storage.inmemory.InMemoryModelProfileRepository
 import dev.aiharness.core.storage.inmemory.InMemoryPersonaRepository
 import dev.aiharness.core.storage.inmemory.InMemorySecretStore
+import dev.aiharness.core.storage.inmemory.InMemoryMarkRepository
+import dev.aiharness.core.storage.inmemory.InMemoryStickerRepository
 import dev.aiharness.core.storage.inmemory.InMemorySettingsRepository
 import dev.aiharness.core.storage.inmemory.InMemoryUserPersonaRepository
 import dev.aiharness.core.util.Clock
@@ -58,7 +60,10 @@ class ScriptedProvider(
 
 class TestEnv(
     val provider: ScriptedProvider = ScriptedProvider(),
-    settings: AppSettings = AppSettings(),
+    // Replies come straight away in tests, unless one is about letters in the post.
+    settings: AppSettings = AppSettings(letters = dev.aiharness.core.model.LetterSettings(travel = dev.aiharness.core.model.LetterTravel.STRAIGHT_AWAY)),
+    /** The phone's calendars, for the planner (none by default). */
+    phone: dev.aiharness.core.planner.PhoneCalendars? = null,
 ) {
     val clock = FakeClock()
     val personas = InMemoryPersonaRepository()
@@ -68,22 +73,33 @@ class TestEnv(
     val memories = InMemoryMemoryRepository()
     val settingsRepo = InMemorySettingsRepository(settings)
     val activity = InMemoryActivityRepository()
+    val stickers = InMemoryStickerRepository()
+    val marks = InMemoryMarkRepository()
+    val plannerEntries = dev.aiharness.core.storage.inmemory.InMemoryPlannerRepository()
+    val credentials = InMemoryCredentialRepository()
+    val secrets = InMemorySecretStore()
+    val images = RecordingImageGenerator()
     val logs = mutableListOf<String>()
 
     val harness = Harness(
         personas = personas,
         userPersonas = userPersonas,
         profiles = profiles,
-        credentials = InMemoryCredentialRepository(),
-        secrets = InMemorySecretStore(),
+        credentials = credentials,
+        secrets = secrets,
         conversations = conversations,
         memories = memories,
         settings = settingsRepo,
         blobs = InMemoryBlobStore(),
         activity = activity,
+        stickers = stickers,
+        marks = marks,
+        plannerEntries = plannerEntries,
         clock = clock,
         providers = ProviderRegistry(listOf(provider)),
         embedderFactory = null,
+        imageGenerator = images,
+        phoneCalendars = phone,
         log = { logs += it },
     )
 
@@ -112,5 +128,15 @@ class TestEnv(
         userPersonas.upsert(user)
         profiles.upsert(profile)
         settingsRepo.update { it.copy(activeUserPersonaId = user.id, defaultModelProfileId = profile.id) }
+    }
+}
+
+/** An image host that records what it was asked to draw and returns a tiny picture. */
+class RecordingImageGenerator : dev.aiharness.core.image.ImageGenerator {
+    val requests = mutableListOf<dev.aiharness.core.image.ImageRequest>()
+
+    override suspend fun generate(request: dev.aiharness.core.image.ImageRequest, apiKey: String?): List<dev.aiharness.core.image.GeneratedImage> {
+        requests += request
+        return listOf(dev.aiharness.core.image.GeneratedImage(byteArrayOf(1, 2, 3), "image/png", 1))
     }
 }
