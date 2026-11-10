@@ -255,8 +255,7 @@ class DesktopScreenshotTour {
         back()
         // Her page again, scrolled about where it was (the heartbeat card; her memory book is above, off the screen).
         waitFor("Wakes now and then")
-        // Once the gallery's list holds it (just after going back, it can still be on its way).
-        compose.waitUntil(timeoutMillis = 10_000) { runCatching { scrollTo("All your personas") }.isSuccess }
+        scrollTo("All your personas")
         click("All your personas")
         waitFor("Your personas")
         shot("07_your_personas")
@@ -365,16 +364,17 @@ class DesktopScreenshotTour {
     }
 
     /** Scrolls whichever list or page holds [text] (beside a list, the page is the later one). */
+    /** Scrolls whichever list holds [text] to it, trying again for a while: just after going back, it can still be on its way. */
     private fun Tour.scrollTo(text: String, exact: Boolean = false) {
         val matcher = if (exact) hasText(text) else hasText(text, substring = true, ignoreCase = true)
-        val lists = compose.onAllNodes(hasScrollToNodeAction())
-        for (i in lists.fetchSemanticsNodes().size - 1 downTo 0) {
-            if (runCatching { lists[i].performScrollToNode(matcher) }.isSuccess) {
-                compose.waitForIdle()
-                return
+        val found = runCatching {
+            compose.waitUntil(timeoutMillis = 10_000) {
+                val lists = compose.onAllNodes(hasScrollToNodeAction())
+                (lists.fetchSemanticsNodes().size - 1 downTo 0).any { i -> runCatching { lists[i].performScrollToNode(matcher) }.isSuccess }
             }
-        }
-        error("No list holds \"$text\"")
+        }.isSuccess
+        if (!found) error("No list holds \"$text\"")
+        compose.waitForIdle()
     }
 
     /** Lets pictures decoding in the background land before a picture is taken. */
