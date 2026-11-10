@@ -12,7 +12,16 @@ you'd made) waits for you, and is listed at the end.
 
 ## Choices
 
-None yet.
+None of my own yet. Two calls the build session, Kanna, made in v0.5's step 6 (fonts) and asked
+you to check:
+
+1. **A Latin-only font file of yours** shows Japanese in the phone's own font, not in Yomogi.
+   (In `main` 2026-11-10; `docs/plan-v0.5.md`, Progress, step 6.)
+2. **The hand picker** draws only the chosen hand and Yomogi in their own faces; the other hands
+   say "comes when chosen", so nothing downloads just from browsing. (Same.)
+
+I looked at both and left them as they are: each follows the design's "another hand downloads
+when it's chosen" (`v0.5.md`, Her hand, Downloads).
 
 ## Waiting for you
 
