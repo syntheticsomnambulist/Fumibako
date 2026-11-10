@@ -32,6 +32,9 @@ Updated 2026-11-10.
     envelopes).
   - Next: steps 6 to 8 (fonts, the planner redrawn, then polish, tests and 0.5.0 for the phone and
     the computer).
+  - Found, for step 8: the large-text phone tour fails now and then at different steps (3 of 7 runs
+    on 2026-11-10), and on a computer the Export and Open a backup pages light the side rail's
+    Settings tab even when reached from Personas.
   - The stationery update goes in whole, as designed, with no changes until friends have installed
     and explored the test build (the user, 2026-11-10, relayed by the build session).
   - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
@@ -43,7 +46,9 @@ Updated 2026-11-10.
   shell, the desktop's services, mouse and keyboard) are done.
   - Step 6, v0.5 on the computer: the computer's side of each v0.5 part as it lands (save and open
     dialogs for import and export, Japanese fonts in the app-data folder). Taken by the desktop
-    installers session, part by part after Kanna lands each (the user, 2026-11-10).
+    installers session, part by part after Kanna lands each (the user, 2026-11-10). Import and
+    export: done (a backup or card opened with Fumibako goes to its page; `.fumibako` registered
+    with each installer). The Japanese fonts follow v0.5's step 6.
   - Step 7, done: the libraries' notices, from the build (About, and beside the installed app);
     smaller installers (the Java runtime trimmed to the modules Fumibako uses); a desktop section
     in `testers.md` and the README; and a desktop screenshot tour (2026-11-10, the desktop
