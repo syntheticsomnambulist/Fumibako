@@ -27,9 +27,11 @@ Updated 2026-11-10.
     memories, Won't fade), step 2 (in a letter, bar thinking lines), the Fumibako boxes, the
     gallery's folded corner for the open persona, step 3 (searching letters on screen), and step 4
     (import and export: character cards in and out, `.fumibako` backups, optionally locked), and
-    her lines on the postmark (below).
-  - Next: steps 5 to 8 (the stationery update, fonts, the planner redrawn, then polish, tests and
-    0.5.0 for the phone and the computer).
+    her lines on the postmark (below), and step 5 (the stationery update, in full: thirteen
+    patterns in light and dark shades, the new tape picker, eight placements that turn, the months'
+    envelopes).
+  - Next: steps 6 to 8 (fonts, the planner redrawn, then polish, tests and 0.5.0 for the phone and
+    the computer).
   - The stationery update goes in whole, as designed, with no changes until friends have installed
     and explored the test build (the user, 2026-11-10, relayed by the build session).
   - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
