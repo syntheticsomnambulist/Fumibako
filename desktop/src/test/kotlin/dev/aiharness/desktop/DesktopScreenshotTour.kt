@@ -208,6 +208,9 @@ class DesktopScreenshotTour {
     private fun Tour.personas() {
         click("Personas")
         waitFor("Choose a persona")
+        // The gallery comes a moment after the empty side; Juno is only in it.
+        waitFor("Juno")
+        settle()
         shot("03_personas")
         click("Aria")
         waitFor("Write a letter")
@@ -380,19 +383,22 @@ class DesktopScreenshotTour {
     }
 
     /**
-     * The window's content in an offscreen scene of the window's size. Dispatchers.Main is the test's
-     * own thread meanwhile: input comes from this thread, and navigation (through lifecycle) checks
-     * that it's on Main's thread, which in the app is Swing's.
+     * The window's content in an offscreen scene of the window's size, with Dispatchers.Main as
+     * [TourMain] meanwhile.
      */
     private fun window(container: AppContainer, prefix: String, steps: Tour.() -> Unit) {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(TourMain(Thread.currentThread()))
         try {
             runDesktopComposeUiTest(WIDTH, HEIGHT) {
                 val backs = BackHandlers()
                 setContent { FumibakoWindow(container, backs) { AppNavigation(MutableStateFlow(null)) } }
                 val tour = Tour(this, prefix, outDir!!, backs)
-                // Where it stopped, if it stops: a picture says more than the timeout.
-                runCatching { tour.steps() }.onFailure { runCatching { tour.shot("stopped_here") }; throw it }
+                // Where it stopped, if it stops: a picture says more than the timeout. Given ten seconds,
+                // since a page that never goes idle would otherwise hold the failure back for good.
+                runCatching { tour.steps() }.onFailure { failure ->
+                    kotlin.concurrent.thread(isDaemon = true) { runCatching { tour.shot("stopped_here") } }.join(10_000)
+                    throw failure
+                }
             }
         } finally {
             Dispatchers.resetMain()
@@ -713,6 +719,25 @@ class DesktopScreenshotTour {
         val bitmap = ImageBitmap(width, height)
         draw(Canvas(bitmap))
         return Image.makeFromBitmap(bitmap.asSkiaBitmap()).encodeToData(EncodedImageFormat.PNG)!!.bytes
+    }
+
+    /**
+     * Main for the tour: work runs at once on the test's thread (input comes from it, and navigation,
+     * through lifecycle, checks it's on Main's thread) or on Swing's, where the scene is measured and
+     * drawn; work resuming anywhere else goes to Swing's, so it never changes what's on screen while
+     * a page is being measured.
+     */
+    private class TourMain(private val testThread: Thread) : kotlinx.coroutines.MainCoroutineDispatcher() {
+        override val immediate: kotlinx.coroutines.MainCoroutineDispatcher get() = this
+
+        override fun isDispatchNeeded(context: kotlin.coroutines.CoroutineContext): Boolean =
+            Thread.currentThread() != testThread && !javax.swing.SwingUtilities.isEventDispatchThread()
+
+        // What it changed is announced at once, so the test's scene sees it on its next frame.
+        override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) = javax.swing.SwingUtilities.invokeLater {
+            block.run()
+            androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
+        }
     }
 
     private companion object {

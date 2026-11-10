@@ -526,6 +526,12 @@ The rules in CLAUDE.md hold through the move:
     pictures. Of the 98 that hold still, only About changed.
 - **Step 6, v0.5 on the computer: taken by the desktop installers session** (the user,
   2026-11-10), part by part after the build session lands each, on `claude/desktop-installers`.
+  - **Import and export (2026-11-10, 500acbe and 491c205):** a file Fumibako is started with, a
+    second start hands over, or the Mac's open-file event sends goes to its page (Import a card, Open
+    a backup), one at a time; each installer registers `.fumibako`, and the `.deb`'s menu entry
+    takes files (`%F`). Checked under Xvfb with the installed `.deb`: a backup saved through the
+    GTK dialog and opened again (locked too), and a card exported and imported. Not yet tried:
+    Windows and Mac file association, a file manager's double-click, the Mac's open-file event.
   With it, the session fixed the Linux keychain and the Keys page's "this phone" (step 7,
   "Found"; 3abda39 and 44adac6, in `main` 2026-11-10). `SecretService.kt` speaks the Secret
   Service's D-Bus API through dbus-java 5.2 (secret-service 3.0.0-alpha, built for it, read every

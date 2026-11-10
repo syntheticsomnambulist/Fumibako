@@ -302,8 +302,11 @@ HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :desktop:test --tests '*Desktop
 ## Design
 
 The visual direction (madoromi ink colors, letter-style messages, washi tape, stickers) is written
-up in [`docs/design/`](docs/design/README.md), with interactive mockups. The fonts are bundled
-placeholders until v0.5's fonts land (SIL OFL, see `ui/src/commonMain/composeResources/files/licenses/fonts.txt`).
+up in [`docs/design/`](docs/design/README.md), with interactive mockups. The fonts (v0.5): Zen Old
+Mincho for names, Literata for letters, Zen Kaku Gothic New for the interface, Yuji Syuku for
+seals, Old Standard TT for cuttings, and a hand for each persona (Yomogi by default, four more, or
+a font file you add). Their Latin subsets are bundled and their Japanese downloads on first use
+(SIL OFL, see `ui/src/commonMain/composeResources/files/licenses/fonts.txt`).
 
 Plans: [`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md),
 [`docs/plan-v0.3.md`](docs/plan-v0.3.md), [`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md),
@@ -333,7 +336,7 @@ Two parts keep their own licenses:
 
 - **The madoromi palette** (`docs/design/madoromi-palette.json` and
   `ui/src/commonMain/kotlin/dev/aiharness/app/ui/theme/MadoromiPalette.kt`): Mozilla Public License 2.0.
-- **The bundled placeholder fonts** (`ui/src/androidMain/res/font/`): SIL Open Font License 1.1, with the
+- **The bundled fonts** (`ui/src/androidMain/res/font/`): SIL Open Font License 1.1, with the
   notice in `ui/src/commonMain/composeResources/files/licenses/fonts.txt`.
 
 The libraries both apps carry keep their own licenses too. The build lists them with their texts
