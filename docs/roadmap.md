@@ -32,13 +32,17 @@ Updated 2026-11-10.
     envelopes), and step 6 (fonts: the six faces and the aligned scale, a hand for each persona and
     each of yours, your own font files, Japanese on first use), and step 7 (the planner redrawn:
     header B, your entries in your hand, suggestions as sticky tabs, the day as a list).
-  - Next: step 8 (polish, tests, and 0.5.0 for the phone and the computer). Sending builds to
-    friends, and any GitHub Actions build for the installers, wait for the user.
-  - Found, for step 8: the large-text phone tour fails now and then at different steps (3 of 7 runs
-    on 2026-11-10), and on a computer the Export and Open a backup pages light the side rail's
-    Settings tab even when reached from Personas. The desktop tour doesn't visit the import and
-    export pages yet: in the test harness, Open a backup's preview card failed to show in 2 or 3
-    of 5 runs (it shows every time in a real window), so that part waits.
+  - Step 8 done (2026-11-10): the testers' guide and README for v0.5, the side rail keeping the
+    tab a transfer page was opened from, and **0.5.0** (versionCode 28) for the phone and the
+    computer. All eight steps are in `main`.
+  - **Waiting for the user:** a debug APK for friends (signed with the shared key), and a GitHub
+    Actions build for the installers (Windows by default; macOS and Linux if wanted). Until
+    friends have 0.5.0, the database keeps its steps from version 2.
+  - Still open after step 8: the large-text phone tour fails now and then at different steps
+    here (4 of 9 runs on 2026-11-10, each passing on a rerun; the build session saw 12 passes in a
+    row), and the desktop tour doesn't visit the import and export pages yet (in the test harness,
+    Open a backup's preview card failed to show in 2 or 3 of 5 runs; it shows every time in a
+    real window). The side rail's tab for the transfer pages is fixed.
   - The stationery update goes in whole, as designed, with no changes until friends have installed
     and explored the test build (the user, 2026-11-10, relayed by the build session).
   - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
