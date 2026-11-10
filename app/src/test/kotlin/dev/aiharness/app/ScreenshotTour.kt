@@ -474,8 +474,11 @@ class ScreenshotTour {
         assertDrawn(compose.onNodeWithText("Done"), shot("${prefix}_03b_new_persona"))
         back()
         click("Discard")
-        waitFor("Juno")
+        // Back on the gallery, still scrolled down to "New persona": with large text its top (and
+        // Juno's polaroid) isn't laid out until it's scrolled up.
+        waitFor("New persona")
         top()
+        waitFor("Juno")
 
         click("Aria")
         waitFor("Write a letter")
@@ -521,7 +524,9 @@ class ScreenshotTour {
         back()
         back()
 
-        scrollTo("All your personas")
+        // Once the gallery's list is the one there: on a busy machine the pages it came back from
+        // can still be leaving, and their list would be scrolled instead.
+        compose.waitUntil(10_000) { runCatching { scrollTo("All your personas") }.isSuccess }
         click("All your personas")
         waitFor("Your personas")
         shot("${prefix}_07_your_personas")
