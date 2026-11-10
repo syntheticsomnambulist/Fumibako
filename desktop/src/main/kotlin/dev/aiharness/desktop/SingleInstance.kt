@@ -12,7 +12,8 @@ import kotlin.concurrent.thread
 
 /**
  * One Fumibako per folder (per computer user): the first to start holds a lock in [dataDir] and
- * listens on the loopback for a later start, which asks it to show its window and then quits.
+ * listens on the loopback for a later start, which asks it to show its window (and to open the
+ * files it was started with, a backup double-clicked, say) and then quits.
  */
 class SingleInstance(private val dataDir: File) {
     private var channel: FileChannel? = null
@@ -21,9 +22,10 @@ class SingleInstance(private val dataDir: File) {
 
     /**
      * Claims the folder: true if this is the only Fumibako, which then calls [onShow] whenever
-     * another start asks; false if one is already running (it has been asked to show itself).
+     * another start asks, and [onOpen] with the files it hands over; false if one is already
+     * running (it has been asked to show itself and open [files]).
      */
-    fun claim(onShow: () -> Unit): Boolean {
+    fun claim(files: List<File> = emptyList(), onOpen: (List<File>) -> Unit = {}, onShow: () -> Unit): Boolean {
         dataDir.mkdirs()
         val lockFile = File(dataDir, LOCK)
         val opened = FileChannel.open(lockFile.toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
@@ -34,7 +36,7 @@ class SingleInstance(private val dataDir: File) {
         }
         if (held == null) {
             opened.close()
-            askTheOtherToShow()
+            askTheOtherToShow(files)
             return false
         }
         channel = opened
@@ -46,18 +48,21 @@ class SingleInstance(private val dataDir: File) {
             while (!socket.isClosed) {
                 val client = runCatching { socket.accept() }.getOrNull() ?: break
                 client.use { c ->
-                    val line = runCatching { c.getInputStream().bufferedReader().readLine() }.getOrNull()
-                    if (line == SHOW) onShow()
+                    val lines = runCatching { c.getInputStream().bufferedReader().readLines() }.getOrDefault(emptyList())
+                    val opened = lines.filter { it.startsWith(OPEN) }.map { File(it.removePrefix(OPEN)) }
+                    if (opened.isNotEmpty()) onOpen(opened)
+                    if (SHOW in lines) onShow()
                 }
             }
         }
         return true
     }
 
-    private fun askTheOtherToShow() {
+    private fun askTheOtherToShow(files: List<File>) {
         val port = runCatching { File(dataDir, PORT).readText().trim().toInt() }.getOrNull() ?: return
+        val message = files.joinToString("") { "$OPEN${it.absolutePath}\n" } + "$SHOW\n"
         runCatching {
-            Socket(InetAddress.getLoopbackAddress(), port).use { it.getOutputStream().write("$SHOW\n".toByteArray()) }
+            Socket(InetAddress.getLoopbackAddress(), port).use { it.getOutputStream().write(message.toByteArray(Charsets.UTF_8)) }
         }
     }
 
@@ -73,5 +78,6 @@ class SingleInstance(private val dataDir: File) {
         const val LOCK = "fumibako.lock"
         const val PORT = "fumibako.port"
         const val SHOW = "show"
+        const val OPEN = "open "
     }
 }

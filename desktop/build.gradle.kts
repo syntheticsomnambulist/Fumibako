@@ -122,8 +122,12 @@ compose.desktop {
             // licenses/libraries.txt beside the app (in its resources folder), as well as inside it.
             appResourcesRootDir.set(layout.dir(besideTheApp.map { it.destinationDir.parentFile }))
 
-            // The installers' icons, drawn by tools/make_icon.py (docs/design/icon.md).
+            // The installers' icons, drawn by tools/make_icon.py (docs/design/icon.md). Each system
+            // opens a .fumibako backup with Fumibako (main() takes the file; a Mac sends it as an
+            // event). Cards (.png, .json, .charx) aren't claimed: other apps use those too.
+            val backup = Triple("application/x-fumibako", "fumibako", "Fumibako backup")
             windows {
+                fileAssociation(backup.first, backup.second, backup.third)
                 iconFile.set(project.file("icons/fumibako.ico"))
                 // Never change: it's how a new installer knows to replace the old one.
                 upgradeUuid = "f9afcf80-a171-41b0-bbf3-e843de80eb3f"
@@ -132,6 +136,7 @@ compose.desktop {
                 shortcut = true
             }
             macOS {
+                fileAssociation(backup.first, backup.second, backup.third)
                 bundleID = "dev.fumibako.desktop"
                 iconFile.set(project.file("icons/fumibako.icns"))
                 // A macOS package's version can't start at 0: the build number counts instead
@@ -139,9 +144,31 @@ compose.desktop {
                 packageVersion = "1.0.$versionCode"
             }
             linux {
+                fileAssociation(backup.first, backup.second, backup.third)
                 packageName = "fumibako"
                 iconFile.set(project.file("icons/fumibako.png"))
             }
         }
+    }
+}
+
+// The .deb's menu entry passes the file it opens ("%F"), so a .fumibako backup double-clicked reaches
+// Fumibako: jpackage 21 writes "Exec=/opt/fumibako/bin/Fumibako" alone, and Compose gives no way to
+// replace its desktop file. So the built .deb has that one line mended, and is packed again.
+tasks.matching { it.name == "packageDeb" }.configureEach {
+    doLast {
+        fun run(vararg command: String) {
+            val process = ProcessBuilder(*command).redirectErrorStream(true).start()
+            val output = process.inputStream.bufferedReader().readText()
+            check(process.waitFor() == 0) { "${command.joinToString(" ")} failed: $output" }
+        }
+        val deb = layout.buildDirectory.dir("compose/binaries/main/deb").get().asFile.listFiles { f -> f.extension == "deb" }!!.single()
+        val unpacked = temporaryDir.resolve("deb").apply { deleteRecursively() }
+        run("dpkg-deb", "-R", deb.path, unpacked.path)
+        val entry = unpacked.walk().single { it.isFile && it.extension == "desktop" }
+        entry.writeText(entry.readText().replace(Regex("^Exec=(\\S+)$", RegexOption.MULTILINE), "Exec=\$1 %F"))
+        check("%F" in entry.readText()) { "the menu entry's Exec line wasn't found" }
+        run("dpkg-deb", "--root-owner-group", "-b", unpacked.path, deb.path)
+        unpacked.deleteRecursively()
     }
 }

@@ -96,7 +96,9 @@ there too, encrypted with a key that the system's keychain holds (Windows Creden
 macOS Keychain, or the Secret Service on Linux). Where Fumibako can't use a keychain, that key is in
 a file only your user can read, and **Settings, Models and keys** says so.
 
-To keep a copy, quit Fumibako and copy the folder. To start over, quit and delete it. To run a
+To keep a copy, quit Fumibako and copy the folder, or save a backup (a persona's page, ⋯,
+**Export**). A backup (`.fumibako`) opens in Fumibako when you double-click it, whether Fumibako
+is running or not, and moves a persona between your phone and your computer. To start over, quit and delete it. To run a
 second, separate Fumibako (to try something without touching your letters), start it with the
 `FUMIBAKO_HOME` environment variable set to another folder.
 
