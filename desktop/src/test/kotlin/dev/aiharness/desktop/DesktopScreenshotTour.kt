@@ -144,6 +144,19 @@ class DesktopScreenshotTour {
         planner()
     }
 
+    /**
+     * The tour's letters, personas and planner seeded into a folder, to look at in the real app
+     * (FUMIBAKO_SEED_HOME=<folder>, then start Fumibako with FUMIBAKO_HOME=<folder>). Skipped otherwise.
+     */
+    @Test
+    fun seedAFolder() {
+        val folder = System.getenv("FUMIBAKO_SEED_HOME")?.takeIf { it.isNotBlank() }?.let(::File)
+        assumeTrue(folder != null)
+        val container = AppContainer(DesktopPlatform(folder!!.apply { mkdirs() }, keychain = { null }))
+        container.start()
+        seed(container, TimeOfDay.HIRU)
+    }
+
     /** A fresh start: the getting-started card, and About with the seal and its version. */
     @Test
     fun firstRunTour() {

@@ -12,7 +12,7 @@ you'd made) waits for you, and is listed at the end.
 
 ## Choices
 
-None of my own yet. Calls other sessions made where the design doesn't settle a detail, for you
+None of my own: every call below was made by another session. Calls other sessions made where the design doesn't settle a detail, for you
 to check: Kanna's in v0.5's step 6 (fonts) and step 7 (the planner redrawn), and the desktop
 installers session's in desktop step 6 (fonts on the computer).
 
@@ -58,11 +58,24 @@ script, which is a bigger change for later.
 10. **The highlighter is see-through by alpha,** not a multiply blend, so it reads the same on
     night paper.
 11. **メモ keeps each plan's day** (WED, FRI) beside it, which the board doesn't show.
+12. **A plan with no time, once stamped done, has its box ticked by hand in your ink** and keeps
+    its 済 beside it, rather than losing the box (step 8, `a02f969`). I'd pointed out an empty box
+    beside a 済 stamp, which read as contradictory; the box staying keeps the names lined up.
 
-I'd keep all eight. Each either follows from a constraint (tap targets, a wider face, night
+I'd keep all nine. Each either follows from a constraint (tap targets, a wider face, night
 paper) or matches how the rest of the planner already behaves; number 6 is the one that changes
 a habit.
 
+### The computer (the desktop installers session; `docs/plan-desktop.md`, step 6)
+
+13. **The desktop window's smallest size is 360 by 600** (a narrow phone's), declared to the
+    window manager (`4e23bc2`). Below it, at 240 wide, the week lost Saturday and Sunday and the
+    tabs split their words. I'd keep it.
+
 ## Waiting for you
 
-None yet.
+- **The 0.5.0 build for friends' phones** (signed with the shared key; installs over their
+  v0.2.2) and **the installers' GitHub Actions build**. Neither has been started.
+- **Deleting the seven branches already merged into `main`**, which this session isn't allowed to
+  do: `ccr-18e33808-77cl1p`, `ccr-af685712-68atlu`, `ccr-cbac297a-wac5ud`, `claude/desktop-step7`,
+  `claude/epic-davinci-rpggbc`, `claude/friendly-euler-ixso62`, `claude/sharp-darwin-o3pk1g`.
