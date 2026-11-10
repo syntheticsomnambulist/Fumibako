@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
@@ -60,7 +61,6 @@ import dev.aiharness.core.util.newId
 import dev.aiharness.app.media.NowPlaying
 import dev.aiharness.core.model.AttachmentMark
 import dev.aiharness.core.model.MarkKind
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import dev.aiharness.core.model.Pronouns
 import dev.aiharness.core.model.PronounKind
 import dev.aiharness.core.model.Keepsake
@@ -223,7 +223,8 @@ class ScreenshotTour {
         shot("wide_01_letters")
         click("Aria")
         waitFor("actually sleep")
-        listOf(":aria-heart: sticker", ":sleeping: sticker", ":gold-star: sticker").forEach { label ->
+        // (Her heart sticker sits above the window's first screen since v0.5's tabs and notice.)
+        listOf(":sleeping: sticker", ":gold-star: sticker").forEach { label ->
             compose.waitUntilAtLeastOneExists(hasContentDescription(label), 10_000)
         }
         shot("wide_02_letter")
@@ -288,11 +289,27 @@ class ScreenshotTour {
 
         click("Aria")
         waitFor("actually sleep")
-        // Stickers bake in the background; wait until the ones on screen are drawn.
-        listOf(":aria-heart: sticker", ":sleeping: sticker", ":gold-star: sticker").forEach { label ->
+        // Stickers bake in the background; wait until the ones on screen are drawn (with large text,
+        // her heart sticker is above the first screen).
+        (if (prefix == "large") listOf(":sleeping: sticker", ":gold-star: sticker") else listOf(":aria-heart: sticker", ":sleeping: sticker", ":gold-star: sticker")).forEach { label ->
             compose.waitUntilAtLeastOneExists(hasContentDescription(label), 10_000)
         }
         shot("${prefix}_02_chat")
+        // v0.5: the newest letter's two tabs pull out what she had in mind, then her thoughts (a slip
+        // grows the letter upward, so its tabs are scrolled back to); then they're tucked away.
+        fun tab(name: String) = compose.onAllNodesWithContentDescription(name).onFirst().performScrollTo().performClick()
+        tab("What she had in mind")
+        waitFor("This turn")
+        pause()
+        shot("${prefix}_02a1_what_she_had_in_mind")
+        tab("Her thoughts")
+        waitFor("HER THOUGHTS")
+        pause()
+        shot("${prefix}_02a2_her_thoughts")
+        tab("What she had in mind")
+        tab("Her thoughts")
+        compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToIndex(0)
+        pause()
         // The + and send buttons stand as tall as the field holding one line: its text (what the
         // field's own node covers) and its 10 dp above and below.
         val density = ApplicationProvider.getApplicationContext<HarnessApp>().resources.displayMetrics.density
@@ -451,6 +468,9 @@ class ScreenshotTour {
         shot("${prefix}_05a_persona_pronouns")
         scrollTo("Drawing style")
         shot("${prefix}_05b_persona_editor_more")
+        // v0.5: her model, since when, and whether she's told when it changes.
+        scrollTo("Tell her when her model changes")
+        shot("${prefix}_05c_persona_model")
         back()
         top()
         waitFor("Edit")
@@ -938,19 +958,45 @@ class ScreenshotTour {
         var t = now - 3 * 3_600_000L
         fun msg(role: MessageRole, vararg parts: ContentPart, origin: MessageOrigin = MessageOrigin.AGENT) =
             ChatMessage(newId(), conversation.id, role, parts.toList(), createdAt = t.also { t += 60_000 }, origin = origin)
+        // v0.5: what she had in mind (the stored context), the turn's tokens, her model, and a letter she looked up.
+        val sonnet = dev.aiharness.core.model.WrittenWith("Claude Sonnet 5.5", ProviderType.ANTHROPIC, "claude-sonnet-5-5")
+        val opus = dev.aiharness.core.model.WrittenWith("Claude Opus 5.5", ProviderType.ANTHROPIC, "claude-opus-5-5")
+        val tokens = dev.aiharness.core.model.TokenUsage(inputTokens = 1_200, outputTokens = 310, cacheReadTokens = 16_800)
+        val finished = msg(MessageRole.USER, ContentPart.Text("I finally finished the first draft of my thesis!"), origin = MessageOrigin.USER).copy(
+            turnContext = "Current time: Monday, 9 November 2026, 21:04.\nTime since the previous message: 3 hours.\n" +
+                "Sam's planner: free this evening. Tomorrow: work, 09:00 to 17:30.\n" +
+                "Memories that come to mind:\n- (2 Nov 2026, felt worried, now hopeful) Sam's thesis is due in December.",
+        )
         val letters = listOf(
-            msg(MessageRole.USER, ContentPart.Text("I finally finished the first draft of my thesis!"), origin = MessageOrigin.USER),
+            finished,
             msg(
                 MessageRole.ASSISTANT,
                 ContentPart.Reasoning("Sam has been working on this for months. This is a big milestone worth remembering."),
                 ContentPart.Text("*gasps and claps both hands over her mouth* Sam! That's **huge**. After all those late nights?"),
                 ContentPart.ToolCall("t1", "memory_save", """{"content":"Sam finished the first draft of the thesis"}"""),
-            ),
+            ).copy(providerType = ProviderType.ANTHROPIC, usage = tokens, writtenWith = sonnet),
             msg(MessageRole.TOOL, ContentPart.ToolResult("t1", "memory_save", "Saved.")),
-            msg(MessageRole.ASSISTANT, ContentPart.Text("I'm writing this one down. How do you feel? :aria-heart:")),
-            msg(MessageRole.USER, ContentPart.Text("Tired. Happy. Can you show me what you'd look like celebrating?"), origin = MessageOrigin.USER),
-            msg(MessageRole.ASSISTANT, ContentPart.Text("*twirls* Like this!"), ContentPart.ToolCall("t2", "generate_image", "{}")),
+            msg(MessageRole.ASSISTANT, ContentPart.Text("I'm writing this one down. How do you feel? :aria-heart:")).copy(writtenWith = sonnet),
+            msg(MessageRole.USER, ContentPart.Text("Tired. Happy. Can you show me what you'd look like celebrating?"), origin = MessageOrigin.USER).copy(
+                turnContext = "Current time: Monday, 9 November 2026, 21:06.\n" +
+                    "Your model changed: you were Claude Sonnet 5.5 until now and are Claude Opus 5.5 from here. Your memories and letters are the same.",
+            ),
+            msg(
+                MessageRole.ASSISTANT,
+                ContentPart.Reasoning("Celebrating! Something twirly. And she said 'first draft' earlier; look back so I get it right."),
+                ContentPart.ToolCall("t3", "letter_search", """{"query":"thesis draft"}"""),
+            ).copy(providerType = ProviderType.ANTHROPIC, usage = tokens, writtenWith = opus),
+            msg(
+                MessageRole.TOOL,
+                ContentPart.ToolResult(
+                    "t3", "letter_search", "1 passage:",
+                    foundLetters = listOf(dev.aiharness.core.model.FoundLetter(finished.id, conversation.id, true, finished.createdAt, "I finally finished the first draft of my thesis!")),
+                ),
+            ),
+            msg(MessageRole.ASSISTANT, ContentPart.Text("*twirls* Like this!"), ContentPart.ToolCall("t2", "generate_image", "{}")).copy(writtenWith = opus),
             msg(MessageRole.TOOL, ContentPart.ToolResult("t2", "generate_image", "Shown."), ContentPart.Image(image, caption = "celebrating")),
+            // A heartbeat's own prompt, hidden, before the letter it wrote while Sam was away.
+            msg(MessageRole.USER, ContentPart.Text("(heartbeat)"), origin = MessageOrigin.HEARTBEAT).copy(hidden = true),
             msg(MessageRole.ASSISTANT, ContentPart.Text("Good morning! Did you actually sleep after all that writing? *tilts head* [mood: fond]"), origin = MessageOrigin.HEARTBEAT),
         )
         // Earlier that evening: things sent as stationery (frames).
@@ -1100,6 +1146,8 @@ class ScreenshotTour {
         plan("Jo's birthday") { it.copy(day = week[5].toString(), allDay = true) }
         // What Aria wrote in Sam's planner (signed with her seal), and Juno's time away.
         h.personas.upsert(aria.copy(planner = dev.aiharness.core.model.PersonaPlanner(seal = "歌")))
+        // (After the last change to Aria above.) Her model was changed on her page just before Sam's second note.
+        h.personas.get(aria.id)?.let { h.personas.upsert(it.copy(modelSince = letters[4].createdAt - 30_000, previousModelName = "Claude Sonnet 5.5")) }
         suspend fun hers(by: String, kind: dev.aiharness.core.model.EntryKind, title: String, build: (dev.aiharness.core.model.PlannerEntry) -> dev.aiharness.core.model.PlannerEntry) =
             h.plannerEntries.upsert(build(dev.aiharness.core.model.PlannerEntry(newId(), sam.id, by, kind, title, createdAt = now - 3_600_000L, updatedAt = now - 3_600_000L)))
         hers(aria.id, dev.aiharness.core.model.EntryKind.NOTE, "ask how the interview went") { it.copy(day = week[2].toString()) }

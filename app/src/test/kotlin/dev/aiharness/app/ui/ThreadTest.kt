@@ -109,5 +109,58 @@ class ThreadTest {
             letter.postscripts.map { it.label to it.text },
         )
     }
-}
 
+    @Test
+    fun aChangeOfModelGoesBeforeTheFirstLetterWithItAndLettersKnowTheirNote() {
+        val sonnet = dev.aiharness.core.model.WrittenWith("Claude Sonnet 5.5", dev.aiharness.core.model.ProviderType.ANTHROPIC, "claude-sonnet-5-5")
+        val opus = sonnet.copy(name = "Claude Opus 5.5", modelId = "claude-opus-5-5")
+        val first = msg(MessageRole.USER, ContentPart.Text("Hello"), origin = MessageOrigin.USER).copy(turnContext = "Current time: Monday.")
+        val reply = msg(MessageRole.ASSISTANT, ContentPart.Text("Hi!")).copy(writtenWith = sonnet)
+        val second = msg(MessageRole.USER, ContentPart.Text("Still you?"), origin = MessageOrigin.USER)
+            .copy(turnContext = "Your model changed: you were Claude Sonnet 5.5 until now and are Claude Opus 5.5 from here.")
+        val found = dev.aiharness.core.model.FoundLetter(first.id, "c", byYou = true, at = first.createdAt, passage = "Hello")
+        val searched = msg(MessageRole.ASSISTANT, ContentPart.ToolCall("s", "letter_search", """{"query":"hello"}""")).copy(writtenWith = opus)
+        val result = msg(MessageRole.TOOL, ContentPart.ToolResult("s", "letter_search", "1 passage:", foundLetters = listOf(found)))
+        val answer = msg(MessageRole.ASSISTANT, ContentPart.Text("Still me.")).copy(writtenWith = opus)
+        val rows = buildThread(listOf(first, reply, second, searched, result, answer), ZoneOffset.UTC)
+
+        assertEquals(listOf("Day", "Note", "Letter", "Note", "ModelChange", "Letter"), rows.map { it::class.simpleName })
+        val change = assertIs<ThreadRow.ModelChange>(rows[4])
+        assertEquals(sonnet, change.notice.was)
+        assertEquals(opus, change.notice.now)
+        assertEquals(reply.createdAt, change.after)
+        assertTrue(change.told)
+        assertEquals(first.id, assertIs<ThreadRow.Letter>(rows[2]).prompt?.id)
+        val letter = assertIs<ThreadRow.Letter>(rows[5])
+        assertEquals(second.id, letter.prompt?.id)
+        assertEquals("hello", letter.slip.searches.single().query)
+        val ps = letter.postscripts.single()
+        assertEquals("Looked back at:", ps.label)
+        assertEquals(found, ps.found)
+    }
+
+    @Test
+    fun aHeartbeatLetterAnswersItsHiddenPromptNotTheNoteBefore() {
+        val note = msg(MessageRole.USER, ContentPart.Text("Tired."), origin = MessageOrigin.USER).copy(turnContext = "Current time: Monday.")
+        val reply = msg(MessageRole.ASSISTANT, ContentPart.Text("Rest!"))
+        val prompt = msg(MessageRole.USER, ContentPart.Text("(heartbeat)"), origin = MessageOrigin.HEARTBEAT, hidden = true)
+        val away = msg(MessageRole.ASSISTANT, ContentPart.Text("Good morning!"), origin = MessageOrigin.HEARTBEAT)
+        val letters = buildThread(listOf(note, reply, prompt, away), ZoneOffset.UTC).filterIsInstance<ThreadRow.Letter>()
+        assertEquals(listOf(note.id, prompt.id), letters.map { it.prompt?.id })
+        assertTrue(letters.last().slip.isEmpty, "nothing in mind to show: no tab")
+
+        // As the thread shows it: hidden prompts left out of the letters, but still each letter's prompt.
+        val shown = buildThread(listOf(note, reply, away), ZoneOffset.UTC, prompts = listOf(note, prompt)).filterIsInstance<ThreadRow.Letter>()
+        assertEquals(listOf(note.id, prompt.id), shown.map { it.prompt?.id })
+    }
+
+    @Test
+    fun aReplyInThePostAnswersTheNoteBeforeItNotOneSentWhileItTravelled() {
+        val asked = msg(MessageRole.USER, ContentPart.Text("How was it?"), origin = MessageOrigin.USER).copy(turnContext = "Current time: Monday.")
+        val reply = msg(MessageRole.ASSISTANT, ContentPart.Text("Lovely.")).copy(deliverAt = t + 600_000)
+        val later = msg(MessageRole.USER, ContentPart.Text("Hello?"), origin = MessageOrigin.USER)
+        // Shown in the order they reached you: the reply after the later note.
+        val letter = buildThread(listOf(asked, later, reply), ZoneOffset.UTC).filterIsInstance<ThreadRow.Letter>().single()
+        assertEquals(asked.id, letter.prompt?.id)
+    }
+}

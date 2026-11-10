@@ -58,10 +58,19 @@ class LetterSearch(private val conversations: ConversationRepository, private va
      * A persona looking back through its letters with you: any of the words of [query] (small words
      * left out), those with more of them first, then newer ones.
      */
-    suspend fun lookUp(personaId: String, query: String, from: LetterFrom = LetterFrom.EITHER, limit: Int = 5): List<LetterHit> {
+    suspend fun lookUp(
+        personaId: String,
+        query: String,
+        from: LetterFrom = LetterFrom.EITHER,
+        limit: Int = 5,
+        /** The conversation it's writing in: the note it's answering (and what it wrote since) is in front of it already. */
+        writingIn: String? = null,
+    ): List<LetterHit> {
         val terms = LetterWords.terms(query).filter { it.length > 1 && it !in SMALL_WORDS }.ifEmpty { LetterWords.terms(query) }
         if (terms.isEmpty()) return emptyList()
+        val turnStart = writingIn?.let { id -> conversations.getMessages(id).lastOrNull { it.role == MessageRole.USER }?.createdAt }
         return hits(terms, matchAll = false, personaId = personaId)
+            .filter { hit -> turnStart == null || hit.message.conversationId != writingIn || hit.message.createdAt < turnStart }
             .filter { hit ->
                 when (from) {
                     LetterFrom.YOU -> hit.byYou

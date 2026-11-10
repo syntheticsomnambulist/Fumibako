@@ -79,6 +79,8 @@ import androidx.navigation.NavController
 import dev.aiharness.app.engine.GenerationManager
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.Routes
+import dev.aiharness.core.model.FoundLetter
+import dev.aiharness.core.model.words
 import dev.aiharness.app.ui.SwitchRow
 import dev.aiharness.app.ui.paper.MoodWord
 import dev.aiharness.app.ui.paper.PortraitDot
@@ -249,7 +251,8 @@ fun ChatScreen(nav: NavController, conversationId: String) {
 
     val persona = header.persona
     val personaName = persona?.name ?: "…"
-    val rows = remember(messages) { buildThread(messages) }
+    val prompts by vm.prompts.collectAsStateWithLifecycle()
+    val rows = remember(messages, prompts) { buildThread(messages, prompts = prompts) }
     // A reply in the post isn't watched being written: the thread says it's on its way instead.
     val writing = if (generation.active && !postage.travels) {
         Writing(generation.streamingText, generation.reasoning, GenerationManager.describeTool(generation.activeTool))
@@ -259,8 +262,29 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     // A turn in progress continues the last letter (earlier tool rounds are already saved into it).
     val writingInto = (rows.lastOrNull() as? ThreadRow.Letter)?.takeIf { writing != null && messages.lastOrNull()?.role != dev.aiharness.core.model.MessageRole.USER }
 
+    // Opened at one of its letters (a P.S. or the index card named it): there, instead of the newest.
+    val letterRequest by container.letterFocus.request.collectAsStateWithLifecycle()
+    val focusHere = letterRequest?.takeIf { it.conversationId == conversationId }
     LaunchedEffect(messages.size, writing != null) {
-        if (messages.isNotEmpty()) listState.animateScrollToItem(0)
+        if (messages.isNotEmpty() && focusHere == null) listState.animateScrollToItem(0)
+    }
+    LaunchedEffect(focusHere, rows) {
+        val request = focusHere ?: return@LaunchedEffect
+        val index = rows.asReversed().indexOfFirst { row ->
+            when (row) {
+                is ThreadRow.Note -> row.message.id == request.messageId
+                is ThreadRow.Letter -> row.messages.any { it.id == request.messageId }
+                else -> false
+            }
+        }
+        if (index < 0) return@LaunchedEffect
+        val leading = (if (arriving != null || (generation.active && postage.travels)) 1 else 0) + (if (writing != null && writingInto == null) 1 else 0)
+        listState.animateScrollToItem(index + leading)
+        container.letterFocus.done(request)
+    }
+    val openLetter: (FoundLetter) -> Unit = { found ->
+        container.letterFocus.open(found.conversationId, found.messageId)
+        if (found.conversationId != conversationId) nav.navigate(Routes.chat(found.conversationId))
     }
     // Everything on screen counts as read, including letters that arrive while it is open (on a
     // computer, while the window is in front of you: not while it waits in the tray).
@@ -367,11 +391,19 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                             user = header.userPersona,
                             stickerName = stickerName,
                             handling = handling,
+                            onOpenLetter = openLetter,
+                        )
+                        is ThreadRow.ModelChange -> ModelChangeNotice(
+                            row,
+                            persona?.words ?: dev.aiharness.core.model.Words(personaName, null),
+                            personaName,
+                            // When it was changed on its page, if that's this change.
+                            changedAt = persona?.modelSince?.takeIf { it <= row.at && it >= (row.after ?: 0L) },
                         )
                     }
                     }
                     // A row that scrolls away can't be dropped on.
-                    if (row !is ThreadRow.Day) {
+                    if (row is ThreadRow.Note || row is ThreadRow.Letter) {
                         val id = when (row) {
                             is ThreadRow.Note -> row.message.id
                             is ThreadRow.Letter -> row.messages.first().id

@@ -139,13 +139,20 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
     fun save() {
         val d = draft ?: return
         if (d.name.isBlank()) return
+        val now = System.currentTimeMillis()
+        // Its model changed here: its model row says since when, and what it was.
+        val modelOf = { id: String? -> profiles.firstOrNull { it.id == (id ?: settings?.defaultModelProfileId) } }
+        val before = original?.takeIf { !isNew }?.let { modelOf(it.defaultModelProfileId) }
+        val modelChanged = before != null && before.id != modelOf(d.defaultModelProfileId)?.id
         scope.launch {
             harness.personas.upsert(
                 d.copy(
                     name = d.name.trim(),
                     outfit = d.outfit?.trim()?.takeIf { it.isNotEmpty() },
                     stylePrompt = d.stylePrompt?.trim()?.takeIf { it.isNotEmpty() },
-                    updatedAt = System.currentTimeMillis(),
+                    modelSince = if (modelChanged) now else d.modelSince,
+                    previousModelName = if (modelChanged) before?.name else d.previousModelName,
+                    updatedAt = now,
                 ),
             )
             onMain {
@@ -473,6 +480,18 @@ private fun LazyListScope.editCards(
         PageCard(p, layouts[4], "behavior") {
             CardTitle("Behavior")
             PaperSelect("Model", profiles, profiles.firstOrNull { it.id == p.defaultModelProfileId }, { it.name }, { m -> onChange(p.copy(defaultModelProfileId = m?.id)) }, noneLabel = "App default")
+            p.modelSince?.let { since ->
+                Text(modelSinceLine(since, p.previousModelName), style = PaperType.noteBody.copy(fontSize = 12.sp), color = paper.usuzumi0)
+            }
+            val w = p.words
+            SwitchRow(
+                "Tell ${w.them} when ${w.their} model changes",
+                p.tellModelChanges,
+                { v -> onChange(p.copy(tellModelChanges = v)) },
+                subtitle = if (p.tellModelChanges) "A line in ${w.their} next letter, and a notice in your thread where it changed."
+                else "${w.theyCapital} won't be told; the notice still shows in your thread.",
+                ink = ink,
+            )
             SwitchRow("Heartbeat", p.heartbeatEnabled, { v -> onChange(p.copy(heartbeatEnabled = v)) }, subtitle = "Wakes now and then to reflect, and may write to you.")
             if (!isNew) InkLink("Heartbeat settings", ink) { nav.navigate(Routes.personaHeartbeat(p.id)) }
             IndexCardField(
@@ -603,3 +622,16 @@ private fun PronounSetChoice(current: Pronouns?, ink: Color, onChange: (Pronouns
     }
 }
 
+/** "Since today, 15:40 · was Claude Sonnet 5.5": when its model was changed on this page, and from what. */
+private fun modelSinceLine(since: Long, previous: String?): String {
+    val zone = java.time.ZoneId.systemDefault()
+    val at = java.time.Instant.ofEpochMilli(since).atZone(zone)
+    val today = java.time.LocalDate.now(zone)
+    val day = when (at.toLocalDate()) {
+        today -> "today"
+        today.minusDays(1) -> "yesterday"
+        else -> dev.aiharness.app.ui.chat.shortDay(since, zone, today)
+    }
+    val time = dev.aiharness.app.ui.planner.AppClock.format.time(at.hour * 60 + at.minute)
+    return "Since $day, $time" + (previous?.let { " · was $it" } ?: "")
+}

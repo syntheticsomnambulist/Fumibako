@@ -41,7 +41,12 @@ import kotlinx.coroutines.withTimeoutOrNull
 import dev.aiharness.app.platform.Picked
 
 /** The thread's letters that have reached you, and when the next one on its way arrives. */
-data class InThePost(val shown: List<ChatMessage> = emptyList(), val next: Long? = null)
+/**
+ * What's in the thread: [shown] (what has reached you, without hidden prompts), [next] (when the
+ * next letter still in the post arrives), and [prompts], every note and hidden heartbeat prompt in
+ * the order they were written, which a letter's index card reads.
+ */
+data class InThePost(val shown: List<ChatMessage> = emptyList(), val next: Long? = null, val prompts: List<ChatMessage> = emptyList())
 
 /** Letters in the post for this thread: [travels] (replies take a while), [showArrival] (the watch says when). */
 data class Postage(val travels: Boolean = false, val showArrival: Boolean = false)
@@ -72,12 +77,13 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
      */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val post: StateFlow<InThePost> = harness.conversations.observeMessages(conversationId)
-        .map { list -> list.filter { !it.hidden } }
-        .transformLatest { list ->
+        .transformLatest { all ->
+            val prompts = all.filter { it.role == dev.aiharness.core.model.MessageRole.USER }
+            val list = all.filter { !it.hidden }
             while (true) {
                 val now = harness.clock.nowMillis()
                 val next = list.mapNotNull { it.deliverAt }.filter { it > now }.minOrNull()
-                emit(InThePost(list.filter { it.arrived(now) }.sortedBy { it.arrivedAt }, next))
+                emit(InThePost(list.filter { it.arrived(now) }.sortedBy { it.arrivedAt }, next, prompts))
                 if (next == null) break
                 delay(next - now + 50)
             }
@@ -89,6 +95,9 @@ class ChatViewModel(private val container: AppContainer, val conversationId: Str
 
     /** When the next letter on its way arrives; null when none is. */
     val arriving: StateFlow<Long?> = post.map { it.next }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Every note and hidden prompt, oldest first, for what a letter had in mind. */
+    val prompts: StateFlow<List<ChatMessage>> = post.map { it.prompts }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val profiles: StateFlow<List<ModelProfile>> = harness.profiles.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

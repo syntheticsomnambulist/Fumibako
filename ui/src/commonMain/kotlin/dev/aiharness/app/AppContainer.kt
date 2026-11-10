@@ -53,6 +53,9 @@ class AppContainer(val platform: AppPlatform) {
     /** Your unsent notes, kept until they're sent. */
     val drafts = Drafts(File(platform.filesDir, "drafts"), appScope)
 
+    /** Where a thread should open at one of its letters (a P.S., the index card, a search). */
+    val letterFocus = dev.aiharness.app.ui.chat.LetterFocus()
+
     private val secrets = platform.secrets
     val blobStore = FileBlobStore(File(platform.filesDir, "blobs"))
     val media: MediaImporter = platform.mediaImporter(blobStore)

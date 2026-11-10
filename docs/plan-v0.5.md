@@ -145,3 +145,31 @@ From `v0.5.md`, in short:
     has them, and Won't fade, which only you set (a memory never weakens or goes dormant, but is
     recalled only when relevant). The memory book's lore label is in; the rest of its look comes
     with import (step 4).
+- **Step 2, in a letter: done** (bar thinking lines, which wait for the design session).
+  - **Two paper tabs** stand behind a letter's top edge at the right: an index card with a
+    paperclip for "What she had in mind", and a scribbled scrap for "Her thoughts" (only when the
+    model gave any). Icons only; screen readers get the names (in the persona's pronouns), and a
+    long press, or a right-click on a computer, shows them. A tap slides the slip out under the
+    name row; the open tab stands taller with its icon in her ink. "Show thoughts" is gone.
+  - **The index card** holds what the note it answered carried: the time, her model (when it had
+    just changed), your planner, memories that came up with their feelings ("always in mind" for
+    core ones), stickers, what she read of the note's attachments (their descriptions), the letters
+    she looked up (each opens), anything else (her outfit), and the turn's tokens ("18,000 tokens
+    read · 310 written"; Anthropic's cached tokens count as read). A heartbeat letter reads its own
+    hidden prompt, and a reply in the post the note before it was written, not one sent while it
+    travelled. Letters from before v0.5 have their context too, since it was always stored.
+  - **Her thoughts** are a scrap of squared paper, pale yamabuki, torn along the top (still in
+    italics until her hand comes with the fonts).
+  - **The model-change notice:** a dashed card with a 改 stamp before the first letter with the
+    new model: "From here, Aria writes with Claude Opus 5.5", then "Was Claude Sonnet 5.5 ·
+    changed 15:40 · she's been told" (the time when it was changed on her page; "she wasn't told"
+    with the tick off).
+  - **Her page, Behavior:** under Model, "Since today, 15:40 · was Claude Sonnet 5.5" once it's
+    been changed there, and "Tell her when her model changes" (on).
+  - **`letter_search`'s P.S.:** "Looked back at: your note of Mon 12 Oct" (or "Aria's letter
+    of ..."), which opens the thread at that letter, in another thread of hers if need be. A
+    persona's search leaves out the note it's answering.
+  - **Tests:** the thread's rows (notices, prompts, the P.S.), the context's sections, and the
+    tours: the thread with the notice and tabs, the index card out, both slips out, and her model
+    card (299 shots). The wide and large-text tours no longer wait for her heart sticker, which
+    the tabs and the notice push above their first screen.

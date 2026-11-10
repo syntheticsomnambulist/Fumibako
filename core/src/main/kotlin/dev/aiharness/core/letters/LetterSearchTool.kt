@@ -2,6 +2,7 @@ package dev.aiharness.core.letters
 
 import dev.aiharness.core.llm.ToolSpec
 import dev.aiharness.core.model.AppSettings
+import dev.aiharness.core.model.FoundLetter
 import dev.aiharness.core.storage.UserPersonaRepository
 import dev.aiharness.core.tools.AgentTool
 import dev.aiharness.core.tools.ToolContext
@@ -46,7 +47,7 @@ class LetterSearchTool(
             "me" -> LetterFrom.ME
             else -> LetterFrom.EITHER
         }
-        val hits = search.lookUp(context.persona.id, query, from, (args.int("limit") ?: 5).coerceIn(1, 10))
+        val hits = search.lookUp(context.persona.id, query, from, (args.int("limit") ?: 5).coerceIn(1, 10), writingIn = context.conversation.id)
         if (hits.isEmpty()) return ToolOutcome("No letters with those words.")
         val names = mutableMapOf<String?, String>()
         suspend fun nameOf(userPersonaId: String?): String = names.getOrPut(userPersonaId) {
@@ -59,7 +60,8 @@ class LetterSearchTool(
             "- $who, ${DATE.format(Instant.ofEpochMilli(hit.at).atZone(clock.zone))}$where: \"${hit.passage}\""
         }
         val heading = if (hits.size == 1) "1 passage:" else "${hits.size} passages, best first:"
-        return ToolOutcome((listOf(heading) + lines).joinToString("\n"), foundLetters = hits.map { it.message.id })
+        val found = hits.map { FoundLetter(it.message.id, it.message.conversationId, it.byYou, it.at, it.passage) }
+        return ToolOutcome((listOf(heading) + lines).joinToString("\n"), foundLetters = found)
     }
 
     private companion object {

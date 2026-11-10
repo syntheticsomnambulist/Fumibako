@@ -157,10 +157,12 @@ class LetterSearchTest {
             ChatMessage("old", conversation.id, MessageRole.USER, listOf(ContentPart.Text("The kinako stall was closed today.")), createdAt = env.clock.millis - 86_400_000),
         )
 
-        env.harness.agent.send(conversation.id, "Remember that stall?").toList()
+        env.harness.agent.send(conversation.id, "Remember that kinako stall?").toList()
 
         val result = env.conversations.getMessages(conversation.id).flatMap { it.toolResults }.single()
-        assertEquals(listOf("old"), result.foundLetters)
+        assertEquals(listOf("old"), result.foundLetters.map { it.messageId }, "not the note it's answering")
+        assertTrue(result.foundLetters.single().byYou)
+        assertEquals("The kinako stall was closed today.", result.foundLetters.single().passage)
         assertContains(result.content, "Sam's note")
         assertContains(result.content, "\"The kinako stall was closed today.\"")
     }

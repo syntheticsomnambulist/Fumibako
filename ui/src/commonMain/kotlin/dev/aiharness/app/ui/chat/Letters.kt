@@ -30,6 +30,10 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -57,6 +61,9 @@ import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
 import dev.aiharness.app.platform.onRightClick
 import dev.aiharness.core.model.ChatMessage
+import dev.aiharness.core.model.FoundLetter
+import dev.aiharness.core.model.Words
+import dev.aiharness.core.model.words
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.model.Sticker
 import dev.aiharness.core.model.StickerArt
@@ -107,14 +114,33 @@ fun LetterSheet(
     user: UserPersona? = null,
     stickerName: (Sticker) -> String? = { null },
     handling: StickerHandling? = null,
+    /** A letter its P.S. or index card names, to open the thread there. */
+    onOpenLetter: (FoundLetter) -> Unit = {},
 ) {
     val s = stationery
     val ink = s.ink(persona?.ink)
     val mood = writing?.text?.let { dev.aiharness.core.model.MoodTags.parse(it) } ?: letter?.mood
+    val words = persona?.words ?: Words("…", null)
+    val personaName = persona?.name ?: "…"
+    val slip = remember(letter) { letter?.slip?.takeUnless { it.isEmpty } }
+    val reasoning = listOfNotNull(letter?.reasoning, writing?.reasoning?.takeIf { it.isNotBlank() }).joinToString("\n\n")
+    var mindOpen by remember(letter?.key) { mutableStateOf(false) }
+    var thoughtsOpen by remember(letter?.key) { mutableStateOf(false) }
+    val hasTabs = slip != null || reasoning.isNotBlank()
+    Box(Modifier.fillMaxWidth()) {
+    // The tabs stand behind the letter's top edge, at the right (its washi strip keeps the left).
+    if (hasTabs) {
+        LetterTabs(
+            words, ink,
+            hasMind = slip != null, mindOpen = mindOpen, onMind = { mindOpen = !mindOpen },
+            hasThoughts = reasoning.isNotBlank(), thoughtsOpen = thoughtsOpen, onThoughts = { thoughtsOpen = !thoughtsOpen },
+            modifier = Modifier.align(Alignment.TopEnd).padding(end = 10.dp),
+        )
+    }
     StuckOn(
         stickers,
         inkOf = { stickerInk(it, s, persona, user) },
-        Modifier.fillMaxWidth().then(letter?.let { handling?.paper(StickerTarget.message(it.messages.first().id)) } ?: Modifier),
+        Modifier.fillMaxWidth().padding(top = if (hasTabs) TabsAbove else 0.dp).then(letter?.let { handling?.paper(StickerTarget.message(it.messages.first().id)) } ?: Modifier),
         stickerName,
         selectedId = handling?.selectedId,
         onTap = handling?.onTap,
@@ -137,8 +163,11 @@ fun LetterSheet(
                 letter?.let { Text(letterStamp(it.arrivedAt), style = PaperType.meta, color = paper.kasure2) }
             }
 
-            val reasoning = listOfNotNull(letter?.reasoning, writing?.reasoning?.takeIf { it.isNotBlank() }).joinToString("\n\n")
-            if (reasoning.isNotBlank()) Thoughts(reasoning)
+            // Its slips, in the order of the turn: what it had, what it made of it, then what it wrote.
+            SlipOut(mindOpen && slip != null) {
+                slip?.let { MindCard(it, words, ink, letter?.let { l -> letterStamp(l.arrivedAt) }, user?.name ?: "You", personaName, onOpenLetter) }
+            }
+            SlipOut(thoughtsOpen && reasoning.isNotBlank()) { ThoughtsScrap(reasoning, words) }
 
             letter?.blocks?.forEach { block ->
                 when (block) {
@@ -164,6 +193,7 @@ fun LetterSheet(
                 Text("Written while you were away", style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp), color = ink)
             }
             letter?.postscripts?.forEach { ps ->
+                val sumi = paper.sumi
                 Text(
                     buildAnnotatedString {
                         append("P.S. ")
@@ -172,12 +202,21 @@ fun LetterSheet(
                             append(" ")
                             append(it)
                         }
+                        ps.found?.let { found ->
+                            append(" ")
+                            val link = LinkAnnotation.Clickable(
+                                "found",
+                                TextLinkStyles(SpanStyle(color = sumi, textDecoration = TextDecoration.Underline)),
+                            ) { onOpenLetter(found) }
+                            withLink(link) { append(foundName(found, personaName)) }
+                        }
                     },
                     style = PaperType.postscript,
                     color = paper.usuzumi1,
                 )
             }
         }
+    }
     }
 }
 
@@ -199,20 +238,6 @@ class StickerHandling(
 /** The ink of whoever stuck [sticker] (day ink: stickers keep their day colours). */
 fun stickerInk(sticker: Sticker, s: Stationery, persona: Persona?, user: UserPersona?): Color =
     if (sticker.byPersonaId != null) s.dayColors.ink(persona?.ink) else s.dayColors.ink(user?.ink ?: "sora")
-
-@Composable
-private fun Thoughts(reasoning: String) {
-    var open by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            if (open) "Hide thoughts" else "Show thoughts",
-            style = PaperType.meta,
-            color = paper.kasure2,
-            modifier = Modifier.clip(RoundedCornerShape(4.dp)).clickable { open = !open }.padding(vertical = 2.dp),
-        )
-        if (open) Text(reasoning, style = PaperType.postscript, color = paper.usuzumi0)
-    }
-}
 
 /** One of the user's notes: a smaller slip on the right with their own tape. */
 @OptIn(ExperimentalFoundationApi::class)

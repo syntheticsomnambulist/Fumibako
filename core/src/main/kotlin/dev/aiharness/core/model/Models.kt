@@ -290,8 +290,8 @@ sealed interface ContentPart {
         val name: String,
         val content: String,
         val isError: Boolean = false,
-        /** Letters a search found (message ids, best first): `letter_search`'s P.S. and the index card open them. */
-        val foundLetters: List<String> = emptyList(),
+        /** Letters a search found, best first: `letter_search`'s P.S. and the index card open them. */
+        val foundLetters: List<FoundLetter> = emptyList(),
     ) : ContentPart
 
     /** Displayable reasoning summary. Never sent back to providers as text. */
@@ -505,7 +505,11 @@ data class TokenUsage(
     val outputTokens: Long? = null,
     val cacheReadTokens: Long? = null,
     val cacheWriteTokens: Long? = null,
-)
+) {
+    /** Every token the model read: Anthropic counts cached ones apart from its input, the others within it. */
+    fun read(provider: ProviderType?): Long =
+        (inputTokens ?: 0) + if (provider == ProviderType.ANTHROPIC) (cacheReadTokens ?: 0) + (cacheWriteTokens ?: 0) else 0
+}
 
 @Serializable
 data class ChatMessage(
@@ -569,6 +573,10 @@ data class ChatMessage(
     val reasoning: String?
         get() = parts.filterIsInstance<ContentPart.Reasoning>().joinToString("\n") { it.text }.ifBlank { null }
 }
+
+/** A letter `letter_search` found: where it is, who wrote it, when it arrived, and the passage that came back. */
+@Serializable
+data class FoundLetter(val messageId: String, val conversationId: String, val byYou: Boolean, val at: Long, val passage: String)
 
 /** The model a persona's letter was written with: its profile's name, provider and model then. */
 @Serializable
