@@ -474,8 +474,11 @@ class ScreenshotTour {
         assertDrawn(compose.onNodeWithText("Done"), shot("${prefix}_03b_new_persona"))
         back()
         click("Discard")
-        waitFor("Juno")
+        // Back on the gallery, still scrolled down to "New persona": with large text its top (and
+        // Juno's polaroid) isn't laid out until it's scrolled up.
+        waitFor("New persona")
         top()
+        waitFor("Juno")
 
         click("Aria")
         waitFor("Write a letter")
