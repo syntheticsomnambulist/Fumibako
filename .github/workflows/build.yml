@@ -1,10 +1,17 @@
 name: Build
 
-# On request only (Actions → Build → Run workflow, or a session's GitHub tools). Pushes run nothing:
-# every session runs the test suites before it pushes (CLAUDE.md), and Actions minutes and storage
-# are limited while the repository is private. Choose what to build below; the Windows installer and
-# the tests come by default.
+# Pushes run the tests, unless they change only docs (the user, 2026-11-10). Standard runners are
+# free for a public repository; while the repository is private, pushes run nothing, since its
+# Actions minutes are limited. The installers and the phone's APK are built on request only
+# (Actions → Build → Run workflow): choose what to build below; the Windows installer and the
+# tests come by default.
 on:
+  push:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".claude/**"
+      - "LICENSE"
   workflow_dispatch:
     inputs:
       tests:
@@ -28,8 +35,10 @@ on:
         type: boolean
         default: false
 
+# A newer push cancels an older push's tests, and a newer request an older request's builds, on the
+# same branch; a push never cancels a requested build.
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 permissions:
@@ -37,7 +46,7 @@ permissions:
 
 jobs:
   tests:
-    if: ${{ inputs.tests }}
+    if: ${{ (github.event_name == 'push' && !github.event.repository.private) || (github.event_name == 'workflow_dispatch' && inputs.tests) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
