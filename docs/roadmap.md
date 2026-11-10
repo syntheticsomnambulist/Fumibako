@@ -24,24 +24,30 @@ Updated 2026-11-10.
   `ccr-df8f1763-ihe4q4`; the plan and progress are in [`plan-v0.5.md`](plan-v0.5.md), the design in
   `v0.5.md` and the planner's third pass in `calendar.md` *(design branch)*.
   - Done: the wide layouts (merged first), step 1 (the engine: letter search, model changes, lore
-    memories, Won't fade), step 2 (in a letter, bar thinking lines), the Fumibako boxes, and the
-    gallery's folded corner for the open persona.
-  - Next: steps 3 to 8 (searching letters on screen, import and export, the stationery update,
-    fonts, the planner redrawn, then polish, tests and 0.5.0 for the phone and the computer).
-  - Waiting on the design session: thinking lines ("While she writes"), since letters in the post
-    leave little time to see them (the user, 2026-11-09).
+    memories, Won't fade), step 2 (in a letter, bar thinking lines), the Fumibako boxes, the
+    gallery's folded corner for the open persona, and step 3 (searching letters on screen).
+  - Next: steps 4 to 8 (import and export, the stationery update, fonts, the planner redrawn, then
+    polish, tests and 0.5.0 for the phone and the computer).
+  - The stationery update goes in whole, as designed, with no changes until friends have installed
+    and explored the test build (the user, 2026-11-10, relayed by the build session).
+  - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
+    branch*): while her reply is in the post, the postmark and her card in the letters list carry
+    one of her own lines, which she can rewrite when she reflects, at most once a week. Some details
+    are still marked proposed there; the build session builds it once they're settled (the v0.5
+    plan's step 2).
 - **Desktop, shipping with v0.5** ([`plan-desktop.md`](plan-desktop.md)): Fumibako on Windows, macOS
   and Linux, with the wide layouts (the user, 2026-11-08). Steps 1 to 5 (the spike, the move, the
   shell, the desktop's services, mouse and keyboard) are done.
   - Step 6, v0.5 on the computer: the computer's side of each v0.5 part as it lands (save and open
-    dialogs for import and export, Japanese fonts in the app-data folder). No owner since the
-    desktop session was archived.
+    dialogs for import and export, Japanese fonts in the app-data folder). Taken by the desktop
+    installers session, part by part after Kanna lands each (the user, 2026-11-10).
   - Step 7, done: the libraries' notices, from the build (About, and beside the installed app);
     smaller installers (the Java runtime trimmed to the modules Fumibako uses); a desktop section
     in `testers.md` and the README; and a desktop screenshot tour (2026-11-10, the desktop
     installers session). Windows and macOS packaging are still to check, from a CI build.
-  - Found: the Linux keychain isn't used (a dbus-java version clash, `plan-desktop.md`, step 7),
-    so keys there are encrypted with a key in an owner-only file. Not scheduled yet.
+  - Fixed (2026-11-10, the desktop installers session): the Linux keychain works, through the
+    Secret Service on the dbus-java FileKit brings; and the Keys page says "this computer" on a
+    computer. KDE's Secret Service and a real desktop login are still to try.
 - **Storage** ([`storage.md`](storage.md)): in place since 2026-11-10 (in `main`, reaching v0.5 by
   merge): clearing unused files (Settings, Media, Storage), and on the phone, new videos kept at
   720p and lossless songs as AAC.
@@ -72,5 +78,12 @@ Updated 2026-11-10.
   wide-layout study ([`design/wide-studies.html`](design/wide-studies.html)): the day beside its
   first letter, what she kept as a slip, her index card of what she had in mind, and today's
   planner page. Which ones is still to choose.
+- **Letter search in Japanese** (the user, 2026-11-10, relayed by the build session: fine as it
+  is for v0.5, to fix later). The word index's tokenizer (SQLite's unicode61) splits only at
+  spaces and punctuation, so a Japanese sentence is one long word, and a search, which matches
+  from a word's start, misses a word in the middle of a phrase. The build session's suggested fix:
+  in `core/letters/LetterWords.kt`, index CJK runs as single characters and search them as a
+  phrase ("東 京"), which works on every phone's SQLite (the trigram tokenizer needs SQLite 3.34,
+  newer than older Androids carry). It needs a migration step that rebuilds `letter_words`.
 - **Desktop, noted for later** ([`plan-desktop.md`](plan-desktop.md), "Noted for later"): sync
   between the phone and the computer, among others.
