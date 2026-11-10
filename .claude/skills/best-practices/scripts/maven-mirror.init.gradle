@@ -1,0 +1,27 @@
+// Sends Maven Central traffic to Google's mirror of it, for one Gradle run:
+//   ./gradlew -I .claude/skills/best-practices/scripts/maven-mirror.init.gradle <tasks>
+// Maven Central answers this environment's shared address with HTTP 429; the mirror doesn't.
+// A stopgap for a repository whose own build doesn't list the mirror yet (the lasting fix is in
+// SKILL.md, section 1). Passed with -I, it writes nothing to ~/.gradle. It replaces Central rather
+// than falling back to it, so an artifact published in the last few hours may not be there yet.
+def mirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
+def centralHosts = ['repo.maven.apache.org', 'repo1.maven.org']
+def toMirror = { repo ->
+    if (repo instanceof MavenArtifactRepository && repo.url?.host in centralHosts) {
+        repo.url = mirror
+    }
+}
+
+beforeSettings { settings ->
+    settings.pluginManagement.repositories.configureEach(toMirror)
+    settings.dependencyResolutionManagement.repositories.configureEach(toMirror)
+}
+
+allprojects {
+    buildscript.repositories.configureEach(toMirror)
+    repositories.configureEach(toMirror)
+    // Robolectric downloads its Android jars itself, outside Gradle's repositories.
+    tasks.withType(Test).configureEach {
+        systemProperty 'robolectric.dependency.repo.url', mirror
+    }
+}
