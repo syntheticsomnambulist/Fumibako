@@ -83,7 +83,17 @@ class Drafts(private val dir: File, private val scope: CoroutineScope) {
         }
     }
 
-    private suspend fun write(draft: Draft, text: String, going: List<Going>) = withContext(Dispatchers.IO) {
+    /**
+     * Every draft as kept on disk, and the open ones as they are now (a change may not be written
+     * yet): for finding the files they hold (Settings, Storage).
+     */
+    fun texts(): List<String> {
+        val open = open.values.map { d -> JSON.encodeToString(Stored.serializer(), stored(d, d.text.value, d.going.value)) }
+        val kept = dir.listFiles { f -> f.isFile && f.name.endsWith(".json") }?.mapNotNull { runCatching { it.readText() }.getOrNull() }.orEmpty()
+        return open + kept
+    }
+
+    private fun stored(draft: Draft, text: String, going: List<Going>): Stored {
         val waiting = going.mapNotNull {
             when (it) {
                 is Going.Picture -> Waiting(image = it.image)
@@ -91,14 +101,18 @@ class Drafts(private val dir: File, private val scope: CoroutineScope) {
                 is Going.Preparing -> null
             }
         }
+        val kept = waiting.mapNotNull { it.attachment?.id }.toSet()
+        return Stored(text, waiting, draft.cuttingsOf.filterKeys { it in kept }, draft.dismissedLinks.toList())
+    }
+
+    private suspend fun write(draft: Draft, text: String, going: List<Going>) = withContext(Dispatchers.IO) {
+        val stored = stored(draft, text, going)
         val file = file(draft.conversationId)
         runCatching {
-            if (text.isBlank() && waiting.isEmpty()) {
+            if (text.isBlank() && stored.waiting.isEmpty()) {
                 file.delete()
             } else {
                 dir.mkdirs()
-                val kept = waiting.mapNotNull { it.attachment?.id }.toSet()
-                val stored = Stored(text, waiting, draft.cuttingsOf.filterKeys { it in kept }, draft.dismissedLinks.toList())
                 val temp = File(dir, file.name + ".new")
                 temp.writeText(JSON.encodeToString(Stored.serializer(), stored))
                 temp.renameTo(file)

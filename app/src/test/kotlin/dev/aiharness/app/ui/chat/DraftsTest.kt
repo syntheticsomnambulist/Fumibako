@@ -58,6 +58,19 @@ class DraftsTest {
     }
 
     @Test
+    fun theFilesDraftsHoldAreFoundOnDiskAndInMemory() {
+        // A draft kept from before (its file), and one changed a moment ago (not written yet).
+        Drafts(dir, scope).of("conv-3").going.value = listOf(Going.Picture(ContentPart.Image("file:kept-photo.jpg")))
+        waitFor("the draft's file") { File(dir, "conv-3.json").exists() }
+        val drafts = Drafts(dir, scope)
+        drafts.of("conv-4").going.value = listOf(Going.Item(ContentPart.Attachment("v1", AttachmentKind.VIDEO, ref = "file:new-video.mp4")))
+
+        val texts = drafts.texts().joinToString("\n")
+        assertTrue("file:kept-photo.jpg" in texts)
+        assertTrue("file:new-video.mp4" in texts)
+    }
+
+    @Test
     fun aDiscardedDraftIsGone() {
         val drafts = Drafts(dir, scope)
         drafts.of("conv-2").text.value = "words"

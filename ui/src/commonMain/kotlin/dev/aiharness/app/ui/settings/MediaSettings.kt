@@ -1,9 +1,22 @@
 package dev.aiharness.app.ui.settings
 
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import dev.aiharness.app.ui.LocalAppContainer
+import dev.aiharness.app.data.BlobSweep
 import dev.aiharness.app.ui.SwitchRow
 import dev.aiharness.app.ui.paper.CardTitle
+import dev.aiharness.app.ui.paper.PaperButton
 import dev.aiharness.app.ui.paper.PaperChoice
+import dev.aiharness.app.ui.theme.stationery
+import dev.aiharness.core.model.humanSize
+import kotlinx.coroutines.launch
 import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.core.model.AppSettings
@@ -62,5 +75,50 @@ internal fun SettingsCards.mediaPage(s: AppSettings, update: Update) {
             subtitle = "Photos lifting, tags swinging, reels turning, letters' things dropping onto the page." + (systemMotionSetting?.let { " $it stills them too." } ?: ""),
         )
         SwitchRow("Haptic ticks", m.haptics, { v -> media { it.copy(haptics = v) } }, subtitle = "A light tick when a read stamp lands.")
+    }
+    card { Storage() }
+}
+
+/** What the letters' files take up, and clearing the ones nothing uses any more (see BlobSweep). */
+@Composable
+private fun Storage() {
+    val container = LocalAppContainer.current
+    val scope = rememberCoroutineScope()
+    var report by remember { mutableStateOf<BlobSweep.Report?>(null) }
+    var failed by remember { mutableStateOf(false) }
+    var clearing by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        runCatching { container.storage.look() }.onSuccess { report = it }.onFailure { failed = true }
+    }
+    val r = report
+    CardTitle("Storage", note = r?.let { humanSize(it.bytes) })
+    when {
+        failed -> Hint("Couldn't look through the letters' files just now.")
+        r == null -> Hint("Looking through the letters' files…")
+        else -> {
+            val kinds = listOf("videos" to r.videos, "songs" to r.songs, "pictures" to r.pictures, "other files" to r.other)
+                .filter { it.second > 0 }
+                .joinToString(", ") { (kind, bytes) -> "$kind ${humanSize(bytes)}" }
+            Hint(if (kinds.isEmpty()) "No files in your letters yet." else "Photos, songs, videos and files in letters: $kinds.")
+            if (r.unusedFiles == 0) {
+                Hint("Nothing unused: every file belongs to a letter, a memory, a draft or a sticker.")
+            } else {
+                Hint(
+                    "${humanSize(r.unusedBytes)} of that is ${if (r.unusedFiles == 1) "a file" else "${r.unusedFiles} files"} nothing uses any more: " +
+                        "from letters you deleted, replies written again, or things taken out of a note before it went. " +
+                        "Memories' keepsakes, drafts, portraits and stickers keep theirs.",
+                )
+                PaperButton(if (clearing) "Clearing…" else "Clear unused files", ink = stationery.you, enabled = !clearing) {
+                    clearing = true
+                    scope.launch {
+                        runCatching { container.storage.clear() }.onSuccess { report = it }.onFailure { failed = true }
+                        clearing = false
+                    }
+                }
+            }
+        }
+    }
+    if (container.media.keepsSmallerCopies) {
+        Hint("Videos you add are kept at 720p, and lossless songs as AAC, which takes a fraction of the space. Ones already in letters stay as they are.")
     }
 }
