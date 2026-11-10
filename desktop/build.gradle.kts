@@ -82,8 +82,27 @@ compose.desktop {
             packageVersion = versionName
             description = "Letters with personas who remember, feel, and write to you on their own."
             vendor = "Fumibako"
-            // The whole runtime for now; trimmed to the modules it needs once packaging is tried on each system.
-            includeAllModules = true
+            // Only the Java modules Fumibako uses, not the whole runtime. Compose adds java.base,
+            // java.desktop (the window, the tray, the clipboard; it brings java.xml and java.prefs)
+            // and java.logging. The list comes from suggestRuntimeModules, jdeps over every jar's
+            // classes (unpacked: a modular jar stops jdeps), and what only shows at run time. A
+            // library that needs a module left out fails only when its code runs, so check a new
+            // one with both tools.
+            modules(
+                "java.instrument", // kotlinx-coroutines (its debug probes)
+                "java.net.http", // the Anthropic SDK (standardwebhooks)
+                "java.sql", // Jackson (the Anthropic SDK), for its date types
+                "jdk.unsupported", // sun.misc.Unsafe: JavaFX, DataStore's protobuf, coroutines
+                "jdk.jfr", // JavaFX (the songs' player)
+                // dbus-java, on Linux (the keychain's Secret Service, and FileKit's dialogs through
+                // the desktop portal): logging in to D-Bus as you, and its Unix socket.
+                "jdk.security.auth",
+                "jdk.net",
+                "jdk.crypto.ec", // HTTPS: elliptic-curve keys and key exchange (in java.base from Java 22)
+                "jdk.charsets", // song tags and PDFs in older Japanese and Chinese encodings
+                "jdk.localedata", // the clock's format and dates in the system's language (beyond US English)
+                "jdk.accessibility", // screen readers on Windows (the Java Access Bridge)
+            )
             // licenses/libraries.txt beside the app (in its resources folder), as well as inside it.
             appResourcesRootDir.set(layout.dir(besideTheApp.map { it.destinationDir.parentFile }))
 
