@@ -45,9 +45,9 @@ Updated 2026-11-10.
     smaller installers (the Java runtime trimmed to the modules Fumibako uses); a desktop section
     in `testers.md` and the README; and a desktop screenshot tour (2026-11-10, the desktop
     installers session). Windows and macOS packaging are still to check, from a CI build.
-  - Being fixed by the desktop installers session (the user, 2026-11-10): the Linux keychain isn't
-    used (a dbus-java version clash, `plan-desktop.md`, step 7), so keys there are encrypted with a
-    key in an owner-only file; and the Keys page says "this phone" on a computer.
+  - Fixed (2026-11-10, the desktop installers session): the Linux keychain works, through the
+    Secret Service on the dbus-java FileKit brings; and the Keys page says "this computer" on a
+    computer. KDE's Secret Service and a real desktop login are still to try.
 - **Storage** ([`storage.md`](storage.md)): in place since 2026-11-10 (in `main`, reaching v0.5 by
   merge): clearing unused files (Settings, Media, Storage), and on the phone, new videos kept at
   720p and lossless songs as AAC.

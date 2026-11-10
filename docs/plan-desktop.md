@@ -526,8 +526,12 @@ The rules in CLAUDE.md hold through the move:
     pictures. Of the 98 that hold still, only About changed.
 - **Step 6, v0.5 on the computer: taken by the desktop installers session** (the user,
   2026-11-10), part by part after the build session lands each, on `claude/desktop-installers`.
-  With it, the session fixes the Linux keychain and the Keys page's "this phone" (step 7,
-  "Found").
+  With it, the session fixed the Linux keychain and the Keys page's "this phone" (step 7,
+  "Found"; 3abda39 and 44adac6, in `main` 2026-11-10). `SecretService.kt` speaks the Secret
+  Service's D-Bus API through dbus-java 5.2 (secret-service 3.0.0-alpha, built for it, read every
+  collection as locked), java-keyring keeps Windows and macOS, and stores that recorded the file
+  key keep it. Checked under Xvfb with gnome-keyring, in the packaged app too; not tried with
+  KDE's Secret Service or a real desktop login.
 - **Step 7, the rest: done (2026-11-10),** by the desktop installers session
   (session_01GW4c4K7manrhf58LhsT5bS, branch `claude/desktop-installers`), merged into `main` by
   the Architect session.
@@ -577,5 +581,3 @@ The rules in CLAUDE.md hold through the move:
 - Signing, notarization, and updates that install themselves.
 - A friendlier installer: the Windows installer's banner and dialog pictures, a background for
   the Mac's disk image.
-- The Linux keychain (step 7, "Found"): dbus-java 5.2 from FileKit against secret-service 1.8.1,
-  built for 4.2.
