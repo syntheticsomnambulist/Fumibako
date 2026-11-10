@@ -30,8 +30,11 @@ Updated 2026-11-10.
     polish, tests and 0.5.0 for the phone and the computer).
   - The stationery update goes in whole, as designed, with no changes until friends have installed
     and explored the test build (the user, 2026-11-10, relayed by the build session).
-  - Waiting on the design session: thinking lines ("While she writes"), since letters in the post
-    leave little time to see them (the user, 2026-11-09).
+  - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
+    branch*): while her reply is in the post, the postmark and her card in the letters list carry
+    one of her own lines, which she can rewrite when she reflects, at most once a week. Some details
+    are still marked proposed there; the build session builds it once they're settled (the v0.5
+    plan's step 2).
 - **Desktop, shipping with v0.5** ([`plan-desktop.md`](plan-desktop.md)): Fumibako on Windows, macOS
   and Linux, with the wide layouts (the user, 2026-11-08). Steps 1 to 5 (the spike, the move, the
   shell, the desktop's services, mouse and keyboard) are done.

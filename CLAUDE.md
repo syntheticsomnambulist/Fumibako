@@ -56,8 +56,9 @@
   - **`main` follows the build branch a step at a time** (the user, 2026-11-10): when the build
     session reports a plan step done and checked, the Architect runs the checks on it and moves
     `main` there. Only the Architect pushes to `main`; other sessions push to their own branches.
-  - The design notes live on the design branch, `ccr-09dbf6b8-2c3jno`. Read them without switching
-    branches: `git show origin/ccr-09dbf6b8-2c3jno:docs/design/v0.5.md`.
+  - The design notes live on the design branch, `ccr-09dbf6b8-2c3jno` (the design session,
+    Shitae's). Read them without switching branches:
+    `git show origin/ccr-09dbf6b8-2c3jno:docs/design/v0.5.md`.
   - The mockups are private design canvases (claude.ai artifacts). The Artifact tool can read them:
     list with scope "files", then read `project/<board>.dc.html`.
 - **Maven Central's mirror is in the build:** Maven Central answers cloud containers with HTTP 429,
