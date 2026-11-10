@@ -5,7 +5,7 @@ when we work through them.
 
 ## Roadmap
 
-Updated 2026-11-09.
+Updated 2026-11-10.
 
 - **Shipped on the build branch:** v0.1 to v0.3.5, and **v0.4, the planner** (0.4.0, then 0.4.1 with
   a new signing key and the GPL-3.0-or-later licence, and 0.4.2). Friends last had **v0.2.2**; the
@@ -29,6 +29,13 @@ Updated 2026-11-09.
   back into the "going out" activities.
 - **v0.95: the settings, redesigned top-down** (the user, 2026-11-06): persona settings (where
   "What she does" moves in v0.6) and the app's Settings, as menus, before 1.0.
+- **Storage optimizations, unscheduled** (the user, 2026-11-10): taken up when storage needs it,
+  between versions. Already in place on the storage branch (`ccr-af685712-68atlu`, headed for the
+  build branch): clearing unused files (Settings, Media, Storage), and on the phone, new videos
+  kept at 720p and lossless songs as AAC. Still to do, in order of the space saved: deleting the
+  copies made for models once they're described, scaling link pictures, drawn pictures as lossless
+  WebP, tidying the database, and clearing unused files on its own. None of them changes what
+  plays, shows or saves. Details in `docs/storage.md` on the storage branch.
 
 ## Name and icon
 
