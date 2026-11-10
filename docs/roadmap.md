@@ -26,16 +26,16 @@ Updated 2026-11-10.
   - Done: the wide layouts (merged first), step 1 (the engine: letter search, model changes, lore
     memories, Won't fade), step 2 (in a letter, bar thinking lines), the Fumibako boxes, the
     gallery's folded corner for the open persona, step 3 (searching letters on screen), and step 4
-    (import and export: character cards in and out, `.fumibako` backups, optionally locked).
-  - Next: her lines on the postmark (below), then steps 5 to 8 (the stationery update, fonts, the
-    planner redrawn, then polish, tests and 0.5.0 for the phone and the computer).
+    (import and export: character cards in and out, `.fumibako` backups, optionally locked), and
+    her lines on the postmark (below).
+  - Next: steps 5 to 8 (the stationery update, fonts, the planner redrawn, then polish, tests and
+    0.5.0 for the phone and the computer).
   - The stationery update goes in whole, as designed, with no changes until friends have installed
     and explored the test build (the user, 2026-11-10, relayed by the build session).
   - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
     branch*): while her reply is in the post, the postmark and her card in the letters list carry
-    one of her own lines, which she can rewrite when she reflects, at most once a week. Some details
-    are still marked proposed there; the build session builds it once they're settled (the v0.5
-    plan's step 2).
+    one of her own lines, which she can rewrite when she reflects, at most once a week. Built
+    (2026-11-10), with her page's On its way card and a plain "Aria is writing…" straight away.
 - **Desktop, shipping with v0.5** ([`plan-desktop.md`](plan-desktop.md)): Fumibako on Windows, macOS
   and Linux, with the wide layouts (the user, 2026-11-08). Steps 1 to 5 (the spike, the move, the
   shell, the desktop's services, mouse and keyboard) are done.
