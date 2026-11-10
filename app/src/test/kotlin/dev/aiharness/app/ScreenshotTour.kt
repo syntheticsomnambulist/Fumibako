@@ -203,6 +203,8 @@ class ScreenshotTour {
         assumeTrue(outDir != null)
         seed(TimeOfDay.YORU, Season.AKI)
         waitFor("Aria")
+        // Her box may be below the "While you were away" card on this small screen.
+        scrollTo("Aria", exact = true)
         click("Aria")
         // Her box opens before her letter comes in (the list's strip already holds the words).
         compose.waitUntilAtLeastOneExists(hasContentDescription("Draw a picture"), 10_000)
