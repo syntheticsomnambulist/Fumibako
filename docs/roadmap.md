@@ -36,10 +36,12 @@ Updated 2026-11-10.
   - Step 6, v0.5 on the computer: the computer's side of each v0.5 part as it lands (save and open
     dialogs for import and export, Japanese fonts in the app-data folder). No owner since the
     desktop session was archived.
-  - Step 7, done: the libraries' notices, from the build (About, and beside the installed app).
-  - Step 7, to do, by a new session (the user, 2026-11-10): smaller installers (the Java runtime
-    trimmed to the modules Fumibako needs), a desktop section in `testers.md` and the README, and a
-    desktop screenshot tour.
+  - Step 7, done: the libraries' notices, from the build (About, and beside the installed app);
+    smaller installers (the Java runtime trimmed to the modules Fumibako uses); a desktop section
+    in `testers.md` and the README; and a desktop screenshot tour (2026-11-10, the desktop
+    installers session). Windows and macOS packaging are still to check, from a CI build.
+  - Found: the Linux keychain isn't used (a dbus-java version clash, `plan-desktop.md`, step 7),
+    so keys there are encrypted with a key in an owner-only file. Not scheduled yet.
 - **Storage** ([`storage.md`](storage.md)): in place since 2026-11-10 (in `main`, reaching v0.5 by
   merge): clearing unused files (Settings, Media, Storage), and on the phone, new videos kept at
   720p and lossless songs as AAC.

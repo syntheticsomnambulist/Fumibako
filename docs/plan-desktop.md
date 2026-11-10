@@ -524,6 +524,32 @@ The rules in CLAUDE.md hold through the move:
     pixel-identical from one run to the next any more: the seeded personas get random ids, which
     choose their tilts and blobs, so two runs of the same code differ in about 180 of 279
     pictures. Of the 98 that hold still, only About changed.
+- **Step 7, the rest: done (2026-11-10),** by the desktop installers session
+  (session_01GW4c4K7manrhf58LhsT5bS, branch `claude/desktop-installers`), merged into `main` by
+  the Architect session.
+  - **Smaller installers** (702f204): `includeAllModules` gives way to `modules(...)` in
+    `desktop/build.gradle.kts`, each module with why it's there. The Linux `.deb` went from 179.6
+    to 167.9 MB, and the installed runtime from 163 to 118 MB (`jdk.localedata`, about 28 MB, stays
+    so clocks and dates follow the system's language). Checked in the container on the packaged
+    runtime (HTTPS, elliptic curves, AES-GCM and PBKDF2, charsets, the clock in other languages,
+    the bundled SQLite with FTS4, PDFs, song tags, JavaFX playing an MP3, the tray, the clipboard,
+    the Anthropic client), against a runtime missing three of the modules that failed those
+    checks, and the packaged app under Xvfb with its tray. Windows and macOS packaging aren't
+    checked yet.
+  - **The testers' guide and the README** (2567630): `docs/testers.md` has an "On a computer"
+    section (installing on each system, past SmartScreen and Gatekeeper, heartbeats and the tray,
+    where letters live, what's not there yet), and the README its own. The SmartScreen and
+    Gatekeeper steps are written from how those systems behave, not tried.
+  - **A desktop screenshot tour** (e5379fc, `DesktopScreenshotTour`): the phone tour's letters and
+    personas at a new window's size (1180 by 780), by day, by night and a first run, offscreen with
+    no display, about 45 seconds; CLAUDE.md's checks say when to run it. It navigates by pointing
+    `Dispatchers.Main` at the test's thread. Emoji draw in black and white in the container, which
+    has no color emoji font.
+  - **Found:** on Linux the keychain is never used. FileKit's dialogs bring dbus-java 5.2.0, and
+    java-keyring's Secret Service backend (secret-service 1.8.1) was built for 4.2.1, so it fails
+    (`NoSuchMethodError`) and keys are encrypted with a key in an owner-only file instead, which
+    Settings says. Windows and macOS are unaffected. Also, the Keys page says "Kept encrypted on
+    this phone" on the computer.
 
 ## Noted for later
 
@@ -547,8 +573,5 @@ The rules in CLAUDE.md hold through the move:
 - Signing, notarization, and updates that install themselves.
 - A friendlier installer: the Windows installer's banner and dialog pictures, a background for
   the Mac's disk image.
-- Found during the move:
-  - The installer carries the whole Java runtime (`includeAllModules`); trim it to the modules
-    needed.
-  - The desktop test composes on its own thread, so it can't navigate yet (navigation checks it's
-    on Swing's). The desktop screenshot tour will need to run on that thread.
+- The Linux keychain (step 7, "Found"): dbus-java 5.2 from FileKit against secret-service 1.8.1,
+  built for 4.2.

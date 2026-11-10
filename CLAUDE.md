@@ -77,3 +77,7 @@
     Not a tour at a time (each run pays Robolectric's and Gradle's startup again), and not
     together with the other suites: in the same test process as the other app tests they fail
     now and then (3 of 4 runs once; alone, none of 5). Look over the pictures for what changed.
+  - When it can alter what the desktop shows (`ui/`, `desktop/src/main`), also run the desktop's
+    tour (day, night, first run; about 45 seconds, offscreen, no display needed), with the same
+    folder: `HARNESS_SCREENSHOTS_DIR=<dir> ./gradlew :desktop:test --tests '*DesktopScreenshotTour*'`.
+    Its pictures are named `desktop_*`.
