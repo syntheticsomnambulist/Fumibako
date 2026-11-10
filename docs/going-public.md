@@ -49,9 +49,9 @@ letters.
 
 **When to flip the switch:** testers' phones can still take an old-key APK until they've installed a
 rotated build (v0.5), though someone would have to talk them into installing a fake one. For no gap
-at all, send v0.5 before making the repository public. *(2026-11-10: the 0.5.0 debug APK is built
-from `main` at `4a29f82` and checked: signed with the shared key, the retired key for Android 8,
-and the lineage between them. Not yet sent to friends.)*
+at all, send v0.5 before making the repository public. *(Done 2026-11-10: friends have the 0.5.0
+debug APK, built from `main` at `4a29f82` and checked: signed with the shared key, the retired key
+for Android 8, and the lineage between them.)*
 
 ## 2. License (chosen: GPL-3.0-or-later)
 
@@ -68,7 +68,7 @@ Two more carry their own notices, both compatible with the GPL: `ui/src/androidM
 (the Android Open Source Project, Apache 2.0, for Play services' font provider), and the libraries
 both apps use, listed from About by `buildSrc/.../LibraryNotices.kt`.
 
-Still to do: the copyright line in the README's License section, once the studio name is chosen.
+The README's License section opens "Copyright 2026 The Fumibako authors" (the user, 2026-11-10).
 
 ## 3. Look over the history (audited 2026-11-10)
 
@@ -87,9 +87,8 @@ Every blob reachable from every branch (5,950) and every commit message was scan
   your account.
 - **Your other project's name:** an early version of the best-practices skill (in history only,
   not in today's files) names the `art-program` repository and a little about its build.
-- **A place:** `ThemeClockTest` checks sunrise at Boston City Hall's coordinates (42.3601,
-  -71.0589), a landmark rather than an address. Swap in another city if you'd rather not hint at
-  yours.
+- **A place:** `ThemeClockTest` checked sunrise at Boston's coordinates; it uses Edinburgh's now
+  (2026-11-10). Older versions in history still have Boston's, a landmark rather than an address.
 - **Size:** 4.2 MB packed; nothing large.
 
 Rewriting history to drop any of these would mean force-pushing every branch, which this checklist
@@ -101,12 +100,9 @@ doesn't recommend: none of it is a secret.
 - **Settings → Branches:** consider protecting `main` from force-pushes and deletion.
 - **Delete the merged session branches** (every branch but `main`, the design branch
   `ccr-09dbf6b8-2c3jno`, and the ones sessions are still working on).
-- **Actions:** GitHub's standard hosted runners are free for public repositories, so the
-  "minutes are limited while the repository is private" reason for building on request only goes
-  away. Decide whether pushes should run the tests again, then update the wording in
-  `.github/workflows/build.yml`, the README's *Builds* and CLAUDE.md's *Checks*, which all say the
-  repository is private.
-- **CLAUDE.md** opens with "The repository is private for now": change it to say it's public.
+- **Actions:** already set up (2026-11-10). Pushes that change more than docs run the tests, which
+  GitHub's standard runners do for free on a public repository; while it was private they ran
+  nothing. The installers stay on request. The README and CLAUDE.md say so.
 
 ## 5. Later, before distributing to other people
 

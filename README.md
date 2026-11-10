@@ -82,10 +82,12 @@ Friends testing the app have their own guide: [`docs/testers.md`](docs/testers.m
 
 ### Builds
 
-GitHub Actions builds on request, not on every push (**Actions → Build → Run workflow**): the tests
-and the Windows installer by default, and the macOS and Linux installers and the phone's debug APK
-when ticked. The files are under the run's **Artifacts** for a week. Pushes run nothing, since each
-session runs the tests before it pushes and Actions time is limited while the repository is private.
+GitHub Actions runs the tests on every push that changes more than docs. The installers and the
+phone's debug APK are built on request (**Actions → Build → Run workflow**): the tests and the
+Windows installer by default, and the macOS and Linux installers and the APK when ticked. The files
+are under the run's **Artifacts** for a week. Without Actions, any computer builds its own
+system's installer with `./gradlew :desktop:packageDistributionForCurrentOS` (JDK 21; no Android
+SDK needed).
 
 Debug builds share one signing key, so a new build installs over the old one. The key
 is never committed: CI and cloud sessions get it from a secret, and without it a build is signed
@@ -331,6 +333,8 @@ Storage and its planned optimizations: [`docs/storage.md`](docs/storage.md). Wha
 - The desktop installers aren't signed or notarized, so each system warns before the first run.
 
 ## License
+
+Copyright 2026 The Fumibako authors.
 
 Fumibako is free software: you can redistribute it and modify it under the terms of the GNU General
 Public License, version 3 or (at your option) any later version. It comes with no warranty. See

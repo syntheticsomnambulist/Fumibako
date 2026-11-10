@@ -8,16 +8,18 @@
   - **But never drop a step a tester's phone still needs:** keep every step from the database
     version of the oldest build friends were given, even if that's more than three. Phones that
     skip builds jump straight from that version, and dropping the step would wipe their letters.
-  - Tester builds so far (the user says when one goes out): **v0.2.2** (database version 2) is
-    the last one sent; **v0.5** is planned as the next. Until friends have v0.5, keep the steps
-    from version 2 (2→3 onward), and keep the test that opens a version 2 database. Once they
-    have it, steps older than v0.5's database version can go (subject to the three-step rule).
+  - Tester builds so far (the user says when one goes out): **v0.2.2** (database version 2),
+    then **v0.5** (0.5.0, database version 6), sent 2026-11-10. Keep the steps from version 2
+    (2→3 onward) and the test that opens a version 2 database until the user says every friend
+    has installed 0.5.0; after that, steps older than version 6 can go, subject to the three-step
+    rule (so 2→3 and the version 2 test go, and 3→4, 4→5 and 5→6 stay).
   - Model fields need no migration: rows are JSON, new fields get defaults, and a renamed field
     keeps its stored name with `@SerialName`. Don't write backfills or legacy fallbacks for them.
   - Settings (DataStore JSON) work the same way: defaults, no fallbacks.
-- **The repository is private for now.** Before it goes public, follow
-  [`docs/going-public.md`](docs/going-public.md). The code is GPL-3.0-or-later (`LICENSE`); the
-  palette (MPL-2.0) and fonts (OFL) keep their own licenses.
+- **The repository is public** (from 2026-11-10; [`docs/going-public.md`](docs/going-public.md)
+  has what was checked, and what to keep out of it: never commit a key, a token or a tester's
+  data). The code is GPL-3.0-or-later (`LICENSE`), copyright the Fumibako authors; the palette
+  (MPL-2.0) and fonts (OFL) keep their own licenses.
 - **Signing: testers' phones need the key chain.** Debug builds are signed with a shared key from
   `HARNESS_DEBUG_KEYSTORE_B64` (never committed) and carry `app/signing/debug-lineage`, which hands
   over from the retired key (`app/signing/retired-debug.keystore`) that signed builds up to 0.4.0.
@@ -71,12 +73,11 @@
 - **Checks:**
   - Before pushing, run `./gradlew :core:test :data:desktopTest :app:testDebugUnitTest :desktop:test`.
     Gradle re-runs only the suites whose code changed (with nothing changed it takes seconds), so
-    there's no need to pick suites by hand. These checks are the only ones a push gets: GitHub
-    Actions doesn't run on pushes (its minutes and storage are limited while the repository is
-    private). A build there runs on request (workflow `build.yml`, inputs `tests`, `windows`,
-    `macos`, `linux`, `phone`; tests and Windows by default); start one only when the user asks
-    for one, such as installers for a release, and leave `macos` off unless asked (its minutes
-    count ten times).
+    there's no need to pick suites by hand. GitHub Actions runs the same tests after every push
+    that changes more than docs (the user, 2026-11-10), but run them yourself first: a red run is
+    public. Installers and the APK are built there on request (workflow `build.yml`, inputs
+    `tests`, `windows`, `macos`, `linux`, `phone`; tests and Windows by default); start one only
+    when the user asks for one, such as installers for a release.
   - When a change can alter what a screen shows (`ui/`, `app/src/main`, or text from `core` that
     screens show), also run all six screenshot tours, in one run (about 1.5 minutes):
     `HARNESS_SCREENSHOTS_DIR=<dir> ./gradlew :app:testDebugUnitTest --tests '*ScreenshotTour*'`.

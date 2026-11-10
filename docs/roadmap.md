@@ -14,7 +14,10 @@ Updated 2026-11-10.
 - **v0.1 to v0.3.5,** and **v0.4, the planner** (0.4.0; 0.4.1 with a new signing key and the
   GPL-3.0-or-later license; 0.4.2 to 0.4.5, including letters in the post in 0.4.4). See
   [`plan-v0.4.md`](plan-v0.4.md) and the earlier plans.
-- **Testers:** friends last had **v0.2.2** (database version 2). The next tester build is **v0.5**.
+- **v0.5** (0.5.0, 2026-11-10): sent to friends as the phone's debug APK; the desktop installers are
+  built on each system (`./gradlew :desktop:packageDistributionForCurrentOS`). See
+  [`plan-v0.5.md`](plan-v0.5.md) and [`plan-desktop.md`](plan-desktop.md).
+- **Testers:** friends have **v0.5** (database version 6), after v0.2.2 (version 2).
   [`testers.md`](testers.md) is their guide.
 
 ## In progress
@@ -35,9 +38,9 @@ Updated 2026-11-10.
   - Step 8 done (2026-11-10): the testers' guide and README for v0.5, the side rail keeping the
     tab a transfer page was opened from, and **0.5.0** (versionCode 28) for the phone and the
     computer. All eight steps are in `main`.
-  - **Waiting for the user:** a debug APK for friends (signed with the shared key), and a GitHub
-    Actions build for the installers (Windows by default; macOS and Linux if wanted). Until
-    friends have 0.5.0, the database keeps its steps from version 2.
+  - Sent to friends (2026-11-10): the 0.5.0 debug APK, built from `main` at `4a29f82` and
+    checked (the shared key, the retired key for Android 8, the lineage between them). The
+    database keeps its steps from version 2 until every friend has installed it.
   - Fixed before the build (2026-11-10): a day page showed the day before's stickers after "‹ ›"
     (c8c555a, in the shared sticker code, with a test), and on the computer emoji stickers drew in
     black even with a color emoji font (a2a2b40).
