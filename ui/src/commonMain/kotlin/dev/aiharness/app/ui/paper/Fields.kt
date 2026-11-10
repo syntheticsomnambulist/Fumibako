@@ -292,11 +292,29 @@ fun <T> PaperSelect(
 }
 
 /** Where a card's tape goes. Corner tape is always a pair on opposing corners. */
-enum class TapeLayout { LEFT, RIGHT, CORNERS, TOP, TOP_PAIR }
+/**
+ * How a card on a screen is taped down: one of the placements, turned (see [TapePlacement]). A
+ * strip runs down the left or right edge; the rest turn too, and four corners and photo corners
+ * don't.
+ */
+enum class TapeLayout(val placement: TapePlacement, val turn: Int = 0) {
+    LEFT(TapePlacement.STRIP),
+    RIGHT(TapePlacement.STRIP, 2),
+    CORNERS(TapePlacement.CORNERS),
+    CORNERS_OTHER(TapePlacement.CORNERS, 1),
+    TOP(TapePlacement.ACROSS),
+    BOTTOM(TapePlacement.ACROSS, 2),
+    TOP_PAIR(TapePlacement.PAIR),
+    BOTTOM_PAIR(TapePlacement.PAIR, 2),
+    FOUR_CORNERS(TapePlacement.FOUR_CORNERS),
+    TOP_AND_BOTTOM(TapePlacement.TOP_AND_BOTTOM),
+    PHOTO_CORNERS(TapePlacement.PHOTO_CORNERS),
+}
 
 /**
  * A mix of tape placements for the cards on one screen: stable for the same [seed] (screen and
- * persona), and never the same placement on two cards in a row.
+ * persona), never the same placement on two cards in a row, and never tape at the same corner of
+ * one card's bottom and the next one's top.
  */
 fun tapeLayouts(seed: String, count: Int): List<TapeLayout> {
     val random = Random(seed.hashCode())
@@ -313,8 +331,10 @@ private val TapeLayout.topCorners: Set<String>
         TapeLayout.LEFT -> setOf("L")
         TapeLayout.RIGHT -> setOf("R")
         TapeLayout.CORNERS -> setOf("L")
-        TapeLayout.TOP -> setOf("C")
-        TapeLayout.TOP_PAIR -> setOf("L", "R")
+        TapeLayout.CORNERS_OTHER -> setOf("R")
+        TapeLayout.TOP, TapeLayout.TOP_AND_BOTTOM -> setOf("C")
+        TapeLayout.BOTTOM, TapeLayout.BOTTOM_PAIR -> emptySet()
+        TapeLayout.TOP_PAIR, TapeLayout.FOUR_CORNERS, TapeLayout.PHOTO_CORNERS -> setOf("L", "R")
     }
 
 private val TapeLayout.bottomCorners: Set<String>
@@ -322,7 +342,10 @@ private val TapeLayout.bottomCorners: Set<String>
         TapeLayout.LEFT -> setOf("L")
         TapeLayout.RIGHT -> setOf("R")
         TapeLayout.CORNERS -> setOf("R")
+        TapeLayout.CORNERS_OTHER -> setOf("L")
+        TapeLayout.BOTTOM, TapeLayout.TOP_AND_BOTTOM -> setOf("C")
         TapeLayout.TOP, TapeLayout.TOP_PAIR -> emptySet()
+        TapeLayout.BOTTOM_PAIR, TapeLayout.FOUR_CORNERS, TapeLayout.PHOTO_CORNERS -> setOf("L", "R")
     }
 
 /** A paper card held down by [tape] in [layout], padded so the tape never covers its content. */
@@ -339,15 +362,11 @@ fun TapedCard(
         TapeLayout.LEFT -> PaddingValues(start = 22.dp, end = 16.dp, top = 14.dp, bottom = 14.dp)
         TapeLayout.RIGHT -> PaddingValues(start = 16.dp, end = 22.dp, top = 14.dp, bottom = 14.dp)
         TapeLayout.TOP, TapeLayout.TOP_PAIR -> PaddingValues(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 14.dp)
-        TapeLayout.CORNERS -> PaddingValues(16.dp, 14.dp)
+        TapeLayout.BOTTOM, TapeLayout.BOTTOM_PAIR -> PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 18.dp)
+        TapeLayout.TOP_AND_BOTTOM -> PaddingValues(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 18.dp)
+        TapeLayout.CORNERS, TapeLayout.CORNERS_OTHER, TapeLayout.FOUR_CORNERS, TapeLayout.PHOTO_CORNERS -> PaddingValues(16.dp, 14.dp)
     }
-    val held = when (layout) {
-        TapeLayout.LEFT -> Modifier.washiStrip(tape, TapeSide.Start, tiltDegrees = -0.7f)
-        TapeLayout.RIGHT -> Modifier.washiStrip(tape, TapeSide.End, tiltDegrees = 0.8f)
-        TapeLayout.CORNERS -> Modifier.cornerTape(tape)
-        TapeLayout.TOP -> Modifier.topTape(tape)
-        TapeLayout.TOP_PAIR -> Modifier.topPairTape(tape)
-    }
+    val held = Modifier.taped(tape, layout.placement, layout.turn)
     Column(
         modifier
             .rotate(tilt)

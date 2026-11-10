@@ -294,7 +294,7 @@ private fun GettingStarted(nav: NavController) {
     val you = stationery.you
     Column(
         Modifier
-            .cornerTape(Tape(you, stationery.youPattern))
+            .cornerTape(dev.aiharness.app.ui.paper.tape(you, stationery.youPattern, stationery.youShade))
             .paperCard()
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -354,7 +354,7 @@ private fun AwayCard(entries: List<ActivityEntry>, personas: List<Persona>, onDi
     val rows = remember(entries) { summarise(entries) }
     Column(
         Modifier
-            .cornerTape(Tape(s.you, s.youPattern))
+            .cornerTape(dev.aiharness.app.ui.paper.tape(s.you, s.youPattern, s.youShade))
             .paperCard()
             .fillMaxWidth()
             .padding(start = 16.dp, end = 14.dp, top = 12.dp, bottom = 10.dp),

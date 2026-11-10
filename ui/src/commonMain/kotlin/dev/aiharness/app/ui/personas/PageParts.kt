@@ -95,9 +95,10 @@ fun InkChip(inkName: String, ink: Color) = Chip {
 }
 
 @Composable
-fun TapeChip(pattern: TapePattern, ink: Color) = Chip {
+fun TapeChip(pattern: TapePattern, ink: Color, shade: dev.aiharness.core.model.TapeShade = dev.aiharness.core.model.TapeShade.THEME) = Chip {
+    val piece = dev.aiharness.app.ui.paper.tape(ink, pattern, shade, shadow = false)
     androidx.compose.foundation.Canvas(Modifier.size(width = 22.dp, height = 10.dp)) {
-        drawTape(androidx.compose.ui.geometry.Offset(0f, size.height / 2), androidx.compose.ui.geometry.Offset(size.width, size.height / 2), size.height, Tape(ink, pattern, shadow = false), tooth = 2.dp.toPx())
+        drawTape(androidx.compose.ui.geometry.Offset(0f, size.height / 2), androidx.compose.ui.geometry.Offset(size.width, size.height / 2), size.height, piece, tooth = 2.dp.toPx())
     }
     Text(pattern.name.lowercase(), style = PaperType.meta.copy(fontSize = 12.sp, letterSpacing = 0.sp), color = paper.usuzumi1)
 }

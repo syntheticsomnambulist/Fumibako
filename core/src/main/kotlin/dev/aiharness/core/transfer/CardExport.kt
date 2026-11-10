@@ -35,6 +35,7 @@ object CardExport {
         val ext = FumibakoCardExtension(
             ink = persona.ink,
             tapePattern = persona.tapePattern,
+            tapeShade = persona.tapeShade,
             pronouns = persona.pronouns,
             alsoPronouns = persona.alsoPronouns,
             pronounsMix = persona.pronounsMix,

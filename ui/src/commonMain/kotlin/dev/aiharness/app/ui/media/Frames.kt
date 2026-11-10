@@ -711,9 +711,10 @@ fun FilmSnip(video: ContentPart.Attachment, scale: Float = 1f, modifier: Modifie
 
 /** A short piece of washi tape in [ink] and [pattern], torn at the ends. */
 @Composable
-fun TapePiece(ink: Color, pattern: TapePattern, modifier: Modifier, tilt: Float = 0f) {
+fun TapePiece(ink: Color, pattern: TapePattern, modifier: Modifier, tilt: Float = 0f, shade: dev.aiharness.core.model.TapeShade = dev.aiharness.core.model.TapeShade.THEME) {
+    val piece = dev.aiharness.app.ui.paper.tape(ink, pattern, shade)
     Canvas(modifier.graphicsLayer { rotationZ = tilt }) {
-        drawTape(Offset(0f, size.height / 2), Offset(size.width, size.height / 2), size.height, Tape(ink, pattern), tooth = 2.dp.toPx())
+        drawTape(Offset(0f, size.height / 2), Offset(size.width, size.height / 2), size.height, piece, tooth = 2.dp.toPx())
     }
 }
 

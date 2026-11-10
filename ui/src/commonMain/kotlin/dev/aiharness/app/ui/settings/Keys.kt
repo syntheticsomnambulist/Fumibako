@@ -95,7 +95,7 @@ fun KeysScreen(nav: NavController) {
     val credentials by remember { harness.credentials.observeAll() }.collectAsStateWithLifecycle(emptyList())
     var editing by remember { mutableStateOf<Credential?>(null) }
     var adding by remember { mutableStateOf(false) }
-    val tape = Tape(stationery.you, stationery.youPattern)
+    val tape = dev.aiharness.app.ui.paper.tape(stationery.you, stationery.youPattern, stationery.youShade)
     val layouts = tapeLayouts("keys", 2)
 
     val pageScroll = rememberLazyListState()
