@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
@@ -189,7 +190,8 @@ fun LetterSheet(
             if (writing != null) {
                 val text = dev.aiharness.core.model.MoodTags.stripStreaming(writing.text)
                 if (text.isNotBlank()) StickerText(text, ink, PaperType.letterBody, paper.sumi)
-                Text(writing.status.ifBlank { "writing…" }, style = PaperType.postscript, color = paper.kasure2)
+                // Straight away: a plain line, its ellipsis writing itself (no lines of her own, none per tool).
+                StillWriting(persona?.name ?: "They")
             }
             find?.inPicture?.takeIf { find.ringed }?.let { Text(it, style = PaperType.meta.copy(fontSize = 11.sp, letterSpacing = 0.sp, lineHeight = 15.sp), color = paper.usuzumi0) }
             letter?.errors?.forEach { Text(it, style = PaperType.postscript, color = s.ink("beni")) }
@@ -354,3 +356,27 @@ fun letterStamp(millis: Long, zone: ZoneId = ZoneId.systemDefault()): String {
 
 /** A soft tint of [ink] over paper for small surfaces (notes, banners). */
 fun tint(paper: Color, ink: Color, amount: Float = 0.06f): Color = lerp(paper, ink, amount)
+
+/** "Aria is writing", its ellipsis writing itself a dot at a time (all three at once with reduced motion). */
+@Composable
+private fun StillWriting(name: String) {
+    val still = dev.aiharness.app.platform.systemReducedMotion()
+    var dots by remember { mutableStateOf(3) }
+    if (!still) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                dots = 0
+                repeat(3) {
+                    kotlinx.coroutines.delay(380)
+                    dots++
+                }
+                kotlinx.coroutines.delay(700)
+            }
+        }
+    }
+    Box {
+        // The full line sets the width, so the words don't move as the dots come.
+        Text("$name is writing…", style = PaperType.postscript, color = androidx.compose.ui.graphics.Color.Transparent)
+        Text("$name is writing" + ".".repeat(dots).let { if (dots == 3) "…" else it }, style = PaperType.postscript, color = paper.kasure2)
+    }
+}

@@ -482,6 +482,9 @@ class ScreenshotTour {
         shot("${prefix}_04e_persona_planner_marks")
         back()
         waitFor("Open sheet")
+        // v0.5: her lines for the postmark, while a reply is on its way.
+        scrollTo("Let Aria write her own")
+        shot("${prefix}_04f_persona_on_its_way")
 
         top()
         click("Edit")

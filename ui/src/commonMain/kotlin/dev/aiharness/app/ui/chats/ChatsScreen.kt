@@ -440,7 +440,8 @@ private fun LetterBoxRow(conversation: Conversation, persona: Persona?, now: Lon
                 )
             }
             if (onItsWay) {
-                Text("〒 ${who.name}'s reply is on its way", style = PaperType.postscript, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val line = dev.aiharness.core.letters.WayLines.pick(who, conversation.id, conversation.lastUserMessageAt)
+                Text("〒 ${who.name}'s reply is on its way · $line", style = PaperType.postscript, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             } else {
                 Text(
                     conversation.preview ?: " ",

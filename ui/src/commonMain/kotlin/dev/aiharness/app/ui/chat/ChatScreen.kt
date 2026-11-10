@@ -402,7 +402,10 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 contentPadding = PaddingValues(horizontal = LocalReadingSides.current ?: 18.dp, vertical = 18.dp),
             ) {
                 if (arriving != null || (generation.active && postage.travels)) {
-                    item(key = "on-its-way") { OnItsWay(personaName, persona?.ink, arriving.takeIf { postage.showArrival }) }
+                    item(key = "on-its-way") {
+                        val line = persona?.let { dev.aiharness.core.letters.WayLines.pick(it, conversationId, header.conversation?.lastUserMessageAt) }
+                        OnItsWay(personaName, persona?.ink, arriving.takeIf { postage.showArrival }, line = line)
+                    }
                 }
                 if (writing != null && writingInto == null) {
                     item(key = "writing") { LetterSheet(null, persona, writing, onLongPress = {}, onImage = { viewing = it }) }

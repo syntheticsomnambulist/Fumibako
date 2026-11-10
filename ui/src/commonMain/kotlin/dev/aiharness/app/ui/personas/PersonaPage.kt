@@ -398,6 +398,7 @@ private fun LazyListScope.viewCards(p: Persona, nav: NavController, mode: Heartb
         }
     }
     item(key = "letter-box") { LetterBoxCard(p) }
+    item(key = "on-its-way") { OnItsWayCard(p) }
     item {
         val harness = LocalAppContainer.current.harness
         val scope = rememberCoroutineScope()
@@ -551,6 +552,108 @@ private fun LazyListScope.editCards(
     }
     if (!isNew) {
         item { PaperButton("Delete ${p.name}, with letters and memories", Modifier.fillMaxWidth(), onClick = onDelete) }
+    }
+}
+
+/**
+ * On its way: their lines for the 〒 postmark while a reply is in the post. You can take one out,
+ * change one or add your own (yours stay as you wrote them), or let them write their own in a
+ * short turn in their voice.
+ */
+@Composable
+private fun OnItsWayCard(p: Persona) {
+    val harness = LocalAppContainer.current.harness
+    val scope = rememberCoroutineScope()
+    val ink = stationery.ink(p.ink)
+    val w = p.words
+    val lines = p.wayLines.ifEmpty { dev.aiharness.core.letters.WayLines.plain(p).map { dev.aiharness.core.model.WayLine(it) } }
+    var editing by remember(p.id) { mutableStateOf<Int?>(null) }
+    var draft by remember(p.id) { mutableStateOf("") }
+    var asking by remember(p.id) { mutableStateOf(false) }
+    var problem by remember(p.id) { mutableStateOf<String?>(null) }
+    fun save(next: List<dev.aiharness.core.model.WayLine>) {
+        scope.launch {
+            val current = harness.personas.get(p.id) ?: p
+            harness.personas.upsert(current.copy(wayLines = next.filter { it.text.isNotBlank() }, updatedAt = System.currentTimeMillis()))
+        }
+    }
+    val layout = remember(p.id) { tapeLayouts("way-${p.id}", 1)[0] }
+    PageCard(p, layout, "on-its-way") {
+        CardTitle("On its way", note = p.wayLinesWrittenAt?.let { "${w.their} own, ${dev.aiharness.app.ui.letterTime(it)}" })
+        Text(
+            "While ${p.name}'s reply is in the post, its postmark carries one of these.",
+            style = PaperType.noteBody.copy(fontSize = 13.sp, lineHeight = 19.sp),
+            color = paper.usuzumi1,
+        )
+        lines.forEachIndexed { i, line ->
+            if (editing == i) {
+                IndexCardField("${p.name}'s reply is on its way ·", draft, { draft = it }, ink = ink, style = PaperType.noteBody, singleLine = true)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    InkLink("Keep it", ink) {
+                        val text = draft.trim()
+                        val next = lines.toMutableList()
+                        if (i < next.size) next[i] = dev.aiharness.core.model.WayLine(text, yours = true) else next += dev.aiharness.core.model.WayLine(text, yours = true)
+                        save(next)
+                        editing = null
+                    }
+                    InkLink("Cancel", paper.usuzumi0) { editing = null }
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        androidx.compose.ui.text.buildAnnotatedString {
+                            append("${p.name}'s reply is on its way · ")
+                            pushStyle(androidx.compose.ui.text.SpanStyle(color = ink))
+                            append(line.text)
+                            pop()
+                        },
+                        style = PaperType.postscript,
+                        color = paper.usuzumi1,
+                        modifier = Modifier.weight(1f).clickable(onClickLabel = "Change this line") { draft = line.text; editing = i },
+                    )
+                    if (line.yours) Text("yours", style = PaperType.meta.copy(letterSpacing = 0.sp), color = ink)
+                    if (lines.size > 1) InkLink("Take out", paper.usuzumi0) { save(lines.filterIndexed { j, _ -> j != i }) }
+                }
+            }
+        }
+        if (editing == lines.size) {
+            IndexCardField("${p.name}'s reply is on its way ·", draft, { draft = it }, ink = ink, style = PaperType.noteBody, singleLine = true, placeholder = "${w.they}${w.verb("'s", "'re")} …")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                InkLink("Add it", ink) {
+                    if (draft.isNotBlank()) save(lines + dev.aiharness.core.model.WayLine(draft.trim(), yours = true))
+                    editing = null
+                }
+                InkLink("Cancel", paper.usuzumi0) { editing = null }
+            }
+        } else if (lines.size < dev.aiharness.core.letters.WayLines.MOST) {
+            InkLink("+ Add a line", ink) { draft = ""; editing = lines.size }
+        }
+        PaperButton(
+            when {
+                asking -> "${p.name} is writing…"
+                p.wayLinesWrittenAt == null -> "Let ${p.name} write ${w.their} own"
+                else -> "Ask ${w.them} for new ones"
+            },
+            Modifier.fillMaxWidth(),
+            ink = ink,
+            enabled = !asking,
+        ) {
+            asking = true
+            problem = null
+            scope.launch {
+                val written = runCatching { harness.writeOwnWayLines(p.id) }.getOrNull()
+                onMain {
+                    asking = false
+                    if (written == null) problem = "${p.name} couldn't write them just now. Is there a model with a key?"
+                }
+            }
+        }
+        problem?.let { Text(it, style = PaperType.noteBody.copy(fontSize = 12.sp), color = stationery.ink("beni")) }
+        Text(
+            "Lines marked yours stay as they are. ${w.theyCapital} may rewrite ${w.their} own, at most once a week, when ${w.they} reflect${w.verb("s", "")}.",
+            style = PaperType.noteBody.copy(fontSize = 12.sp),
+            color = paper.usuzumi0,
+        )
     }
 }
 
