@@ -25,7 +25,7 @@ object WayLines {
     fun plain(persona: Persona): List<String> {
         val w = persona.words
         val subject = if (persona.pronouns?.subject == null) "" else w.they + w.verb("'s", "'re") + " "
-        return listOf("${subject}addressing the envelope", "${subject}looking for a stamp", "${subject}on the way to the post box")
+        return listOf("${subject}addressing the envelope", "${subject}looking for a stamp", "${subject}heading to the post box")
     }
 
     /** Its lines, or the plain ones when it has none. */

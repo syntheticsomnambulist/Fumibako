@@ -26,7 +26,7 @@ class WayLinesTest {
         assertEquals("looking for a stamp", WayLines.plain(env.persona)[1], "without pronouns, no subject (her name is already before it)")
         val she = env.persona.copy(pronouns = Pronouns(PronounKind.SHE))
         assertEquals("she's addressing the envelope", WayLines.of(she).first())
-        assertEquals("they're on the way to the post box", WayLines.plain(env.persona.copy(pronouns = Pronouns(PronounKind.THEY))).last())
+        assertEquals("they're heading to the post box", WayLines.plain(env.persona.copy(pronouns = Pronouns(PronounKind.THEY))).last())
     }
 
     @Test
