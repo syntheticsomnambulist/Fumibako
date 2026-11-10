@@ -28,6 +28,8 @@ Updated 2026-11-10.
     gallery's folded corner for the open persona, and step 3 (searching letters on screen).
   - Next: steps 4 to 8 (import and export, the stationery update, fonts, the planner redrawn, then
     polish, tests and 0.5.0 for the phone and the computer).
+  - The stationery update goes in whole, as designed, with no changes until friends have installed
+    and explored the test build (the user, 2026-11-10, relayed by the build session).
   - Waiting on the design session: thinking lines ("While she writes"), since letters in the post
     leave little time to see them (the user, 2026-11-09).
 - **Desktop, shipping with v0.5** ([`plan-desktop.md`](plan-desktop.md)): Fumibako on Windows, macOS
@@ -73,5 +75,12 @@ Updated 2026-11-10.
   wide-layout study ([`design/wide-studies.html`](design/wide-studies.html)): the day beside its
   first letter, what she kept as a slip, her index card of what she had in mind, and today's
   planner page. Which ones is still to choose.
+- **Letter search in Japanese** (the user, 2026-11-10, relayed by the build session: fine as it
+  is for v0.5, to fix later). The word index's tokenizer (SQLite's unicode61) splits only at
+  spaces and punctuation, so a Japanese sentence is one long word, and a search, which matches
+  from a word's start, misses a word in the middle of a phrase. The build session's suggested fix:
+  in `core/letters/LetterWords.kt`, index CJK runs as single characters and search them as a
+  phrase ("東 京"), which works on every phone's SQLite (the trigram tokenizer needs SQLite 3.34,
+  newer than older Androids carry). It needs a migration step that rebuilds `letter_words`.
 - **Desktop, noted for later** ([`plan-desktop.md`](plan-desktop.md), "Noted for later"): sync
   between the phone and the computer, among others.
