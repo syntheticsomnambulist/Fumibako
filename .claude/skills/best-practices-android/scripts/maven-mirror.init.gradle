@@ -1,5 +1,5 @@
 // Sends Maven Central traffic to Google's mirror of it, for one Gradle run:
-//   ./gradlew -I .claude/skills/best-practices/scripts/maven-mirror.init.gradle <tasks>
+//   ./gradlew -I .claude/skills/best-practices-android/scripts/maven-mirror.init.gradle <tasks>
 // Maven Central answers this environment's shared address with HTTP 429; the mirror doesn't.
 // A stopgap for a repository whose own build doesn't list the mirror yet (the lasting fix is in
 // SKILL.md, section 1). Passed with -I, it writes nothing to ~/.gradle. It replaces Central rather

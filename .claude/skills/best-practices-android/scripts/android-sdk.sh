@@ -3,7 +3,7 @@
 # container, and points a repository at it through local.properties, which is gitignored. Takes
 # about 20 seconds. Safe to run again.
 #
-#   bash .claude/skills/best-practices/scripts/android-sdk.sh [repository folder]
+#   bash .claude/skills/best-practices-android/scripts/android-sdk.sh [repository folder]
 #
 # local.properties instead of ANDROID_HOME in ~/.bashrc: the safety classifier refuses edits to
 # shell profiles as persistence, and an exported variable doesn't outlive the shell anyway.
