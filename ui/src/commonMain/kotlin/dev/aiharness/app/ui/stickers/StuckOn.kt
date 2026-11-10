@@ -83,7 +83,9 @@ fun StuckOn(
         modifier = modifier,
         content = {
             content()
-            stickers.forEach { sticker ->
+            // Each sticker its own piece, so what one remembers (held, its gestures, its picture)
+            // stays with it when the list changes.
+            stickers.forEach { sticker -> androidx.compose.runtime.key(sticker.id) {
                 OnePiece(
                     sticker = sticker,
                     ink = inkOf(sticker),
@@ -96,7 +98,7 @@ fun StuckOn(
                     // Held, one of yours moves without being selected (a selected one already drags).
                     onHold = onChange.takeIf { sticker.id != selectedId && sticker.byPersonaId == null },
                 )
-            }
+            } }
         },
     ) { measurables, constraints ->
         val sheet = measurables.first().measure(constraints)

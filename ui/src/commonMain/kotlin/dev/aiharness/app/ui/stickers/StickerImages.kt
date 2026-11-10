@@ -139,15 +139,19 @@ fun StickerPicture(ref: StickerRef, ownerInk: Color, modifier: Modifier = Modifi
     val width = LocalStickerSettings.current.outlineWidth
     val outline = s.outlineFor(ownerInk)
     val key = StickerBaker.key(ref, outline, width)
-    val baked by produceState(StickerBaker.cached(key), key) {
-        if (value != null) return@produceState
-        value = withContext(Dispatchers.Default) {
-            when (ref) {
-                is StickerRef.Emoji -> StickerBaker.bake(key, StickerRaster.emoji(ref.emoji), StickerFinish.DIE_CUT, outline, width)
-                is StickerRef.Art -> {
-                    val art = container.harness.stickers.getArt(ref.artId) ?: return@withContext null
-                    val bytes = withContext(Dispatchers.IO) { container.blobStore.get(art.imageRef) } ?: return@withContext null
-                    StickerBaker.bake(key, StickerRaster.picture(bytes), art.finish(), outline, width)
+    // Kept per picture: produceState alone keeps its value when the key changes, so a place reused
+    // for another sticker (the next day's, say) went on showing the one before.
+    val baked by androidx.compose.runtime.key(key) {
+        produceState(StickerBaker.cached(key), key) {
+            if (value != null) return@produceState
+            value = withContext(Dispatchers.Default) {
+                when (ref) {
+                    is StickerRef.Emoji -> StickerBaker.bake(key, StickerRaster.emoji(ref.emoji), StickerFinish.DIE_CUT, outline, width)
+                    is StickerRef.Art -> {
+                        val art = container.harness.stickers.getArt(ref.artId) ?: return@withContext null
+                        val bytes = withContext(Dispatchers.IO) { container.blobStore.get(art.imageRef) } ?: return@withContext null
+                        StickerBaker.bake(key, StickerRaster.picture(bytes), art.finish(), outline, width)
+                    }
                 }
             }
         }
