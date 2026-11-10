@@ -18,11 +18,14 @@ object WayLines {
     /** Its own rewrites in a heartbeat come at most this often. */
     const val WEEK = 7L * 24 * 60 * 60 * 1000
 
-    /** The plain lines a persona starts with: "she's addressing the envelope". */
+    /**
+     * The plain lines a persona starts with: "she's addressing the envelope". Without pronouns, no
+     * subject ("addressing the envelope"), so its name doesn't come twice after "Kit's reply".
+     */
     fun plain(persona: Persona): List<String> {
         val w = persona.words
-        val subject = w.they + w.verb("'s", "'re")
-        return listOf("$subject addressing the envelope", "$subject looking for a stamp", "$subject on the way to the post box")
+        val subject = if (persona.pronouns?.subject == null) "" else w.they + w.verb("'s", "'re") + " "
+        return listOf("${subject}addressing the envelope", "${subject}looking for a stamp", "${subject}on the way to the post box")
     }
 
     /** Its lines, or the plain ones when it has none. */
