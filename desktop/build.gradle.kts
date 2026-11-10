@@ -40,8 +40,17 @@ dependencies {
 }
 
 tasks.test {
-    // Fresh folders per test; screenshots when asked for (as the phone's tour).
-    environment("HARNESS_SCREENSHOTS_DIR", System.getenv("HARNESS_SCREENSHOTS_DIR") ?: "")
+    // Fresh folders per test; screenshots when asked for (as the phone's tour). The screenshot tour
+    // (DesktopScreenshotTour) runs only with HARNESS_SCREENSHOTS_DIR set, and such a run always
+    // really runs: never "up to date" and never from the build cache, which would pass it without
+    // drawing a single picture.
+    val shots = providers.environmentVariable("HARNESS_SCREENSHOTS_DIR")
+    environment("HARNESS_SCREENSHOTS_DIR", shots.getOrElse(""))
+    inputs.property("screenshotsDir", shots.orElse(""))
+    outputs.upToDateWhen { !shots.isPresent }
+    outputs.cacheIf { !shots.isPresent }
+    // About's version, as the installed app's launcher passes it.
+    systemProperty("fumibako.version", versionName)
     testLogging {
         events("failed", "skipped")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL

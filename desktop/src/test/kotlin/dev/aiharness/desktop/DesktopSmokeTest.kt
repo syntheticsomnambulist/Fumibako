@@ -29,9 +29,8 @@ import kotlin.test.assertEquals
  * fresh folder: the first launch seeds Aria, and the letters page's getting-started card names you.
  * Set HARNESS_SCREENSHOTS_DIR to keep a picture.
  *
- * Only the first page for now: the test composes on its own thread, but navigating checks it's on
- * the window's (Swing's) thread. The desktop's screenshot tour (docs/plan-desktop.md, step 7) will
- * walk every page; until then the other pages are checked in a real window.
+ * Only the first page: navigating checks it's on Main's thread, which this rule doesn't arrange.
+ * DesktopScreenshotTour walks the other pages (it points Dispatchers.Main at its own thread).
  */
 @OptIn(ExperimentalTestApi::class)
 class DesktopSmokeTest {

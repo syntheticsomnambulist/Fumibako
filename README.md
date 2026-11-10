@@ -291,6 +291,14 @@ of their own:
 HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests '*ScreenshotTour*'
 ```
 
+The desktop has its own tour, of the same letters and personas in a new desktop window's size
+(1180 by 780), by day and by night, and a first run. It renders offscreen, so it needs no display,
+and its pictures are named `desktop_*`:
+
+```
+HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :desktop:test --tests '*DesktopScreenshotTour*'
+```
+
 ## Design
 
 The visual direction (madoromi ink colors, letter-style messages, washi tape, stickers) is written
