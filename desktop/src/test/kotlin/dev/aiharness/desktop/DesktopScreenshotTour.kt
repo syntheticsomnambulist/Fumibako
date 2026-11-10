@@ -383,12 +383,11 @@ class DesktopScreenshotTour {
     }
 
     /**
-     * The window's content in an offscreen scene of the window's size. Dispatchers.Main is the test's
-     * own thread meanwhile: input comes from this thread, and navigation (through lifecycle) checks
-     * that it's on Main's thread, which in the app is Swing's.
+     * The window's content in an offscreen scene of the window's size, with Dispatchers.Main as
+     * [TourMain] meanwhile.
      */
     private fun window(container: AppContainer, prefix: String, steps: Tour.() -> Unit) {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(TourMain(Thread.currentThread()))
         try {
             runDesktopComposeUiTest(WIDTH, HEIGHT) {
                 val backs = BackHandlers()
@@ -720,6 +719,25 @@ class DesktopScreenshotTour {
         val bitmap = ImageBitmap(width, height)
         draw(Canvas(bitmap))
         return Image.makeFromBitmap(bitmap.asSkiaBitmap()).encodeToData(EncodedImageFormat.PNG)!!.bytes
+    }
+
+    /**
+     * Main for the tour: work runs at once on the test's thread (input comes from it, and navigation,
+     * through lifecycle, checks it's on Main's thread) or on Swing's, where the scene is measured and
+     * drawn; work resuming anywhere else goes to Swing's, so it never changes what's on screen while
+     * a page is being measured.
+     */
+    private class TourMain(private val testThread: Thread) : kotlinx.coroutines.MainCoroutineDispatcher() {
+        override val immediate: kotlinx.coroutines.MainCoroutineDispatcher get() = this
+
+        override fun isDispatchNeeded(context: kotlin.coroutines.CoroutineContext): Boolean =
+            Thread.currentThread() != testThread && !javax.swing.SwingUtilities.isEventDispatchThread()
+
+        // What it changed is announced at once, so the test's scene sees it on its next frame.
+        override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) = javax.swing.SwingUtilities.invokeLater {
+            block.run()
+            androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
+        }
     }
 
     private companion object {
