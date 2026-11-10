@@ -197,6 +197,14 @@ expect fun rememberOutside(): Outside
 @Composable
 expect fun rememberSaveAs(onSaved: (Boolean) -> Unit): (file: java.io.File, name: String, mime: String) -> Unit
 
+/**
+ * A handwriting face that isn't bundled ([dev.aiharness.core.model.Hands]), once it's here: on the
+ * phone through Google Play services' font provider (asked for the first time it's wanted, and
+ * kept); null until then, or where it can't come.
+ */
+@Composable
+expect fun downloadedHand(name: String): androidx.compose.ui.text.font.FontFamily?
+
 /** [bytes] (a picture of any kind this platform reads) as a PNG; null if it isn't a picture. */
 expect fun pngOf(bytes: ByteArray): ByteArray?
 

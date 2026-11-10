@@ -203,7 +203,8 @@ fun LetterSheet(
                 Text(
                     buildAnnotatedString {
                         append("P.S. ")
-                        withStyle(SpanStyle(fontStyle = FontStyle.Normal, fontWeight = FontWeight.Medium, color = if (ps.isError) s.ink("beni") else ink)) { append(ps.label) }
+                        // The label is printed (the letters face), the rest in her hand, as the Hand board has it.
+                        withStyle(SpanStyle(fontFamily = dev.aiharness.app.ui.theme.HarnessFonts.Read, fontWeight = FontWeight.Medium, fontSize = 14.sp, color = if (ps.isError) s.ink("beni") else ink)) { append(ps.label) }
                         ps.text?.let {
                             append(" ")
                             append(it)

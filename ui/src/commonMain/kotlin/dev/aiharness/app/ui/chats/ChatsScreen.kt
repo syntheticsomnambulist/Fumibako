@@ -407,7 +407,11 @@ private fun summarise(entries: List<ActivityEntry>): List<AwayRow> =
  * paper tucked beneath its side: their name, mood and the time, and the latest line.
  */
 @Composable
-private fun LetterBoxRow(conversation: Conversation, persona: Persona?, now: Long, open: Boolean, modifier: Modifier = Modifier) {
+private fun LetterBoxRow(conversation: Conversation, persona: Persona?, now: Long, open: Boolean, modifier: Modifier = Modifier) =
+    dev.aiharness.app.ui.theme.InHand(persona?.hand) { LetterBoxRowInHand(conversation, persona, now, open, modifier) }
+
+@Composable
+private fun LetterBoxRowInHand(conversation: Conversation, persona: Persona?, now: Long, open: Boolean, modifier: Modifier) {
     val s = stationery
     val ink = s.ink(persona?.ink)
     val who = persona ?: Persona(id = conversation.personaId, name = conversation.title, createdAt = 0, updatedAt = 0)

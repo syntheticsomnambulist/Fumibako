@@ -28,6 +28,8 @@ data class FumibakoCardExtension(
     val ink: String? = null,
     val tapePattern: TapePattern? = null,
     val tapeShade: dev.aiharness.core.model.TapeShade? = null,
+    /** Her hand, by name only: a phone without it shows the default. */
+    val hand: String? = null,
     val pronouns: Pronouns? = null,
     val alsoPronouns: List<Pronouns> = emptyList(),
     val pronounsMix: PronounMix? = null,
@@ -153,6 +155,7 @@ class CardImport(
             ink = choices.ink ?: ext?.ink ?: defaults.ink,
             tapePattern = ext?.tapePattern ?: defaults.tapePattern,
             tapeShade = ext?.tapeShade ?: defaults.tapeShade,
+            hand = ext?.hand,
             pronouns = ext?.pronouns,
             alsoPronouns = ext?.alsoPronouns.orEmpty(),
             pronounsMix = ext?.pronounsMix ?: defaults.pronounsMix,

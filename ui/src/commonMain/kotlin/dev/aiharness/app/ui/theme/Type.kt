@@ -1,6 +1,7 @@
 package dev.aiharness.app.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -92,10 +93,10 @@ object PaperType {
     val letterName = display.copy(fontSize = 20.sp, lineHeight = 24.sp)
     val listName = display.copy(fontSize = 20.sp, lineHeight = 24.sp)
     val letterBody = TextStyle(fontFamily = HarnessFonts.Read, fontSize = 15.5.sp, lineHeight = 24.sp)
-    /** A P.S., her thoughts, a caption in her voice: in her hand. */
-    val postscript = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 15.sp, lineHeight = 20.sp)
-    /** Her mood word, in her hand. */
-    val mood = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 15.sp, lineHeight = 20.sp)
+    /** A P.S., her thoughts, a line in her voice: in the hand here ([LocalHand]). */
+    val postscript: TextStyle @Composable get() = inHand(15f, 20f)
+    /** Her mood word, in the hand here. */
+    val mood: TextStyle @Composable get() = inHand(15f, 20f)
     val preview = TextStyle(fontFamily = HarnessFonts.Read, fontSize = 14.sp, lineHeight = 20.sp)
     /** Interface text: descriptions, hints, rows. */
     val noteBody = ui.copy(fontSize = 14.sp, lineHeight = 22.sp)
@@ -111,6 +112,13 @@ object PaperType {
     val heroName = display.copy(fontSize = 38.sp, lineHeight = 40.sp)
     val polaroidName = display.copy(fontSize = 20.sp, lineHeight = 24.sp)
     val seal = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 18.sp)
-    /** Captions and labels on frames, in the hand. */
-    val caption = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 12.5.sp, lineHeight = 16.sp)
+    /** Captions and labels on frames, in the hand here. */
+    val caption: TextStyle @Composable get() = inHand(12.5f, 16f)
+
+    /** [size] and [line] in the hand here, scaled so its x-height sits with the letters'. */
+    @Composable
+    private fun inHand(size: Float, line: Float): TextStyle {
+        val hand = LocalHand.current
+        return TextStyle(fontFamily = hand.family, fontSize = (size * hand.scale).sp, lineHeight = line.sp)
+    }
 }

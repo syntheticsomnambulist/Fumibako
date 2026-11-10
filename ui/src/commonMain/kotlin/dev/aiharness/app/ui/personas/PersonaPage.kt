@@ -174,6 +174,7 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
     }
 
     val pageScroll = rememberLazyListState()
+    dev.aiharness.app.ui.theme.InHand(p.hand) {
     LazyColumn(
         Modifier.fillMaxSize().scrollbar(pageScroll),
         state = pageScroll,
@@ -223,6 +224,7 @@ fun PersonaPageScreen(nav: NavController, personaId: String) {
             }
             viewCards(p, nav, settings?.heartbeat?.mode)
         }
+    }
     }
 
     if (confirmDelete) {
@@ -446,6 +448,10 @@ private fun LazyListScope.editCards(
             InkPicker(p.ink, { v -> onChange(p.copy(ink = v)) })
             Text("TAPE", style = PaperType.meta, color = paper.kasure2)
             TapePicker(p.ink, p.tapePattern, { v -> onChange(p.copy(tapePattern = v)) }, shade = p.tapeShade, onShade = { v -> onChange(p.copy(tapeShade = v)) })
+            Text(if (p.pronouns != null) "${p.words.their.uppercase()} HAND" else "HAND", style = PaperType.meta, color = paper.kasure2)
+            dev.aiharness.app.ui.paper.HandPicker(p.hand, stationery.ink(p.ink), "${p.words.their.replaceFirstChar { it.uppercase() }} P.S. lines, mood words and thoughts, the feelings in ${p.words.their} memory book, and what ${p.words.they} ${p.words.verb("writes", "write")} on ${p.words.their} pictures.") { v ->
+                onChange(p.copy(hand = v))
+            }
         }
     }
     item {

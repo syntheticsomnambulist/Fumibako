@@ -490,6 +490,9 @@ class ScreenshotTour {
         click("Edit")
         waitFor("EDITING")
         shot("${prefix}_05_persona_editor")
+        // v0.5: her hand, under her ink and tape.
+        scrollTo("Hachi Maru Pop")
+        shot("${prefix}_05d_persona_hand")
         scrollTo("Another set", exact = false)
         shot("${prefix}_05a_persona_pronouns")
         scrollTo("Drawing style")

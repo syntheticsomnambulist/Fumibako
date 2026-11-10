@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
@@ -106,6 +108,55 @@ fun TapePicker(
         if (onShade != null) {
             Text("SHADE", style = PaperType.meta, color = paper.kasure2, modifier = Modifier.padding(top = 4.dp))
             PaperChoice(TapeShade.entries.map { it to it.label }, shade, onShade, ink = ink, maxLines = 2)
+        }
+    }
+}
+
+/**
+ * The hands to write in ([dev.aiharness.core.model.Hands]): each a line of P.S. in its own face
+ * (Yomogi's bundled; the others show in it until they've come, the first time they're chosen),
+ * with [about] saying what the hand covers.
+ */
+@Composable
+fun HandPicker(selected: String?, ink: Color, about: String, onSelect: (String?) -> Unit) {
+    val chosen = dev.aiharness.core.model.Hands.of(selected)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(about, style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 18.sp), color = paper.usuzumi0)
+        dev.aiharness.core.model.Hands.BUILT_IN.forEach { hand ->
+            val on = hand == chosen
+            // Only the chosen one, and Yomogi, are drawn in their own face: the others download when chosen.
+            val face = if (on || hand == dev.aiharness.core.model.Hands.DEFAULT) dev.aiharness.app.ui.theme.rememberHand(hand.name) else null
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(selected = on, role = Role.RadioButton) { onSelect(hand.name.takeIf { hand != dev.aiharness.core.model.Hands.DEFAULT }) }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Box(
+                    Modifier.size(18.dp).border(1.5.dp, ink, androidx.compose.foundation.shape.CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) { if (on) Box(Modifier.size(8.dp).background(ink, androidx.compose.foundation.shape.CircleShape)) }
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "P.S. the window cat 窓辺の猫",
+                        style = androidx.compose.ui.text.TextStyle(
+                            fontFamily = face?.family ?: dev.aiharness.app.ui.theme.HarnessFonts.Hand,
+                            fontSize = (16 * (face?.scale ?: 1f)).sp,
+                            lineHeight = 22.sp,
+                        ),
+                        color = paper.sumi,
+                    )
+                    val note = when {
+                        hand == dev.aiharness.core.model.Hands.DEFAULT -> " · the default"
+                        on && face?.name != hand.name -> " · on its way"
+                        !on -> " · comes when chosen"
+                        else -> ""
+                    }
+                    Text(hand.name + note, style = PaperType.meta.copy(letterSpacing = 0.sp), color = paper.kasure2)
+                }
+            }
         }
     }
 }

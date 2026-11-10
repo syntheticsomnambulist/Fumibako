@@ -155,6 +155,8 @@ data class Persona(
     val ink: String = "sakura",
     val tapePattern: TapePattern = TapePattern.DOTS,
     val tapeShade: TapeShade = TapeShade.THEME,
+    /** Its hand (see [Hands]): the face of its P.S., mood words, thoughts and captions; null is Yomogi. */
+    val hand: String? = null,
     /**
      * What an unread letter from this persona wears: the id of one of its stickers, or null for its
      * "hello" sticker (the seal when it has none).
@@ -210,6 +212,20 @@ data class CardOrigin(
     val importedAt: Long = 0,
 )
 
+/**
+ * The handwriting faces a persona (or one of yours) can write in: Yomogi (the default, bundled),
+ * and four that download when chosen. [scale] lines their x-heights up with the letters'.
+ */
+object Hands {
+    data class Hand(val name: String, val scale: Float = 1f)
+
+    val DEFAULT = Hand("Yomogi")
+    val BUILT_IN: List<Hand> = listOf(DEFAULT, Hand("Klee One"), Hand("Zen Kurenaido"), Hand("Hachi Maru Pop", 0.92f), Hand("Yusei Magic", 0.96f))
+
+    /** The hand called [name], or the default. */
+    fun of(name: String?): Hand = BUILT_IN.firstOrNull { it.name == name } ?: DEFAULT
+}
+
 /** One of a persona's lines for the postmark: [yours] when you wrote or edited it (then it stays as it is). */
 @Serializable
 data class WayLine(val text: String, val yours: Boolean = false)
@@ -245,6 +261,8 @@ data class UserPersona(
     val ink: String = "sora",
     val tapePattern: TapePattern = TapePattern.STRIPES,
     val tapeShade: TapeShade = TapeShade.THEME,
+    /** Your hand for captions on what you send and labels on your keepsakes (see [Hands]); null is Yomogi. */
+    val hand: String? = null,
     /**
      * Whether personas see this one's planner: null follows the rule, which shares your default
      * persona's (the one you write as) and not the others', which may be fictional.

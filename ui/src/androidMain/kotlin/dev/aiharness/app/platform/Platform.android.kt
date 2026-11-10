@@ -296,6 +296,45 @@ private class AndroidOutside(private val context: Context, private val blobs: Fi
 
 actual fun decodeImage(bytes: ByteArray): ImageBitmap? = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
 
+@Composable
+actual fun downloadedHand(name: String): androidx.compose.ui.text.font.FontFamily? {
+    val context = LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(name) { ProvidedFonts.ask(context.applicationContext, name) }
+    return ProvidedFonts.families[name]
+}
+
+/**
+ * Faces from Google Play services' font provider, asked for once each and kept for the process
+ * (the provider keeps one copy for all apps). Without Play services they never come, and the
+ * bundled faces stand in.
+ */
+internal object ProvidedFonts {
+    val families = androidx.compose.runtime.mutableStateMapOf<String, androidx.compose.ui.text.font.FontFamily>()
+    private val asked = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    fun ask(context: Context, name: String) {
+        if (!asked.add(name)) return
+        val request = androidx.core.provider.FontRequest(
+            "com.google.android.gms.fonts",
+            "com.google.android.gms",
+            "name=$name",
+            dev.aiharness.app.ui.R.array.com_google_android_gms_fonts_certs,
+        )
+        val callback = object : androidx.core.provider.FontsContractCompat.FontRequestCallback() {
+            override fun onTypefaceRetrieved(typeface: android.graphics.Typeface) {
+                families[name] = androidx.compose.ui.text.font.FontFamily(androidx.compose.ui.text.font.Typeface(typeface))
+            }
+
+            override fun onTypefaceRequestFailed(reason: Int) {
+                asked.remove(name)
+            }
+        }
+        runCatching {
+            androidx.core.provider.FontsContractCompat.requestFont(context, request, callback, android.os.Handler(android.os.Looper.getMainLooper()))
+        }.onFailure { asked.remove(name) }
+    }
+}
+
 actual fun pngOf(bytes: ByteArray): ByteArray? = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { bitmap ->
     java.io.ByteArrayOutputStream().also { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
 }
