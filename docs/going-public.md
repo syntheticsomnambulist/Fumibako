@@ -49,7 +49,9 @@ letters.
 
 **When to flip the switch:** testers' phones can still take an old-key APK until they've installed a
 rotated build (v0.5), though someone would have to talk them into installing a fake one. For no gap
-at all, send v0.5 before making the repository public.
+at all, send v0.5 before making the repository public. *(2026-11-10: the 0.5.0 debug APK is built
+from `main` at `4a29f82` and checked: signed with the shared key, the retired key for Android 8,
+and the lineage between them. Not yet sent to friends.)*
 
 ## 2. License (chosen: GPL-3.0-or-later)
 
@@ -58,21 +60,55 @@ option) any later version". Two parts keep their own licenses, as the README lis
 
 - **The madoromi palette** (MPL-2.0): `docs/design/madoromi-palette.json` and
   `ui/src/commonMain/kotlin/dev/aiharness/app/ui/theme/MadoromiPalette.kt`.
-- **The bundled placeholder fonts** (SIL OFL 1.1): `ui/src/androidMain/res/font/`, with the notice in
+- **The bundled fonts** (SIL OFL 1.1): Zen Old Mincho, Literata, Zen Kaku Gothic New, Yomogi, Yuji
+  Syuku and Old Standard TT, in `ui/src/androidMain/res/font/`, with their notices in
   `ui/src/commonMain/composeResources/files/licenses/fonts.txt`.
+
+Two more carry their own notices, both compatible with the GPL: `ui/src/androidMain/res/values/font_certs.xml`
+(the Android Open Source Project, Apache 2.0, for Play services' font provider), and the libraries
+both apps use, listed from About by `buildSrc/.../LibraryNotices.kt`.
 
 Still to do: the copyright line in the README's License section, once the studio name is chosen.
 
-## 3. Look over the history
+## 3. Look over the history (audited 2026-11-10)
 
-- **API keys:** none have been committed; they live only in the app's Keystore and in environment
-  variables. Run GitHub's secret scanning once the repository is public to confirm.
-- **Session links:** commit messages carry `Claude-Session:` links. They only open for your
-  account, but they'll be visible.
-- **Design links:** the docs link design canvases published as private claude.ai artifacts. They
-  say so where they appear, since they only open for your account.
+Every blob reachable from every branch (5,950) and every commit message was scanned.
 
-## 4. Later, before distributing to other people
+- **API keys and secrets:** none. No key-shaped strings (Anthropic, OpenAI, Google, GitHub,
+  NovelAI, AWS, Slack), no private-key blocks, no encoded keystores. The only key file ever
+  committed is the retired debug key, public on purpose (section 1). Run GitHub's secret scanning
+  once the repository is public to confirm.
+- **Who wrote it:** all 327 commits are authored and committed as Claude
+  (noreply@anthropic.com); no personal email or name is in the commit metadata or the files.
+- **Session links:** 303 commit messages carry `Claude-Session:` links, and the docs name two
+  session ids. They only open for your account, but they'll be visible.
+- **Design links:** today's docs link six private claude.ai artifacts (the design canvases), and
+  older versions in history link more. They say so where they appear, since they only open for
+  your account.
+- **Your other project's name:** an early version of the best-practices skill (in history only,
+  not in today's files) names the `art-program` repository and a little about its build.
+- **A place:** `ThemeClockTest` checks sunrise at Boston City Hall's coordinates (42.3601,
+  -71.0589), a landmark rather than an address. Swap in another city if you'd rather not hint at
+  yours.
+- **Size:** 4.2 MB packed; nothing large.
+
+Rewriting history to drop any of these would mean force-pushing every branch, which this checklist
+doesn't recommend: none of it is a secret.
+
+## 4. Right after the switch
+
+- **Settings → Code security:** turn on secret scanning, push protection and Dependabot alerts.
+- **Settings → Branches:** consider protecting `main` from force-pushes and deletion.
+- **Delete the merged session branches** (every branch but `main`, the design branch
+  `ccr-09dbf6b8-2c3jno`, and the ones sessions are still working on).
+- **Actions:** GitHub's standard hosted runners are free for public repositories, so the
+  "minutes are limited while the repository is private" reason for building on request only goes
+  away. Decide whether pushes should run the tests again, then update the wording in
+  `.github/workflows/build.yml`, the README's *Builds* and CLAUDE.md's *Checks*, which all say the
+  repository is private.
+- **CLAUDE.md** opens with "The repository is private for now": change it to say it's public.
+
+## 5. Later, before distributing to other people
 
 Release builds are unsigned today. A release signing key is a different key from the debug one,
 and it must never be committed. Set it up the same way as the debug key, through secrets. (If the
