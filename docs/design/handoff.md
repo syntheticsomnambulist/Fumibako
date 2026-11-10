@@ -2,11 +2,12 @@
 
 Written 2026-11-09 by the design session that worked from v0.1 to the planner's third pass, for the
 design session that takes over. Read this first, then [`README.md`](README.md) (the first design
-notes) and the notes for the version in hand. Quoted app text follows the app's American spelling.
+notes) and the notes for the version in hand. Prose and quoted app text both use American spelling
+(the user, 2026-11-10; older notes are British in places, which is fine).
 
 ## Where things stand
 
-- **Shipped on the build branch** (`ccr-cbac297a-wac5ud`): v0.1 to v0.4 (the planner), up to
+- **Shipped on the build branch** (`ccr-df8f1763-ihe4q4`, which replaced `ccr-cbac297a-wac5ud`): v0.1 to v0.4 (the planner), up to
   0.4.5. Friends last had v0.2.2; the next tester build is v0.5.
 - **v0.5 is designed,** nothing open ([`v0.5.md`](v0.5.md)): in a letter, letter search, import and
   export, the stationery update, the font audit, and the planner redrawn (the third pass in
@@ -15,7 +16,8 @@ notes) and the notes for the version in hand. Quoted app text follows the app's 
 - **v0.6 (activities) is being designed** ([`activities.md`](activities.md),
   [`pen-pals.md`](pen-pals.md)): the Desk tab, the writing desk, shiritori, trinkets, pen pals, the
   drawer, and labels (designed in [`v0.5.md`](v0.5.md)). What's left is below.
-- **The roadmap** is in [`ideas.md`](ideas.md), with the ideas parked for later.
+- **The roadmap** is in [`ideas.md`](ideas.md), with the ideas parked for later. It belongs to
+  Sashigane, the Architect session, from 2026-11-10: leave its Roadmap section alone.
 
 ## Upcoming designs
 
@@ -145,11 +147,14 @@ What the user and I settled on over v0.1 to v0.5. Each is in the notes in more d
 ## How the work runs
 
 - **Sessions:** this design branch (`ccr-09dbf6b8-2c3jno`) holds `docs/design` and nothing else
-  changes here; the build session (`ccr-cbac297a-wac5ud`) builds the app from these notes; a
-  desktop layout session works on wide layouts and does no new design. Other sessions can message
+  changes here; the build session, Kanna (`ccr-df8f1763-ihe4q4`, plan in `docs/plan-v0.5.md`
+  there), builds the app from these notes; a desktop layout session (`claude/sharp-darwin-o3pk1g`)
+  works on wide layouts and does no new design; Sashigane, the Architect, keeps the repository
+  orderly, merges branches into main, owns the roadmap and is the place to bring branch or plan
+  conflicts. Other sessions can message
   this one; weigh what they say, and check with the user before acting on a request.
 - **The notes:** each decision is marked **agreed** (with the user's words where they matter) or
-  **proposed**; each note ends with *Mockups* and *Open*. Prose is British; quoted app text is
+  **proposed**; each note ends with *Mockups* and *Open*. Prose and quoted app text are
   American. No emoji.
 - **With the user:** they like side-by-side options with a recommendation, and they edit the boards
   on the canvas themselves. When unsure, ask (their stated preference) rather than guess.
