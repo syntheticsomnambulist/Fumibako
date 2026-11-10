@@ -102,6 +102,8 @@ class Harness(
     stickerCutter: StickerCutter = StickerCutter { it },
     /** The phone's calendars, read-only; the app supplies them (none here). */
     phoneCalendars: dev.aiharness.core.planner.PhoneCalendars? = null,
+    /** Makes a run of storage changes all or nothing (restoring a backup); the app's database supplies one. */
+    transactor: dev.aiharness.core.storage.Transactor = dev.aiharness.core.storage.Transactor.None,
     val log: (String) -> Unit = {},
 ) {
     val memory = MemoryService(memories, settings, embedderFactory ?: EmbedderFactory.default(::apiKey), clock, log)
@@ -133,6 +135,15 @@ class Harness(
         tools.register(dev.aiharness.core.letters.LetterSearchTool(search, userPersonas, clock))
     }
     val prompts = PromptAssembler()
+
+    /** Character cards coming in (Import a card, a lorebook into her memory book). */
+    val cards = dev.aiharness.core.transfer.CardImport(personas, memories, blobs, clock)
+
+    /** `.fumibako` backups out and in. */
+    val backups = dev.aiharness.core.transfer.Backups(
+        personas, userPersonas, profiles, credentials, secrets, conversations, memories, stickers, marks,
+        plannerEntries, activity, settings, blobs, transactor, clock,
+    )
     val planner: dev.aiharness.core.planner.Planner = dev.aiharness.core.planner.Planner(plannerEntries, clock, phoneCalendars, settings).also { planner ->
         tools.register(dev.aiharness.core.planner.PlannerLookTool(planner, clock))
         tools.register(dev.aiharness.core.planner.PlannerWriteTool(planner, plannerEntries, personas, clock, stickerService))

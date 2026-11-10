@@ -211,6 +211,7 @@ class RoomStickerRepository(private val dao: HarnessDao) : StickerRepository {
 
     override suspend fun forConversation(conversationId: String) = dao.stickers(conversationId).map { s.decode(it.json) }
     override suspend fun get(id: String) = dao.sticker(id)?.let { s.decode(it.json) }
+    override suspend fun all() = dao.allStickers().map { s.decode(it.json) }
     override suspend fun changedSince(conversationId: String, since: Long) =
         dao.stickersChangedSince(conversationId, since).map { s.decode(it.json) }
 

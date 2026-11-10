@@ -189,6 +189,8 @@ class InMemoryStickerRepository : StickerRepository {
     override suspend fun changedSince(conversationId: String, since: Long): List<Sticker> =
         stickers.all().filter { it.conversationId == conversationId && it.updatedAt > since }.sortedBy { it.updatedAt }
 
+    override suspend fun all(): List<Sticker> = stickers.all().sortedBy { it.createdAt }
+
     override suspend fun upsert(sticker: Sticker) = stickers.upsert(sticker)
     override suspend fun delete(id: String) = stickers.delete(id)
 
@@ -221,6 +223,13 @@ class InMemoryBlobStore : BlobStore {
 
     override suspend fun get(ref: String): ByteArray? = blobs.value[ref]
     override suspend fun delete(ref: String) = blobs.update { it - ref }
+
+    override suspend fun restore(ref: String, input: java.io.InputStream): String {
+        if (!ref.startsWith("mem:")) return super.restore(ref, input)
+        val bytes = input.use { it.readBytes() }
+        blobs.update { if (ref in it) it else it + (ref to bytes) }
+        return ref
+    }
 }
 
 class InMemoryPlannerRepository : dev.aiharness.core.storage.PlannerRepository {

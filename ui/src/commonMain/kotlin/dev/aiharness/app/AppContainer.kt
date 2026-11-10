@@ -81,6 +81,7 @@ class AppContainer(val platform: AppPlatform) {
         plannerEntries = RoomPlannerRepository(database.dao()),
         stickerCutter = PlainBackgroundCutter,
         phoneCalendars = phoneCalendars,
+        transactor = dev.aiharness.app.data.RoomTransactor(database),
         log = platform::log,
     )
 
