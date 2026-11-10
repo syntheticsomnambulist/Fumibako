@@ -196,7 +196,7 @@ fun PolaroidFrame(
             .rotate(tiltDegrees)
             .then(
                 if (cornerTaped) {
-                    Modifier.cornerTape(tape, length = 40.dp, angleDegrees = -40f, reach = 10.dp, lift = 3.dp)
+                    Modifier.cornerTape(tape)
                 } else {
                     Modifier.topTape(tape, tiltDegrees = tapeTiltDegrees)
                 },

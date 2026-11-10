@@ -749,7 +749,7 @@ private fun Slip(memory: MemoryEntry, ink: Color, label: String?, taped: Boolean
     val colors = paper
     Column(
         Modifier
-            .then(if (taped) Modifier.cornerTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN), length = 30.dp, thickness = 11.dp, angleDegrees = -32f, reach = 7.dp, lift = 1.dp) else Modifier)
+            .then(if (taped) Modifier.cornerTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN), length = 44.dp, thickness = 11.dp, reach = 8.dp) else Modifier)
             .fillMaxWidth()
             .background(colors.hyoshi, PaperCorner)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = "Open this memory", onClick = onClick)

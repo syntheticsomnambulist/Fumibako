@@ -210,29 +210,131 @@ fun Modifier.washiStrip(
     }
 }
 
+/** The ways to tape something down (the Placements board in `docs/design/v0.5.md`). */
+enum class TapePlacement {
+    /** Down an edge, past both corners: letters and notes. */
+    STRIP,
+
+    /** Two corners, opposite each other: cards and the cutting. */
+    CORNERS,
+
+    /** One piece across an edge, centred: polaroids. */
+    ACROSS,
+
+    /** A pair at the two corners of an edge, angled in. */
+    PAIR,
+
+    /** One small piece at a corner: memory slips. */
+    CORNER,
+
+    /** Held down all round (doesn't turn). */
+    FOUR_CORNERS,
+
+    /** A piece across each end. */
+    TOP_AND_BOTTOM,
+
+    /** Paper album corners in the ink, without a pattern (doesn't turn). */
+    PHOTO_CORNERS,
+}
+
+/** One piece of tape: centred at ([cx], [cy]) dp, [w] by [h] before turning by [r] degrees; [photo] marks a paper corner (0 to 3, clockwise from top left). */
+internal data class TapePiece(val cx: Float, val cy: Float, val w: Float, val h: Float, val r: Float, val photo: Int? = null)
+
 /**
- * Two pieces of tape on opposing corners (upper left and lower right), the rule for corner tape.
- * [angleDegrees] is measured from horizontal; the pieces are centred [reach] in from each corner.
+ * Where each piece goes on a thing [w] by [h] dp, for [placement] and [turn] (quarter turns
+ * clockwise). Each placement is drawn upright and the turn rotates the layout round the thing.
+ * Corner pieces sit about 9dp in along the corner's diagonal, across it, and are long enough that
+ * both ends run onto the page (its white tip still peeks out past the tape).
  */
-fun Modifier.cornerTape(
-    tape: Tape,
-    length: Dp = 40.dp,
-    thickness: Dp = 14.dp,
-    angleDegrees: Float = -35f,
-    reach: Dp = 13.dp,
-    lift: Dp = 3.dp,
-): Modifier = drawWithCache {
-    val l = length.toPx()
-    val dx = reach.toPx()
-    val dy = lift.toPx()
-    val rad = Math.toRadians(angleDegrees.toDouble())
-    val half = Offset((kotlin.math.cos(rad) * l / 2).toFloat(), (kotlin.math.sin(rad) * l / 2).toFloat())
-    val upperLeft = Offset(dx, dy)
-    val lowerRight = Offset(size.width - dx, size.height - dy)
+internal fun tapePieces(placement: TapePlacement, w: Float, h: Float, turn: Int = 0, length: Float? = null, thickness: Float? = null): List<TapePiece> {
+    val k = if (placement == TapePlacement.FOUR_CORNERS || placement == TapePlacement.PHOTO_CORNERS) 0 else Math.floorMod(turn, 4)
+    val wide = if (k % 2 == 1) h else w
+    val tall = if (k % 2 == 1) w else h
+    val t = thickness ?: 13f
+    val upright = when (placement) {
+        TapePlacement.STRIP -> listOf(TapePiece(-0.5f, tall / 2, t, length ?: (tall + 16f), -0.7f))
+        TapePlacement.CORNERS -> listOf(TapePiece(9f, 9f, length ?: 50f, t, -45f), TapePiece(wide - 9f, tall - 9f, length ?: 50f, t, -44f))
+        TapePlacement.ACROSS -> listOf(TapePiece(wide / 2, 0f, length ?: 58f, thickness ?: 14f, -4f))
+        TapePlacement.PAIR -> listOf(TapePiece(9f, 9f, length ?: 50f, t, -42f), TapePiece(wide - 9f, 9f, length ?: 50f, t, 42f))
+        TapePlacement.CORNER -> listOf(TapePiece(8f, 8f, length ?: 44f, thickness ?: 11f, -45f))
+        TapePlacement.FOUR_CORNERS -> (length ?: 46f).let { l ->
+            val th = thickness ?: 12f
+            listOf(TapePiece(8f, 8f, l, th, -45f), TapePiece(wide - 8f, 8f, l, th, 44f), TapePiece(8f, tall - 8f, l, th, 46f), TapePiece(wide - 8f, tall - 8f, l, th, -45f))
+        }
+        TapePlacement.TOP_AND_BOTTOM -> listOf(TapePiece(wide / 2, -0.5f, length ?: 50f, t, -3f), TapePiece(wide / 2, tall + 0.5f, length ?: 50f, t, 2f))
+        TapePlacement.PHOTO_CORNERS -> listOf(
+            TapePiece(7f, 7f, 20f, 20f, 0f, 0), TapePiece(wide - 7f, 7f, 20f, 20f, 0f, 1),
+            TapePiece(wide - 7f, tall - 7f, 20f, 20f, 0f, 2), TapePiece(7f, tall - 7f, 20f, 20f, 0f, 3),
+        )
+    }
+    return upright.map { p ->
+        val (x, y) = when (k) {
+            1 -> (w - p.cy) to p.cx
+            2 -> (w - p.cx) to (h - p.cy)
+            3 -> p.cy to (h - p.cx)
+            else -> p.cx to p.cy
+        }
+        p.copy(cx = x, cy = y, r = p.r + 90f * k)
+    }
+}
+
+/**
+ * [tape] holding this down in [placement], turned [turn] quarter turns. Put it first in the
+ * modifier chain so the tape draws over the thing's background and content.
+ */
+fun Modifier.taped(tape: Tape, placement: TapePlacement, turn: Int = 0, length: Dp? = null, thickness: Dp? = null): Modifier = drawWithCache {
+    val d = density
+    val pieces = tapePieces(placement, size.width / d, size.height / d, turn, length?.value, thickness?.value)
     onDrawWithContent {
         drawContent()
-        drawTape(upperLeft - half, upperLeft + half, thickness.toPx(), tape)
-        drawTape(lowerRight - half, lowerRight + half, thickness.toPx(), tape)
+        pieces.forEach { drawPiece(it, tape) }
+    }
+}
+
+/** One piece: a strip of tape along its longer side, or a paper photo corner. */
+internal fun DrawScope.drawPiece(p: TapePiece, tape: Tape) {
+    val d = density
+    val centre = Offset(p.cx * d, p.cy * d)
+    if (p.photo != null) {
+        val half = p.w * d / 2
+        // A right triangle over the corner, its long side facing in.
+        val corner = Path().apply {
+            when (p.photo) {
+                0 -> { moveTo(-half, -half); lineTo(half, -half); lineTo(-half, half) }
+                1 -> { moveTo(-half, -half); lineTo(half, -half); lineTo(half, half) }
+                2 -> { moveTo(half, -half); lineTo(half, half); lineTo(-half, half) }
+                else -> { moveTo(-half, -half); lineTo(-half, half); lineTo(half, half) }
+            }
+            close()
+        }
+        translate(centre.x, centre.y) {
+            if (tape.shadow) translate(0f, 0.6.dp.toPx()) { drawPath(corner, Color.Black.copy(alpha = 0.16f)) }
+            drawPath(corner, tape.base.copy(alpha = tape.alpha))
+        }
+        return
+    }
+    val along = p.w >= p.h
+    val length = (if (along) p.w else p.h) * d
+    val thick = (if (along) p.h else p.w) * d
+    val angle = Math.toRadians((p.r + if (along) 0f else 90f).toDouble())
+    val half = Offset((kotlin.math.cos(angle) * length / 2).toFloat(), (kotlin.math.sin(angle) * length / 2).toFloat())
+    drawTape(centre - half, centre + half, thick, tape)
+}
+
+/**
+ * Two pieces of tape on opposing corners (upper left and lower right), each about [reach] in along
+ * the corner's diagonal and across it, long enough to reach the page at both ends.
+ */
+fun Modifier.cornerTape(tape: Tape, length: Dp = 50.dp, thickness: Dp = 13.dp, reach: Dp = 9.dp): Modifier = drawWithCache {
+    val d = density
+    val r = reach.value
+    val pieces = listOf(
+        TapePiece(r, r, length.value, thickness.value, -45f),
+        TapePiece(size.width / d - r, size.height / d - r, length.value, thickness.value, -44f),
+    )
+    onDrawWithContent {
+        drawContent()
+        pieces.forEach { drawPiece(it, tape) }
     }
 }
 
@@ -255,16 +357,8 @@ fun Modifier.topTape(
 }
 
 /** Two pieces of tape at the top corners, angled in towards each other. */
-fun Modifier.topPairTape(tape: Tape, length: Dp = 44.dp, thickness: Dp = 14.dp, inset: Dp = 16.dp): Modifier = drawWithCache {
-    val l = length.toPx()
-    val left = Offset(inset.toPx() + l / 2, -1.dp.toPx())
-    val right = Offset(size.width - inset.toPx() - l / 2, -1.dp.toPx())
-    onDrawWithContent {
-        drawContent()
-        rotate(-8f, pivot = left) { drawTape(Offset(left.x - l / 2, left.y), Offset(left.x + l / 2, left.y), thickness.toPx(), tape) }
-        rotate(7f, pivot = right) { drawTape(Offset(right.x - l / 2, right.y), Offset(right.x + l / 2, right.y), thickness.toPx(), tape) }
-    }
-}
+fun Modifier.topPairTape(tape: Tape, length: Dp = 50.dp, thickness: Dp = 13.dp): Modifier =
+    taped(tape, TapePlacement.PAIR, length = length, thickness = thickness)
 
 /** The tape in the current theme's version of [inkName], with the time of day's shade (or [shade]). */
 @Composable

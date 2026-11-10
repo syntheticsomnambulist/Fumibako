@@ -333,6 +333,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
                             open = open,
                             ink = ink,
                             peek = peek,
+                            oldName = dev.aiharness.app.ui.planner.PlannerDays.months[month.monthValue - 1],
                         ) {
                             if (month in openMonths) {
                                 openMonths.remove(month)
@@ -502,7 +503,7 @@ private fun AlwaysInMind(pages: List<BookPage>, ink: Color, onOpen: (String) -> 
     Column(
         Modifier
             .rotate(0.5f)
-            .cornerTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN), length = 32.dp, thickness = 12.dp, reach = 10.dp)
+            .cornerTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN), length = 46.dp, thickness = 12.dp)
             .background(colors.kami, PaperCorner)
             .drawBehind { drawRect(colors.nijimi1, style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx())) }
             .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 4.dp),

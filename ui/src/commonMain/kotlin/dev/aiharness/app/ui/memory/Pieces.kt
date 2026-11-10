@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import dev.aiharness.app.ui.BlobImage
+import dev.aiharness.app.ui.paper.taped
 import dev.aiharness.app.ui.paper.PaperCorner
 import dev.aiharness.app.ui.paper.PolaroidFrame
 import dev.aiharness.app.ui.paper.Tape
@@ -132,21 +133,18 @@ fun Modifier.worn(age: MemoryAge?, seed: String): Modifier =
 
 enum class TapeCorner { TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT }
 
-/** One small piece of tape across a corner. */
-fun Modifier.pieceOfTape(tape: Tape, corner: TapeCorner, length: Dp = 34.dp, thickness: Dp = 11.dp): Modifier = drawWithCache {
-    val l = length.toPx() / 2
-    val (centre, angle) = when (corner) {
-        TapeCorner.TOP_LEFT -> Offset(6.dp.toPx(), 2.dp.toPx()) to -35f
-        TapeCorner.TOP_RIGHT -> Offset(size.width - 6.dp.toPx(), 1.dp.toPx()) to 32f
-        TapeCorner.BOTTOM_RIGHT -> Offset(size.width - 8.dp.toPx(), size.height - 2.dp.toPx()) to -30f
-    }
-    val rad = Math.toRadians(angle.toDouble())
-    val half = Offset((kotlin.math.cos(rad) * l).toFloat(), (kotlin.math.sin(rad) * l).toFloat())
-    onDrawWithContent {
-        drawContent()
-        drawTape(centre - half, centre + half, thickness.toPx(), tape)
-    }
-}
+/** One small piece of tape across a corner, about 8dp in along its diagonal, long enough that both ends reach the page. */
+fun Modifier.pieceOfTape(tape: Tape, corner: TapeCorner, length: Dp = 44.dp, thickness: Dp = 11.dp): Modifier = taped(
+    tape,
+    dev.aiharness.app.ui.paper.TapePlacement.CORNER,
+    turn = when (corner) {
+        TapeCorner.TOP_LEFT -> 0
+        TapeCorner.TOP_RIGHT -> 1
+        TapeCorner.BOTTOM_RIGHT -> 2
+    },
+    length = length,
+    thickness = thickness,
+)
 
 /** Paper torn along the top and bottom: a row of small teeth. */
 class TornEdges(private val tooth: Dp = 7.dp, private val depth: Dp = 3.dp) : Shape {
@@ -305,8 +303,8 @@ fun UpdatedPage(page: BookPage, ink: Color, onOpen: () -> Unit) {
         Column(
             Modifier
                 .rotate(seededTilt(m.id, 0.9f))
-                .pieceOfTape(tape, TapeCorner.TOP_LEFT, length = 26.dp, thickness = 9.dp)
-                .pieceOfTape(tape, TapeCorner.BOTTOM_RIGHT, length = 26.dp, thickness = 9.dp)
+                .pieceOfTape(tape, TapeCorner.TOP_LEFT, thickness = 9.dp)
+                .pieceOfTape(tape, TapeCorner.BOTTOM_RIGHT, thickness = 9.dp)
                 .paperCard()
                 .worn(page.age, m.id)
                 .fillMaxWidth()
@@ -351,7 +349,7 @@ fun ReplacedPage(page: BookPage, ink: Color, onOpen: () -> Unit) {
                 modifier = Modifier
                     .offset(x = (-10).dp, y = (-14).dp)
                     .rotate(-2f)
-                    .pieceOfTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN), TapeCorner.TOP_LEFT, length = 24.dp, thickness = 9.dp)
+                    .pieceOfTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN), TapeCorner.TOP_LEFT, thickness = 9.dp)
                     .widthIn(max = 260.dp)
                     .shadow(1.dp, PaperCorner)
                     .background(colors.kami, PaperCorner)
@@ -406,7 +404,16 @@ fun DateStamp(text: String, ink: Color, modifier: Modifier = Modifier, tilt: Flo
  * flap up and back, and a few notes peek out of the top.
  */
 @Composable
-fun MonthEnvelope(month: String, summary: String, open: Boolean, ink: Color, peek: dev.aiharness.core.model.AttachmentKind? = null, onClick: () -> Unit) {
+fun MonthEnvelope(
+    month: String,
+    summary: String,
+    open: Boolean,
+    ink: Color,
+    peek: dev.aiharness.core.model.AttachmentKind? = null,
+    /** The month's old name (神無月) and what it means ("gods' month"), from the planner's. */
+    oldName: Pair<String, String>? = null,
+    onClick: () -> Unit,
+) {
     val colors = paper
     val progress by animateFloatAsState(if (open) 1f else 0f, tween(520), label = "envelope")
     // The open flap stands above the envelope, so room is made for it as it rises.
@@ -490,9 +497,17 @@ fun MonthEnvelope(month: String, summary: String, open: Boolean, ink: Color, pee
                 drawLine(colors.nijimi2, Offset(0f, top), Offset(w, top), line)
             }
         }
-        Row(Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(month, style = PaperType.entryTitle.copy(fontSize = 20.sp), color = colors.sumi)
-            Text(summary.uppercase(), style = PaperType.meta, color = colors.kasure2, modifier = Modifier.padding(bottom = 3.dp))
+        Column(Modifier.align(Alignment.BottomStart).padding(start = 16.dp, end = 84.dp, bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                oldName?.let { (kanji, _) ->
+                    Text(kanji, style = PaperType.seasonKanji.copy(fontSize = 21.sp, lineHeight = 24.sp), color = ink, maxLines = 1)
+                }
+                Text(month, style = PaperType.entryTitle.copy(fontSize = 20.sp), color = colors.sumi, maxLines = 1)
+                oldName?.let { (_, meaning) ->
+                    Text("“$meaning”", style = PaperType.postscript.copy(fontSize = 13.sp), color = colors.usuzumi1, maxLines = 1, modifier = Modifier.padding(bottom = 2.dp))
+                }
+            }
+            Text(summary.uppercase(), style = PaperType.meta, color = colors.kasure2)
         }
         DateStamp(if (open) "Close" else "Open", ink, Modifier.align(Alignment.BottomEnd).padding(end = 14.dp, bottom = 14.dp))
     }

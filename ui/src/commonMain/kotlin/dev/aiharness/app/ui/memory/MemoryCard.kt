@@ -563,7 +563,7 @@ private fun ContentCard(m: MemoryEntry, about: UserPersona?, ink: Color, tape: T
     val colors = paper
     val label = listOfNotNull(about?.let { "About ${it.name}" }, kindLabel(m.kind)).joinToString(" · ")
     if (editing) {
-        Box(Modifier.rotate(-0.6f).topPairTape(tape, length = 38.dp, thickness = 13.dp)) {
+        Box(Modifier.rotate(-0.6f).topPairTape(tape, thickness = 13.dp)) {
             IndexCardField(label, m.content, onChange, ink = ink, style = PaperType.prose.copy(fontSize = 16.sp, lineHeight = 28.sp), minLines = 2, placeholder = "What to remember")
         }
         return
@@ -571,7 +571,7 @@ private fun ContentCard(m: MemoryEntry, about: UserPersona?, ink: Color, tape: T
     Column(
         Modifier
             .rotate(-0.6f)
-            .topPairTape(tape.copy(alpha = agedAlpha(age)), length = 38.dp, thickness = 13.dp)
+            .topPairTape(tape.copy(alpha = agedAlpha(age)), thickness = 13.dp)
             .fillMaxWidth()
             .background(colors.kami, PaperCorner)
             .border(1.dp, colors.nijimi1, PaperCorner)
