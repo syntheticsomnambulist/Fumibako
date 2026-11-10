@@ -38,9 +38,11 @@ Updated 2026-11-10.
   - **Waiting for the user:** a debug APK for friends (signed with the shared key), and a GitHub
     Actions build for the installers (Windows by default; macOS and Linux if wanted). Until
     friends have 0.5.0, the database keeps its steps from version 2.
+  - Before the build: the day page showing the previous day's stickers after "Saturday >" (found
+    on the computer, shared code) is with the build session to fix.
   - Still open after step 8: the large-text phone tour fails now and then at different steps
-    here (4 of 9 runs on 2026-11-10, each passing on a rerun; the build session saw 12 passes in a
-    row), and the desktop tour doesn't visit the import and export pages yet (in the test harness,
+    here (6 of 11 runs on 2026-11-10, always on the personas gallery's waits, which can run while
+    the gallery is scrolled down; the build session saw 12 passes in a row), and the desktop tour doesn't visit the import and export pages yet (in the test harness,
     Open a backup's preview card failed to show in 2 or 3 of 5 runs; it shows every time in a
     real window). The side rail's tab for the transfer pages is fixed.
   - The stationery update goes in whole, as designed, with no changes until friends have installed
