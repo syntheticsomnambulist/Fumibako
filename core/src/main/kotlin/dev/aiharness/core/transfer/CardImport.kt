@@ -27,6 +27,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 data class FumibakoCardExtension(
     val ink: String? = null,
     val tapePattern: TapePattern? = null,
+    val tapeShade: dev.aiharness.core.model.TapeShade? = null,
     val pronouns: Pronouns? = null,
     val alsoPronouns: List<Pronouns> = emptyList(),
     val pronounsMix: PronounMix? = null,
@@ -151,6 +152,7 @@ class CardImport(
             moodPortraits = moods,
             ink = choices.ink ?: ext?.ink ?: defaults.ink,
             tapePattern = ext?.tapePattern ?: defaults.tapePattern,
+            tapeShade = ext?.tapeShade ?: defaults.tapeShade,
             pronouns = ext?.pronouns,
             alsoPronouns = ext?.alsoPronouns.orEmpty(),
             pronounsMix = ext?.pronounsMix ?: defaults.pronounsMix,

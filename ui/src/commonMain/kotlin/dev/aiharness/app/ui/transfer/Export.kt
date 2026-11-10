@@ -106,7 +106,7 @@ fun ExportScreen(nav: NavController, personaId: String?) {
     val saveAs = rememberSaveAs { saved -> if (saved) outside.toast("Saved.") }
 
     val ink = persona?.takeIf { !everything }?.let { stationery.ink(it.ink) } ?: stationery.you
-    val tape = Tape(ink, persona?.takeIf { !everything }?.tapePattern ?: stationery.youPattern.takeIf { it != TapePattern.PLAIN } ?: TapePattern.STRIPES)
+    val tape = dev.aiharness.app.ui.paper.tape(ink, persona?.takeIf { !everything }?.tapePattern ?: stationery.youPattern.takeIf { it != TapePattern.PLAIN } ?: TapePattern.STRIPES, persona?.takeIf { !everything }?.tapeShade ?: stationery.youShade)
     val layouts = tapeLayouts("export", 4)
     val w = persona?.words
     val inkRgb = (persona?.let { stationery.ink(it.ink).toArgb() } ?: 0xA26480) and 0xFFFFFF

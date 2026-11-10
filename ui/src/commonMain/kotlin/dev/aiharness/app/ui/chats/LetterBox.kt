@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.aiharness.app.ui.paper.drawPatternOver
 import dev.aiharness.app.ui.theme.HarnessFonts
 import dev.aiharness.app.ui.theme.InkKanji
 import dev.aiharness.app.ui.theme.paper
@@ -298,6 +299,8 @@ private fun DrawScope.face(rect: Rect, radius: Float, color: Color, pattern: Tap
                 while (y < rect.bottom) { drawRect(band, Offset(rect.left, y), Size(rect.width, 4f)); y += 8f }
             }
             TapePattern.PLAIN -> Unit
+            // The nine from v0.5, from the same tiles as the tape, at the box's own size.
+            else -> drawPatternOver(pattern, Rect(0f, 0f, rect.right, rect.bottom), c.kami, color, 0.9f, 1f, centered = false)
         }
     }
 }

@@ -8,15 +8,20 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.aiharness.app.ui.theme.stationery
 import dev.aiharness.core.model.TapePattern
+import dev.aiharness.core.model.TapeShade
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.sqrt
@@ -27,9 +32,44 @@ import kotlin.math.sqrt
  * mockups in docs/design (13dp strips, 14dp pieces, 2.6dp teeth).
  */
 
-/** How a piece of tape looks. */
+/**
+ * How a piece of tape looks. With [paper] it's the light shade (the ink mixed into that paper, the
+ * pattern in the paper's colour); without, the dark one (the ink itself, the pattern in white).
+ * Make one with [tape], which picks the shade from a [TapeShade] and the time of day.
+ */
 @Stable
-data class Tape(val ink: Color, val pattern: TapePattern, val alpha: Float = 1f, val shadow: Boolean = true)
+data class Tape(val ink: Color, val pattern: TapePattern, val alpha: Float = 1f, val shadow: Boolean = true, val paper: Color? = null) {
+    /** The tape's own colour. */
+    val base: Color get() = paper?.let { lerp(it, ink, LIGHT_MIX) } ?: ink
+
+    companion object {
+        /** How much ink a light tape has in it. */
+        const val LIGHT_MIX = 0.4f
+    }
+}
+
+/**
+ * [ink] as tape in [pattern], light or dark as [shade] has it: with the time of day (light by day,
+ * dark at night), or always one. A light tape at night is still mixed with the day's paper.
+ */
+@Composable
+fun tape(ink: Color, pattern: TapePattern, shade: TapeShade = TapeShade.THEME, alpha: Float = 1f, shadow: Boolean = true): Tape {
+    val s = stationery
+    val light = when (shade) {
+        TapeShade.LIGHT -> true
+        TapeShade.DARK -> false
+        TapeShade.THEME -> !s.isNight
+    }
+    return Tape(ink, pattern, alpha, shadow, paper = if (light) s.dayColors.kami else null)
+}
+
+/** A persona's tape: its ink, pattern and shade. */
+@Composable
+fun tapeOf(persona: dev.aiharness.core.model.Persona): Tape = tape(stationery.ink(persona.ink), persona.tapePattern, persona.tapeShade)
+
+/** Your tape: your persona's ink, pattern and shade. */
+@Composable
+fun yourTape(pattern: TapePattern = stationery.youPattern): Tape = tape(stationery.you, pattern, stationery.youShade)
 
 /**
  * Draws one piece of tape along the line from [start] to [end] (its torn ends sit on those points).
@@ -46,8 +86,9 @@ fun DrawScope.drawTape(start: Offset, end: Offset, thickness: Float, tape: Tape,
                 translate(0f, 0.6.dp.toPx()) { drawPath(outline, Color.Black.copy(alpha = if (tape.alpha > 0.6f) 0.16f else 0.08f)) }
             }
             clipPath(outline) {
-                drawRect(tape.ink.copy(alpha = tape.alpha), topLeft = Offset(0f, -thickness / 2), size = Size(length, thickness))
-                drawPattern(tape.pattern, Rect(0f, -thickness / 2, length, thickness / 2))
+                val base = tape.base.copy(alpha = tape.alpha)
+                drawRect(base, topLeft = Offset(0f, -thickness / 2), size = Size(length, thickness))
+                drawTapePattern(tape, Rect(0f, -thickness / 2, length, thickness / 2))
             }
         }
     }
@@ -81,49 +122,66 @@ private fun tapeOutline(length: Float, thickness: Float, tooth: Float): Path = P
     close()
 }
 
-private fun DrawScope.drawPattern(pattern: TapePattern, area: Rect) {
-    val white = Color.White
-    when (pattern) {
-        TapePattern.PLAIN -> Unit
-        TapePattern.DOTS -> {
-            val step = 7.dp.toPx()
-            val radius = 1.4.dp.toPx()
-            var x = area.left + step / 2
+/**
+ * [tape]'s pattern over [area] (a piece of tape, in its own coordinates): laid out from its centre,
+ * rows symmetric about the centreline and repeating outwards from the middle along its length, each
+ * tile scaled so whole repeats fit across it (so no half-rows at the edges, and both torn ends cut
+ * it alike).
+ */
+private fun DrawScope.drawTapePattern(tape: Tape, area: Rect) {
+    val tile = TapeTiles.of(tape.pattern) ?: return
+    val light = tape.paper != null
+    val fg = tape.paper ?: Color.White
+    val layer = (if (light) 0.95f else tile.darkAlpha) * tape.alpha
+    val natural = tile.height * density
+    val rows = maxOf(1, Math.round(area.height / natural))
+    val unit = area.height / rows / tile.height
+    drawTiles(tile, area, fg, tape.base, layer, unit, centered = true)
+}
+
+/**
+ * A pattern laid over [area] in [fg] (with [base] for the parts that cover what's under them),
+ * the whole at [alpha]: [unit] pixels to the pattern's unit (a dp at its own size); [centered] lays
+ * it out from the middle, else from the area's top left (a box's face).
+ */
+fun DrawScope.drawPatternOver(pattern: TapePattern, area: Rect, fg: Color, base: Color, alpha: Float, unit: Float, centered: Boolean) {
+    val tile = TapeTiles.of(pattern) ?: return
+    drawTiles(tile, area, fg, base, alpha, unit, centered)
+}
+
+private fun DrawScope.drawTiles(tile: TapeTiles.Tile, area: Rect, fg: Color, base: Color, alpha: Float, unit: Float, centered: Boolean) {
+    val tw = tile.width * unit
+    val th = tile.height * unit
+    if (tw <= 0f || th <= 0f) return
+    val x0 = if (centered) area.center.x - tw / 2 - kotlin.math.ceil((area.width / 2 + tw) / tw).toFloat() * tw else area.left
+    val y0 = if (centered) area.top else area.top
+    // One layer for the whole pattern, so overlapping strokes don't darken where they cross.
+    drawContext.canvas.saveLayer(area, Paint().apply { this.alpha = alpha.coerceIn(0f, 1f) })
+    if (tile.diagonal) {
+        // Stripes: bands at 45 degrees, repeating outwards from the middle.
+        val period = tile.width * unit * sqrt(2f)
+        val h = area.height
+        var x = (if (centered) area.center.x else area.left) - kotlin.math.ceil((area.width / 2 + h) / period).toFloat() * period
+        while (x < area.right + h) {
+            drawLine(fg.copy(alpha = tile.inner), Offset(x, area.bottom), Offset(x + h, area.top), strokeWidth = tile.band * unit)
+            x += period
+        }
+    } else {
+        var y = y0
+        while (y < area.bottom - 0.01f) {
+            var x = x0
             while (x < area.right) {
-                var y = area.top + step / 2
-                while (y < area.bottom + step) {
-                    drawCircle(white.copy(alpha = 0.6f), radius, Offset(x, y))
-                    y += step
+                if (x + tw > area.left) {
+                    clipRect(x, y, x + tw, y + th) {
+                        withTransform({ translate(x, y); scale(unit, unit, Offset.Zero) }) { tile.draw(this, fg, base, unit) }
+                    }
                 }
-                x += step
+                x += tw
             }
-        }
-        TapePattern.STRIPES -> {
-            // Diagonal bands 2.5dp wide every 6dp, across the tape.
-            val period = 6.dp.toPx() * sqrt(2f)
-            val band = 2.5.dp.toPx()
-            val h = area.height
-            var x = area.left - h
-            while (x < area.right + h) {
-                drawLine(white.copy(alpha = 0.38f), Offset(x, area.bottom), Offset(x + h, area.top), strokeWidth = band)
-                x += period
-            }
-        }
-        TapePattern.GINGHAM -> {
-            val cell = 8.dp.toPx()
-            val bandColor = white.copy(alpha = 0.3f)
-            var x = area.left
-            while (x < area.right) {
-                drawRect(bandColor, Offset(x, area.top), Size(cell / 2, area.height))
-                x += cell
-            }
-            var y = area.top
-            while (y < area.bottom) {
-                drawRect(bandColor, Offset(area.left, y), Size(area.width, cell / 2))
-                y += cell
-            }
+            y += th
         }
     }
+    drawContext.canvas.restore()
 }
 
 enum class TapeSide { Start, End }
@@ -208,6 +266,6 @@ fun Modifier.topPairTape(tape: Tape, length: Dp = 44.dp, thickness: Dp = 14.dp, 
     }
 }
 
-/** The persona-or-user tape in the current theme's version of [inkName]. */
+/** The tape in the current theme's version of [inkName], with the time of day's shade (or [shade]). */
 @Composable
-fun tapeOf(inkName: String?, pattern: TapePattern): Tape = Tape(stationery.ink(inkName), pattern)
+fun tapeOf(inkName: String?, pattern: TapePattern, shade: TapeShade = TapeShade.THEME): Tape = tape(stationery.ink(inkName), pattern, shade)

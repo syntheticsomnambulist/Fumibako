@@ -152,7 +152,7 @@ fun LetterSheet(
         Column(
             Modifier
                 .matchRing(find?.ringed == true, ink)
-                .washiStrip(Tape(ink, persona?.tapePattern ?: TapePattern.DOTS), tiltDegrees = -0.7f, overhang = 8.dp)
+                .washiStrip(dev.aiharness.app.ui.paper.tape(ink, persona?.tapePattern ?: TapePattern.DOTS, persona?.tapeShade ?: dev.aiharness.core.model.TapeShade.THEME), tiltDegrees = -0.7f, overhang = 8.dp)
                 .paperCard()
                 .fillMaxWidth()
                 .combinedClickable(onClick = {}, onLongClick = onLongPress, onLongClickLabel = "Letter options")
@@ -275,7 +275,7 @@ fun NoteSlip(
             Column(
                 Modifier
                     .matchRing(find?.ringed == true, s.ink(persona?.ink))
-                    .washiStrip(Tape(you, pattern), side = TapeSide.End, tiltDegrees = 0.9f, overhang = 7.dp)
+                    .washiStrip(dev.aiharness.app.ui.paper.tape(you, pattern, stationery.youShade), side = TapeSide.End, tiltDegrees = 0.9f, overhang = 7.dp)
                     .paperCard(color = lerp(s.colors.kami, you, 0.06f))
                     .combinedClickable(onClick = {}, onLongClick = onLongPress, onLongClickLabel = "Note options")
                     .onRightClick(onLongPress)

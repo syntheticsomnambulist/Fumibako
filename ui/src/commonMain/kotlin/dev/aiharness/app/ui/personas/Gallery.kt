@@ -182,7 +182,7 @@ private fun WritingAsCard(user: UserPersona, active: Boolean, onClick: () -> Uni
     val ink = s.ink(user.ink)
     Row(
         Modifier
-            .washiStrip(Tape(ink, user.tapePattern), tiltDegrees = 0.8f)
+            .washiStrip(dev.aiharness.app.ui.paper.tape(ink, user.tapePattern, user.tapeShade), tiltDegrees = 0.8f)
             .paperCard()
             .fillMaxWidth()
             .combinedClickable(onClick = onClick, onClickLabel = "Write as ${user.name}")

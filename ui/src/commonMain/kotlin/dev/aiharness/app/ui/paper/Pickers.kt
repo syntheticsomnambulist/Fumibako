@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,7 @@ import dev.aiharness.app.ui.theme.PaperType
 import dev.aiharness.app.ui.theme.paper
 import dev.aiharness.app.ui.theme.stationery
 import dev.aiharness.core.model.TapePattern
+import dev.aiharness.core.model.TapeShade
 
 /** The 14 madoromi inks as swatches; the chosen one is ringed. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -51,28 +53,59 @@ fun InkPicker(selected: String?, onSelect: (String) -> Unit, modifier: Modifier 
     }
 }
 
-/** The four tape patterns, each shown as a short piece of tape in [inkName]. */
+/**
+ * The thirteen tape patterns, each a short piece of tape in [inkName] and the chosen [shade], in a
+ * grid with the Japanese name beside the English where there is one; a strip of the chosen tape
+ * above; and the Shade row: with the time of day, light or dark.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TapePicker(inkName: String?, selected: TapePattern, onSelect: (TapePattern) -> Unit, modifier: Modifier = Modifier) {
+fun TapePicker(
+    inkName: String?,
+    selected: TapePattern,
+    onSelect: (TapePattern) -> Unit,
+    modifier: Modifier = Modifier,
+    shade: TapeShade = TapeShade.THEME,
+    onShade: ((TapeShade) -> Unit)? = null,
+) {
     val ink = stationery.ink(inkName)
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        TapePattern.entries.forEach { pattern ->
-            val on = pattern == selected
-            Column(
-                Modifier
-                    .weight(1f)
-                    .clip(PaperCorner)
-                    .selectable(selected = on, role = Role.RadioButton, onClick = { onSelect(pattern) })
-                    .border(if (on) 2.dp else 1.dp, if (on) paper.sumi else paper.nijimi0, PaperCorner)
-                    .padding(horizontal = 4.dp, vertical = 6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Canvas(Modifier.fillMaxWidth().height(16.dp)) {
-                    drawTape(Offset(0f, size.height / 2), Offset(size.width, size.height / 2), size.height, Tape(ink, pattern, shadow = false))
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        val chosen = tape(ink, selected, shade)
+        Canvas(Modifier.fillMaxWidth().height(14.dp)) {
+            drawTape(Offset(0f, size.height / 2), Offset(size.width, size.height / 2), size.height, chosen)
+        }
+        TapePattern.entries.chunked(3).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { pattern ->
+                    val on = pattern == selected
+                    val piece = tape(ink, pattern, shade, shadow = false)
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .clip(PaperCorner)
+                            .selectable(selected = on, role = Role.RadioButton, onClick = { onSelect(pattern) })
+                            .border(if (on) 2.dp else 1.dp, if (on) paper.sumi else paper.nijimi0, PaperCorner)
+                            .padding(horizontal = 4.dp, vertical = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Canvas(Modifier.fillMaxWidth().height(14.dp)) {
+                            drawTape(Offset(0f, size.height / 2), Offset(size.width, size.height / 2), size.height, piece)
+                        }
+                        Text(
+                            pattern.label + (pattern.japanese?.let { " $it" } ?: ""),
+                            style = PaperType.meta.copy(letterSpacing = 0.sp),
+                            color = if (on) paper.sumi else paper.kasure2,
+                            maxLines = 1,
+                        )
+                    }
                 }
-                Text(pattern.name.lowercase(), style = PaperType.meta.copy(letterSpacing = 0.sp), color = if (on) paper.sumi else paper.kasure2, maxLines = 1)
+                repeat(3 - row.size) { Box(Modifier.weight(1f)) }
             }
+        }
+        if (onShade != null) {
+            Text("SHADE", style = PaperType.meta, color = paper.kasure2, modifier = Modifier.padding(top = 4.dp))
+            PaperChoice(TapeShade.entries.map { it to it.label }, shade, onShade, ink = ink, maxLines = 2)
         }
     }
 }

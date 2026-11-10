@@ -158,7 +158,7 @@ fun Polaroid(
     foldedCorner: Boolean = false,
     caption: @Composable (() -> Unit)? = null,
 ) = PolaroidFrame(
-    tape = Tape(stationery.ink(persona.ink), persona.tapePattern),
+    tape = tapeOf(persona),
     modifier = modifier,
     tiltDegrees = tiltDegrees,
     tapeTiltDegrees = tapeTiltDegrees,
@@ -298,6 +298,7 @@ fun TapeLabel(text: String, ink: Color, modifier: Modifier = Modifier, on: Boole
                             Offset(-3.dp.toPx(), size.height / 2),
                             Offset(size.width + 3.dp.toPx(), size.height / 2),
                             size.height + 2.dp.toPx(),
+                            // Always the dark shade: the label is written on it in white.
                             Tape(ink, TapePattern.PLAIN, shadow = false),
                             tooth = 2.dp.toPx(),
                         )

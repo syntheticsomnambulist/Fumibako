@@ -125,7 +125,7 @@ fun MemoryCardScreen(nav: NavController, personaId: String, memoryId: String) {
     val persona = personas.firstOrNull { it.id == personaId }
     val name = persona?.name ?: "…"
     val ink = stationery.ink(persona?.ink)
-    val tape = Tape(ink, persona?.tapePattern ?: TapePattern.DOTS)
+    val tape = dev.aiharness.app.ui.paper.tape(ink, persona?.tapePattern ?: TapePattern.DOTS, persona?.tapeShade ?: dev.aiharness.core.model.TapeShade.THEME)
     val s = settings ?: return
     val all = memories ?: return
     val canEdit = s.memory.userCanEdit

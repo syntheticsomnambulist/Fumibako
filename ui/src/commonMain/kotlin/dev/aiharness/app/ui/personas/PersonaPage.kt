@@ -445,7 +445,7 @@ private fun LazyListScope.editCards(
             Text("INK", style = PaperType.meta, color = paper.kasure2)
             InkPicker(p.ink, { v -> onChange(p.copy(ink = v)) })
             Text("TAPE", style = PaperType.meta, color = paper.kasure2)
-            TapePicker(p.ink, p.tapePattern, { v -> onChange(p.copy(tapePattern = v)) })
+            TapePicker(p.ink, p.tapePattern, { v -> onChange(p.copy(tapePattern = v)) }, shade = p.tapeShade, onShade = { v -> onChange(p.copy(tapeShade = v)) })
         }
     }
     item {
@@ -720,7 +720,7 @@ private fun LetterBoxCard(p: Persona) {
 
 @Composable
 private fun PageCard(p: Persona, layout: TapeLayout, key: String, content: @Composable () -> Unit) {
-    TapedCard(layout, Tape(stationery.ink(p.ink), p.tapePattern), tilt = cardTilt("${p.id}-$key")) { content() }
+    TapedCard(layout, dev.aiharness.app.ui.paper.tapeOf(p), tilt = cardTilt("${p.id}-$key")) { content() }
 }
 
 /** Always-in-mind memories taped down, then the latest episodes and reflections. */
@@ -749,7 +749,7 @@ private fun Slip(memory: MemoryEntry, ink: Color, label: String?, taped: Boolean
     val colors = paper
     Column(
         Modifier
-            .then(if (taped) Modifier.cornerTape(Tape(ink, TapePattern.PLAIN), length = 30.dp, thickness = 11.dp, angleDegrees = -32f, reach = 7.dp, lift = 1.dp) else Modifier)
+            .then(if (taped) Modifier.cornerTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN), length = 30.dp, thickness = 11.dp, angleDegrees = -32f, reach = 7.dp, lift = 1.dp) else Modifier)
             .fillMaxWidth()
             .background(colors.hyoshi, PaperCorner)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = "Open this memory", onClick = onClick)

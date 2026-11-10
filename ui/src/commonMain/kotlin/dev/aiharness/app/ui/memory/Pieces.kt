@@ -231,7 +231,7 @@ fun LabelSlip(page: BookPage, ink: Color, onOpen: () -> Unit) {
             color = agedInk(page.age),
             modifier = Modifier
                 .rotate(seededTilt(m.id, 1.6f))
-                .then(if (taped) Modifier.pieceOfTape(Tape(ink, TapePattern.PLAIN, alpha = agedAlpha(page.age)), tapeCorner) else Modifier)
+                .then(if (taped) Modifier.pieceOfTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN, alpha = agedAlpha(page.age)), tapeCorner) else Modifier)
                 .widthIn(max = 300.dp)
                 .shadow(1.dp, PaperCorner, ambientColor = colors.chitsu)
                 .background(colors.kami, PaperCorner)
@@ -300,7 +300,7 @@ fun HappenedPage(page: BookPage, ink: Color, tape: Tape, onOpen: () -> Unit) {
 @Composable
 fun UpdatedPage(page: BookPage, ink: Color, onOpen: () -> Unit) {
     val m = page.memory
-    val tape = Tape(ink, TapePattern.PLAIN, alpha = agedAlpha(page.age))
+    val tape = dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN, alpha = agedAlpha(page.age))
     StampCorner(page, ink) {
         Column(
             Modifier
@@ -351,7 +351,7 @@ fun ReplacedPage(page: BookPage, ink: Color, onOpen: () -> Unit) {
                 modifier = Modifier
                     .offset(x = (-10).dp, y = (-14).dp)
                     .rotate(-2f)
-                    .pieceOfTape(Tape(ink, TapePattern.PLAIN), TapeCorner.TOP_LEFT, length = 24.dp, thickness = 9.dp)
+                    .pieceOfTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN), TapeCorner.TOP_LEFT, length = 24.dp, thickness = 9.dp)
                     .widthIn(max = 260.dp)
                     .shadow(1.dp, PaperCorner)
                     .background(colors.kami, PaperCorner)
@@ -366,7 +366,7 @@ fun ReplacedPage(page: BookPage, ink: Color, onOpen: () -> Unit) {
 @Composable
 fun BookPolaroid(ref: String, caption: String?, ink: Color, seed: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     PolaroidFrame(
-        tape = Tape(ink, TapePattern.DOTS),
+        tape = dev.aiharness.app.ui.paper.tape(ink, TapePattern.DOTS),
         modifier = modifier.width(150.dp).clickable(role = Role.Button, onClickLabel = "Open the letter", onClick = onClick),
         tiltDegrees = seededTilt(seed, 3.5f),
         framePadding = 8.dp,

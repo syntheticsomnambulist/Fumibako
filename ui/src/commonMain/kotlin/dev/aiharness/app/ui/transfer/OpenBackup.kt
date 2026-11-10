@@ -85,7 +85,7 @@ fun OpenBackupScreen(nav: NavController) {
     val preview by produceState<RestorePreview?>(null, zip) {
         value = zip?.let { z -> runCatching { harness.backups.preview(z) }.getOrNull() }
     }
-    val tape = Tape(stationery.you, stationery.youPattern.takeIf { it != TapePattern.PLAIN } ?: TapePattern.STRIPES)
+    val tape = dev.aiharness.app.ui.paper.tape(stationery.you, stationery.youPattern.takeIf { it != TapePattern.PLAIN } ?: TapePattern.STRIPES, stationery.youShade)
     val layouts = tapeLayouts("open-backup", 4)
     val beni = stationery.ink("beni")
 
@@ -152,7 +152,7 @@ fun OpenBackupScreen(nav: NavController) {
                         }
                     }
                     item {
-                        TapedCard(layouts[1], Tape(beni, TapePattern.STRIPES), tilt = cardTilt("backup-replaces")) {
+                        TapedCard(layouts[1], dev.aiharness.app.ui.paper.tape(beni, TapePattern.STRIPES), tilt = cardTilt("backup-replaces")) {
                             CardTitle("It replaces what's here")
                             Text(goesLine(pv), style = PaperType.prose.copy(fontSize = 14.sp, lineHeight = 20.sp), color = paper.sumi)
                             Note("Your keys stay on this $deviceNoun, so everyone can write straight away.")
@@ -185,7 +185,7 @@ fun OpenBackupScreen(nav: NavController) {
                     val w = persona?.words
                     val name = persona?.name ?: "Them"
                     item {
-                        TapedCard(layouts[0], Tape(stationery.ink(persona?.ink), persona?.tapePattern ?: TapePattern.DOTS), tilt = cardTilt("backup-one")) {
+                        TapedCard(layouts[0], dev.aiharness.app.ui.paper.tape(stationery.ink(persona?.ink), persona?.tapePattern ?: TapePattern.DOTS, persona?.tapeShade ?: dev.aiharness.core.model.TapeShade.THEME), tilt = cardTilt("backup-one")) {
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.size(44.dp).background(stationery.ink(persona?.ink).copy(alpha = 0.55f), CircleShape))
                                 Column {
@@ -199,7 +199,7 @@ fun OpenBackupScreen(nav: NavController) {
                     val here = pv.here
                     if (here != null && w != null) {
                         item {
-                            TapedCard(layouts[1], Tape(stationery.ink(here.ink), here.tapePattern), tilt = cardTilt("backup-here")) {
+                            TapedCard(layouts[1], dev.aiharness.app.ui.paper.tapeOf(here), tilt = cardTilt("backup-here")) {
                                 CardTitle("${here.name} is already here")
                                 Note(
                                     "Here now: ${pv.hereMemories} ${if (pv.hereMemories == 1) "memory" else "memories"}" +
@@ -268,7 +268,7 @@ private fun FileTag(name: String, meta: String) {
 
 @Composable
 private fun Refused(title: String, detail: String) {
-    TapedCard(dev.aiharness.app.ui.paper.TapeLayout.LEFT, Tape(stationery.ink("beni"), TapePattern.PLAIN)) {
+    TapedCard(dev.aiharness.app.ui.paper.TapeLayout.LEFT, dev.aiharness.app.ui.paper.tape(stationery.ink("beni"), TapePattern.PLAIN)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
             Text("旧", style = PaperType.label.copy(fontSize = 18.sp), color = stationery.ink("beni"))
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

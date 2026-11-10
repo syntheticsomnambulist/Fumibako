@@ -84,9 +84,34 @@ data class ProviderOptions(
 // Personas
 // ---------------------------------------------------------------------------
 
-/** Washi tape patterns, part of a persona's (and the user's) look alongside its ink. */
+/**
+ * Washi tape patterns, part of a persona's (and the user's) look alongside its ink: the first four,
+ * and (v0.5) nine traditional ones from the planner pass. [japanese] is the pattern's own name.
+ */
 @Serializable
-enum class TapePattern { PLAIN, DOTS, STRIPES, GINGHAM }
+enum class TapePattern(val label: String, val japanese: String? = null) {
+    PLAIN("Plain"),
+    DOTS("Dots"),
+    STRIPES("Stripes"),
+    GINGHAM("Gingham"),
+    ICHIMATSU("Checks", "市松"),
+    SHIPPO("Rings", "七宝"),
+    SEIGAIHA("Waves", "青海波"),
+    ASANOHA("Hemp leaf", "麻の葉"),
+    YAGASURI("Arrows", "矢絣"),
+    HEARTS("Hearts"),
+    UROKO("Scales", "鱗"),
+    KIKKO("Tortoiseshell", "亀甲"),
+    KAGOME("Basket", "籠目"),
+}
+
+/**
+ * Which shade a tape shows: with the time of day (light with the day palettes, dark with the night
+ * ones), or always light or always dark. A light tape is the ink mixed into the day's paper, with
+ * the pattern in the paper's colour; a dark one is the ink itself with the pattern in white.
+ */
+@Serializable
+enum class TapeShade(val label: String) { THEME("With the time of day"), LIGHT("Light"), DARK("Dark") }
 
 /** An agent persona. Each persona owns its own memories. */
 @Serializable
@@ -129,6 +154,7 @@ data class Persona(
     /** Signature ink: one of the madoromi accent ink names (see `docs/design`). */
     val ink: String = "sakura",
     val tapePattern: TapePattern = TapePattern.DOTS,
+    val tapeShade: TapeShade = TapeShade.THEME,
     /**
      * What an unread letter from this persona wears: the id of one of its stickers, or null for its
      * "hello" sticker (the seal when it has none).
@@ -218,6 +244,7 @@ data class UserPersona(
     val outfit: String = "",
     val ink: String = "sora",
     val tapePattern: TapePattern = TapePattern.STRIPES,
+    val tapeShade: TapeShade = TapeShade.THEME,
     /**
      * Whether personas see this one's planner: null follows the rule, which shares your default
      * persona's (the one you write as) and not the others', which may be fictional.
