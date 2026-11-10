@@ -25,9 +25,10 @@ Updated 2026-11-10.
   `v0.5.md` and the planner's third pass in `calendar.md` *(design branch)*.
   - Done: the wide layouts (merged first), step 1 (the engine: letter search, model changes, lore
     memories, Won't fade), step 2 (in a letter, bar thinking lines), the Fumibako boxes, the
-    gallery's folded corner for the open persona, and step 3 (searching letters on screen).
-  - Next: steps 4 to 8 (import and export, the stationery update, fonts, the planner redrawn, then
-    polish, tests and 0.5.0 for the phone and the computer).
+    gallery's folded corner for the open persona, step 3 (searching letters on screen), and step 4
+    (import and export: character cards in and out, `.fumibako` backups, optionally locked).
+  - Next: her lines on the postmark (below), then steps 5 to 8 (the stationery update, fonts, the
+    planner redrawn, then polish, tests and 0.5.0 for the phone and the computer).
   - The stationery update goes in whole, as designed, with no changes until friends have installed
     and explored the test build (the user, 2026-11-10, relayed by the build session).
   - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
