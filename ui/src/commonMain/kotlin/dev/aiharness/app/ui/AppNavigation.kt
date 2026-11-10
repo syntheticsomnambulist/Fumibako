@@ -141,7 +141,10 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
                 if (wide) {
                     TapeNavRail(tab) { nav.navigateTab(it) }
                     when (tab) {
-                        Routes.CHATS -> ListSide(WideLayout.LIST_WIDTH) { ChatsScreen(nav) }
+                        Routes.CHATS -> ListSide(WideLayout.LIST_WIDTH) {
+                            val open = backStack?.takeIf { currentRoute == "chat/{id}" }?.arg("id")
+                            CompositionLocalProvider(LocalOpenLetter provides open) { ChatsScreen(nav) }
+                        }
                         Routes.PERSONAS -> ListSide(WideLayout.GALLERY_WIDTH) { PersonasScreen(nav) }
                     }
                 }

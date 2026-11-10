@@ -54,6 +54,10 @@ import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.Persona
+import dev.aiharness.core.model.LetterBox
+import dev.aiharness.core.model.BoxFinish
+import dev.aiharness.core.model.BoxLid
+import dev.aiharness.core.model.BoxTie
 import dev.aiharness.core.model.ProviderType
 import dev.aiharness.core.model.UserPersona
 import dev.aiharness.core.util.newId
@@ -200,7 +204,8 @@ class ScreenshotTour {
         seed(TimeOfDay.YORU, Season.AKI)
         waitFor("Aria")
         click("Aria")
-        waitFor("actually sleep")
+        // Her box opens before her letter comes in (the list's strip already holds the words).
+        compose.waitUntilAtLeastOneExists(hasContentDescription("Draw a picture"), 10_000)
         compose.onNodeWithContentDescription("Draw a picture").performClick()
         waitFor("What Aria is wearing")
         shot("picture_dialog")
@@ -888,7 +893,13 @@ class ScreenshotTour {
         val now = System.currentTimeMillis()
         val aria = h.personas.getAll().first { it.name == "Aria" }
         // Aria goes by she and they: the app's sentences take turns.
-        h.personas.upsert(aria.copy(alsoPronouns = listOf(Pronouns(PronounKind.THEY))))
+        // Set boxes, so the pictures are the same every run (a box picked at random comes from the persona's id, new each run).
+        h.personas.upsert(
+            aria.copy(
+                alsoPronouns = listOf(Pronouns(PronounKind.THEY)),
+                letterBox = LetterBox(BoxFinish.WASHI, BoxLid.SEAL, BoxTie.BOW),
+            ),
+        )
 
         val sam = UserPersona(newId(), "Sam", "A grad student who writes too late at night.", ink = "sora", tapePattern = TapePattern.STRIPES, createdAt = now, updatedAt = now)
         h.userPersonas.upsert(sam)
@@ -912,10 +923,12 @@ class ScreenshotTour {
         val kestrel = Persona(
             newId(), "Kestrel", "A stoic knight-errant sworn to an order that no longer exists.", personality = "Dry humor, fiercely loyal.",
             greeting = "You keep late hours. So do I. Sit, if you like.", ink = "tokiwa", tapePattern = TapePattern.STRIPES, createdAt = now, updatedAt = now,
+            letterBox = LetterBox(BoxFinish.PAULOWNIA, BoxLid.KANJI, BoxTie.CROSSWISE),
         )
         val juno = Persona(
             newId(), "Juno", "A sharp-tongued tech witch who runs a repair shop in a rainy megacity.", personality = "Sarcastic, secretly soft.",
             greeting = "Shop's open. Don't touch the cat, she bites the curious.", ink = "kikyo", tapePattern = TapePattern.GINGHAM, createdAt = now, updatedAt = now,
+            letterBox = LetterBox(BoxFinish.LACQUER, BoxLid.GILDED, BoxTie.MIZUHIKI, chosenByYou = true),
         )
         listOf(kestrel to "watchful", juno to "smug").forEach { (persona, mood) ->
             h.personas.upsert(persona)
@@ -1099,7 +1112,8 @@ class ScreenshotTour {
         plan("Return the library books") { it.copy(day = week[2].toString(), state = dev.aiharness.core.model.EntryState.DONE) }
         plan("Jo's birthday") { it.copy(day = week[5].toString(), allDay = true) }
         // What Aria wrote in Sam's planner (signed with her seal), and Juno's time away.
-        h.personas.upsert(aria.copy(planner = dev.aiharness.core.model.PersonaPlanner(seal = "歌")))
+        // From the store: the copy from the top of the seed would undo her pronouns and box.
+        h.personas.upsert(h.personas.get(aria.id)!!.copy(planner = dev.aiharness.core.model.PersonaPlanner(seal = "歌")))
         suspend fun hers(by: String, kind: dev.aiharness.core.model.EntryKind, title: String, build: (dev.aiharness.core.model.PlannerEntry) -> dev.aiharness.core.model.PlannerEntry) =
             h.plannerEntries.upsert(build(dev.aiharness.core.model.PlannerEntry(newId(), sam.id, by, kind, title, createdAt = now - 3_600_000L, updatedAt = now - 3_600_000L)))
         hers(aria.id, dev.aiharness.core.model.EntryKind.NOTE, "ask how the interview went") { it.copy(day = week[2].toString()) }
