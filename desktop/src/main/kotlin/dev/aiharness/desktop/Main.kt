@@ -86,6 +86,8 @@ fun main(args: Array<String>) {
     CrashReport.install(dataDir)
 
     val platform = DesktopPlatform(dataDir)
+    // The faces that aren't bundled (other hands, the Japanese) are kept here once downloaded.
+    dev.aiharness.app.ui.theme.DesktopFonts.start(java.io.File(dataDir, "fonts"))
     val container = AppContainer(platform)
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val trayState = TrayState()

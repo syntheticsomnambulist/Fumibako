@@ -91,7 +91,10 @@ leaves your letters where they are:
 - Mac: `~/Library/Application Support/Fumibako` (in Finder, **Go, Go to Folder…**)
 - Linux: `~/.local/share/Fumibako` (or `$XDG_DATA_HOME/Fumibako`)
 
-The database, settings and every file sent in a letter (in `blobs`) are there. Your API keys are
+The database, settings and every file sent in a letter (in `blobs`) are there, and so are the
+fonts Fumibako downloads (in `fonts`): the Japanese faces the first time Japanese shows (about 25 MB,
+or from Settings, Look), and another handwriting when you choose it. They come once from Google
+Fonts, which is told only the font's name, and work offline after. Your API keys are
 there too, encrypted with a key that the system's keychain holds (Windows Credential Manager, the
 macOS Keychain, or the Secret Service on Linux). Where Fumibako can't use a keychain, that key is in
 a file only your user can read, and **Settings, Models and keys** says so.

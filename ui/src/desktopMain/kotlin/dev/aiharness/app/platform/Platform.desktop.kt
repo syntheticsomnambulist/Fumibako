@@ -264,14 +264,29 @@ actual fun fontFromFile(file: File): androidx.compose.ui.text.font.FontFamily? =
 }.getOrNull()
 
 @Composable
-actual fun rememberJapaneseFonts(): JapaneseFontsInfo? = null
+actual fun rememberJapaneseFonts(): JapaneseFontsInfo? {
+    val fonts = dev.aiharness.app.ui.theme.DesktopFonts
+    val state = when (fonts.state) {
+        dev.aiharness.app.ui.theme.DesktopFonts.State.NOT_YET -> "Not downloaded yet"
+        dev.aiharness.app.ui.theme.DesktopFonts.State.COMING -> "Downloading…"
+        dev.aiharness.app.ui.theme.DesktopFonts.State.HERE -> "Downloaded"
+        dev.aiharness.app.ui.theme.DesktopFonts.State.CANT -> "Couldn't download them (they come from Google Fonts: is this computer online?)"
+    }
+    return JapaneseFontsInfo(state, dev.aiharness.app.ui.theme.DesktopFonts.ABOUT_MB) { fonts.need() }
+}
 
 @Composable
-actual fun NoticeJapanese(text: String?) = Unit
+actual fun NoticeJapanese(text: String?) {
+    if (!hasJapanese(text)) return
+    androidx.compose.runtime.LaunchedEffect(Unit) { dev.aiharness.app.ui.theme.DesktopFonts.need() }
+}
 
-/** Not yet on a computer (desktop step 6): Yomogi stands in. */
+/** From Google Fonts, the first time it's wanted, into the app-data folder (DesktopFonts); Yomogi stands in until then. */
 @Composable
-actual fun downloadedHand(name: String): androidx.compose.ui.text.font.FontFamily? = null
+actual fun downloadedHand(name: String): androidx.compose.ui.text.font.FontFamily? {
+    androidx.compose.runtime.LaunchedEffect(name) { dev.aiharness.app.ui.theme.DesktopFonts.ask(name) }
+    return dev.aiharness.app.ui.theme.DesktopFonts.hands[name]
+}
 
 actual fun pngOf(bytes: ByteArray): ByteArray? =
     runCatching { Image.makeFromEncoded(bytes).encodeToData(org.jetbrains.skia.EncodedImageFormat.PNG)?.bytes }.getOrNull()

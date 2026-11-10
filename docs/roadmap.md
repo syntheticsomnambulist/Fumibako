@@ -51,8 +51,9 @@ Updated 2026-11-10.
     dialogs for import and export, Japanese fonts in the app-data folder). Taken by the desktop
     installers session, part by part after Kanna lands each (the user, 2026-11-10). Import and
     export: done (a backup or card opened with Fumibako goes to its page; `.fumibako` registered
-    with each installer). Next, the fonts' downloads and Japanese on the computer (v0.5's step 6
-    is in `main`).
+    with each installer). Fonts: done (the Japanese faces and the other hands from Google Fonts on
+    first use, into the app-data folder; Literata and Old Standard TT keep the computer's own
+    Japanese, `architect-decisions.md`).
   - Step 7, done: the libraries' notices, from the build (About, and beside the installed app);
     smaller installers (the Java runtime trimmed to the modules Fumibako uses); a desktop section
     in `testers.md` and the README; and a desktop screenshot tour (2026-11-10, the desktop
