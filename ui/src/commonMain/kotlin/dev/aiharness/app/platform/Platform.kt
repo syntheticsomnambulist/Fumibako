@@ -94,6 +94,12 @@ interface MediaImporter {
     /** The picked file's bytes (a portrait, a photo to cut a sticker from). */
     suspend fun read(item: Picked): ByteArray?
 
+    /** Copies what [item] holds into [into], without reading it all into memory; false if it can't be read. */
+    suspend fun copy(item: Picked, into: java.io.File): Boolean = read(item)?.let { into.writeBytes(it); true } ?: false
+
+    /** The name [item] had where it was picked (aria-2026-11-06.fumibako), when that's known. */
+    fun nameOf(item: Picked): String? = null
+
     /** Where the camera puts its next photo, or null without a camera. */
     fun cameraTarget(): Picked?
 

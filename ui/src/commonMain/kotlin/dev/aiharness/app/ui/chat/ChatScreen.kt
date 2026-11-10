@@ -276,7 +276,16 @@ fun ChatScreen(nav: NavController, conversationId: String) {
     // A search being stepped through here (from Search letters): its matches, newest first, and the one shown.
     var finding by remember(conversationId) { mutableStateOf<LetterFocus.Find?>(null) }
     var findAt by remember(conversationId) { mutableStateOf(0) }
-    val leading = (if (arriving != null || (generation.active && postage.travels)) 1 else 0) + (if (writing != null && writingInto == null) 1 else 0)
+    // A new thread holding only her first letter offers her other greetings, until you write.
+    val greetings = persona?.let { container.harness.greetingsOf(it) }.orEmpty()
+    val firstLetter = (rows.singleOrNull() as? ThreadRow.Letter)?.messages?.singleOrNull()?.takeIf { it.role == dev.aiharness.core.model.MessageRole.ASSISTANT }
+    val greetingAt = if (greetings.size > 1 && firstLetter != null && writing == null && !generation.active) {
+        container.harness.greetingIndex(persona!!, firstLetter.text, header.userPersona?.name ?: "you") ?: 0
+    } else {
+        null
+    }
+    val leading = (if (arriving != null || (generation.active && postage.travels)) 1 else 0) + (if (writing != null && writingInto == null) 1 else 0) +
+        (if (greetingAt != null) 1 else 0)
     fun rowIndexOf(messageId: String) = rows.asReversed().indexOfFirst { row ->
         when (row) {
             is ThreadRow.Note -> row.message.id == messageId
@@ -397,6 +406,13 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 }
                 if (writing != null && writingInto == null) {
                     item(key = "writing") { LetterSheet(null, persona, writing, onLongPress = {}, onImage = { viewing = it }) }
+                }
+                if (greetingAt != null) {
+                    item(key = "greetings") {
+                        OtherGreetings(greetingAt, greetings.size, stationery.ink(persona?.ink)) { next ->
+                            scope.launch { container.harness.swapGreeting(conversationId, next) }
+                        }
+                    }
                 }
                 // The letter holding the sticker picked or being moved comes in front of its neighbors,
                 // so a big one (and its handle) isn't under the next letter.
@@ -1015,5 +1031,15 @@ private fun FindStrip(query: String, at: Int, total: Int, personaName: String, o
             Icon(Icons.Default.KeyboardArrowDown, "Newer match", tint = colors.sumi.copy(alpha = if (at > 0) 1f else 0.35f))
         }
         TextButton(onClick = onDone) { Text("Done", style = PaperType.label.copy(letterSpacing = 0.sp, fontSize = 12.5.sp), color = stationery.you) }
+    }
+}
+
+/** Under a new thread's only letter: which of her first letters it is, and another to read instead. */
+@Composable
+private fun OtherGreetings(at: Int, count: Int, ink: androidx.compose.ui.graphics.Color, onPick: (Int) -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        Text("First letter ${at + 1} of $count", style = PaperType.meta.copy(letterSpacing = 0.sp), color = paper.kasure2)
+        Spacer(Modifier.width(8.dp))
+        dev.aiharness.app.ui.paper.InkLink("Another", ink) { onPick((at + 1) % count) }
     }
 }

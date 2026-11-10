@@ -213,6 +213,8 @@ private class DesktopOutside(private val blobs: FileBlobStore) : Outside {
 
     override fun share(ref: String?, mime: String?, url: String?) = Unit
 
+    override fun shareFile(file: File, name: String, mime: String) = Unit
+
     /** The system's own Save dialog, suggesting the file's name. */
     override suspend fun save(ref: String?, mime: String?, name: String?): Boolean {
         val file = blobs.existingFile(ref) ?: return false
@@ -253,6 +255,28 @@ object Toasts {
 }
 
 actual fun decodeImage(bytes: ByteArray): ImageBitmap? = runCatching { Image.makeFromEncoded(bytes).toComposeImageBitmap() }.getOrNull()
+
+actual fun pngOf(bytes: ByteArray): ByteArray? =
+    runCatching { Image.makeFromEncoded(bytes).encodeToData(org.jetbrains.skia.EncodedImageFormat.PNG)?.bytes }.getOrNull()
+
+/** The system's own Save dialog, suggesting the file's name, then the file copied there. */
+@Composable
+actual fun rememberSaveAs(onSaved: (Boolean) -> Unit): (file: File, name: String, mime: String) -> Unit {
+    val saved by rememberUpdatedState(onSaved)
+    val scope = rememberCoroutineScope()
+    return remember {
+        { file, name, _ ->
+            scope.launch {
+                val extension = name.substringAfterLast('.', "").takeIf { it.isNotEmpty() && it.length <= 8 }
+                val target = runCatching {
+                    FileKit.openFileSaver(suggestedName = if (extension != null) name.substringBeforeLast('.') else name, extension = extension)
+                }.getOrNull()?.file
+                val ok = target != null && withContext(Dispatchers.IO) { runCatching { file.copyTo(target, overwrite = true); true }.getOrDefault(false) }
+                dev.aiharness.app.ui.onMain { saved(ok) }
+            }
+        }
+    }
+}
 
 actual fun decodeSampledImage(file: File, maxSize: Int): ImageBitmap? {
     val image = runCatching { Image.makeFromEncoded(file.readBytes()) }.getOrNull() ?: return null

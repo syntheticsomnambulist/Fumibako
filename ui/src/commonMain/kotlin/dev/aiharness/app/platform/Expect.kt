@@ -173,6 +173,9 @@ interface Outside {
 
     fun share(ref: String?, mime: String?, url: String? = null)
 
+    /** Sends [file] to another app as [name] (an export); nothing where [canShare] is false. */
+    fun shareFile(file: java.io.File, name: String, mime: String)
+
     /** Saves a picture or file where the device keeps them; false if it couldn't. */
     suspend fun save(ref: String?, mime: String?, name: String?): Boolean
 
@@ -186,6 +189,16 @@ interface Outside {
 
 @Composable
 expect fun rememberOutside(): Outside
+
+/**
+ * Saving a file where you choose: Android's save dialog, a computer's Save As. Call the result
+ * with the file, the name to suggest and its type; [onSaved] says whether it was saved.
+ */
+@Composable
+expect fun rememberSaveAs(onSaved: (Boolean) -> Unit): (file: java.io.File, name: String, mime: String) -> Unit
+
+/** [bytes] (a picture of any kind this platform reads) as a PNG; null if it isn't a picture. */
+expect fun pngOf(bytes: ByteArray): ByteArray?
 
 /** A picture from its encoded bytes (PNG, JPEG...), or null if it isn't one. */
 expect fun decodeImage(bytes: ByteArray): ImageBitmap?

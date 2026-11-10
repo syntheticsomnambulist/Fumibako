@@ -59,8 +59,15 @@ data class ContextSlip(
             val stickers = mutableListOf<String>()
             val also = mutableListOf<String>()
             var list: String? = null
+            var card = false
             prompt?.turnContext?.lines()?.map { it.trim() }?.filter { it.isNotEmpty() }?.forEach { line ->
                 when {
+                    // A card's instructions come last and can be any lines at all.
+                    card -> also += line
+                    line == TurnContextBuilder.CARD_INSTRUCTIONS -> {
+                        card = true
+                        also += line
+                    }
                     line == RECALLED || line == CORE -> list = line
                     line.startsWith("- ") && list != null -> memories += recalled(line.removePrefix("- "), core = list == CORE)
                     else -> {

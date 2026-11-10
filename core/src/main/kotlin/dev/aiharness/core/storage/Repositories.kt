@@ -159,6 +159,9 @@ interface StickerRepository {
 
     /** Stuck, moved or peeled after [since], oldest first: what a persona hears about on its next turn. */
     suspend fun changedSince(conversationId: String, since: Long): List<Sticker>
+
+    /** Every sticker, wherever it's stuck (letters, drafts, the planner): for an Everything backup. */
+    suspend fun all(): List<Sticker>
     suspend fun upsert(sticker: Sticker)
     suspend fun delete(id: String)
 
@@ -185,4 +188,30 @@ interface BlobStore {
     suspend fun put(bytes: ByteArray, extension: String): String
     suspend fun get(ref: String): ByteArray?
     suspend fun delete(ref: String)
+
+    /** What [ref] holds, as a stream (songs and videos can be large); null when it isn't here. */
+    suspend fun open(ref: String): java.io.InputStream? = get(ref)?.inputStream()
+
+    /** How many bytes [ref] holds; null when it isn't here. */
+    suspend fun sizeOf(ref: String): Long? = get(ref)?.size?.toLong()
+
+    /**
+     * A backup's file coming back: stored under [ref] itself when this store makes refs like it
+     * (and kept as it is when it's already here), else as a new one. Returns the ref it's under.
+     */
+    suspend fun restore(ref: String, input: java.io.InputStream): String =
+        put(input.use { it.readBytes() }, ref.substringAfterLast('.', "bin"))
+}
+
+/**
+ * Runs a block of storage changes as one: all of them, or (if the block throws) none. Restoring
+ * an Everything backup goes through it, so a failure halfway leaves the phone as it was.
+ */
+interface Transactor {
+    suspend fun <T> inTransaction(block: suspend () -> T): T
+
+    /** No transactions: each change stands alone (the in-memory stores). */
+    object None : Transactor {
+        override suspend fun <T> inTransaction(block: suspend () -> T): T = block()
+    }
 }

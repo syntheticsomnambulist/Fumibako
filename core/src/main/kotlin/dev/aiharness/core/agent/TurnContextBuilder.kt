@@ -136,11 +136,20 @@ class TurnContextBuilder(
             }
         }
 
+        // A card's own instructions go last, as SillyTavern puts them after the history.
+        persona.postHistoryInstructions?.takeIf { it.isNotBlank() }?.let { text ->
+            lines += CARD_INSTRUCTIONS
+            lines += text.trim().replace("{{char}}", persona.name, ignoreCase = true).replace("{{user}}", userPersona?.name ?: "you", ignoreCase = true)
+        }
+
         return lines.takeIf { it.isNotEmpty() }?.joinToString("\n")
     }
 
     companion object {
         private const val SEASON = "Season:"
+
+        /** Heads a card's post-history instructions, the last thing in the block (see [ContextSlip]). */
+        const val CARD_INSTRUCTIONS = "Your card's instructions:"
 
         fun wrap(context: String): String = "<context>\n$context\n</context>"
     }
