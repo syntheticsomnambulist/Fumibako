@@ -97,7 +97,7 @@ fun isStickerMark(mark: String): Boolean = mark.length >= 16 && mark.none { it.i
 /**
  * One thing a persona wrote in your planner, as it sits under the week's grid or on a day's page:
  * a note or haiku on a 一筆箋 (a narrow ruled slip with the season's motif, signed with its seal),
- * a suggestion on a 付箋 (a dashed sticky tab with "Add to my planner" and "Not this time"), a
+ * a suggestion on a 付箋 (a sticky note in its ink with "Add it" and "Not this time"), a
  * reminder with its wake mark, or its time away.
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -110,7 +110,10 @@ fun PersonaSlip(
     clock: ClockFormat,
     onAdd: (PlannerEntry) -> Unit,
     onDecline: (PlannerEntry) -> Unit,
-) {
+    /** Taken down just now (its note peels off, then "Put it back"). */
+    takenDown: Boolean = false,
+    onPutBack: (PlannerEntry) -> Unit = {},
+) = dev.aiharness.app.ui.theme.InHand(persona.hand) {
     val e = o.entry
     val colors = paper
     val ink = stationery.ink(persona.ink)
@@ -142,7 +145,7 @@ fun PersonaSlip(
                     .padding(start = 14.dp, end = 40.dp, top = 10.dp, bottom = 10.dp),
             ) {
                 Column {
-                    Text(e.title, style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 14.sp, lineHeight = 20.sp), color = lerp(ink, colors.sumi, 0.3f))
+                    Text(e.title, style = handText(14.sp, 20.sp), color = lerp(ink, colors.sumi, 0.3f))
                     Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         PersonaSeal(persona)
                         Text(signed, style = PaperType.meta.copy(fontSize = 9.5.sp), color = colors.kasure2)
@@ -152,43 +155,10 @@ fun PersonaSlip(
                 SeasonMotif(micro.index / 3, Modifier.align(Alignment.BottomEnd).offset(x = 30.dp, y = 4.dp).size(26.dp).rotate(14f))
             }
         }
-        EntryKind.SUGGESTION -> {
-            val declined = e.state == EntryState.DECLINED
-            val added = e.state == EntryState.ADDED
-            Column(
-                Modifier
-                    .padding(start = 6.dp, end = 30.dp, top = 4.dp, bottom = 4.dp)
-                    .fillMaxWidth()
-                    .background(lerp(colors.kami, ink, 0.1f), RoundedCornerShape(2.dp))
-                    .drawBehind {
-                        drawRoundRect(
-                            ink.copy(alpha = 0.7f), cornerRadius = CornerRadius(2.dp.toPx()),
-                            style = Stroke(1.2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 3.dp.toPx()))),
-                        )
-                    }
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    PersonaSeal(persona, size = 18.dp)
-                    Text("${persona.name.uppercase()} SUGGESTS · ${dateWords.uppercase()}${at?.let { " · $it" } ?: ""}", style = PaperType.meta.copy(fontSize = 9.5.sp), color = ink)
-                }
-                Text(
-                    e.title,
-                    style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 15.sp, lineHeight = 20.sp, textDecoration = if (declined) TextDecoration.LineThrough else null),
-                    color = lerp(ink, colors.sumi, 0.3f).copy(alpha = if (declined) 0.6f else 1f),
-                )
-                when {
-                    added -> Text("Added to your planner.", style = PaperType.postscript, color = colors.usuzumi1)
-                    declined -> Text("Not this time.", style = PaperType.postscript, color = colors.usuzumi1)
-                    // Side by side when they fit, else one under the other.
-                    else -> androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        PaperButton("Add to my planner", ink = ink) { onAdd(e) }
-                        PaperButton("Not this time") { onDecline(e) }
-                    }
-                }
-            }
-        }
+        EntryKind.SUGGESTION -> SuggestionNote(
+            e, persona, ink, whenWords = dateWords + (at?.let { " · $it" } ?: ""), takenDown = takenDown,
+            onAdd = onAdd, onDecline = onDecline, onPutBack = onPutBack,
+        )
         EntryKind.REMINDER -> {
           // Long past and still waiting: its wakeup never came (a heartbeat marks it so when it next runs).
           val missed = e.state == EntryState.MISSED || (e.state == EntryState.OPEN && (e.start ?: Long.MAX_VALUE) < System.currentTimeMillis() - dev.aiharness.core.planner.Planner.MISSED_AFTER)
@@ -217,7 +187,7 @@ fun PersonaSlip(
 
 /** "Aria is away until Sunday, 9:00 am: busy with the garden", with a crescent moon. */
 @Composable
-fun AwayLine(persona: Persona, e: PlannerEntry, zone: ZoneId, clock: ClockFormat) {
+fun AwayLine(persona: Persona, e: PlannerEntry, zone: ZoneId, clock: ClockFormat) = dev.aiharness.app.ui.theme.InHand(persona.hand) {
     val ink = stationery.ink(persona.ink)
     val until = e.end?.let { Instant.ofEpochMilli(it).atZone(zone) }
     val untilWords = until?.let { "${it.dayOfWeek.getDisplayName(DayText.FULL, Locale.US)}, ${clock.time(it.hour * 60 + it.minute)}" }
@@ -230,7 +200,7 @@ fun AwayLine(persona: Persona, e: PlannerEntry, zone: ZoneId, clock: ClockFormat
         Moon(ink, Modifier.size(11.dp))
         Text(
             "${persona.name} is away" + (untilWords?.let { " until $it" } ?: "") + (e.title.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""),
-            style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 13.sp, lineHeight = 17.sp),
+            style = handText(13.sp, 17.sp),
             color = lerp(ink, paper.sumi, 0.35f),
         )
     }

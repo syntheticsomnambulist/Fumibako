@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,6 +29,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -100,21 +102,18 @@ fun MonthPage(
     // A solar term's name on its first day, when the seasons are shown.
     val terms = if (seasonBand) Seasons.termsBeginning(days.first(), days.last(), zone, hemisphere).toMap() else emptyMap()
     val byDay = occurrences.groupBy { it.day }
-    Column(Modifier.fillMaxSize().scrollingPage().padding(bottom = 24.dp)) {
-        BoxWithConstraints(Modifier.fillMaxWidth().padding(start = 18.dp, end = 30.dp, top = 6.dp)) {
+    val termsThisMonth = if (seasonBand) Seasons.termsBeginning(month.atDay(1), month.atEndOfMonth(), zone, hemisphere) else emptyList()
+    Column(Modifier.fillMaxSize().scrollingPage().padding(bottom = 24.dp + CORNER_ROOM)) {
+        // The month's solar terms, with their motifs: "7日 立冬 winter begins | 22日 小雪 light snow".
+        if (termsThisMonth.isNotEmpty()) MonthTerms(termsThisMonth)
+        BoxWithConstraints(Modifier.fillMaxWidth().padding(start = 20.dp, end = 14.dp, top = if (termsThisMonth.isEmpty()) 6.dp else 0.dp)) {
             val col: Dp = maxWidth / 7
             Column {
-                // The days of the week: kanji, with the English under them.
-                Row(Modifier.fillMaxWidth().drawBehind { drawLine(ink, Offset(0f, size.height), Offset(size.width, size.height), 1.5.dp.toPx()) }) {
+                // The days of the week, in kanji (the English is in each day's spoken label), over the rule.
+                Row(Modifier.fillMaxWidth().height(32.dp).inkRule(ink, y = 29.dp, overhang = 5.dp)) {
                     weekdays.forEach { d ->
-                        val c = dayInk(d, colors.sumi, night)
-                        Column(Modifier.width(col).padding(vertical = 3.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(PlannerDays.kanji(d), style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 13.sp, lineHeight = 14.sp), color = c)
-                            Text(
-                                d.getDisplayName(DayText.SHORT, Locale.US).uppercase(),
-                                style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 7.5.sp, letterSpacing = 0.08.em),
-                                color = if (d == DayOfWeek.SATURDAY || d == DayOfWeek.SUNDAY) c else colors.usuzumi1,
-                            )
+                        Box(Modifier.width(col).height(28.dp).semantics { contentDescription = d.getDisplayName(DayText.FULL, Locale.US) }, contentAlignment = Alignment.Center) {
+                            Text(PlannerDays.kanji(d), style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 13.sp, lineHeight = 14.sp), color = dayInk(d, colors.sumi, night))
                         }
                     }
                 }
@@ -193,27 +192,31 @@ private fun DayCell(
                 .semantics { contentDescription = label },
         ) {
             Box(
-                Modifier.padding(start = 3.dp, top = 2.dp).size(22.dp)
+                Modifier.padding(start = 4.dp, top = 3.dp).size(22.dp)
                     .then(if (today) Modifier.border(1.5.dp, ink, CircleShape) else Modifier),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("${day.dayOfMonth}", style = TextStyle(fontFamily = HarnessFonts.Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 15.sp), color = numberColor)
+                Text("${day.dayOfMonth}", style = TextStyle(fontFamily = HarnessFonts.Display, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 14.sp), color = numberColor)
             }
             term?.let {
-                Text(it, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 8.5.sp, lineHeight = 9.sp), color = holidayRed, modifier = Modifier.align(Alignment.TopEnd).padding(top = 3.dp, end = 3.dp))
+                Text(it, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 9.5.sp, lineHeight = 10.sp), color = holidayRed, modifier = Modifier.align(Alignment.TopEnd).padding(top = 5.dp, end = 3.dp))
             }
             // A holiday's name, else the day's first plan, under the date.
             val under = holidays.firstOrNull()
             if (under != null) {
                 Text(
-                    under, style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 7.5.sp, lineHeight = 8.5.sp), color = holidayRed,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 3.dp, end = 2.dp, top = 26.dp),
+                    under, style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 9.5.sp, lineHeight = 11.sp), color = holidayRed,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 4.dp, end = 2.dp, top = 28.dp),
                 )
             } else if (first != null && inMonth) {
+                // Your plan's name in your hand, with the highlighter across it; the phone's in pencil.
+                val pencil = first.entry.phone != null
                 Text(
-                    first.entry.title.ifBlank { "Busy" }, style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 8.5.sp, lineHeight = 9.sp),
-                    color = if (first.entry.phone != null) Pencil else lerp(ink, colors.sumi, 0.35f), maxLines = 1, overflow = TextOverflow.Clip,
-                    modifier = Modifier.padding(start = 3.dp, end = 2.dp, top = 27.dp),
+                    first.entry.title.ifBlank { "Busy" }, style = handText(12.sp, 13.sp),
+                    color = if (pencil) graphite() else lerp(ink, colors.sumi, 0.45f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 4.dp, end = 2.dp, top = 28.dp)
+                        .then(if (pencil) Modifier else Modifier.highlighter(ink, down = false))
+                        .padding(horizontal = 2.dp),
                 )
             }
             // Who has written here: you, and each persona, in their inks.
@@ -244,10 +247,10 @@ private fun MonthLegend(occurrences: List<Occurrence>, personas: List<Persona>, 
     val ink = sheet.you
     val red = dayInk(DayOfWeek.SUNDAY, colors.sumi, sheet.isNight)
     val writers = occurrences.mapNotNull { it.entry.byPersonaId }.distinct().mapNotNull { id -> personas.firstOrNull { it.id == id } }
-    val small = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 9.5.sp)
+    val small = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.sp)
     androidx.compose.foundation.layout.FlowRow(
-        Modifier.padding(start = 24.dp, end = 30.dp, top = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.padding(start = 22.dp, end = 16.dp, top = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(6.dp).background(ink, CircleShape)); Text("  Yours", style = small, color = colors.sumi) }
@@ -255,12 +258,12 @@ private fun MonthLegend(occurrences: List<Occurrence>, personas: List<Persona>, 
             Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(6.dp).border(1.2.dp, Pencil, CircleShape)); Text("  Phone calendar", style = small, color = colors.sumi) }
         }
         writers.forEach { p -> Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(6.dp).background(sheet.ink(p.ink), CircleShape)); Text("  ${p.name}", style = small, color = colors.sumi) } }
-        Row(verticalAlignment = Alignment.CenterVertically) { Text("済", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 10.sp), color = ink); Text("  All stamped done", style = small, color = colors.sumi) }
+        Row(verticalAlignment = Alignment.CenterVertically) { Text("済", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 11.sp), color = ink); Text("  All done", style = small, color = colors.sumi) }
         if (phoneHolidays || (holidays.show && holidays.country != null)) {
             val where = if (phoneHolidays) "your phone's calendar" else java.util.Locale("", holidays.country).getDisplayCountry(Locale.US)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("11", style = TextStyle(fontFamily = HarnessFonts.Display, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 12.sp), color = red)
-                Text("  Public holiday ($where)", style = small, color = colors.sumi)
+                Text("  Holiday ($where)", style = small, color = colors.sumi)
             }
         }
     }
@@ -281,4 +284,25 @@ fun ordinal(n: Int): String = "$n" + when {
     n % 10 == 2 -> "nd"
     n % 10 == 3 -> "rd"
     else -> "th"
+}
+
+/** The month's solar terms on one line, each with its motif and its day: "7日 立冬 winter begins". */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun MonthTerms(terms: List<Pair<LocalDate, dev.aiharness.core.seasons.SolarTerm>>) {
+    val colors = paper
+    val spoken = "Seasons this month: " + terms.joinToString(", ") { (day, t) -> "${t.english.lowercase()} on the ${ordinal(day.dayOfMonth)}" }
+    androidx.compose.foundation.layout.FlowRow(
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 4.dp, bottom = 6.dp).heightIn(min = 24.dp).clearAndSetSemantics { contentDescription = spoken },
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalArrangement = Arrangement.Center,
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        terms.forEachIndexed { i, (day, t) ->
+            if (i > 0) Box(Modifier.padding(horizontal = 5.dp).size(1.dp, 12.dp).background(colors.nijimi1))
+            SeasonMotif(t.index, Modifier.size(14.dp))
+            Text("${day.dayOfMonth}日 ${t.kanji}", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 12.sp), color = colors.sumi)
+            Text(t.english.replaceFirstChar { it.lowercase() }, style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.sp), color = colors.sumi)
+        }
+    }
 }

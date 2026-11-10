@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -38,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -150,15 +152,24 @@ data class PlanDraft(
 }
 
 /**
- * A day of the planner: everything on it in time order (your typical week's bands, your plans,
- * what's untimed), and "Add a plan", which opens a plan's card.
+ * A day of the planner: header B, then everything on it as a list in time order (see [DayList]),
+ * "Add a plan", which opens a plan's card, and who sees your planner at the foot.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlannerDayScreen(nav: NavController, date: String) {
     val container = LocalAppContainer.current
     val vm: PlannerViewModel = viewModel { PlannerViewModel(container) }
-    val day = remember(date) { runCatching { LocalDate.parse(date) }.getOrNull() } ?: return
+    // The day shown: the one opened, then the days either side ("‹ Thursday · Saturday ›").
+    var shownDate by rememberSaveable(date) { mutableStateOf(date) }
+    val day = remember(shownDate) { runCatching { LocalDate.parse(shownDate) }.getOrNull() } ?: return
+    // The week or month page under this one, to go back up to (the day shown, in the view chosen).
+    val below = nav.previousBackStackEntry?.takeIf { it.destination.route == dev.aiharness.app.ui.Routes.PLANNER }
+    val under: PlannerViewModel? = below?.let { viewModel(it) { PlannerViewModel(container) } }
+    val up = { v: PlannerView ->
+        under?.let { it.shownDay.value = day; it.view.value = v }
+        if (below != null) nav.popBackStack() else nav.navigate(dev.aiharness.app.ui.Routes.PLANNER)
+    }
     val settings by vm.settings.collectAsStateWithLifecycle()
     val entries by vm.entries.collectAsStateWithLifecycle()
     val seenBy by vm.seenBy.collectAsStateWithLifecycle()
@@ -173,78 +184,74 @@ fun PlannerDayScreen(nav: NavController, date: String) {
     val theirs = all.filter { it.entry.byPersonaId != null }.sortedWith(compareBy<Occurrence> { it.entry.kind != EntryKind.AWAY }.thenBy { it.start ?: Long.MIN_VALUE })
     val personas by vm.personas.collectAsStateWithLifecycle()
     var card by remember { mutableStateOf<PlanDraft?>(null) }
+    val takenDown = remember { androidx.compose.runtime.mutableStateListOf<String>() }
     val colors = paper
     val ink = stationery.you
     val today = vm.today()
     val you by vm.you.collectAsStateWithLifecycle()
     val dayTarget = you?.let { dev.aiharness.core.model.StickerTarget.day(it.id, day.toString()) }
+    val weekday = { d: LocalDate -> d.dayOfWeek.getDisplayName(DayText.FULL, Locale.US) }
     PlannerStickerHost(you?.id, you) { stickers, bottom ->
-    Box(Modifier.fillMaxSize().background(colors.kami)) {
-        Column(Modifier.fillMaxSize().statusBarsPadding().padding(bottom = bottom)) {
-            Row(
-                Modifier.fillMaxWidth().drawBehind { drawLine(colors.nijimi0, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx()) }
-                    .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to the planner", tint = colors.usuzumi0) }
-                // The title takes what's left, so the stickers button always keeps its place.
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        "${day.dayOfWeek.getDisplayName(DayText.FULL, Locale.US)} ${day.dayOfMonth} ${day.month.getDisplayName(DayText.FULL, Locale.US)}",
-                        style = PaperType.letterName.copy(fontSize = 24.sp, lineHeight = 26.sp),
-                        color = colors.sumi,
-                    )
-                    val who = if (seenBy.isEmpty()) "ONLY YOU SEE YOUR PLANNER" else "${names(seenBy.map { it.name }).uppercase()} CAN SEE YOUR PLANNER"
-                    Text((if (day == today) "TODAY · " else "") + who, style = PaperType.meta, color = ink)
-                    // A public holiday, in red like a Sunday; the solar term and microseason the day is in.
-                    val red = dayInk(java.time.DayOfWeek.SUNDAY, colors.sumi, stationery.isNight)
-                    vm.holidaysOn(day).forEach { name ->
-                        Text(name.uppercase() + " · PUBLIC HOLIDAY", style = PaperType.meta, color = red)
-                    }
-                    if (settings.planner.seasonBand) {
-                        val micro = remember(day, settings.theme) { dev.aiharness.core.seasons.Seasons.microOn(day, vm.zone, vm.hemisphere(settings)) }
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 3.dp)) {
-                            SeasonMotif(micro.index / 3, Modifier.size(13.dp))
-                            Text(
-                                "  ${micro.term.kanji} ${micro.term.english} · ${micro.kanji} ${micro.english}",
-                                style = PaperType.noteBody.copy(fontSize = 12.5.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                                color = colors.usuzumi1,
-                            )
-                        }
-                    }
-                }
-                if (dayTarget != null) {
-                    Box(
-                        Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).clickable(role = Role.Button, onClickLabel = "Stick stickers on this day") { stickers.openTray(dayTarget) },
-                        contentAlignment = Alignment.Center,
-                    ) { StickersMark() }
-                }
-            }
+    dev.aiharness.app.ui.theme.InHand(you?.hand) {
+    Box(Modifier.fillMaxSize().background(colors.kami).pageDots(colors.sumi.copy(alpha = 0.12f))) {
+        Column(Modifier.fillMaxSize().stitched(androidx.compose.ui.graphics.lerp(colors.nijimi2, colors.kami, 0.2f)).statusBarsPadding().padding(bottom = bottom)) {
+            PlannerHeader(
+                label = dayLabel(day, today),
+                before = weekday(day.minusDays(1)), after = weekday(day.plusDays(1)),
+                spokenBefore = "The day before, ${dayName(day.minusDays(1))}", spokenAfter = "The day after, ${dayName(day.plusDays(1))}",
+                view = null,
+                onBefore = { shownDate = day.minusDays(1).toString() },
+                onAfter = { shownDate = day.plusDays(1).toString() },
+                onWeek = { up(PlannerView.WEEK) },
+                onMonth = { up(PlannerView.MONTH) },
+            )
+            // The rule under the header, by hand.
+            Box(Modifier.fillMaxWidth().height(12.dp).padding(start = 24.dp, end = 22.dp).inkRule(ink, y = 7.dp))
             // The day's stickers go over everything on it.
             val page: @Composable (@Composable () -> Unit) -> Unit = { inner ->
                 if (dayTarget != null) stickers.On(dayTarget, Modifier.weight(1f).fillMaxWidth()) { inner() } else Box(Modifier.weight(1f)) { inner() }
             }
             page {
             Column(
-                Modifier.fillMaxSize().scrollingPage().padding(horizontal = 18.dp, vertical = 14.dp),
+                Modifier.fillMaxSize().scrollingPage().padding(start = 24.dp, end = 16.dp, top = 10.dp, bottom = 28.dp + CORNER_ROOM),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                val timed = occurrences.filter { it.start != null }.sortedBy { it.start }
-                val untimed = occurrences.filter { it.start == null }
+                // A public holiday, in red like a Sunday.
+                vm.holidaysOn(day).forEach { name ->
+                    Text(name.uppercase() + " · PUBLIC HOLIDAY", style = PaperType.meta.copy(fontSize = 11.sp), color = beni())
+                }
                 // A phone calendar's event opens in the phone's calendar app; yours, its card.
                 val open = { o: Occurrence -> if (o.entry.phone != null) outside.openPhoneEvent(o.entry) else card = PlanDraft.of(o.entry, day, vm.zone) }
-                timed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { open(o) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
-                untimed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { open(o) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
-                if (occurrences.isEmpty()) Text("Nothing planned yet.", style = PaperType.postscript, color = colors.usuzumi1)
-                // What your personas wrote on this day.
-                theirs.forEach { o ->
-                    val persona = personas.firstOrNull { it.id == o.entry.byPersonaId } ?: return@forEach
-                    PersonaSlip(o, persona, vm.zone, { vm.hemisphere(settings) }, clock, onAdd = vm::addSuggestion, onDecline = vm::declineSuggestion)
-                }
+                // Everything on the day in time order, what your personas wrote among it.
+                DayList(
+                    day = day, today = today, now = vm.now(), yours = occurrences, theirs = theirs, personas = personas, clock = clock, zone = vm.zone,
+                    actions = DayActions(
+                        open = open,
+                        stamp = { e, state -> vm.stamp(e, state) },
+                        slip = { o, persona ->
+                            PersonaSlip(
+                                o, persona, vm.zone, { vm.hemisphere(settings) }, clock, onAdd = vm::addSuggestion,
+                                onDecline = { e -> vm.declineSuggestion(e); takenDown += e.id },
+                                takenDown = o.entry.id in takenDown,
+                                onPutBack = { e -> vm.putBackSuggestion(e); takenDown -= e.id },
+                            )
+                        },
+                    ),
+                )
                 PaperButton("+ Add a plan", modifier = Modifier.padding(top = 6.dp)) { card = PlanDraft.new(day) }
+                // Who sees your planner, at the foot, quietly.
+                WhoSees(seenBy.map { it.name }) { nav.navigate(dev.aiharness.app.ui.Routes.settings("planner")) }
             }
             }
         }
+        // The ribbon: back to the day it marks; a long press moves it here.
+        val marked = vm.bookmark(settings)
+        PlannerRibbon(
+            day == marked, "${marked.dayOfMonth} ${marked.month.getDisplayName(DayText.FULL, Locale.US)}", Modifier.align(Alignment.TopEnd),
+            onGo = { shownDate = marked.toString() },
+            onMoveHere = { vm.moveBookmark(day); outside.toast("Bookmark moved to ${weekday(day)}") },
+        )
+        if (dayTarget != null) StickersCorner(Modifier.align(Alignment.BottomEnd).padding(bottom = bottom), spoken = "Stick stickers on this day") { stickers.openTray(dayTarget) }
         card?.let { draft ->
             PlanCard(
                 draft = draft, clock = clock, zone = vm.zone, ink = ink, seenBy = seenBy.map { it.name },
@@ -256,59 +263,38 @@ fun PlannerDayScreen(nav: NavController, date: String) {
         }
     }
     }
+    }
 }
 
-/** One thing on a day: a band of your typical week, a plan at a time (○), or an untimed one (•). */
-@OptIn(ExperimentalFoundationApi::class)
+/** "Aria and Juno can see your planner. Who sees what", with an eye, at the foot of a day. */
 @Composable
-private fun DayRow(o: Occurrence, day: LocalDate, clock: ClockFormat, zone: ZoneId, ink: Color, onOpen: () -> Unit, onStamp: () -> Unit) {
+internal fun WhoSees(seenBy: List<String>, onWho: () -> Unit) {
     val colors = paper
-    val e = o.entry
-    val busy = Planner.isBusy(e)
-    val start = o.start?.let { clock.time(PlannerDays.minuteOf(it, day, zone)) }
-    val end = o.end?.takeIf { it != o.start }?.let { clock.time(PlannerDays.minuteOf(it, day, zone)) }
-    if (e.kind == EntryKind.ROUTINE) {
-        val what = e.title.ifBlank { if (e.routine == RoutineKind.SLEEP) "Sleep" else if (e.routine == RoutineKind.WORK) "Work" else "Routine" }
-        // Until when it really ends: sleep from 23:00 runs to the morning, past this day's midnight.
-        val end = e.weekly?.let { clock.time(it.to) } ?: end
-        Row(
-            Modifier.fillMaxWidth().background(colors.chitsu, RoundedCornerShape(2.dp)).clickable(onClickLabel = "Open your typical week's $what") { onOpen() }
-                .padding(start = 4.dp, end = 10.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Box(Modifier.width(4.dp).heightIn(min = 18.dp).then(if (busy) Modifier.hatched(colors.kasure2) else Modifier))
-            Text(start ?: "", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp), color = colors.usuzumi1, modifier = Modifier.width(72.dp), maxLines = 1, softWrap = false)
-            Text(
-                listOfNotNull(what.uppercase() + (end?.let { " UNTIL $it" } ?: ""), "YOUR TYPICAL WEEK".takeIf { !busy }, "BUSY".takeIf { busy }).joinToString(" · "),
-                style = PaperType.meta.copy(fontSize = 10.5.sp),
-                color = colors.usuzumi1,
-            )
+    val ink = stationery.you
+    Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        androidx.compose.foundation.Canvas(Modifier.size(14.dp)) {
+            val w = size.width
+            val h = size.height
+            val eye = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w * 0.08f, h * 0.5f)
+                cubicTo(w * 0.3f, h * 0.18f, w * 0.7f, h * 0.18f, w * 0.92f, h * 0.5f)
+                cubicTo(w * 0.7f, h * 0.82f, w * 0.3f, h * 0.82f, w * 0.08f, h * 0.5f)
+                close()
+            }
+            drawPath(eye, colors.usuzumi1, style = androidx.compose.ui.graphics.drawscope.Stroke(1.6.dp.toPx() * 0.6f))
+            drawCircle(colors.usuzumi1, w * 0.13f, Offset(w / 2, h / 2))
         }
-        return
-    }
-    Row(
-        Modifier.fillMaxWidth()
-            .combinedClickable(onClickLabel = "Open ${e.title}", onLongClickLabel = "Stamp it done", onLongClick = onStamp, onClick = onOpen)
-            .onRightClick(onStamp)
-            .drawBehind { drawLine(colors.nijimi1, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx()) }
-            .padding(start = 4.dp, top = 6.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Box(Modifier.width(4.dp).heightIn(min = 18.dp).then(if (busy) Modifier.hatched(colors.kasure2) else Modifier))
-        Text(start ?: if (e.allDay) "all day" else "any time", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp), color = colors.usuzumi1, modifier = Modifier.width(72.dp), maxLines = 1, softWrap = false)
-        Column(Modifier.weight(1f)) {
-            val pencil = e.phone != null
-            Text(
-                (if (start != null) "○ " else "• ") + e.title.ifBlank { if (pencil) "Busy" else "A plan" } + (end?.let { ", until $it" } ?: ""),
-                style = TextStyle(fontFamily = if (pencil) HarnessFonts.Hand else HarnessFonts.Read, fontSize = 15.sp, textDecoration = if (e.state == EntryState.CANCELLED) TextDecoration.LineThrough else null),
-                color = if (pencil) Pencil else ink,
-            )
-            val meta = listOfNotNull(e.phone?.let { "PHONE · ${it.uppercase()}" }, e.place?.uppercase(), "BUSY".takeIf { busy }, "MOVED".takeIf { e.movedFrom != null }, "NOT GOING".takeIf { pencil && e.state == EntryState.CANCELLED }).joinToString(" · ")
-            if (meta.isNotEmpty()) Text(meta, style = PaperType.meta.copy(fontSize = 10.5.sp), color = colors.kasure2)
-        }
-        stampOf(e)?.let { Stamp(it, ink, size = 22.dp) }
+        Text(
+            if (seenBy.isEmpty()) "Only you see your planner." else "${names(seenBy)} can see your planner.",
+            style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp, lineHeight = 16.sp),
+            color = colors.usuzumi1,
+        )
+        Text(
+            "Who sees what",
+            style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp, lineHeight = 16.sp, textDecoration = TextDecoration.Underline),
+            color = androidx.compose.ui.graphics.lerp(ink, colors.sumi, 0.3f),
+            modifier = Modifier.heightIn(min = 32.dp).clickable(role = Role.Button, onClickLabel = "Choose who sees your planner", onClick = onWho).padding(vertical = 8.dp),
+        )
     }
 }
 

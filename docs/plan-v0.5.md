@@ -376,4 +376,39 @@ Updated 2026-11-10 (later).
     Yomogi's (chaining it like Literata is for step 8 if wanted).
   - **Tests:** the font reader (3), her font in her backup (1); the tours show the new faces, her
     hand on her page, and the Look page's Japanese and Your fonts cards.
-
+- **Step 7, the planner redrawn: built** (2026-11-10), as the third pass and Header B have it.
+  - **Header B** on the week, month and day pages: the month on light masking tape in your ink
+    ("霜月 • November", "神無月 • Oct – Nov", "金 • 6 November"), the way either side in words under
+    it ("‹ Week before · Week after ›", the months' names, the days' names), and a Week and Month
+    switch with the view you're on circled in ink, the loop drawn as you switch (neither on the
+    day page, where both go back up to that page with the day shown). The edge tabs are gone; the
+    ribbon hangs longer away from the page it marks (the day page has it too), and stickers open
+    from a sheet's corner at the bottom right.
+  - **The week:** kanji over each date, today ringed, a beni dot on a solar term's first day, and
+    the rule under the days ruled by hand, ending in a loop past Sunday. The days and the all-day
+    bar (a faint fill with a perforated edge, time away in it) lie over the hours, which scroll
+    under them until the end of the grid; whatever is brought into view (by TalkBack or the
+    keyboard) lands below them. No season band on the week or the day.
+  - **The month:** its solar terms on a line above the weekdays ("7日 立冬 winter begins | 22日 小雪
+    light snow"), kanji weekdays alone over the rule, and its small type at 9.5 or more (the legend
+    at 11).
+  - **In your hand:** everything you wrote in the planner is in your persona's hand, and each
+    persona's slips in theirs. Your plans have a see-through highlighter in your ink (streaked,
+    darker where the pen comes down and lifts, ends cut at a slant; down the column on the week,
+    across a name elsewhere); the phone's events are pencilled in, a box of four quick strokes;
+    nothing is filled in behind them. Busy hours have a pale wash and a bracket down the day's
+    edge with a tick at each end.
+  - **Suggestions:** a 付箋 tab in the persona's ink on the grid at its time, and its sticky note
+    under the grid with "Add it" and "Not this time". Taken down, both peel off from the bottom
+    right corner (the tab a moment later, leaving a faint mark), and "Taken down; Aria will hear it
+    wasn't for this time" takes the note's place, with "Put it back". Added, the note stays
+    ("ADDED TO YOUR PLANNER").
+  - **The day,** as a list in time order: sleep folded at both ends, your typical week's bands
+    (work bracketed from "9:00 · WORK" to "17:30 · WORK ENDS", what's inside on its wash), entries
+    as cards, the now line in beni, what your personas wrote at its time, and plans with any time
+    to tick. An entry that has ended without a stamp asks "How did it go?" (済 Done, 止 Not going or
+    Didn't happen); the stamp lands on its card, and "Lift the stamp" takes it off. "Aria and Juno
+    can see your planner. Who sees what" is at the foot.
+  - **Nothing smaller than 9.5** on any planner page.
+  - **Tests:** the tours go between weeks by the words, open today's page, and take a suggestion
+    down and put it back before adding it.
