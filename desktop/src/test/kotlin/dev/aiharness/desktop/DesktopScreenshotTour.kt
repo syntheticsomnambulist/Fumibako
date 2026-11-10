@@ -208,6 +208,9 @@ class DesktopScreenshotTour {
     private fun Tour.personas() {
         click("Personas")
         waitFor("Choose a persona")
+        // The gallery comes a moment after the empty side; Juno is only in it.
+        waitFor("Juno")
+        settle()
         shot("03_personas")
         click("Aria")
         waitFor("Write a letter")
@@ -391,8 +394,12 @@ class DesktopScreenshotTour {
                 val backs = BackHandlers()
                 setContent { FumibakoWindow(container, backs) { AppNavigation(MutableStateFlow(null)) } }
                 val tour = Tour(this, prefix, outDir!!, backs)
-                // Where it stopped, if it stops: a picture says more than the timeout.
-                runCatching { tour.steps() }.onFailure { runCatching { tour.shot("stopped_here") }; throw it }
+                // Where it stopped, if it stops: a picture says more than the timeout. Given ten seconds,
+                // since a page that never goes idle would otherwise hold the failure back for good.
+                runCatching { tour.steps() }.onFailure { failure ->
+                    kotlin.concurrent.thread(isDaemon = true) { runCatching { tour.shot("stopped_here") } }.join(10_000)
+                    throw failure
+                }
             }
         } finally {
             Dispatchers.resetMain()

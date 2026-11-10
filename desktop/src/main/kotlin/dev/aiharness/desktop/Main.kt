@@ -1,6 +1,7 @@
 package dev.aiharness.desktop
 
 import androidx.compose.foundation.layout.BoxWithConstraints
+import dev.aiharness.app.platform.Picked
 import dev.aiharness.app.ui.WideLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -56,6 +57,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.awt.Desktop
@@ -75,7 +77,12 @@ fun main(args: Array<String>) {
     val dataDir = DesktopPlatform.dataDir()
     val showRequests = MutableStateFlow(0)
     val instance = SingleInstance(dataDir)
-    if (!instance.claim { showRequests.update { it + 1 } }) return
+    // Files it was started with (a backup double-clicked), opened here or by the Fumibako already running.
+    val files = filesIn(args)
+    val opened = MutableStateFlow<List<File>>(emptyList())
+    val open = { more: List<File> -> opened.update { it + more }; showRequests.update { it + 1 } }
+    if (!instance.claim(files, onOpen = open) { showRequests.update { it + 1 } }) return
+    opened.value = files
     CrashReport.install(dataDir)
 
     val platform = DesktopPlatform(dataDir)
@@ -94,6 +101,16 @@ fun main(args: Array<String>) {
     notices.start()
     container.start()
     whenDockIconClicked { showRequests.update { it + 1 } }
+    whenFilesOpened(open)
+    // Each file opened goes to its page (Import a card, Open a backup), one at a time, as on the phone.
+    scope.launch {
+        opened.collect { waiting ->
+            val next = waiting.firstOrNull() ?: return@collect
+            container.transfers.incoming.first { it == null }
+            container.transfers.incoming.value = Picked(next.toURI().toString())
+            opened.update { it.drop(1) }
+        }
+    }
 
     val inTray = { platform.trayWorks && platform.keepInTray.value }
     val startHidden = LoginItem.BACKGROUND in args && inTray()
@@ -195,6 +212,18 @@ private fun firstCloseNotice(platform: DesktopPlatform, tray: TrayState) {
 }
 
 private const val KEY_TRAY_NOTICE = "tray_notice_shown"
+
+/** The files among the arguments (not options such as --background) that exist. */
+internal fun filesIn(args: Array<String>): List<File> =
+    args.filterNot { it.startsWith("--") }.map { File(it).absoluteFile }.filter { it.isFile }
+
+/** On a Mac, a file opened with Fumibako (double-clicked in the Finder) comes as an event, not an argument. */
+private fun whenFilesOpened(open: (List<File>) -> Unit) {
+    runCatching {
+        val desktop = Desktop.getDesktop()
+        if (desktop.isSupported(Desktop.Action.APP_OPEN_FILE)) desktop.setOpenFileHandler { event -> open(event.files.filter { it.isFile }) }
+    }
+}
 
 /** On a Mac, clicking the dock icon with the window closed shows it again. */
 private fun whenDockIconClicked(show: () -> Unit) {
