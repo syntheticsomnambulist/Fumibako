@@ -145,7 +145,10 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
                             val open = backStack?.takeIf { currentRoute == "chat/{id}" }?.arg("id")
                             CompositionLocalProvider(LocalOpenLetter provides open) { ChatsScreen(nav) }
                         }
-                        Routes.PERSONAS -> ListSide(WideLayout.GALLERY_WIDTH) { PersonasScreen(nav) }
+                        Routes.PERSONAS -> ListSide(WideLayout.GALLERY_WIDTH) {
+                            val open = backStack?.takeIf { currentRoute in personaRoutes }?.arg("id")?.takeIf { it != Routes.NEW }
+                            CompositionLocalProvider(LocalOpenPersona provides open) { PersonasScreen(nav) }
+                        }
                     }
                 }
                 Scaffold(
@@ -189,6 +192,9 @@ private fun NavGraphBuilder.screen(route: String, content: @Composable (NavBackS
 private val listedTabs = setOf(Routes.CHATS, Routes.PERSONAS)
 
 /** Which tab a screen belongs to, for the index tabs and the list beside it. */
+/** A persona's own pages, each with the persona's id: the open side shows one of these beside the gallery. */
+private val personaRoutes = setOf("page/{id}", "page/{id}/heartbeat", "page/{id}/stickers", "memory/{id}", "memory/{id}/{memory}")
+
 private fun tabOf(route: String?): String? = when {
     route == null -> null
     route == Routes.CHATS || route.startsWith("chat/") -> Routes.CHATS

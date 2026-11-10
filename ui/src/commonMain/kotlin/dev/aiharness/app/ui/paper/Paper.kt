@@ -18,6 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -147,6 +155,7 @@ fun Polaroid(
     bottomPadding: Dp = 0.dp,
     framePadding: Dp = 10.dp,
     cornerTaped: Boolean = false,
+    foldedCorner: Boolean = false,
     caption: @Composable (() -> Unit)? = null,
 ) = PolaroidFrame(
     tape = Tape(stationery.ink(persona.ink), persona.tapePattern),
@@ -156,11 +165,16 @@ fun Polaroid(
     bottomPadding = bottomPadding,
     framePadding = framePadding,
     cornerTaped = cornerTaped,
+    foldedCorner = foldedCorner,
     picture = { PersonaPortrait(persona, it) },
     caption = caption,
 )
 
-/** A polaroid of anything: [picture] fills the square. */
+/**
+ * A polaroid of anything: [picture] fills the square. With [foldedCorner], its bottom right corner is
+ * folded down (the mark of the persona open beside the gallery, docs/plan-desktop.md): the desk shows
+ * where the corner was, and the flap (the frame turned over) is tinted with your ink.
+ */
 @Composable
 fun PolaroidFrame(
     tape: Tape,
@@ -170,10 +184,13 @@ fun PolaroidFrame(
     bottomPadding: Dp = 0.dp,
     framePadding: Dp = 10.dp,
     cornerTaped: Boolean = false,
+    foldedCorner: Boolean = false,
     picture: @Composable (Modifier) -> Unit,
     caption: @Composable (() -> Unit)? = null,
 ) {
     val s = stationery
+    val shape = if (foldedCorner) FoldedCornerShape(FOLD, 3.dp) else RoundedCornerShape(3.dp)
+    val flap = lerp(s.frame, s.you, 0.26f)
     Column(
         modifier
             .rotate(tiltDegrees)
@@ -184,15 +201,60 @@ fun PolaroidFrame(
                     Modifier.topTape(tape, tiltDegrees = tapeTiltDegrees)
                 },
             )
-            .shadow(3.dp, RoundedCornerShape(3.dp), ambientColor = s.colors.chitsu, spotColor = Color.Black.copy(alpha = 0.35f))
-            .background(s.frame, RoundedCornerShape(3.dp))
-            .border(1.dp, s.colors.nijimi1.copy(alpha = 0.45f), RoundedCornerShape(3.dp))
+            .shadow(3.dp, shape, ambientColor = s.colors.chitsu, spotColor = Color.Black.copy(alpha = 0.35f))
+            .background(s.frame, shape)
+            .border(1.dp, s.colors.nijimi1.copy(alpha = 0.45f), shape)
+            .then(if (foldedCorner) Modifier.drawWithContent { drawContent(); drawFlap(FOLD.toPx(), flap) } else Modifier)
             .padding(start = framePadding, end = framePadding, top = framePadding, bottom = bottomPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         picture(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(1.dp)))
         caption?.invoke()
     }
+}
+
+/** How far along each edge a polaroid's corner is folded. */
+private val FOLD = 22.dp
+
+/** A rounded rectangle with its bottom right corner cut off along the diagonal, [fold] along each edge. */
+private class FoldedCornerShape(private val fold: Dp, private val radius: Dp) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val f = with(density) { fold.toPx() }.coerceAtMost(minOf(size.width, size.height))
+        val r = with(density) { radius.toPx() }
+        val (w, h) = size.width to size.height
+        return Outline.Generic(
+            Path().apply {
+                moveTo(r, 0f)
+                lineTo(w - r, 0f)
+                quadraticTo(w, 0f, w, r)
+                lineTo(w, h - f)
+                lineTo(w - f, h)
+                lineTo(r, h)
+                quadraticTo(0f, h, 0f, h - r)
+                lineTo(0f, r)
+                quadraticTo(0f, 0f, r, 0f)
+                close()
+            },
+        )
+    }
+}
+
+/**
+ * The folded-down flap: the cut corner turned over onto the frame, with a soft shadow above and to
+ * its left, where it lifts off the paper.
+ */
+private fun DrawScope.drawFlap(fold: Float, color: Color) {
+    val (w, h) = size.width to size.height
+    fun flap(dx: Float, dy: Float) = Path().apply {
+        moveTo(w - fold + dx, h + dy)
+        lineTo(w + dx, h - fold + dy)
+        lineTo(w - fold + dx, h - fold + dy)
+        close()
+    }
+    val lift = 1.dp.toPx()
+    drawPath(flap(-lift, -lift), Color(0xFF1E1208).copy(alpha = 0.10f))
+    drawPath(flap(-lift / 2, -lift / 2), Color(0xFF1E1208).copy(alpha = 0.10f))
+    drawPath(flap(0f, 0f), color)
 }
 
 /** A user persona's picture: their photo if they chose one, otherwise an ink wash in their ink. */

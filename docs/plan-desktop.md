@@ -35,7 +35,8 @@ answers below; the reorganization has started (see *Progress*).
   - **Letters at a reading width,** about 640, in the middle of the right side. The margins a
     wider window leaves are wanted for things (ideas drawn in the study: the day beside its first
     letter, what she kept as a slip, her index card of what she had in mind, today's planner
-    page); which ones is still to choose. Narrower, each stays where it is on the phone.
+    page). **Left for a future version** (your answer, 2026-11-10), and noted for the roadmap.
+    Narrower, each stays where it is on the phone.
   - **Letters opens on the letter you last had open,** and Personas on the page you last opened,
     with the gallery beside it.
   - **A new window opens 1180 × 780,** smaller on a small screen. A window you've already sized
@@ -46,7 +47,7 @@ answers below; the reorganization has started (see *Progress*).
     cards to be **little fumibakos**, the open one opened: drawn in the study (lacquer tied with a
     cord in their ink, or covered in their washi; the open box with its lid leaning behind it and
     the letter inside). Still to settle: the finish, whether the phone's list gets boxes too, and
-    the gallery's mark.
+    the gallery's mark. **The gallery's mark: the folded corner** (your answer, 2026-11-10).
   - **The fumibakos it is** (2026-11-08), with the lining in their ink too. A closer pass is in
     [`docs/design/fumibako-studies.html`](design/fumibako-studies.html) (private artifact:
     https://claude.ai/artifact/9krTn2vam1SDMUWGSUsU4L): five boxes (lacquer in their ink, black
@@ -118,8 +119,13 @@ answers below; the reorganization has started (see *Progress*).
     tape, portraits and times change from run to run. Compared by eye, and by the build session
     after its merge, the phone's screens are laid out as before.) Two new tours, `wideTour`
     (1180 × 780) and `wideNightTour` (1600 × 900), render the wide layouts.
-  - **Not yet:** the gallery's mark for the open persona (of those drawn, the folded corner was
-    the favorite), and the margins.
+  - **The open persona's mark (2026-11-10):** the polaroid of the persona open beside the gallery
+    (their page, memory book, heartbeat or stickers) has its bottom right corner folded down, as
+    drawn in the study: the desk shows where the corner was, and the flap is the frame turned over,
+    tinted with your ink (at night too, since the frame stays light). The phone's gallery has no
+    mark. Code: `foldedCorner` on `Polaroid` and `PolaroidFrame` (`ui/.../paper/Paper.kt`),
+    `LocalOpenPersona` (`WideLayout.kt`), provided beside the gallery in `AppNavigation.kt`.
+  - **For a future version:** the margins beside a wide letter (above).
 - **The boxes (2026-11-09):** every persona has a box (`Persona.letterBox`; until one is chosen,
   the pick from their id). Each letter in the list is the persona's box with a one-line paper
   strip tucked beneath it. On the phone, tapping plays the box's opening (the tie comes undone,
@@ -498,6 +504,9 @@ The rules in CLAUDE.md hold through the move:
 
 ## Noted for later
 
+- The margins beside a letter in a wide window (ideas drawn in the study: the day beside its first
+  letter, what she kept as a slip, her index card of what she had in mind, today's planner page),
+  for a future version (2026-11-10).
 - Sync between the phone and the computer.
 - Calendars on the computer: a calendar's private iCal link (Google, Outlook and iCloud each offer
   one), read-only like the phone's.

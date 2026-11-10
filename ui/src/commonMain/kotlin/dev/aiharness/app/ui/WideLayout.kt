@@ -36,6 +36,12 @@ fun NavController.openFromList(route: String, listRoute: String) = navigate(rout
 /** The conversation open beside the letters list in a wide layout (its box is drawn open), or null. */
 val LocalOpenLetter = compositionLocalOf<String?> { null }
 
+/**
+ * The persona whose page (or memory book, heartbeat or stickers) is open beside the gallery in a wide
+ * layout (its polaroid's corner is folded down), or null.
+ */
+val LocalOpenPersona = compositionLocalOf<String?> { null }
+
 /** True when the screen is laid out wide. */
 val LocalWide = compositionLocalOf { false }
 

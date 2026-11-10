@@ -1,6 +1,9 @@
 package dev.aiharness.app.ui.personas
 
 import dev.aiharness.app.ui.openFromList
+import dev.aiharness.app.ui.LocalOpenPersona
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -70,6 +73,7 @@ fun PersonasScreen(nav: NavController) {
         value = personas.associate { it.id to harness.memory.all(it.id).size }
     }
 
+    val openPersona = LocalOpenPersona.current
     val pageScroll = rememberLazyListState()
     LazyColumn(
         Modifier.fillMaxSize().scrollbar(pageScroll),
@@ -87,7 +91,9 @@ fun PersonasScreen(nav: NavController) {
                             NewPolaroid { nav.openFromList(Routes.personaPage(Routes.NEW), Routes.PERSONAS) }
                         } else {
                             val latest = conversations.filter { it.personaId == persona.id }.maxByOrNull { it.updatedAt }
-                            GalleryPolaroid(persona, latest, memoryCounts[persona.id], index) { nav.openFromList(Routes.personaPage(persona.id), Routes.PERSONAS) }
+                            GalleryPolaroid(persona, latest, memoryCounts[persona.id], index, open = persona.id == openPersona) {
+                                nav.openFromList(Routes.personaPage(persona.id), Routes.PERSONAS)
+                            }
                         }
                     }
                 }
@@ -114,16 +120,17 @@ fun PersonasScreen(nav: NavController) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun GalleryPolaroid(persona: Persona, latest: Conversation?, memories: Int?, column: Int, onClick: () -> Unit) {
+private fun GalleryPolaroid(persona: Persona, latest: Conversation?, memories: Int?, column: Int, open: Boolean, onClick: () -> Unit) {
     val s = stationery
     val seed = persona.id.hashCode()
     val tilt = if (column == 0) -1.6f - (seed % 3) * 0.4f else 1.4f + (seed % 3) * 0.4f
     val tapeTilt = if (column == 0) 4f else -5f
     Polaroid(
         persona,
-        Modifier.fillMaxWidth().combinedClickable(onClick = onClick, onClickLabel = "Open ${persona.name}'s page"),
+        Modifier.fillMaxWidth().semantics { selected = open }.combinedClickable(onClick = onClick, onClickLabel = "Open ${persona.name}'s page"),
         tiltDegrees = tilt,
         tapeTiltDegrees = tapeTilt,
+        foldedCorner = open,
     ) {
         Column(Modifier.fillMaxWidth().padding(top = 9.dp, bottom = 13.dp, start = 2.dp, end = 2.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(persona.name, style = PaperType.polaroidName, color = s.frameInk, maxLines = 1, overflow = TextOverflow.Ellipsis)
