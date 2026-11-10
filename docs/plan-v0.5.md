@@ -334,7 +334,7 @@ Updated 2026-11-10 (later).
     and in her ink, then the English month and what the name means (神無月 October “gods'
     month”), from the planner's names.
   - **Labels** wait for v0.6, as agreed.
-- **Step 6, fonts: under way** (2026-11-10).
+- **Step 6, fonts: built** (2026-11-10).
   - **The faces** (bundled as Latin subsets, plus 〒): Zen Old Mincho for names and titles, Literata
     for letters (and now your notes in a thread too, `PaperType.yourNote`), Zen Kaku Gothic New for
     the interface, Yomogi for the hand, Yuji Syuku for seals, Old Standard TT for cuttings. The old
@@ -353,4 +353,27 @@ Updated 2026-11-10 (later).
     Google's, from its Downloadable Fonts sample, `ui/src/androidMain/res/values/font_certs.xml`);
     Yomogi stands in until they arrive, and on the computer for now (desktop step 6). Cards from
     Fumibako name the hand.
+  - **Japanese on first use** (phone): the first time Japanese shows (a letter or note, a name or
+    preview in the list, an imported card), or at once on a phone set to Japanese, the faces'
+    Japanese comes through the same provider. Zen Old Mincho, Zen Kaku Gothic New, Yomogi and Yuji
+    Syuku come whole and replace their Latin subsets. Literata and Old Standard TT keep theirs, with
+    Zen Old Mincho and Zen Antique chained behind them a character at a time
+    (`Typeface.CustomFallbackBuilder`, Android 10 and newer; before that their Japanese stays the
+    phone's). The families are read live, so text redraws in the full faces when they arrive.
+    Settings › Look has **Download Japanese fonts now · about 25 MB**, and says where they are.
+    Without Play services nothing comes and nothing changes.
+  - **Your own fonts:** **+ Add a font file…** under the hands takes a .ttf or .otf (a collection's
+    first face). `core/fonts/FontFiles` reads its name, whether it has Latin and Japanese, and its
+    x-height, so its size is matched to Yomogi's; the platform loads it once to refuse what it
+    can't use; up to 20 MB. The sheet: the file and its size, its name (editable), a sample with a
+    line of the letters under it, what it covers, Size − and +, and "Add only fonts you're allowed
+    to use". Added fonts are a library (`AppSettings.fonts`) for every persona and each of yours,
+    listed in Settings › Look to rename or remove (anyone writing in a removed one goes back to
+    Yomogi). Kept as files; a persona's backup carries her hand's font, Everything all of them;
+    cards only name the hand.
+  - **Not here yet:** the computer's side of downloads and Japanese (desktop step 6, the installers
+    session's); a Latin-only font of yours writes Japanese in the phone's own font rather than
+    Yomogi's (chaining it like Literata is for step 8 if wanted).
+  - **Tests:** the font reader (3), her font in her backup (1); the tours show the new faces, her
+    hand on her page, and the Look page's Japanese and Your fonts cards.
 
