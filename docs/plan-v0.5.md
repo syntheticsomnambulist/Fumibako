@@ -67,11 +67,18 @@ From `v0.5.md`, in short:
 
 ## Who does what
 
-- **This session:** parts 1 to 6, written once in `ui` and `core`, so they reach the desktop.
-- **The desktop session** (`claude/epic-davinci-rpggbc`, with step 7 on `claude/desktop-step7`):
-  the computer's side of each part as it lands (save and open dialogs, Japanese fonts downloaded
-  to the app-data folder).
-- **The desktop layout session** (`claude/sharp-darwin-o3pk1g`): the wide layouts and the boxes.
+Updated 2026-11-10.
+
+- **This session (Kanna):** parts 1 to 6, written once in `ui` and `core`, so they reach the desktop.
+- **The Architect session (Sashigane):** `main`, the roadmap (`docs/roadmap.md`), and merging
+  finished branches; where conflicts between sessions get settled.
+- **The computer's side of each part** (save and open dialogs for import and export, Japanese fonts
+  downloaded to the app-data folder; desktop step 6 in `docs/plan-desktop.md`): the desktop
+  session that had it is archived, and the Architect is asking you who takes it.
+- **The desktop installers session** (`claude/desktop-installers`): the rest of desktop step 7
+  (smaller installers, the testers' guide and README for the computer, a desktop tour).
+- **The desktop layout session** (`claude/sharp-darwin-o3pk1g`, archived): the wide layouts and the
+  Fumibako boxes, both merged.
 - **The design session** (from `docs/design/handoff.md` on the design branch): thinking lines, and
   any questions found while building.
 
@@ -204,3 +211,8 @@ From `v0.5.md`, in short:
     thread with `runBlocking` while the open thread was marking letters read on the main
     dispatcher inside `updateConversation`'s lock. Its writes now run off the main thread while
     the looper keeps going. The app never blocks its main thread this way.
+- **`main` merged in** (2026-11-10, e72b9a1, from the Architect): the storage work (unused files
+  cleared, videos kept at 720p, a Storage card), the libraries' notices, the best-practices skills,
+  the README for both apps, the roadmap in `docs/roadmap.md`, and Maven Central's mirror in the
+  build itself. No conflicts. Every suite passes (core 208, data 7, app 60, desktop 57) without a
+  local init script, and the tours render 305 shots.

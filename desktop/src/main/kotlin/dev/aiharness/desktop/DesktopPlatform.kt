@@ -80,6 +80,8 @@ class DesktopPlatform(
             CrashReport.file(dataDir).delete()
         }
 
+        override fun libraryNotices(): String? = javaClass.getResourceAsStream("/licenses/libraries.txt")?.use { it.readBytes().decodeToString() }
+
         @Suppress("DEPRECATION") // The classpath loader reads the app's vector icon; Compose resources would need a second copy.
         @Composable
         override fun icon(): Painter = painterResource("seal.xml")

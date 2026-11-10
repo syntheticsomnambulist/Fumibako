@@ -95,7 +95,9 @@ phone's calendars are read, never changed or copied.
   the memory book as a scrapbook piece; tap it to play or open it, or hold it to stick a sticker
   on it. The book's Keepsakes tab shows just those.
 - **Settings, Media** has where links open, which app songs open in, picture size, playback and
-  motion switches.
+  motion switches. Its Storage card shows what letters' files take up, and clears files nothing
+  uses any more (from deleted letters, replies written again, things taken out of a note). On the
+  phone, videos you add are kept at 720p and lossless songs (FLAC, WAV) as AAC, to save space.
 - **The planner (帳):** a week of all 24 hours, your sleep folded to a band. Add a plan, and set
   your typical week (work, sleep). Tap a plan for its stamps: 済 done, 延 move, 止 cancel. The
   tabs at the right edge go to the month (月), the week or month before (‹), today (今) and

@@ -9,10 +9,10 @@ Research brief for the AI Harness memory design discussion. Prepared 5 November 
 **What the field does**
 
 - **Relevance does most of the work everywhere.** Every system I looked at ranks mainly by how well a memory matches the moment (keywords, embeddings, graph links). Importance and recency are small nudges on top. Some of the strongest results come from making *search* better, not from scoring memories better. One example is Letta's plain-file agent that searches iteratively.
-- **Model-chosen importance scores are popular but barely tested.** Generative Agents made the 1-10 "poignancy" score famous, but the paper never tests whether that score helps. Its released code also uses different weights from the paper. MemGPT/Letta, Mem0, A-MEM and Zep don't ask the model for an importance number at all. Commercial companions that expose priority use **three levels** (Nomi: High / Standard / Low) or user signals (Kindroid: favourite, deprioritise; Character.AI: pin).
-- **What does carry signal is emotional intensity and usage.** One long user study (LUFY: people chatted for 2+ hours across 4 sessions) found emotional arousal was by far the strongest predictor of which memories mattered. In LUFY's learned weights, arousal (2.76) far outweighed the LLM's own importance rating (0.44). Prioritising arousing memories while forgetting about 90% of the conversation improved user ratings. A 2026 preprint found the same thing: emotional intensity and "who said it" (the user vs the model) were the most useful factors for deciding what to keep.
+- **Model-chosen importance scores are popular but barely tested.** Generative Agents made the 1-10 "poignancy" score famous, but the paper never tests whether that score helps. Its released code also uses different weights from the paper. MemGPT/Letta, Mem0, A-MEM and Zep don't ask the model for an importance number at all. Commercial companions that expose priority use **three levels** (Nomi: High / Standard / Low) or user signals (Kindroid: favorite, deprioritize; Character.AI: pin).
+- **What does carry signal is emotional intensity and usage.** One long user study (LUFY: people chatted for 2+ hours across 4 sessions) found emotional arousal was by far the strongest predictor of which memories mattered. In LUFY's learned weights, arousal (2.76) far outweighed the LLM's own importance rating (0.44). Prioritizing arousing memories while forgetting about 90% of the conversation improved user ratings. A 2026 preprint found the same thing: emotional intensity and "who said it" (the user vs the model) were the most useful factors for deciding what to keep.
 - **People disagree about what is "important".** In LUFY, pairs of human annotators agreed on which utterances were important only about 23% of the time. A fine 1-10 scale implies precision that isn't there.
-- **LLMs are uneven at numeric ratings.** They cluster on a few values, favour round numbers, and vary between runs. Strong models handle 1-10 reasonably well. That gets riskier across a mix of providers and small local models.
+- **LLMs are uneven at numeric ratings.** They cluster on a few values, favor round numbers, and vary between runs. Strong models handle 1-10 reasonably well. That gets riskier across a mix of providers and small local models.
 - **Decay is common in products but rarely validated.** Mem0 shipped an opt-in, access-based decay that only re-orders results (0.3x to 1.5x) and never hides anything. MemoryBank's Ebbinghaus curve was never tested by its authors. Nomi and Kindroid keep an "active" working set and let the rest fade from automatic recall while keeping it searchable. Nobody I found hard-deletes memories automatically.
 - **Emotion-tagged memory is a young area.** There is only a handful of small papers. Emotional RAG reranks memories by emotional similarity, which helps role-play characters stay in character. A 2026 robot study multiplies memory strength by emotional intensity. PsychoAgent filters by topic first and then reranks by salience. None shows a large, clean win for mood-congruent recall. The safe pattern is "match the topic first, use emotion as a tie-breaker".
 - **Revising a memory's emotion has a good human analogy and a good agent precedent.** In people, recalling a memory makes it editable again (reconsolidation), and we remember past feelings through our present view (Levine & Safer). Negative feelings fade faster than positive ones (the fading affect bias). Nomi's design keeps underlying memories read-only while the summaries built on them can change. A-MEM updates the *descriptions* of old notes but never their original content. Both point to the same rule: **keep what was felt at the time, and store the reinterpretation beside it.**
@@ -47,7 +47,7 @@ None of this is wrong. It just means the 1-10 scale isn't buying much today.
 
 - **What's stored:** a "memory stream" of natural-language observations, plans and reflections, each with a creation time and a last-access time.
 - **Importance:** asked once, when the memory is created, with this prompt: *"On the scale of 1 to 10, where 1 is purely mundane (e.g., brushing teeth, making bed) and 10 is extremely poignant (e.g., a break up, college acceptance), rate the likely poignancy of the following piece of memory."* Examples from the paper: "cleaning up the room" scored 2 and "asking your crush out on a date" scored 8.
-- **Retrieval:** recency, importance and relevance are each min-max normalised to [0, 1] and added. The paper sets every weight to 1, with recency as exponential decay of 0.995 per sandbox hour since last retrieval.
+- **Retrieval:** recency, importance and relevance are each min-max normalized to [0, 1] and added. The paper sets every weight to 1, with recency as exponential decay of 0.995 per sandbox hour since last retrieval.
   - The **released code differs**: `gw = [0.5, 3, 2]` (recency, relevance, importance). The comment reads *"[1, 1, 1] tends to work decently, but in the future, these weights should likely be learned"*. Recency in the code is `0.99^rank` over memories sorted by last access, not by hours.
   - On my reading of `retrieve.py`, the list is sorted oldest-first before the decreasing values are assigned. That would give the *least* recently accessed memory the highest recency score. I could not find an issue or erratum confirming this, so treat it as unverified. Either way, the weighting was heuristic.
 - **Reflection trigger:** reflect when the sum of importance scores of recent events passes 150. In practice that meant about two or three times a simulated day. Reflections ask "what are the 3 most salient high-level questions?", retrieve memories for each, and store insights that **cite their evidence** ("... (because of 1, 2, 8, 15)") as pointers to the source memories.
@@ -72,19 +72,19 @@ None of this is wrong. It just means the 1-10 scale isn't buying much today.
 - **Importance:** no stored score. The extractor is told to keep salient facts.
 - **Decay (Platform feature, opt-in):** each memory keeps its last 20 retrieval times. At search time this history becomes a multiplier between 0.3x and 1.5x: just accessed is about 1.5x, idle for weeks 0.4 to 0.6x, idle for months about 0.3x. In the docs' words, *"It is a soft ranking bias, never a filter."* The docs describe it as *"deliberately the simplest version of decay we could ship"*. Planned next: weighting by category, so health facts fade more slowly than trivia. There is also a "memory expiration" feature that stops a memory surfacing after a set date without deleting it.
 - **Evidence (LoCoMo, LLM-judge score):** Mem0 66.9, Mem0 with graph 68.4. But simply putting the **whole conversation in context scored 72.9**. Mem0's win is in cost and latency: 91% lower p95 latency and over 90% fewer tokens.
-  - Zep disputed Mem0's numbers for Zep (their corrected Zep score is 75.1). Zep also criticised LoCoMo itself: conversations fit in modern context windows, there are no "knowledge update" questions, and some answers are wrong.
+  - Zep disputed Mem0's numbers for Zep (their corrected Zep score is 75.1). Zep also criticized LoCoMo itself: conversations fit in modern context windows, there are no "knowledge update" questions, and some answers are wrong.
   - I found no published evaluation of Mem0's decay feature.
 
 ### 2.4 A-MEM (Xu et al., 2025), Zettelkasten-style
 
 - **What's stored:** atomic notes, each with the original content, a timestamp, LLM-written keywords, tags and a context description, an embedding, and links to related notes.
 - **Importance or decay:** none.
-- **"Memory evolution":** when a new note arrives, the LLM may update the *context, keywords and tags* of its neighbouring notes. The original content is never changed. This is the closest agent precedent to "revise the interpretation, keep the record".
+- **"Memory evolution":** when a new note arrives, the LLM may update the *context, keywords and tags* of its neighboring notes. The original content is never changed. This is the closest agent precedent to "revise the interpretation, keep the record".
 - **Evidence (ablation, LoCoMo F1):** multi-hop questions scored 9.7 with neither linking nor evolution, 21.4 with linking only, and 27.0 with both. Temporal questions scored 24.6, 31.2 and 45.9. So updating the interpretation of old memories measurably helped.
 
 ### 2.5 MemoryBank / SiliconFriend (Zhong et al., 2023)
 
-- **What's stored:** raw conversations, daily event summaries rolled up into a global summary, and daily personality notes rolled up into a global profile. This is a summarisation hierarchy.
+- **What's stored:** raw conversations, daily event summaries rolled up into a global summary, and daily personality notes rolled up into a global profile. This is a summarization hierarchy.
 - **Decay:** an Ebbinghaus-style retention `R = e^(-t/S)`. Strength S starts at 1. Each time the memory is recalled, S goes up by 1 and t resets to 0.
 - **Evidence:** the authors call it *"an exploratory and highly simplified memory updating model."* LUFY later pointed out that MemoryBank *"did not include experiments to validate their proposed concept."* In LUFY's user study, MemoryBank did no better than plain retrieval.
 
@@ -106,10 +106,10 @@ None of this is wrong. It just means the 1-10 scale isn't buying much today.
 
 | Product | What's documented | Importance / priority | Decay / forgetting |
 |---|---|---|---|
-| **ChatGPT** | "Saved memories" (explicit) plus "reference chat history" (since 10 April 2025; free users from 3 June 2025). Reverse-engineering suggests a summary or "dossier" of past chats injected into each new chat, not search (Rehberger, via Willison). | Not documented. The FAQ says it keeps what it "determines are most important". | October 2025 "automatic memory management", reported as prioritising by recency and frequency so "memory full" stops happening. *I could not open OpenAI's pages; these details come from search summaries and press coverage.* |
+| **ChatGPT** | "Saved memories" (explicit) plus "reference chat history" (since 10 April 2025; free users from 3 June 2025). Reverse-engineering suggests a summary or "dossier" of past chats injected into each new chat, not search (Rehberger, via Willison). | Not documented. The FAQ says it keeps what it "determines are most important". | October 2025 "automatic memory management", reported as prioritizing by recency and frequency so "memory full" stops happening. *I could not open OpenAI's pages; these details come from search summaries and press coverage.* |
 | **Character.AI** | Pinned messages, "auto-memories" (paid tier), and "chat memories": a 400-character fixed text box (official blog, May 2025). | User pins. | Old context drops out of the window. A 2026 "Story Memory"/"Facts" redesign is reported by secondary sites only; *unverified*. |
 | **Replika** | Memory tab of facts the user can view, add and delete, plus a "deeper system" built from conversation patterns; also a Diary. | Not documented. | Not documented. *Help page blocked to me; details from search snippet.* |
-| **Kindroid** (official docs) | Persistent fields (backstory, key memories, directives, "Learned Context"); "Cascaded Memory" (hierarchical medium-term memory); long-term memory consolidated "at regular intervals"; keyphrase-triggered journal entries. | Cascaded memory keeps things *"based on their significance and timing"*. Users can **favourite** messages, which then count for more when memories form, and **Deprioritize** a recalled memory. Learned Context drops "the least important older items" when full (800 / 1,200 / 800 character areas). | Long-term recall is sifted by *"relevance, recency, and diversity"*. Lower fidelity for older material (*"akin to remembering something more vaguely if it was 1 month ago than 1 day ago"*). Suggested journal entries need user approval (at most one per day). |
+| **Kindroid** (official docs) | Persistent fields (backstory, key memories, directives, "Learned Context"); "Cascaded Memory" (hierarchical medium-term memory); long-term memory consolidated "at regular intervals"; keyphrase-triggered journal entries. | Cascaded memory keeps things *"based on their significance and timing"*. Users can **favorite** messages, which then count for more when memories form, and **Deprioritize** a recalled memory. Learned Context drops "the least important older items" when full (800 / 1,200 / 800 character areas). | Long-term recall is sifted by *"relevance, recency, and diversity"*. Lower fidelity for older material (*"akin to remembering something more vaguely if it was 1 month ago than 1 day ago"*). Suggested journal entries need user approval (at most one per day). |
 | **Nomi** (official wiki) | Short, medium and long-term memory; an "Identity Core" (the Nomi's own evolving self-understanding, which users can't view or edit); "Mind Map" entries, which are dossiers *derived from* memories. | **Three levels: High (up to 10), Standard ("dynamically decides importance"), Low ("never considered").** Up to 50 active entries per category, 150 in total. 2 to 5 entries recalled per response. | Entries outside the active set "will start to fade away" from the Mind Map but remain in long-term memory. *"The memories themselves are never editable"*; editing a dossier "would be like editing a summary of something that happened, not editing what happened". |
 
 ### 2.9 Does importance or decay scoring actually help?
@@ -121,9 +121,9 @@ None of this is wrong. It just means the 1-10 scale isn't buying much today.
 | Multi-factor value model (Chen & Cheng, 2026 preprint) | Choosing what to keep (30% budget, LongMemEval): learned mix 0.77, uniform weights 0.66, best single factor 0.52, **recency alone 0.37**. Dominant factors: reliability (user-stated beats model-stated) and emotional intensity. Both were computed without an LLM. |
 | Mem0 decay | Shipped and documented, no published evaluation. |
 | MemoryBank | Never validated. No better than plain retrieval in LUFY's study. |
-| Letta filesystem | Iterative search by the agent beat specialised memory scoring on LoCoMo. |
+| Letta filesystem | Iterative search by the agent beat specialized memory scoring on LoCoMo. |
 | LongMemEval (Wu et al., ICLR 2025) | Commercial assistants and long-context models lose about 30% accuracy over sustained chats. *Replacing* raw history with summaries or facts loses information and hurts accuracy. Using summaries as an *index* over the raw text helps. ChatGPT *"tended to overwrite crucial information as the chat continues."* |
-| LLM ratings (G-Eval; Stureborg et al., 2024) | Scores cluster: "one digit usually dominates", models output integers only, and favour round numbers (90, 95) on a 1-100 scale. With GPT-4, 1-10 actually correlated *best* with humans among the scales tried (0.43 vs 0.34 for 1-5). But consistency between samples was low. Strong models can use 1-10; whether a mix of models can is the open question. |
+| LLM ratings (G-Eval; Stureborg et al., 2024) | Scores cluster: "one digit usually dominates", models output integers only, and favor round numbers (90, 95) on a 1-100 scale. With GPT-4, 1-10 actually correlated *best* with humans among the scales tried (0.43 vs 0.34 for 1-5). But consistency between samples was low. Strong models can use 1-10; whether a mix of models can is the open question. |
 
 **My reading:** there is no good evidence that a model-chosen 1-10 score improves recall. There is moderate evidence that emotional intensity, usage and provenance carry real signal. Decay mainly earns its keep by keeping the candidate pool clean and the companion feeling natural, not by improving question-answering accuracy.
 
@@ -135,7 +135,7 @@ None of this is wrong. It just means the 1-10 scale isn't buying much today.
 
 - **Arousal, more than pleasantness, makes memories stick.** The amygdala boosts how well emotionally *arousing* experiences are stored (McGaugh, 2004). Kensinger & Corkin (2004) found two routes. Arousing material is enhanced automatically; merely pleasant or unpleasant but calm material is enhanced only with deliberate attention. **Design consequence: intensity ("how strongly felt") should drive memory strength, not just positive vs negative.**
 - **Emotional memories feel more accurate than they are.** For 9/11 memories, vividness and confidence stayed high while consistency declined *as fast as* everyday memories (Talarico & Rubin, 2003). Emotion also narrows focus: the central detail is kept and the background lost (Payne et al., 2008). **Consequence: a strong emotion tag shouldn't make the persona *more certain* about details.**
-- **Mood-congruent recall.** People recall material that matches their current mood more easily (Bower, 1981). The stricter "mood-dependent" effect (recall is best in the same mood as learning) is fragile in the lab. It is most reliable with real moods and self-generated events (Eich, 1995). In depression, recall tilts towards negative material (Matt, Vázquez & Campbell, 1992 meta-analysis; implicit memory, Gaddy & Ingram, 2014). This is part of how low mood keeps itself going. **Consequence: mood-congruent retrieval can create a melancholy loop.**
+- **Mood-congruent recall.** People recall material that matches their current mood more easily (Bower, 1981). The stricter "mood-dependent" effect (recall is best in the same mood as learning) is fragile in the lab. It is most reliable with real moods and self-generated events (Eich, 1995). In depression, recall tilts toward negative material (Matt, Vázquez & Campbell, 1992 meta-analysis; implicit memory, Gaddy & Ingram, 2014). This is part of how low mood keeps itself going. **Consequence: mood-congruent retrieval can create a melancholy loop.**
 - **Feelings fade unevenly.** The fading affect bias: the feeling attached to negative memories fades faster than for positive ones, a healthy coping pattern that is disrupted in dysphoria (Walker, Skowronski & Thompson, 2003). **Consequence: a persona whose old hurts soften over time is psychologically realistic, and the reverse should be the exception.**
 - **We remember past feelings through present eyes.** Recalled emotions are partly rebuilt from current appraisals and goals (Levine & Safer, 2002). For example, students who later got good grades underestimated their pre-exam anxiety.
 - **Recalling a memory makes it changeable.** Reactivated memories become labile and must be re-stored, so they can be altered at that moment (Nader, Schafe & LeDoux, 2000). **Consequence: tie emotion revisions to moments when a memory is actually recalled.**
@@ -174,7 +174,7 @@ None of these systems tags memories with the *agent's own* mood. They tag the us
 **Risks**
 
 1. **Rewriting history:** the persona's "now" view replaces what it felt then. Levine & Safer is exactly this bias in people. The persona's sense of its own story flattens ("it was always fine").
-2. **Drift and flip-flopping:** weaker models may re-tag a memory on every heartbeat, or drift towards their default upbeat tone. In Generative Agents, instruction tuning made agents "overly cooperative".
+2. **Drift and flip-flopping:** weaker models may re-tag a memory on every heartbeat, or drift toward their default upbeat tone. In Generative Agents, instruction tuning made agents "overly cooperative".
 3. **People-pleasing:** after a conflict the persona revises "hurt" to "understanding" because that's agreeable, not because anything was resolved.
 4. **Rumination loops,** if emotion also drives recall: a sad mood pulls up sad memories, which feed a sad mood.
 5. **Manipulation and poisoning:** a user, or injected text from a link or document, talks the persona into reframing memories. The SpAIware research showed memories can be planted through ChatGPT's memory tool from untrusted content.
@@ -187,7 +187,7 @@ None of these systems tags memories with the *agent's own* mood. They tag the us
 - **A reason is required** ("we talked it through in March"), plus a revision date. Rate-limit to once per memory per week, say. Freeze or flag a memory after a few revisions.
 - **Revisions change ranking only through intensity bands.** A revision can't change the memory's content or kind.
 - **Users see it:** the memory screen shows felt vs now and offers "reset to felt".
-- **Expected direction:** prompt the persona that feelings commonly soften with time and resolution. Treat revisions towards *more* negative as needing a concrete new event.
+- **Expected direction:** prompt the persona that feelings commonly soften with time and resolution. Treat revisions toward *more* negative as needing a concrete new event.
 
 ---
 
@@ -204,7 +204,7 @@ None of these systems tags memories with the *agent's own* mood. They tag the us
 
 ### 4.2 Spaced recall and rehearsal
 
-Retrieval practice strengthens memories, and sleep favours what's expected to matter later. For a companion, that suggests the heartbeat occasionally *revisits* a few important but dormant memories: an anniversary, an unresolved worry. Then the persona can bring them up naturally ("I was thinking about your exam...").
+Retrieval practice strengthens memories, and sleep favors what's expected to matter later. For a companion, that suggests the heartbeat occasionally *revisits* a few important but dormant memories: an anniversary, an unresolved worry. Then the persona can bring them up naturally ("I was thinking about your exam...").
 
 Generative Agents' reflection on recent memories and Letta's sleep-time agent are versions of this. **Risk:** repetitive callbacks and context bleed (Willison's complaint about ChatGPT). Use a cooldown, and keep it to one or two memories per heartbeat.
 
@@ -215,7 +215,7 @@ Generative Agents' reflection on recent memories and Letta's sleep-time agent ar
 - **Kindroid:** consolidates long-term memory at regular intervals.
 - **Generative Agents:** reflects when accumulated importance passes a threshold. That is event-driven, not clock-driven.
 
-### 4.4 Summarisation hierarchies
+### 4.4 Summarization hierarchies
 
 - MemoryBank rolls daily summaries into a global summary and daily personality notes into a global profile.
 - Kindroid's cascaded memory is hierarchical, with lower fidelity for older material.
@@ -230,7 +230,7 @@ Generative Agents' reflection on recent memories and Letta's sleep-time agent ar
 - **Stale and contradictory facts:** this is the "knowledge update" weakness in LongMemEval. ChatGPT overwrote crucial information. Mem0 moved its automatic path to "additive". Zep uses validity dates.
 - **Missed recall:** Nomi's wiki says *"Information may still exist in memory without being retrieved at the right moment."* Kindroid says long-term memory is "recalled less reliably".
 - **Too much in the prompt:** models use information in the middle of long contexts poorly ("Lost in the Middle"). Fewer, better memories beat many.
-- **Context bleed and over-personalisation:** memories surface where they don't belong. Willison's dog-in-a-pelican-costume picture gained an unasked-for "Half Moon Bay" sign.
+- **Context bleed and over-personalization:** memories surface where they don't belong. Willison's dog-in-a-pelican-costume picture gained an unasked-for "Half Moon Bay" sign.
 - **Embellishment:** agents fill gaps with plausible invented details (Generative Agents 6.5.2).
 - **Inflation and self-reinforcement:** importance that only goes up (the app's merge rule), and recall that refreshes itself.
 - **Poisoning:** untrusted content writes memories (SpAIware).
@@ -249,7 +249,7 @@ These are written so the scheme still works when the driving model is weak. Wher
 |---|---|---|
 | **A. Keep 1-10, model-chosen** | No change. Familiar from Generative Agents. Strong models use it reasonably. | No evidence it helps recall. Clusters and is inconsistent across models. False precision, since humans only agree about 23%. Only goes up on merge. Small effect in today's formula. |
 | **B. Three named levels** (`minor` / `normal` / `major`) | Easy for any model. Matches how Nomi exposes priority. Loses little, given how small the effect is now. Easy to show and edit in the UI. | Coarser. Needs rationing of `major` or everything becomes major. |
-| **C. Fully derived** (emotional intensity + use + provenance + kind) | No model judgement. Best-supported signals. | A persona can't say "this matters" about something that is calm and rarely mentioned but still matters. Usage signals can feed themselves. |
+| **C. Fully derived** (emotional intensity + use + provenance + kind) | No model judgment. Best-supported signals. | A persona can't say "this matters" about something that is calm and rarely mentioned but still matters. Usage signals can feed themselves. |
 | **D. Drop it** (relevance + recency + pin only) | Simplest. Letta's result suggests search matters more than scoring. | Nothing to drive which memories resist fading, what goes dormant, or when to reflect. |
 
 **My pick: B plus C.** The persona picks a level; the app derives everything else.
@@ -270,7 +270,7 @@ What salience then *does*:
 1. A small ranking term, the same 0.20 slot as now.
 2. Sets the decay half-life (5.3).
 3. Exempts memories from going dormant.
-4. Counts towards the reflection trigger (5.4).
+4. Counts toward the reflection trigger (5.4).
 5. Orders CORE memories in the prompt, as now.
 
 ### 5.2 Emotion
@@ -356,16 +356,16 @@ Each step is a small, structured job. Weak models can skip the optional ones.
    - the persona may revise mood (with a reason), change level, mark something superseded, or do nothing;
    - add a cooldown so the same old memory isn't resurfaced every day.
 4. **Tidy:** merge near-duplicates, flag likely contradictions, enforce the `major` limit. Contradiction-spotting can be cheap at first: same entity plus a changed value, then confirmed by the persona.
-5. **Roll up:** when more than about 20 dormant episodes accumulate for a relationship, write a "chapter" memory that summarises them and cites them. Keep the episodes as dormant sources.
+5. **Roll up:** when more than about 20 dormant episodes accumulate for a relationship, write a "chapter" memory that summarizes them and cites them. Keep the episodes as dormant sources.
 
 Per Letta, consider an optional **separate "heartbeat model"** setting, so a stronger cloud model can tend memories even when a small local model handles conversation.
 
 ### 5.5 Robust across models
 
-- No numeric judgements anywhere: levels, mood words and a few yes/no or pick-one questions.
-- Tool descriptions carry examples. Parsers accept synonyms and old integers. Anything unrecognised falls back to `normal`, no revision, or neutral.
+- No numeric judgments anywhere: levels, mood words and a few yes/no or pick-one questions.
+- Tool descriptions carry examples. Parsers accept synonyms and old integers. Anything unrecognized falls back to `normal`, no revision, or neutral.
 - One decision per call in the heartbeat ("which of these 3 should stay major?" rather than "re-score all memories").
-- Derived signals carry the weight, so a weak model that ignores the levels entirely still gets sensible behaviour: everything is `normal`, and intensity and usage do the rest.
+- Derived signals carry the weight, so a weak model that ignores the levels entirely still gets sensible behavior: everything is `normal`, and intensity and usage do the rest.
 
 ### 5.6 How to tell whether it works
 
@@ -383,7 +383,7 @@ Then do the owner's own read-through for tone. Does the persona bring up the rig
 ## 6. Open questions for the owner
 
 1. **What should "importance" mean?** "Matters emotionally to the persona" and "useful to know" are different, for example a bereavement vs an allergy. My pick treats the first as `major` and the second as `pinned`. Is that the split you want?
-2. **Should emotion change *what* is recalled, or only *how* it's told?** I suggest intensity affects fading, display everywhere, and mood-matching off at first. Are you comfortable with personas whose current mood colours what they remember?
+2. **Should emotion change *what* is recalled, or only *how* it's told?** I suggest intensity affects fading, display everywhere, and mood-matching off at first. Are you comfortable with personas whose current mood colors what they remember?
 3. **Who has the last word on feelings?** Nomi doesn't let users edit memories; Kindroid lets users edit most things. Should the user be able to edit or reset a persona's `mood`, or only see it?
 4. **How much forgetting do you want?** Visible fading of small details is more human. Never forgetting is more useful. Dormant-but-searchable is a middle path. Should the UI show dormant memories differently?
 5. **Only the persona's emotion, or also the user's?** Recording the user's apparent mood is what most research systems do. It's also more sensitive, and the model can easily get it wrong.

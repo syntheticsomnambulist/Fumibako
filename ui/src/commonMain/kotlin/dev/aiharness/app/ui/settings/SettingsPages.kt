@@ -11,6 +11,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.AlertDialog
+import dev.aiharness.app.platform.scrollbar
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -66,6 +70,8 @@ import dev.aiharness.core.model.HeartbeatMode
 import dev.aiharness.core.model.HeartbeatRhythm
 import dev.aiharness.app.platform.rememberOutside
 import dev.aiharness.app.ui.res.Res
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal typealias Update = ((AppSettings) -> AppSettings) -> Unit
 
@@ -517,7 +523,48 @@ internal fun SettingsCards.aboutPage() {
             color = paper.usuzumi1,
         )
         FontLicence()
+        LibraryLicenses()
     }
+}
+
+/**
+ * The libraries the app carries, with their licenses, notices and license texts, in a dialog of
+ * its own: at 50 to 150 KB the list is too long for a card, so it's read only when asked for and
+ * drawn a paragraph at a time.
+ */
+@Composable
+private fun LibraryLicenses() {
+    val about = LocalAppContainer.current.platform.about
+    var open by remember { mutableStateOf(false) }
+    InkLink("Read the libraries' licenses") { open = true }
+    if (!open) return
+    val parts by produceState<List<String>?>(null) {
+        value = withContext(Dispatchers.Default) { about.libraryNotices()?.trim()?.split(Regex("\n{2,}")).orEmpty() }
+    }
+    val list = rememberLazyListState()
+    AlertDialog(
+        onDismissRequest = { open = false },
+        title = { Text("Libraries and their licenses", style = PaperType.entryTitle) },
+        text = {
+            LazyColumn(Modifier.fillMaxWidth().scrollbar(list), state = list, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val shown = parts
+                when {
+                    shown == null -> Unit
+                    shown.isEmpty() -> item { Text("This build has no list of its libraries.", style = PaperType.prose, color = paper.usuzumi1) }
+                    else -> items(shown.size) { i ->
+                        val part = shown[i]
+                        // The list's headings come as "== Apache License 2.0 (101) ==".
+                        if (part.startsWith("== ") && part.endsWith(" ==") && '\n' !in part) {
+                            Text(part.removeSurrounding("== ", " =="), style = PaperType.entryTitle, color = paper.sumi, modifier = Modifier.padding(top = 8.dp))
+                        } else {
+                            Text(part, style = PaperType.noteBody.copy(fontSize = 11.sp, lineHeight = 15.sp), color = paper.usuzumi0)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { InkLink("Close") { open = false } },
+    )
 }
 
 @Composable

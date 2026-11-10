@@ -1,3 +1,7 @@
+// Maven Central through Google's mirror of it first, then Central itself (for anything published in
+// the last few hours). Cloud containers share an address that Central answers with HTTP 429; the
+// mirror doesn't. buildSrc (its own settings.gradle.kts) and Robolectric's downloads (build.gradle.kts)
+// use the same mirror.
 pluginManagement {
     repositories {
         google {
@@ -7,6 +11,7 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
+        maven("https://maven-central.storage-download.googleapis.com/maven2/")
         mavenCentral()
         gradlePluginPortal()
     }
@@ -22,6 +27,7 @@ dependencyResolutionManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
+        maven("https://maven-central.storage-download.googleapis.com/maven2/")
         mavenCentral()
     }
 }

@@ -35,18 +35,50 @@ import dev.aiharness.app.platform.Picked
 class AndroidMediaImport(private val context: Context, private val blobs: FileBlobStore) : MediaImporter {
     private val shrinker = Shrinker(context)
 
-    /** The smaller copy models are sent, stored beside the original: (ref, size), or null. */
+    /** The smaller copy models are sent, stored beside the kept file: (ref, size), or null. */
     private suspend fun smallerCopy(ref: String, video: Boolean, onProgress: (Float) -> Unit = {}, endMs: Long? = null): Pair<String, Long>? {
-        val source = blobs.fileFor(ref)?.takeIf { it.exists() } ?: return null
+        val source = blobs.existingFile(ref) ?: return null
         val out = File(context.cacheDir, "shrink-${newId()}.mp4")
         val made = (if (video) shrinker.video(source, out, endMs, onProgress) else shrinker.song(source, out, onProgress)) ?: return null
         return try {
-            val stored = made.inputStream().use { blobs.putStream(it, if (video) "mp4" else "m4a") } ?: return null
-            stored to made.length()
+            val size = made.length()
+            blobs.move(made, if (video) "mp4" else "m4a") to size
         } finally {
             made.delete()
         }
     }
+
+    /**
+     * The copy kept in place of the original at [ref], to save space (see [Shrinker.keptVideo] and
+     * [Shrinker.keptSong]): its ref and size, with the original deleted. Null, keeping the
+     * original, when the copy can't be made or wouldn't save much.
+     */
+    private suspend fun keptCopy(ref: String, video: Boolean, shortSide: Int?, lengthMs: Long?, onProgress: (Float) -> Unit = {}): Pair<String, Long>? {
+        val source = blobs.existingFile(ref) ?: return null
+        val out = File(context.cacheDir, "keep-${newId()}.mp4")
+        val made = (if (video) shrinker.keptVideo(source, out, shortSide, lengthMs, onProgress) else shrinker.keptSong(source, out, lengthMs, onProgress))
+            ?: return null
+        try {
+            val size = made.length()
+            if (size <= 0 || size > source.length() * Shrinker.KEPT_MOST) return null
+            val kept = blobs.move(made, if (video) "mp4" else "m4a")
+            blobs.delete(ref)
+            return kept to size
+        } finally {
+            made.delete()
+        }
+    }
+
+    /** Whether a video is big enough for its 720p copy to be worth making: larger than 720p, or well over its bitrate. */
+    private fun worthKeepingSmaller(shortSide: Int?, bitrate: Int?): Boolean =
+        shortSide == null || shortSide > Shrinker.KEPT_SHORT_SIDE || bitrate == null || bitrate > Shrinker.KEPT_VIDEO_BITRATE * 1.3
+
+    /** A lossless song (FLAC, WAV, AIFF), which is kept as AAC; MP3s and the like stay as they are. */
+    private fun isLossless(mime: String?, name: String?): Boolean =
+        mime?.lowercase() in LOSSLESS_TYPES || name?.substringAfterLast('.', "")?.lowercase() in LOSSLESS_EXTENSIONS
+
+    /** The picked name with its kept copy's extension: `walk.mov` kept as `walk.mp4`. */
+    private fun keptName(name: String?, extension: String): String? = name?.let { it.substringBeforeLast('.', it) + ".$extension" }
 
     private val resolver get() = context.contentResolver
 
@@ -56,7 +88,10 @@ class AndroidMediaImport(private val context: Context, private val blobs: FileBl
     /** A photo, scaled so its longer side is at most [maxSide] (0 keeps it full size). */
     private suspend fun photo(uri: Uri, maxSide: Int): ContentPart.Image? = withContext(Dispatchers.IO) {
         val bitmap = decode(uri, maxSide) ?: return@withContext null
-        ContentPart.Image(blobs.put(jpeg(bitmap), "jpg"), "image/jpeg")
+        ContentPart.Image(blobs.put(jpeg(bitmap), "jpg"), "image/jpeg").also {
+            // The camera's full-size shot has been copied in: it needn't stay in the cache.
+            cameraShotAt(uri)?.delete()
+        }
     }
 
     /** Any file, as a luggage tag: its name, kind, size, and a PDF's pages and first page. */
@@ -130,7 +165,7 @@ class AndroidMediaImport(private val context: Context, private val blobs: FileBl
         val ref = copy(uri, extensionOf(mime, name)) ?: return null
         val file = blobs.fileFor(ref) ?: return null
         val retriever = MediaMetadataRetriever()
-        return try {
+        val read = try {
             retriever.setDataSource(file.path)
             val cover = retriever.embeddedPicture?.let { bytes ->
                 BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { blobs.put(jpeg(scale(it, 512)), "jpg") }
@@ -151,6 +186,11 @@ class AndroidMediaImport(private val context: Context, private val blobs: FileBl
         } finally {
             runCatching { retriever.release() }
         }
+        // A lossless song is kept as AAC, which takes about a fifth of the space (the tags and cover were read above).
+        if (!isLossless(mime, name)) return read
+        val (track, cover) = read
+        val kept = keptCopy(ref, video = false, shortSide = null, lengthMs = track.lengthMs) ?: return read
+        return track.copy(ref = kept.first, mimeType = "audio/mp4", name = keptName(track.name, "m4a")) to cover
     }
 
     /**
@@ -183,9 +223,12 @@ class AndroidMediaImport(private val context: Context, private val blobs: FileBl
         val mime = resolver.getType(uri) ?: mimeOf(name) ?: "video/mp4"
         val ref = copy(uri, extensionOf(mime, name)) ?: return@withContext null
         val retriever = MediaMetadataRetriever()
-        try {
+        var bitrate: Int? = null
+        // What it says of itself and its frames, read from the original before its copy replaces it.
+        val read = try {
             retriever.setDataSource(blobs.fileFor(ref)!!.path)
             val length = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
+            bitrate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)?.toIntOrNull()
             val shown = FileFacts.shownSize(
                 retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull(),
                 retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull(),
@@ -195,9 +238,6 @@ class AndroidMediaImport(private val context: Context, private val blobs: FileBl
                 val us = ((length ?: 0L) * at * 1000).toLong()
                 retriever.getFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)?.let { blobs.put(jpeg(scale(it, 480)), "jpg") }
             }
-            // A smaller copy for models that watch video: all of it, or a longer one's first four minutes.
-            val firstPart = length != null && length > Shrinker.FIRST_PART_MS
-            val small = if (length != null) smallerCopy(ref, video = true, onProgress, endMs = if (firstPart) Shrinker.FIRST_PART_MS else null) else null
             ContentPart.Attachment(
                 newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size,
                 title = FileFacts.text(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)) ?: FileFacts.titleFromName(name),
@@ -208,20 +248,56 @@ class AndroidMediaImport(private val context: Context, private val blobs: FileBl
                 height = shown?.second,
                 hasSound = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)?.let { it == "yes" },
                 lengthMs = length, frameRefs = frames, thumbRef = frames.getOrNull(1) ?: frames.firstOrNull(),
-                modelRef = small?.first, modelMimeType = small?.let { "video/mp4" }, modelSizeBytes = small?.second,
-                modelLengthMs = if (small != null && firstPart) Shrinker.FIRST_PART_MS else null,
             )
         } catch (e: Exception) {
-            ContentPart.Attachment(newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size, title = FileFacts.titleFromName(name), recordedAt = takenAt(uri))
+            return@withContext ContentPart.Attachment(newId(), AttachmentKind.VIDEO, ref = ref, mimeType = mime, name = name, sizeBytes = size, title = FileFacts.titleFromName(name), recordedAt = takenAt(uri))
         } finally {
             runCatching { retriever.release() }
         }
+        val length = read.lengthMs ?: return@withContext read
+        // Kept as a 720p copy in place of the original (most of the wait is this), then the copy for models made from it.
+        val (w, h) = read.width to read.height
+        val shortSide = if (w != null && h != null) minOf(w, h) else null
+        val keeping = worthKeepingSmaller(shortSide, bitrate)
+        val kept = if (keeping) keptCopy(ref, video = true, shortSide, length) { onProgress(it * KEPT_SHARE) } else null
+        val start = if (keeping) KEPT_SHARE else 0f
+        // For models that watch video: all of it, or a longer one's first four minutes.
+        val firstPart = length > Shrinker.FIRST_PART_MS
+        val small = smallerCopy(kept?.first ?: ref, video = true, { onProgress(start + it * (1 - start)) }, endMs = if (firstPart) Shrinker.FIRST_PART_MS else null)
+        read.copy(
+            ref = kept?.first ?: ref,
+            mimeType = if (kept != null) "video/mp4" else mime,
+            name = if (kept != null) keptName(name, "mp4") else name,
+            sizeBytes = kept?.second ?: size,
+            modelRef = small?.first, modelMimeType = small?.let { "video/mp4" }, modelSizeBytes = small?.second,
+            modelLengthMs = if (small != null && firstPart) Shrinker.FIRST_PART_MS else null,
+        )
     }
 
-    /** A place for the camera to write a photo, and the address to give it. */
+    private val cameraDir get() = File(context.cacheDir, "camera")
+
+    /**
+     * A place for the camera to write a photo, and the address to give it. Shots left from before
+     * (taken but never brought in) are cleared first.
+     */
     private fun cameraFile(): Pair<File, Uri> {
-        val file = File(File(context.cacheDir, "camera").apply { mkdirs() }, "${newId()}.jpg")
+        val dir = cameraDir.apply { mkdirs() }
+        val stale = System.currentTimeMillis() - CAMERA_SHOT_KEPT_MS
+        dir.listFiles()?.filter { it.isFile && it.lastModified() < stale }?.forEach { it.delete() }
+        val file = File(dir, "${newId()}.jpg")
         return file to androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.files", file)
+    }
+
+    /**
+     * The camera's shot that [uri] points to (this app's provider, under `camera/`), or null for
+     * anything else: the same provider also hands out stored files, which must stay.
+     */
+    private fun cameraShotAt(uri: Uri): File? {
+        if (uri.scheme != "content" || uri.authority != "${context.packageName}.files") return null
+        val segments = uri.pathSegments
+        if (segments.size != 2 || segments[0] != "camera") return null
+        val name = segments[1].takeIf { it.isNotEmpty() && '/' !in it && it != "." && it != ".." } ?: return null
+        return File(cameraDir, name).takeIf { it.isFile }
     }
 
     private fun nameAndSize(uri: Uri): Pair<String?, Long?> = runCatching {
@@ -289,4 +365,16 @@ class AndroidMediaImport(private val context: Context, private val blobs: FileBl
 
     override fun cameraTarget(): Picked = Picked(cameraFile().second.toString())
 
+    override val keepsSmallerCopies: Boolean get() = true
+
+    private companion object {
+        /** A camera shot never brought in is cleared this long after it was taken. */
+        const val CAMERA_SHOT_KEPT_MS = 60 * 60 * 1000L
+
+        /** How much of a video's progress bar its kept copy takes (the copy for models is shorter and smaller). */
+        const val KEPT_SHARE = 0.75f
+
+        val LOSSLESS_TYPES = setOf("audio/flac", "audio/x-flac", "audio/wav", "audio/x-wav", "audio/wave", "audio/vnd.wave", "audio/aiff", "audio/x-aiff")
+        val LOSSLESS_EXTENSIONS = setOf("flac", "wav", "wave", "aif", "aiff")
+    }
 }

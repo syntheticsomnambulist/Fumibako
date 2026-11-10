@@ -62,9 +62,26 @@ class FileBlobStore(private val dir: File) : BlobStore {
         PREFIX + name
     }
 
+    /**
+     * Takes [file] in (a copy just made in the cache), moving it rather than writing it again
+     * where it's on the same disk.
+     */
+    suspend fun move(file: File, extension: String): String = withContext(Dispatchers.IO) {
+        val name = "${newId()}.${extension.trimStart('.')}"
+        val target = File(dir, name)
+        if (!file.renameTo(target)) {
+            file.inputStream().use { input -> target.outputStream().use { input.copyTo(it) } }
+            file.delete()
+        }
+        PREFIX + name
+    }
+
     override suspend fun delete(ref: String) {
         withContext(Dispatchers.IO) { fileFor(ref)?.delete() }
     }
+
+    /** Every file stored here. */
+    fun files(): List<File> = dir.listFiles()?.filter { it.isFile }.orEmpty()
 
     /** Deletes every stored image (used when the database is wiped: nothing refers to them any more). */
     fun clearAll() {

@@ -96,6 +96,9 @@ interface MediaImporter {
 
     /** Where the camera puts its next photo, or null without a camera. */
     fun cameraTarget(): Picked?
+
+    /** Videos are kept as a 720p copy and lossless songs as AAC, rather than as picked (on the phone). */
+    val keepsSmallerCopies: Boolean get() = false
 }
 
 /** One wakeup a persona's reminder asked for. */
@@ -125,6 +128,12 @@ interface AboutApp {
     fun crashReport(): String?
 
     fun clearCrashReport()
+
+    /**
+     * The libraries the app carries, their licenses and notices, as the build lists them
+     * (buildSrc/LibraryNotices.kt): `licenses/libraries.txt`, or null if the build left it out.
+     */
+    fun libraryNotices(): String?
 
     /** The app's icon (the seal). */
     @Composable

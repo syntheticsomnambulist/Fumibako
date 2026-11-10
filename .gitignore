@@ -13,3 +13,4 @@ captures/
 *.keystore
 *.jks
 !app/signing/retired-debug.keystore
+.claude/worktrees/
