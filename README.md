@@ -1,11 +1,14 @@
-# Fumibako (Android)
+# Fumibako
 
-Fumibako (文箱, a lacquered box for keeping letters) is an Android app for living with AI personas: chat with them, swap models and personas freely, and
-let each persona keep its own long-term memory and a "heartbeat" that lets it reflect, tend its
-memories, and reach out to you on its own. Image generation uses NovelAI.
+Fumibako (文箱, a lacquered box for keeping letters) is an app for living with AI personas, on an
+Android phone and on a computer (Windows, macOS, Linux): write letters to them, swap models and
+personas freely, and let each persona keep its own long-term memory and a "heartbeat" that lets it
+reflect, tend its memories, and reach out to you on its own. Pictures come from NovelAI, Stable
+Diffusion, OpenAI or Google.
 
-Kotlin + Jetpack Compose. All agent logic lives in a plain Kotlin/JVM module (`core`) so it can be
-tested without a device and reused elsewhere.
+Kotlin, with Compose Multiplatform: the screens are written once (`ui`) and shared by the phone
+(`app`) and the desktop (`desktop`). All agent logic lives in a plain Kotlin/JVM module (`core`) so
+it can be tested without a device.
 
 ## Features
 
@@ -18,28 +21,36 @@ Paths under `ui/` are in `ui/src/commonMain/kotlin/dev/aiharness/app/`, under `a
 | Letters in the post: a reply is written at once and kept back until it arrives (2 to 3 minutes by default, up to 2 or 3 days, or straight away; per persona too), with a postmark meanwhile, an optional watch with its arrival, and a notification when it comes | `core/model/Settings.kt` (`LetterTravel`), `core/agent/AgentRunner.kt`, `ui/chat/InThePost.kt`, `app/heartbeat/LetterArrival.kt` |
 | Swappable models: Anthropic (Claude), Google Gemini, any OpenAI-compatible server, NovelAI text | `core/llm/*` |
 | Swappable personas, each with its own memories, greeting, pronouns, looks, outfit, drawing style and default model | `ui/personas` |
-| Swappable user personas (who *you* are), switchable mid-chat | `ui/settings/KeysAndUsers.kt` |
+| Swappable user personas (who *you* are), switchable mid-chat | `ui/personas/You.kt` |
 | Long-term memory: agent-written via tools, hybrid keyword + optional embedding recall, core memories, episode recaps, keepsakes (things kept from letters) in the memory book | `core/memory`, `core/tools/BuiltinTools.kt`, `ui/memory` |
 | Heartbeat: **Proactive** (background reflection + optional messages), **Time-aware**, or **Off** | `core/agent/HeartbeatEngine.kt`, `app/heartbeat` |
 | Pictures from NovelAI, Stable Diffusion (Forge, Automatic1111, ComfyUI), OpenAI or Google, through image profiles (persona can call it as a tool, or you can request one) | `core/image` |
 | Photos, files, songs, playlists, videos and links in letters, framed as stationery, with players and an in-app browser; each model receives what it can take in; personas open links you share (Claude's web fetch, or the app's fetcher) and share links and songs back | `core/media`, `core/tools/LinkTools.kt`, `app/media`, `ui/media` |
 | Stickers: emoji, each persona's own sheet (drawn from its looks), and a shared library (from photos, cut out on the phone); placed by you or by personas through tools, inline `:name:` in letters | `core/stickers`, `core/tools/StickerTools.kt`, `ui/stickers` |
 | The 帳 planner: a vertical week, a month, a day; your typical week, stamps (done, moved, cancelled), stickers, a movable bookmark; solar terms and microseasons worked out on the phone; public holidays (Nager.Date, or a phone holiday calendar); the phone's calendars read live at a detail level you choose; personas see what you share and write in it themselves (notes, suggestions, reminders that wake them, time away, season haiku); notifications held while you're busy | `core/planner`, `core/seasons`, `core/agent/PlannerActivities.kt`, `ui/planner`, `app/heartbeat/BusyTimes.kt` |
-| API keys encrypted with the Android Keystore | `app/data/PlatformStores.kt` |
+| API keys encrypted with the Android Keystore on the phone, and with a key in the system's keychain on a computer | `app/data/PlatformStores.kt`, `desktop/.../Secrets.kt` |
 
 ## Getting started
 
-1. Open the project in Android Studio (or use `./gradlew :app:assembleDebug`). Requires JDK 17+
-   and Android SDK platform 37.
-2. Install on a device running Android 8.0 (API 26) or later.
-3. In the app: **Settings → API keys** → add your key(s). For NovelAI use a *persistent API token*.
-4. **Settings → Model profiles → +** → pick a preset (Claude Opus 5.5, Gemini, OpenAI, OpenRouter,
-   local Ollama/LM Studio, NovelAI GLM…), select the key, tap **Fetch** to pick a model id if the
-   preset left it blank, then **Test**.
-5. **Settings → Image generation** → pick your NovelAI key to enable images.
-6. Write to a persona from **Letters → New letter**. A sample persona, *Aria*, is created on first launch.
-7. **Settings → Look** sets how the theme switches between day and night (set hours, sunrise and
-   sunset, or a fixed theme), the polaroid frame and outline colors, and mood words.
+1. Build it. Requires JDK 17+, and for the phone the Android SDK platform 37.
+   - **The phone:** open the project in Android Studio, or `./gradlew :app:assembleDebug`, and
+     install on a device running Android 8.0 (API 26) or later.
+   - **A computer:** `./gradlew :desktop:run` opens the app (its data goes in `FUMIBAKO_HOME`, if
+     set); `./gradlew :desktop:packageDistributionForCurrentOS` makes an installer for the system
+     it runs on. Installers for each system also come from CI (see *Builds*).
+2. In the app: **Settings → Models and keys → Manage keys** → add your key(s). For NovelAI use a
+   *persistent API token*.
+3. **Settings → Models and keys → Model profiles → +** → pick a preset (Claude Opus 5.5, Gemini,
+   OpenAI, OpenRouter, local Ollama/LM Studio, NovelAI GLM…), select the key, tap **Fetch** to pick
+   a model id if the preset left it blank, then **Test**.
+4. **Settings → Pictures → Image profiles** → add one (NovelAI, Stable Diffusion, ComfyUI, OpenAI
+   or Google) to enable pictures.
+5. Write to a persona from **Letters → New letter**. A sample persona, *Aria*, is created on first launch.
+6. **Settings → Look** sets how the theme switches between day and night (set hours, sunrise and
+   sunset, or a fixed theme), the polaroid frames, lamplight at night, and mood words; the sticker
+   outline is under **Settings → Stickers**.
+
+Friends testing the app have their own guide: [`docs/testers.md`](docs/testers.md).
 
 ### Builds
 
@@ -84,8 +95,11 @@ core/                         Plain Kotlin/JVM library: no Android dependencies
   media/                      What each model takes in, the parts it receives, descriptions, link previews
   planner/                    Planner (entries, busy, what a persona is told), its tools, holidays, phone calendars
   seasons/                    The 24 solar terms and 72 microseasons from the sun's position
+  letters/                    Letter search: the word index's queries, your search, the persona's letter_search tool
+  theme/                      The theme's clock (day and night by set hours or the sun)
 data/                         Multiplatform (Android + desktop): Room (JSON-document rows, migration steps kept as
                               CLAUDE.md says, schemas in data/schemas), the DataStore settings store, file blobs
+                              and clearing the ones nothing uses (BlobSweep)
 ui/                           Multiplatform (Compose Multiplatform): everything both apps show
   AppContainer.kt             The shared container, handed each platform's services (platform/AppPlatform)
   engine/GenerationManager    Runs turns in an app-wide scope so replies survive leaving the screen
@@ -97,7 +111,12 @@ app/                          Android shell
   data/                       Keystore secrets, DataStore's settings file, phone calendars
   heartbeat/                  WorkManager worker, scheduler, notifications, reminders' wakeups, busy times
   media/                      Importing photos, songs and videos; playback (media3); the video shrinker
-desktop/                      Desktop shell (docs/plan-desktop.md): the window, the desktop's services
+desktop/                      Desktop shell (docs/plan-desktop.md): the window, the desktop's services, the keychain,
+                              notifications and the tray, packaging into installers
+buildSrc/                     Build logic for both apps: the libraries' notices (LibraryNotices.kt), shown from About
+tools/                        The icon's drawing (make_icon.py) and exporting the Fumibako boxes' SVGs
+docs/                         Plans, the design notes, the testers' guide, storage, going public
+.claude/skills/               Practices for Claude Code sessions working here (best-practices, best-practices-android)
 ```
 
 The screens are written once, in `ui/src/commonMain`, which can use the JDK but not Android: what a
@@ -147,7 +166,8 @@ that always sit in the system prompt. Memories about you can be scoped to one us
   embedding endpoint (OpenAI-compatible or Gemini) under Settings → Memory.
 - Models without tool calling (e.g. NovelAI GLM) get prompt-based tools (`<tool_call>` tags); if
   tools are off entirely, memory still forms through compaction and heartbeat episode recaps.
-- Everything is browsable and editable in **Personas → (brain icon)**.
+- Everything is browsable and editable in each persona's memory book (**Personas → a persona →
+  Memories**).
 
 ### Heartbeat
 
@@ -209,18 +229,20 @@ editor can generate an avatar.
 - **New image backend**: implement `ImageGenerator` and pass it to `Harness(imageGenerator = …)`.
 - **Different storage**: implement the interfaces in `core/storage/Repositories.kt`.
 - Domain objects are stored as JSON documents, so adding fields with defaults needs no schema change.
-  A schema change bumps `HarnessDatabase`'s version and adds a step to its `MIGRATIONS`, with a test
-  in `MigrationTest` against the schema exported to `app/schemas`. Keep the last three steps, plus
-  every step a tester's phone still needs (see [`CLAUDE.md`](CLAUDE.md)); a phone on an older
-  database starts fresh.
+  A schema change bumps `HarnessDatabase`'s version and adds a step to its `MIGRATIONS`, with tests
+  against the schema exported to `data/schemas`, on the phone's SQLite (`app/.../MigrationTest.kt`)
+  and the desktop's (`data/.../DesktopMigrationTest.kt`). Keep the last three steps, plus every
+  step a tester's phone still needs (see [`CLAUDE.md`](CLAUDE.md)); a phone on an older database
+  starts fresh.
 
 ## Testing
 
 ```
 ./gradlew :core:test                 # providers (mock servers), context epochs, compaction, agent loop,
                                      # memory recall, heartbeat, NovelAI request format
-./gradlew :data:desktopTest          # the migration steps on the desktop's SQLite
-./gradlew :app:testDebugUnitTest     # Robolectric: Room repositories + a smoke test of the real app UI
+./gradlew :data:desktopTest          # the migration steps on the desktop's SQLite, clearing unused files
+./gradlew :app:testDebugUnitTest     # Robolectric: Room repositories, the migration steps on the phone's
+                                     # SQLite, and a smoke test of the real app UI
 ./gradlew :desktop:test              # the desktop app: its first launch offscreen, keys, heartbeats,
                                      # what goes in letters, the player, the tray's helpers
 ./gradlew :desktop:run               # opens the desktop app (its data in FUMIBAKO_HOME, if set)
@@ -235,7 +257,11 @@ HARNESS_LIVE_TESTS=1 ANTHROPIC_API_KEY=… NOVELAI_API_KEY=… ./gradlew :core:t
 They make a two-turn Claude tool round trip with thinking replay, list NovelAI text models, and
 generate one NovelAI image (`NOVELAI_OUTPUT=/path/out.png` saves it).
 
-To render the main screens to PNGs with sample data (for design review, no device needed):
+Before pushing, sessions run the first four together, as [`CLAUDE.md`](CLAUDE.md) says.
+
+To render the phone's screens to PNGs with sample data (for design review, no device needed), the
+six screenshot tours (night, day, large text, first run, wide, wide at night) run together, in a run
+of their own:
 
 ```
 HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests '*ScreenshotTour*'
@@ -244,11 +270,14 @@ HARNESS_SCREENSHOTS_DIR=/path/to/shots ./gradlew :app:testDebugUnitTest --tests 
 ## Design
 
 The visual direction (madoromi ink colors, letter-style messages, washi tape, stickers) is written
-up in [`docs/design/`](docs/design/README.md), with interactive mockups; v0.1 builds all of it except
-stickers. Fonts are bundled placeholders (SIL OFL, see `ui/src/commonMain/composeResources/files/licenses/fonts.txt`). Plans:
-[`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md),
-[`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.4.md`](docs/plan-v0.4.md) (the planner),
-[`docs/plan-v0.5.md`](docs/plan-v0.5.md) (current).
+up in [`docs/design/`](docs/design/README.md), with interactive mockups. The fonts are bundled
+placeholders until v0.5's fonts land (SIL OFL, see `ui/src/commonMain/composeResources/files/licenses/fonts.txt`).
+
+Plans: [`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md),
+[`docs/plan-v0.3.md`](docs/plan-v0.3.md), [`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md),
+[`docs/plan-v0.4.md`](docs/plan-v0.4.md) (the planner), [`docs/plan-v0.5.md`](docs/plan-v0.5.md)
+(current), and the desktop version alongside it, [`docs/plan-desktop.md`](docs/plan-desktop.md).
+Storage and its planned optimizations: [`docs/storage.md`](docs/storage.md).
 
 ## Known limitations / next steps
 
@@ -271,3 +300,7 @@ Two parts keep their own licenses:
   `ui/src/commonMain/kotlin/dev/aiharness/app/ui/theme/MadoromiPalette.kt`): Mozilla Public License 2.0.
 - **The bundled placeholder fonts** (`ui/src/androidMain/res/font/`): SIL Open Font License 1.1, with the
   notice in `ui/src/commonMain/composeResources/files/licenses/fonts.txt`.
+
+The libraries both apps carry keep their own licenses too. The build lists them with their texts
+and notices (`buildSrc/.../LibraryNotices.kt`), shown from **Settings → About → Read the libraries'
+licenses**, and beside the installed desktop app.
