@@ -30,9 +30,10 @@ Updated 2026-11-10.
     her lines on the postmark (below), and step 5 (the stationery update, in full: thirteen
     patterns in light and dark shades, the new tape picker, eight placements that turn, the months'
     envelopes), and step 6 (fonts: the six faces and the aligned scale, a hand for each persona and
-    each of yours, your own font files, Japanese on first use).
-  - Next: steps 7 and 8 (the planner redrawn, then polish, tests and 0.5.0 for the phone and the
-    computer).
+    each of yours, your own font files, Japanese on first use), and step 7 (the planner redrawn:
+    header B, your entries in your hand, suggestions as sticky tabs, the day as a list).
+  - Next: step 8 (polish, tests, and 0.5.0 for the phone and the computer). Sending builds to
+    friends, and any GitHub Actions build for the installers, wait for the user.
   - Found, for step 8: the large-text phone tour fails now and then at different steps (3 of 7 runs
     on 2026-11-10), and on a computer the Export and Open a backup pages light the side rail's
     Settings tab even when reached from Personas. The desktop tour doesn't visit the import and
