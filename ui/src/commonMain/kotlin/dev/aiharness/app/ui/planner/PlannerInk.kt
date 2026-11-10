@@ -2,6 +2,7 @@ package dev.aiharness.app.ui.planner
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -143,4 +144,23 @@ internal fun androidx.compose.ui.graphics.drawscope.DrawScope.busyHours(left: Fl
     drawLine(BusyBracket, Offset(x, top + line / 2), Offset(x, bottom - line / 2), line)
     drawLine(BusyBracket, Offset(x - line / 2, top + line / 2), Offset(x + tick - line / 2, top + line / 2), line)
     drawLine(BusyBracket, Offset(x - line / 2, bottom - line / 2), Offset(x + tick - line / 2, bottom - line / 2), line)
+}
+
+/** A plan's box to tick, in [ink]: ticked by hand when it's [done], so it agrees with its 済. */
+@Composable
+internal fun PlanTick(done: Boolean, ink: Color) {
+    androidx.compose.foundation.Canvas(Modifier.size(12.dp)) {
+        val d = 1.dp.toPx()
+        drawRoundRect(ink, cornerRadius = androidx.compose.ui.geometry.CornerRadius(2 * d), style = Stroke(1.3f * d))
+        if (done) {
+            val w = size.width
+            val h = size.height
+            val tick = Path().apply {
+                moveTo(w * 0.18f, h * 0.52f)
+                quadraticTo(w * 0.32f, h * 0.62f, w * 0.42f, h * 0.82f)
+                quadraticTo(w * 0.62f, h * 0.36f, w * 1.05f, h * 0.02f)
+            }
+            drawPath(tick, ink, style = Stroke(1.6f * d, cap = StrokeCap.Round))
+        }
+    }
 }

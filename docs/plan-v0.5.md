@@ -424,6 +424,16 @@ Updated 2026-11-10 (later).
     letters-in-the-post test, which timed out once in a full run, passed five runs alone and every
     full run since. The desktop tour run straight after the phone tours has passed in both runs
     since `main`'s dispatcher fix came in; worth watching a while longer.
+  - **A done plan's box is ticked** (Sashigane noticed the empty box beside 済 in メモ): a plan
+    with no time, in メモ and on its day, has its box ticked by hand in your ink when it's stamped
+    done, and keeps the 済 beside it. My call, over dropping the box for stamped plans: the names
+    stay lined up, and the box still says what a tap will do.
   - **0.5.0:** `fumibako.versionName` 0.5.0, `versionCode` 28, for the phone and the computer.
-    Sending a build to friends, and the GitHub Actions build that makes the installers, wait for
-    the user.
+  - **Ready for the user** (each waits for you to say so):
+    - **A 0.5.0 build for friends' phones:** a debug APK signed with the shared key (with
+      `HARNESS_DEBUG_KEYSTORE_B64` set, checked with `apksigner verify --print-certs` for
+      "CN=Fumibako Debug"), so it installs over their v0.2.2 and keeps their letters (the
+      database steps from version 2 are kept). Once friends have it, steps older than v0.5's
+      database version can go, keeping the last three.
+    - **The installers for computers:** the GitHub Actions build (`build.yml`, with `windows` and
+      `linux`, and `macos` only if you want it, since its minutes count ten times).
