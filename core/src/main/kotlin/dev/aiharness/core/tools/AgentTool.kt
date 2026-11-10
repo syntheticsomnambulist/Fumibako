@@ -47,6 +47,8 @@ data class ToolOutcome(
     val isError: Boolean = false,
     /** What goes into the letter alongside the tool result: a drawn picture, a cutting, a ticket. */
     val attachments: List<ContentPart> = emptyList(),
+    /** Letters it found (message ids, best first), kept on the result for the letter's P.S. and index card. */
+    val foundLetters: List<String> = emptyList(),
 )
 
 /**

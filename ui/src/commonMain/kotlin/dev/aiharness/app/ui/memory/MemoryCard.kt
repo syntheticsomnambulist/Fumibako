@@ -601,6 +601,7 @@ private fun kindLabel(kind: MemoryKind) = when (kind) {
     MemoryKind.FACT -> "fact"
     MemoryKind.EPISODE -> "what happened"
     MemoryKind.REFLECTION -> "thought"
+    MemoryKind.LORE -> "lore"
 }
 
 @Composable

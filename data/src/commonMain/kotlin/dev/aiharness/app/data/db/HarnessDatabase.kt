@@ -1,9 +1,12 @@
 package dev.aiharness.app.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.ConstructedBy
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
+import androidx.room.Fts4
+import androidx.room.FtsOptions
 import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -74,6 +77,18 @@ data class MarkEntity(@PrimaryKey val id: String, val attachmentId: String, val 
 @Entity(tableName = "planner_entries", indices = [Index("plannerId")])
 data class PlannerEntryEntity(@PrimaryKey val id: String, val plannerId: String, val byPersonaId: String?, val json: String)
 
+/**
+ * The words of each message, for searching letters ([dev.aiharness.core.letters.LetterWords]): an
+ * FTS4 word index whose rowid is the message's rowid. Every message has a row (empty when it has
+ * nothing to search), so the ones without one are those written before the index existed.
+ */
+@Fts4(tokenizer = FtsOptions.TOKENIZER_UNICODE61)
+@Entity(tableName = "letter_words")
+data class LetterWordsEntity(@PrimaryKey @ColumnInfo(name = "rowid") val rowid: Long, val words: String)
+
+/** A message's rowid and row, for filling the word index. */
+data class MessageRow(val rowid: Long, val json: String)
+
 @Dao
 interface HarnessDao {
     // Personas
@@ -120,6 +135,25 @@ interface HarnessDao {
     @Upsert suspend fun upsertMessage(entity: MessageEntity)
     @Query("DELETE FROM messages WHERE id IN (:ids)") suspend fun deleteMessages(ids: List<String>)
     @Query("DELETE FROM messages WHERE conversationId = :conversationId") suspend fun deleteMessagesFor(conversationId: String)
+
+    // The word index for searching letters (rowid is the message's)
+    @Query("SELECT rowid FROM messages WHERE id = :id") suspend fun messageRowid(id: String): Long?
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putLetterWords(entity: LetterWordsEntity)
+
+    @Query("DELETE FROM letter_words WHERE rowid IN (SELECT rowid FROM messages WHERE id IN (:ids))")
+    suspend fun deleteLetterWords(ids: List<String>)
+
+    @Query("DELETE FROM letter_words WHERE rowid IN (SELECT rowid FROM messages WHERE conversationId = :conversationId)")
+    suspend fun deleteLetterWordsFor(conversationId: String)
+
+    @Query("SELECT m.rowid AS rowid, m.json AS json FROM messages m WHERE NOT EXISTS (SELECT 1 FROM letter_words w WHERE w.rowid = m.rowid) LIMIT :limit")
+    suspend fun unindexedMessages(limit: Int): List<MessageRow>
+
+    @Query(
+        "SELECT m.* FROM letter_words JOIN messages m ON m.rowid = letter_words.rowid JOIN conversations c ON c.id = m.conversationId " +
+            "WHERE letter_words MATCH :match AND (:personaId IS NULL OR c.personaId = :personaId) ORDER BY m.createdAt DESC LIMIT :limit",
+    )
+    suspend fun searchLetters(match: String, personaId: String?, limit: Int): List<MessageEntity>
 
     // Memories
     @Query("SELECT * FROM memories WHERE personaId = :personaId ORDER BY updatedAt DESC")
@@ -198,13 +232,13 @@ interface HarnessDao {
         PersonaEntity::class, UserPersonaEntity::class, ModelProfileEntity::class, CredentialEntity::class,
         ConversationEntity::class, MessageEntity::class, MemoryEntity::class, MemoryVectorEntity::class,
         ActivityEntity::class, StickerEntity::class, StickerArtEntity::class, MarkEntity::class,
-        PlannerEntryEntity::class,
+        PlannerEntryEntity::class, LetterWordsEntity::class,
     ],
     // A schema change bumps the version and adds a step to MIGRATIONS (keeping the last three, and
     // any a tester's phone still needs: see MIGRATIONS);
     // field changes on domain models need neither, since rows are JSON. Schemas are exported to
     // data/schemas for the migration tests.
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @ConstructedBy(HarnessDatabaseConstructor::class)
@@ -220,7 +254,7 @@ abstract class HarnessDatabase : RoomDatabase() {
          * (see CLAUDE.md). When a step can go, drop its test too, and its exported schema once no
          * test uses it.
          */
-        val MIGRATIONS: Array<Migration> = arrayOf(Migration2To3, Migration3To4, Migration4To5)
+        val MIGRATIONS: Array<Migration> = arrayOf(Migration2To3, Migration3To4, Migration4To5, Migration5To6)
 
         /**
          * Opens the database called [name] where [context]'s platform keeps databases (on Android,
@@ -291,5 +325,15 @@ object Migration4To5 : Migration(4, 5) {
                 "`json` TEXT NOT NULL, PRIMARY KEY(`id`))",
         )
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_planner_entries_plannerId` ON `planner_entries` (`plannerId`)")
+    }
+}
+
+/**
+ * v0.5: the word index for searching letters. The letters already there are put into it when the
+ * app starts ([dev.aiharness.core.storage.ConversationRepository.indexLetters]), not here.
+ */
+object Migration5To6 : Migration(5, 6) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("CREATE VIRTUAL TABLE IF NOT EXISTS `letter_words` USING FTS4(`words` TEXT NOT NULL, tokenize=unicode61)")
     }
 }

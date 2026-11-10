@@ -239,7 +239,8 @@ The visual direction (madoromi ink colours, letter-style messages, washi tape, s
 up in [`docs/design/`](docs/design/README.md), with interactive mockups; v0.1 builds all of it except
 stickers. Fonts are bundled placeholders (SIL OFL, see `ui/src/commonMain/composeResources/files/licenses/fonts.txt`). Plans:
 [`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md),
-[`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.4.md`](docs/plan-v0.4.md) (the planner).
+[`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.4.md`](docs/plan-v0.4.md) (the planner),
+[`docs/plan-v0.5.md`](docs/plan-v0.5.md) (current).
 
 ## Known limitations / next steps
 

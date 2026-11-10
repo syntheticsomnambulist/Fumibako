@@ -216,7 +216,7 @@ class RevisitActivity : HeartbeatActivity {
         if ((beat.lastInvited(name) ?: 0L) > now - 12 * HOUR) return null
         val candidates = beat.h.memory.all(beat.persona.id)
             .filter { m ->
-                !m.isReplaced && m.kind != MemoryKind.REFLECTION &&
+                !m.isReplaced && m.kind != MemoryKind.REFLECTION && m.kind != MemoryKind.LORE &&
                     maxOf(m.lastAccessedAt, m.lastUsedAt) > now - 3 * DAY &&
                     m.createdAt < now - HOUR &&
                     (m.revisitedAt ?: 0L) < now - 7 * DAY
@@ -252,7 +252,7 @@ class SettleActivity : HeartbeatActivity {
         val settings = beat.setup.settings.memory
         if (!settings.enabled || !settings.memoryToolsEnabled) return null
         if ((beat.lastInvited(name) ?: 0L) > beat.now - DAY) return null
-        val deep = beat.h.memory.all(beat.persona.id).filter { it.level == MemoryLevel.MATTERS_DEEPLY && !it.isReplaced && !it.isCore }
+        val deep = beat.h.memory.all(beat.persona.id).filter { it.level == MemoryLevel.MATTERS_DEEPLY && !it.isReplaced && !it.isCore && it.kind != MemoryKind.LORE }
         val over = deep.size - settings.deepLimit
         if (over <= 0) return null
         val oldest = deep.sortedBy { maxOf(it.lastUsedAt, it.createdAt) }.take((over + 2).coerceAtMost(6))
