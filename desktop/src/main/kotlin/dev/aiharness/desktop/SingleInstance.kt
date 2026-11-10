@@ -48,8 +48,9 @@ class SingleInstance(private val dataDir: File) {
             while (!socket.isClosed) {
                 val client = runCatching { socket.accept() }.getOrNull() ?: break
                 client.use { c ->
-                    val lines = runCatching { c.getInputStream().bufferedReader().readLines() }.getOrDefault(emptyList())
-                    val opened = lines.filter { it.startsWith(OPEN) }.map { File(it.removePrefix(OPEN)) }
+                    // Any program on this computer can reach the port: read a little, and only files that exist.
+                    val lines = runCatching { c.getInputStream().readNBytes(MOST).toString(Charsets.UTF_8).lines().take(MOST_LINES) }.getOrDefault(emptyList())
+                    val opened = lines.filter { it.startsWith(OPEN) }.map { File(it.removePrefix(OPEN)) }.filter { it.isFile }
                     if (opened.isNotEmpty()) onOpen(opened)
                     if (SHOW in lines) onShow()
                 }
@@ -79,5 +80,7 @@ class SingleInstance(private val dataDir: File) {
         const val PORT = "fumibako.port"
         const val SHOW = "show"
         const val OPEN = "open "
+        const val MOST = 64 * 1024
+        const val MOST_LINES = 100
     }
 }
