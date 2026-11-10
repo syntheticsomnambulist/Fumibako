@@ -277,7 +277,8 @@ Plans: [`docs/plan-v0.1.md`](docs/plan-v0.1.md), [`docs/plan-v0.2.md`](docs/plan
 [`docs/plan-v0.3.md`](docs/plan-v0.3.md), [`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md),
 [`docs/plan-v0.4.md`](docs/plan-v0.4.md) (the planner), [`docs/plan-v0.5.md`](docs/plan-v0.5.md)
 (current), and the desktop version alongside it, [`docs/plan-desktop.md`](docs/plan-desktop.md).
-Storage and its planned optimizations: [`docs/storage.md`](docs/storage.md).
+Storage and its planned optimizations: [`docs/storage.md`](docs/storage.md). What comes after v0.5:
+[`docs/roadmap.md`](docs/roadmap.md).
 
 ## Known limitations / next steps
 

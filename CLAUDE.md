@@ -34,6 +34,7 @@
 - **App text uses American spelling** (aging, color, license, summarize), since that's how the app's
   user writes.
 - **Where things are:**
+  - The roadmap: [`docs/roadmap.md`](docs/roadmap.md), kept by the Architect session.
   - Plans and progress: [`docs/plan-v0.5.md`](docs/plan-v0.5.md) (current),
     [`docs/plan-v0.4.md`](docs/plan-v0.4.md), [`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md),
     [`docs/plan-v0.1.md`](docs/plan-v0.1.md).
@@ -56,12 +57,11 @@
     branches: `git show origin/ccr-09dbf6b8-2c3jno:docs/design/v0.5.md`.
   - The mockups are private design canvases (claude.ai artifacts). The Artifact tool can read them:
     list with scope "files", then read `project/<board>.dc.html`.
-- **Maven Central from a cloud container:** `settings.gradle.kts` has no mirror yet, so Maven
-  Central's HTTP 429s stop builds. Until it does, pass the skill's init script on every run
-  (`./gradlew -I .claude/skills/best-practices-android/scripts/maven-mirror.init.gradle ...`).
-  It doesn't cover `buildSrc`, whose `kotlin-dsl` plugin comes through the Gradle Plugin Portal
-  and on to Maven Central: if that 429s too, the build needs the mirror listed for `buildSrc`'s
-  plugins as well.
+- **Maven Central's mirror is in the build:** Maven Central answers cloud containers with HTTP 429,
+  so Google's mirror of it comes first in `settings.gradle.kts`, in `buildSrc` (its
+  `settings.gradle.kts` for the `kotlin-dsl` plugin, and its `build.gradle.kts`), and for
+  Robolectric's own downloads (the root `build.gradle.kts`). No init script is needed. Keep the
+  mirror ahead of `mavenCentral()` when changing repositories.
 - **Checks:**
   - Before pushing, run `./gradlew :core:test :data:desktopTest :app:testDebugUnitTest :desktop:test`.
     Gradle re-runs only the suites whose code changed (with nothing changed it takes seconds), so
