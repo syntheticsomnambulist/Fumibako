@@ -20,8 +20,10 @@ you to check:
 2. **The hand picker** draws only the chosen hand and Yomogi in their own faces; the other hands
    say "comes when chosen", so nothing downloads just from browsing. (Same.)
 
-I looked at both and left them as they are: each follows the design's "another hand downloads
-when it's chosen" (`v0.5.md`, Her hand, Downloads).
+I looked at both and left them as they are. The second follows the design's "another hand
+downloads when it's chosen" (`v0.5.md`, Her hand, Downloads). The design doesn't say what fills in
+for a font of yours that has no Japanese; the phone's own font is Kanna's choice, and Yomogi
+would be the other.
 
 ## Waiting for you
 
