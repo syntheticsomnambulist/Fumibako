@@ -41,11 +41,13 @@ Updated 2026-11-10.
   - Fixed before the build (2026-11-10): a day page showed the day before's stickers after "‹ ›"
     (c8c555a, in the shared sticker code, with a test), and on the computer emoji stickers drew in
     black even with a color emoji font (a2a2b40).
-  - Still open after step 8: the large-text phone tour fails now and then at different steps
-    here. The personas gallery's waits are fixed (49eac57, 1cab062); after them, 2 of 3 runs passed
-    and the third failed on the persona page's scrollTo("Open sheet"), the same kind of wait, and the desktop tour doesn't visit the import and export pages yet (in the test harness,
-    Open a backup's preview card failed to show in 2 or 3 of 5 runs; it shows every time in a
-    real window). The side rail's tab for the transfer pages is fixed.
+  - Still open after step 8, in the tests only (the app isn't affected): the tours' scroll and
+    gallery waits are fixed (49eac57, 1cab062, 3b39f2f, dde7bd9; 3 of 3 runs passed here on
+    3b39f2f), but a long phone tour can still stall on a database read under Robolectric (a
+    gallery with no personas yet, or a model page that hasn't read its profile, 10 s after coming
+    back; the build session, 2026-11-10), to look into between versions. And the desktop tour
+    doesn't visit the import and export pages yet (in the test harness, Open a backup's preview
+    card failed to show in 2 or 3 of 5 runs; it shows every time in a real window).
   - The stationery update goes in whole, as designed, with no changes until friends have installed
     and explored the test build (the user, 2026-11-10, relayed by the build session).
   - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
