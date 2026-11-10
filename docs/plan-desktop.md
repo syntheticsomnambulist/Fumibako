@@ -532,6 +532,15 @@ The rules in CLAUDE.md hold through the move:
     takes files (`%F`). Checked under Xvfb with the installed `.deb`: a backup saved through the
     GTK dialog and opened again (locked too), and a card exported and imported. Not yet tried:
     Windows and Mac file association, a file manager's double-click, the Mac's open-file event.
+  - **Fonts (2026-11-10, f668e31):** the Japanese faces and the other hands come from the Google
+    Fonts CSS API (whole TTFs per weight from fonts.gstatic.com) on first use, into the app-data
+    folder's `fonts`, and replace their Latin subsets; Literata and Old Standard TT keep the
+    computer's own Japanese, since a Compose desktop font family doesn't fall back character by
+    character. Checked under Xvfb with the packaged app: nothing downloads at start; a card named
+    文子 brought the Japanese in (6 files, about 27 MB) and redrew in Zen Old Mincho; offline after
+    a restart the faces load from disk; choosing Klee One downloaded only that hand. Not tried:
+    the Settings button, Windows and Mac. With it, the single-instance listener reads at most
+    64 KB or 100 lines and passes on only files that exist (b6e7be4).
   With it, the session fixed the Linux keychain and the Keys page's "this phone" (step 7,
   "Found"; 3abda39 and 44adac6, in `main` 2026-11-10). `SecretService.kt` speaks the Secret
   Service's D-Bus API through dbus-java 5.2 (secret-service 3.0.0-alpha, built for it, read every
