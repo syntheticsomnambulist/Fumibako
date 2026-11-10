@@ -67,7 +67,7 @@ Friends testing the app have their own guide: [`docs/testers.md`](docs/testers.m
   uninstalling keep them: `%APPDATA%\Fumibako`, `~/Library/Application Support/Fumibako`, or
   `~/.local/share/Fumibako` (`$XDG_DATA_HOME`). `FUMIBAKO_HOME` points a copy somewhere else (a
   second Fumibako, or tests). API keys there are encrypted with a key held by the system's
-  keychain (`desktop/.../Secrets.kt`).
+  keychain (`desktop/.../Secrets.kt`; on Linux, the Secret Service through `SecretService.kt`).
 - **Not there yet:** the camera, phone calendars, video frames and shrinking, FLAC and Ogg in
   the app's player, cutting a sticker's subject out of a busy photo, and the burn shader. The full
   comparison is in [`docs/plan-desktop.md`](docs/plan-desktop.md) ("What's different on a computer").
@@ -322,10 +322,6 @@ Storage and its planned optimizations: [`docs/storage.md`](docs/storage.md). Wha
   delay wakeups.
 - On a computer, heartbeats run only while Fumibako runs (in the tray or its window).
 - The desktop installers aren't signed or notarized, so each system warns before the first run.
-- On Linux the keychain isn't used yet: FileKit's dialogs bring dbus-java 5.2, and the keychain
-  library's Secret Service backend (secret-service 1.8.1, under java-keyring) was built for 4.2
-  and fails against it. Keys are then encrypted with a key in an owner-only file, and Settings
-  says so.
 
 ## License
 
