@@ -170,6 +170,9 @@ fun main(args: Array<String>) {
         ) {
             // "While you were away" counts from when the window last lost focus.
             LaunchedEffect(window) {
+                // No narrower than the phones the layouts are drawn for: below that the week loses its
+                // weekend and the tabs their words. (AWT counts the system's scaled pixels, as dp.)
+                window.minimumSize = java.awt.Dimension(MIN_WIDTH, MIN_HEIGHT)
                 container.onForeground()
                 window.addWindowFocusListener(object : WindowAdapter() {
                     override fun windowGainedFocus(e: WindowEvent) = container.onForeground()
@@ -192,6 +195,10 @@ fun main(args: Array<String>) {
         }
     }
 }
+
+/** The window's smallest: a narrow phone's width (360 dp), and enough height for a page and its tabs. */
+private const val MIN_WIDTH = 360
+private const val MIN_HEIGHT = 600
 
 /** "Busy for now" from the tray: a busy plan in your planner, as from a notification on the phone. */
 private fun busy(scope: CoroutineScope, container: AppContainer, tray: TrayState, length: String, words: String) {
