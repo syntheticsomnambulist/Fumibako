@@ -135,7 +135,7 @@ fun StickerArtDialog(
                 if (confirmRemove) {
                     Text(
                         "Take it off the sheet for good? It comes off wherever it's stuck, too.",
-                        style = PaperType.postscript.copy(fontStyle = FontStyle.Italic),
+                        style = PaperType.postscript,
                         color = stationery.ink("beni"),
                     )
                 }

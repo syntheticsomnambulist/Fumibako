@@ -10,11 +10,8 @@ internal actual fun bundledFont(name: String, weight: FontWeight, style: FontSty
 private val fontIds = mapOf(
     "brush_regular" to R.font.brush_regular,
     "display_medium" to R.font.display_medium,
-    "display_medium_italic" to R.font.display_medium_italic,
     "display_semibold" to R.font.display_semibold,
-    "display_semibold_italic" to R.font.display_semibold_italic,
     "hand_regular" to R.font.hand_regular,
-    "hand_semibold" to R.font.hand_semibold,
     "news_bold" to R.font.news_bold,
     "news_regular" to R.font.news_regular,
     "read_bold" to R.font.read_bold,

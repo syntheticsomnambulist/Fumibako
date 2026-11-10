@@ -288,7 +288,7 @@ fun NoteSlip(
                     color = you,
                 )
                 if (message.displayText.isNotBlank()) {
-                    StickerText(message.displayText, you, PaperType.noteBody, paper.usuzumi1, find?.marks)
+                    StickerText(message.displayText, you, PaperType.yourNote, paper.usuzumi1, find?.marks)
                 }
                 val noteInk = s.dayColors.ink(user?.ink ?: "sora")
                 val notePaper = lerp(s.colors.kami, you, 0.06f)

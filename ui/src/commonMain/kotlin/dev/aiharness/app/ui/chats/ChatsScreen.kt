@@ -360,7 +360,7 @@ private fun AwayCard(entries: List<ActivityEntry>, personas: List<Persona>, onDi
             .padding(start = 16.dp, end = 14.dp, top = 12.dp, bottom = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("While you were away", style = PaperType.entryTitle.copy(fontStyle = FontStyle.Italic, fontSize = 18.sp), color = paper.sumi)
+        Text("While you were away", style = PaperType.entryTitle.copy(fontSize = 18.sp), color = paper.sumi)
         rows.take(5).forEach { row ->
             val persona = personas.firstOrNull { it.id == row.personaId } ?: return@forEach
             val ink = s.ink(persona.ink)
