@@ -373,6 +373,7 @@ private fun LazyListScope.viewCards(p: Persona, nav: NavController, mode: Heartb
             }
         }
     }
+    item(key = "letter-box") { LetterBoxCard(p) }
     item {
         val harness = LocalAppContainer.current.harness
         val scope = rememberCoroutineScope()
@@ -511,6 +512,66 @@ private fun LazyListScope.editCards(
 }
 
 /** A taped card on a persona's page, in the persona's ink and pattern. */
+/**
+ * The box their letters are kept in, in the letters list: theirs to choose (now and then, in a
+ * heartbeat), picked at random until they do; choosing here marks it as chosen by you.
+ */
+@Composable
+private fun LetterBoxCard(p: Persona) {
+    val harness = LocalAppContainer.current.harness
+    val scope = rememberCoroutineScope()
+    val ink = stationery.ink(p.ink)
+    val box = dev.aiharness.core.model.LetterBoxes.of(p)
+    var open by remember { mutableStateOf(false) }
+    fun choose(next: dev.aiharness.core.model.LetterBox) {
+        val now = System.currentTimeMillis()
+        scope.launch { harness.personas.upsert(p.copy(letterBox = next.copy(chosenByYou = true, chosenAt = now), updatedAt = now)) }
+    }
+    val layout = remember(p.id) { tapeLayouts("box-${p.id}", 1)[0] }
+    PageCard(p, layout, "letter-box") {
+        CardTitle(
+            "Letter box",
+            note = when (p.letterBox?.chosenByYou) {
+                null -> "picked at random"
+                true -> "chosen by you"
+                false -> "chosen by ${p.name}"
+            },
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            dev.aiharness.app.ui.chats.LetterBoxPicture(
+                p,
+                open,
+                Modifier.padding(top = 16.dp, bottom = 6.dp).clickable(onClickLabel = if (open) "Shut the box" else "Open the box") { open = !open },
+                box = box,
+            )
+            Text(
+                "Where ${p.name}'s letters are kept, in your letters list. ${p.name} chooses a new one now and then.",
+                style = PaperType.noteBody.copy(fontSize = 13.sp, lineHeight = 19.sp),
+                color = paper.usuzumi1,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        PaperChoice(
+            listOf(dev.aiharness.core.model.BoxFinish.LACQUER to "Lacquer", dev.aiharness.core.model.BoxFinish.WASHI to "Washi", dev.aiharness.core.model.BoxFinish.PAULOWNIA to "Paulownia"),
+            box.finish, { choose(box.copy(finish = it)) }, ink = ink,
+        )
+        PaperChoice(
+            listOf(
+                dev.aiharness.core.model.BoxLid.NAME to "Name", dev.aiharness.core.model.BoxLid.SEAL to "Seal", dev.aiharness.core.model.BoxLid.ENGRAVED to "Engraved",
+                dev.aiharness.core.model.BoxLid.GILDED to "Gilded", dev.aiharness.core.model.BoxLid.KANJI to "Kanji",
+            ),
+            box.lid, { choose(box.copy(lid = it)) }, ink = ink, columns = 3,
+        )
+        PaperChoice(
+            listOf(
+                dev.aiharness.core.model.BoxTie.BOW to "Bow", dev.aiharness.core.model.BoxTie.CROSSWISE to "Crosswise",
+                dev.aiharness.core.model.BoxTie.MIZUHIKI to "Mizuhiki", dev.aiharness.core.model.BoxTie.TASSEL to "Tassel",
+            ),
+            box.tie, { choose(box.copy(tie = it)) }, ink = ink, columns = 2,
+        )
+    }
+}
+
 @Composable
 private fun PageCard(p: Persona, layout: TapeLayout, key: String, content: @Composable () -> Unit) {
     TapedCard(layout, Tape(stationery.ink(p.ink), p.tapePattern), tilt = cardTilt("${p.id}-$key")) { content() }

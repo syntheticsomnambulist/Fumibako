@@ -45,6 +45,12 @@ interface HeartbeatActivity {
      */
     val usesSlot: Boolean get() = false
 
+    /**
+     * True for a small, occasional offer (choosing a new letter box): its invitation joins a private
+     * moment that's happening anyway, but never brings one about by itself.
+     */
+    val optional: Boolean get() = false
+
     /** A paragraph for the private moment's note, or null when nothing is due. */
     suspend fun invite(beat: Beat): String? = null
 

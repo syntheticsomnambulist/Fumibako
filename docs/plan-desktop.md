@@ -86,6 +86,17 @@ answers below; the reorganization has started (see *Progress*).
     180 against lengths (front to back) 56, 64, 70 and 80. Once a size is chosen: build the boxes
     in the app, and give the user the SVGs (every finish, lid and tie, shut and open) for a later
     pass by hand.
+  - **Chosen (2026-11-09): 120 by 80** for every box. A persona's box is picked at random at
+    first (the same pick every time, from their id), and they can change it as a heartbeat
+    activity; you can choose for them on their page. The SVGs are in
+    [`docs/design/fumibako-svg/`](design/fumibako-svg/README.md) (120 files, made by
+    `tools/export_fumibako_svgs.js`), for the user's pass by hand.
+  - **Building them:** `Persona.letterBox` (finish, lid, tie, and who chose it; null means the
+    pick from their id, so nothing is written for existing personas); a `choose_letter_box` tool
+    that works in heartbeats, offered now and then by a heartbeat activity; the box drawn in
+    Compose to the study's shapes, with the opening animated; the letters list's rows as a box
+    and a one-line paper strip, on the phone (tapping opens the box, then the letter) and wide
+    (the open letter's box stays open); a card on the persona's page for choosing for them.
 
 ## Wide layouts: progress
 
@@ -100,10 +111,30 @@ answers below; the reorganization has started (see *Progress*).
   - Code: `ui/.../ui/WideLayout.kt` (the widths, `openFromList`), `AppNavigation.kt` (the rail,
     the sides, `Placed`, `LastOpen`), small changes in `ChatScreen`, `ChatsScreen`, `Gallery`,
     `PersonaPage` and `PageBar`, and the desktop window in `desktop/.../Main.kt`.
-  - **The phone is unchanged:** the 283 screenshots of its tours are identical before and after,
-    pixel for pixel. Two new tours, `wideTour` (1180 × 780) and `wideNightTour` (1600 × 900),
-    render the wide layouts.
-  - **Not yet:** the open one's mark (the fumibakos, above), and the margins.
+  - **The phone is laid out as before.** (Corrected 2026-11-10: this said its tour screenshots
+    were identical pixel for pixel, but the comparison was broken: Pillow's `getbbox()` on an RGBA
+    difference looks only at the alpha channel, so opaque pictures always came out "identical".
+    The tours can't match pixel for pixel anyway: the seed uses new ids and the real clock, so
+    tape, portraits and times change from run to run. Compared by eye, and by the build session
+    after its merge, the phone's screens are laid out as before.) Two new tours, `wideTour`
+    (1180 × 780) and `wideNightTour` (1600 × 900), render the wide layouts.
+  - **Not yet:** the gallery's mark for the open persona (of those drawn, the folded corner was
+    the favorite), and the margins.
+- **The boxes (2026-11-09):** every persona has a box (`Persona.letterBox`; until one is chosen,
+  the pick from their id). Each letter in the list is the persona's box with a one-line paper
+  strip tucked beneath it. On the phone, tapping plays the box's opening (the tie comes undone,
+  the lid lifts) and then opens the letter; it's shut again when you come back. Wide, the box of
+  the letter open beside the list stays open, which is the open one's mark. The persona's page
+  has a Letter box card (who chose it, and finish, lid and tie to choose for them); in a
+  heartbeat, a persona is offered `choose_letter_box` now and then (not within 12 days of the
+  last offer, or 30 of a choice), and the offer never brings a heartbeat about on its own.
+  - Code: `core/.../model/LetterBox.kt`, `core/.../tools/LetterBoxTool.kt`,
+    `core/.../agent/LetterBoxActivity.kt` (and `optional` invitations in `HeartbeatEngine`),
+    `ui/.../ui/chats/LetterBox.kt` (the drawing and opening), `ChatsScreen` (the rows) and
+    `PersonaPage` (the card).
+  - **Checked:** 6 core tests (`LetterBoxTest`), the five tours (the tours seed set boxes for
+    Aria, Kestrel and Juno), and `LetterBoxGalleryTest`, which draws every finish, lid and tie,
+    shut and open, by day and by night (with `HARNESS_SCREENSHOTS_DIR`, it keeps the pictures).
 
 ## The aim
 

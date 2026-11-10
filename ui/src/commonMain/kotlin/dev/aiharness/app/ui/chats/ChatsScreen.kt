@@ -2,6 +2,18 @@
 
 package dev.aiharness.app.ui.chats
 
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.geometry.Size
+import dev.aiharness.app.ui.LocalWide
+import dev.aiharness.app.ui.LocalOpenLetter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
@@ -66,13 +78,11 @@ import dev.aiharness.app.ui.letterTime
 import dev.aiharness.app.ui.onMain
 import dev.aiharness.app.ui.openFromList
 import dev.aiharness.app.ui.paper.MoodWord
-import dev.aiharness.app.ui.paper.PersonaPortrait
 import dev.aiharness.app.ui.paper.PortraitDot
 import dev.aiharness.app.ui.paper.Tape
 import dev.aiharness.app.ui.paper.UnreadSeal
 import dev.aiharness.app.ui.paper.cornerTape
 import dev.aiharness.app.ui.paper.paperCard
-import dev.aiharness.app.ui.paper.washiStrip
 import dev.aiharness.app.ui.seasonKanji
 import dev.aiharness.app.ui.theme.HarnessFonts
 import dev.aiharness.app.ui.theme.PaperType
@@ -116,6 +126,24 @@ fun ChatsScreen(nav: NavController) {
     val activity by remember { container.awaySince.flatMapLatest { harness.activity.observeSince(it) } }.collectAsStateWithLifecycle(emptyList())
     var picking by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf<Conversation?>(null) }
+    // Opening a letter opens its box first. On the phone the letter's page comes once the box is open,
+    // and coming back the box shuts behind you; wide, the open letter's box stays open beside it.
+    val wide = LocalWide.current
+    val openBeside = LocalOpenLetter.current
+    var opening by rememberSaveable { mutableStateOf<String?>(null) }
+    var gone by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(opening, gone) {
+        val id = opening ?: return@LaunchedEffect
+        if (gone) {
+            delay(120)
+            opening = null
+            gone = false
+        } else {
+            delay(OPENING_MILLIS + 60L)
+            gone = true
+            nav.openFromList(Routes.chat(id), Routes.CHATS)
+        }
+    }
     val visible = conversations.filter { !it.archived }
     // Drawn once the profiles are in, so "Getting started" doesn't pop in above the first rows as the app starts.
     if (profiles == null) return
@@ -148,12 +176,16 @@ fun ChatsScreen(nav: NavController) {
             }
             items(visible, key = { it.id }) { conversation ->
                 val persona = personas.firstOrNull { it.id == conversation.personaId }
-                LetterCard(
+                LetterBoxRow(
                     conversation,
                     persona,
                     now,
+                    open = opening == conversation.id || (wide && openBeside == conversation.id),
                     modifier = Modifier.combinedClickable(
-                        onClick = { nav.openFromList(Routes.chat(conversation.id), Routes.CHATS) },
+                        onClick = {
+                            if (wide) nav.openFromList(Routes.chat(conversation.id), Routes.CHATS)
+                            else if (opening == null) opening = conversation.id
+                        },
                         onLongClick = { deleting = conversation },
                         onLongClickLabel = "Delete",
                     ).onRightClick { deleting = conversation },
@@ -353,74 +385,95 @@ private fun summarise(entries: List<ActivityEntry>): List<AwayRow> =
         .map { (key, group) -> AwayRow(key.first, key.second, group.sumOf { it.count }, group.maxOf { it.createdAt }) }
         .sortedByDescending { it.at }
 
-/** One conversation as a paper card: portrait, name, mood, time and the last line of the latest letter. */
+/**
+ * One conversation as the persona's little box (their own, see [LetterBoxPicture]), with a strip of
+ * paper tucked beneath its side: their name, mood and the time, and the latest line.
+ */
 @Composable
-private fun LetterCard(conversation: Conversation, persona: Persona?, now: Long, modifier: Modifier = Modifier) {
+private fun LetterBoxRow(conversation: Conversation, persona: Persona?, now: Long, open: Boolean, modifier: Modifier = Modifier) {
     val s = stationery
     val ink = s.ink(persona?.ink)
+    val who = persona ?: Persona(id = conversation.personaId, name = conversation.title, createdAt = 0, updatedAt = 0)
     val tilt = remember(conversation.id) { ((conversation.id.hashCode() % 9) / 10f).coerceIn(-0.9f, 0.9f) }
     // A reply in the post: "on its way" (its words not shown) until it arrives, then unread.
     val onItsWay = conversation.onItsWay(now)
-    val unread = conversation.unreadAt(now)
-    Box {
-        Row(
-            modifier
-                .washiStrip(Tape(ink, persona?.tapePattern ?: dev.aiharness.core.model.TapePattern.DOTS), tiltDegrees = tilt)
-                .paperCard()
+    val unread = conversation.unreadAt(now) && !open
+    // Room above for the lid when the box is open (it tips back over the row's top edge).
+    Box(modifier.fillMaxWidth().padding(top = 10.dp).semantics { if (unread) contentDescription = "Unread letter from ${who.name}" }) {
+        // The strip, tucked under the box's side.
+        Column(
+            Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = LetterBoxWidth - STRIP_TUCK)
                 .fillMaxWidth()
-                .padding(start = 22.dp, end = 14.dp, top = 12.dp, bottom = 12.dp)
-                .semantics { if (unread) contentDescription = "Unread letter from ${persona?.name}" },
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .graphicsLayer { rotationZ = tilt }
+                .shadow(1.5.dp, PaperStrip)
+                .background(paper.kami, PaperStrip)
+                .padding(start = STRIP_TUCK + 10.dp, end = 18.dp, top = 6.dp, bottom = 7.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
         ) {
-            PersonaPortrait(
-                persona,
-                Modifier
-                    .size(width = 52.dp, height = 62.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(paper.kami),
-            )
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(persona?.name ?: conversation.title, style = PaperType.listName, color = paper.sumi, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 180.dp))
-                    Box(Modifier.weight(1f)) { MoodWord(conversation.mood, ink, Modifier.padding(bottom = 2.dp)) }
-                    Text(
-                        letterTime(if (onItsWay) conversation.updatedAt else conversation.lastAgentMessageAt ?: conversation.updatedAt),
-                        style = PaperType.meta,
-                        color = paper.kasure2,
-                        modifier = Modifier.padding(bottom = 3.dp, end = if (unread) 18.dp else 0.dp),
-                    )
-                }
-                if (onItsWay) {
-                    Text("〒 ${persona?.name ?: "A"}'s reply is on its way", style = PaperType.postscript, color = ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                } else {
-                    Text(
-                        conversation.preview ?: " ",
-                        style = PaperType.preview,
-                        color = if (unread) paper.sumi else paper.usuzumi1,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                if (unread && conversation.previewFromHeartbeat) {
-                    Text("Left for you while you were away", style = PaperType.meta.copy(letterSpacing = 0.sp), color = ink)
-                }
-            }
-        }
-        if (unread) {
-            val harness = LocalAppContainer.current.harness
-            val art by remember { harness.stickers.observeArt() }.collectAsStateWithLifecycle(emptyList())
-            val mark = persona?.let { p -> StickerService.unreadMark(p, art.filter { it.ownerPersonaId == p.id }) }
-            if (mark != null) {
-                StickerPicture(
-                    StickerRef.Art(mark.id),
-                    s.dayColors.ink(persona.ink),
-                    Modifier.align(Alignment.TopEnd).offset(x = 20.dp, y = (-22).dp).size((40 * StickerBaker.BOX).dp).rotate(10f),
-                    name = "Unread",
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(who.name, style = PaperType.listName.copy(fontSize = 17.sp, lineHeight = 20.sp), color = paper.sumi, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 130.dp))
+                Box(Modifier.weight(1f)) { MoodWord(conversation.mood, ink, Modifier.padding(bottom = 1.dp)) }
+                Text(
+                    letterTime(if (onItsWay) conversation.updatedAt else conversation.lastAgentMessageAt ?: conversation.updatedAt),
+                    style = PaperType.meta,
+                    color = paper.kasure2,
+                    modifier = Modifier.padding(bottom = 2.dp),
                 )
+            }
+            if (onItsWay) {
+                Text("〒 ${who.name}'s reply is on its way", style = PaperType.postscript, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             } else {
-                UnreadSeal(persona?.ink, Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp).rotate(10f))
+                Text(
+                    conversation.preview ?: " ",
+                    style = PaperType.preview.copy(fontSize = 13.sp, lineHeight = 18.sp),
+                    color = if (unread) paper.sumi else paper.usuzumi1,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
+        Box(Modifier.align(Alignment.CenterStart)) {
+            LetterBoxPicture(who, open)
+            if (unread) {
+                val harness = LocalAppContainer.current.harness
+                val art by remember { harness.stickers.observeArt() }.collectAsStateWithLifecycle(emptyList())
+                val mark = persona?.let { p -> StickerService.unreadMark(p, art.filter { it.ownerPersonaId == p.id }) }
+                if (mark != null) {
+                    StickerPicture(
+                        StickerRef.Art(mark.id),
+                        s.dayColors.ink(persona.ink),
+                        Modifier.align(Alignment.TopEnd).offset(x = 18.dp, y = (-20).dp).size((40 * StickerBaker.BOX).dp).rotate(10f),
+                        name = "Unread",
+                    )
+                } else {
+                    UnreadSeal(persona?.ink, Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp).rotate(10f))
+                }
+            }
+        }
+    }
+}
+
+/** How far the paper strip goes in under the box. */
+private val STRIP_TUCK = 26.dp
+
+/** A strip of paper with its right end torn in small teeth. */
+private val PaperStrip = object : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val tooth = with(density) { 4.dp.toPx() }
+        val teeth = 6
+        val path = Path().apply {
+            moveTo(0f, 0f)
+            lineTo(size.width, 0f)
+            for (i in 1..teeth) {
+                val y = size.height * i / teeth
+                lineTo(if (i % 2 == 1) size.width - tooth else size.width, y)
+            }
+            lineTo(0f, size.height)
+            close()
+        }
+        return Outline.Generic(path)
     }
 }
 

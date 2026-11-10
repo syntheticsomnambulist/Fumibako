@@ -54,6 +54,7 @@ class HeartbeatEngine(private val h: Harness) {
         RemindersActivity(),
         LookAheadActivity(),
         SeasonHaikuActivity(),
+        LetterBoxActivity(),
     )
 
     /** Runs a heartbeat for every persona that is due ([force]: all of them, e.g. "Run a heartbeat now"). */
@@ -125,7 +126,7 @@ class HeartbeatEngine(private val h: Harness) {
             val invitations = activities.mapNotNull { activity ->
                 guarded(activity, "invite") { activity.invite(beat) }?.let { text ->
                     beat.invited += activity.name
-                    Invitation(text, activity.usesSlot)
+                    Invitation(text, activity.usesSlot, activity.optional)
                 }
             }
             // Slots can already be gone: an activity may act on its own before the moment (in prepare).
@@ -133,7 +134,7 @@ class HeartbeatEngine(private val h: Harness) {
             val you = setup.userPersona
             val asleep = setup.settings.planner.sleepQuietHours && you != null && runCatching { h.planner.asleepNow(you.id) }.getOrDefault(false)
             val blocked = blockedReason(rhythm, beat.history, promised, asleep) ?: if (beat.slotsLeft == 0) "no activities left this time" else null
-            if (blocked != null && invitations.isEmpty()) {
+            if (blocked != null && invitations.none { !it.optional }) {
                 h.logActivity(persona.id, ActivityKind.RESTED, initial.id, note = blocked)
                 return HeartbeatOutcome.Skipped(persona.id, blocked)
             }
@@ -145,7 +146,7 @@ class HeartbeatEngine(private val h: Harness) {
     }
 
     /** An activity's paragraph for the private moment, and whether doing it uses a slot. */
-    private class Invitation(val text: String, val usesSlot: Boolean)
+    private class Invitation(val text: String, val usesSlot: Boolean, val optional: Boolean = false)
 
     private suspend fun privateMoment(beat: Beat, invitations: List<Invitation>, letterAllowed: Boolean, blockedReason: String?): HeartbeatOutcome {
         val setup = beat.setup
@@ -164,7 +165,7 @@ class HeartbeatEngine(private val h: Harness) {
             if (lastUserMessage != null) append(" $userName last wrote ${humanizeDuration(now - lastUserMessage.createdAt)} ago.")
             if (unanswered > 0) append(" You have sent $unanswered message(s) since then without a reply.")
             append("\n\n")
-            val free = invitations.filter { !it.usesSlot }
+            val free = invitations.filter { !it.usesSlot && !it.optional }
             val choices = invitations.filter { it.usesSlot }
             if (free.isEmpty()) {
                 append("Take a moment to reflect")
@@ -173,6 +174,7 @@ class HeartbeatEngine(private val h: Harness) {
             } else {
                 free.forEach { append(it.text.trim()).append("\n\n") }
             }
+            invitations.filter { it.optional }.forEach { append(it.text.trim()).append("\n\n") }
             // Meaningful actions in your own voice share a few slots; reflecting and tending memories are free.
             if (letterAllowed || choices.isNotEmpty()) {
                 val left = beat.slotsLeft

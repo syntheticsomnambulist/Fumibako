@@ -126,6 +126,8 @@ data class Persona(
      * "hello" sticker (the seal when it has none).
      */
     val unreadMark: String? = null,
+    /** The box its letters are kept in, in the letters list; null until chosen (see [LetterBoxes.of]). */
+    val letterBox: LetterBox? = null,
     val stickers: PersonaStickers = PersonaStickers(),
     /** Its pronouns; null until chosen (the app then uses its name, and the model isn't told). */
     val pronouns: Pronouns? = null,

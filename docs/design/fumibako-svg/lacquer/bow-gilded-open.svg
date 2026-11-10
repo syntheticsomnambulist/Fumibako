@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="288" height="216" viewBox="-12 -22 144 108">
+  <!-- Fumibako box: lacquer, gilded on the lid, bow, open. 120 x 80 (the viewBox has room for the lid and loose cords). Aria's ink (sakura), autumn by day. -->
+  <defs><pattern id="pattern" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.25" fill="#f8f0e9"></circle></pattern></defs>
+  <g id="box">
+    <rect x="5" y="54" width="110" height="23" rx="3" fill="#bd8d9e"></rect>
+    <rect x="27.5" y="58" width="5" height="19" fill="#e3ccce"></rect>
+    <rect x="5" y="9" width="110" height="51" rx="3" fill="#bd8d9e"></rect>
+    <rect x="10" y="14" width="100" height="44" fill="#d7b6be"></rect>
+    <rect x="10" y="14" width="100" height="8" fill="#bd8d9e"></rect>
+    <polygon points="10,14 16,22 16,58 10,58" fill="#caa1ae"></polygon>
+    <polygon points="110,14 104,22 104,58 110,58" fill="#caa1ae"></polygon>
+  </g>
+  <g id="letter">
+    <rect x="55.2" y="27.32" width="40.800000000000004" height="29.68" fill="#fdf9f4" transform="matrix(0.996 0.087 -0.087 0.996 3.958 -11.324)"></rect>
+    <rect x="61.2" y="35.824" width="25.2" height="2" fill="#dfcebf" transform="matrix(0.996 0.087 -0.087 0.996 3.958 -11.324)"></rect>
+    <rect x="61.2" y="43.744" width="19.2" height="2" fill="#dfcebf" transform="matrix(0.996 0.087 -0.087 0.996 3.958 -11.324)"></rect>
+    <rect x="24" y="26.32" width="44" height="31.68" fill="#fdf9f4" transform="matrix(0.998 -0.07 0.07 0.998 -2.834 -1.828)"></rect>
+    <text x="29" y="46.16" font-family="Yomogi" font-size="12" fill="#a26480" transform="matrix(0.998 -0.07 0.07 0.998 -2.834 -1.828)">Aria</text>
+  </g>
+  <g id="lid">
+    <rect x="0" y="38" width="120" height="22" rx="5" fill="#af788f" transform="matrix(1 0 0 0.42 0 -16.2)"></rect>
+    <rect x="0" y="2" width="120" height="48" rx="6" fill="#bd8d9e" transform="matrix(1 0 0 0.42 0 -16.2)"></rect>
+    <rect x="4" y="5.5" width="112" height="43" rx="4" fill="none" stroke="#d7b6be" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" transform="matrix(1 0 0 0.42 0 -16.2)"></rect>
+    <text x="79" y="33.84" text-anchor="middle" font-family="Zen Old Mincho" font-weight="600" font-size="19" fill="#774b03" transform="matrix(1 0 0 0.42 0 -16.2)">Aria</text>
+    <text x="79" y="32.84" text-anchor="middle" font-family="Zen Old Mincho" font-weight="600" font-size="19" fill="#e9a853" transform="matrix(1 0 0 0.42 0 -16.2)">Aria</text>
+  </g>
+  <g id="loose">
+    <path d="M29 74 C 26 80, 16 81, 7 79 S -1 79, -4 81" fill="none" stroke="#e3ccce" stroke-width="4" stroke-linecap="round" stroke-linejoin="miter"></path>
+    <path d="M31 74 C 35 80, 47 82, 57 80" fill="none" stroke="#e3ccce" stroke-width="4" stroke-linecap="round" stroke-linejoin="miter"></path>
+  </g>
+</svg>

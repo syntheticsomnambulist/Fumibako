@@ -173,3 +173,11 @@ From `v0.5.md`, in short:
     tours: the thread with the notice and tabs, the index card out, both slips out, and her model
     card (299 shots). The wide and large-text tours no longer wait for her heart sticker, which
     the tabs and the notice push above their first screen.
+- **The Fumibako boxes: merged** (2026-11-10) from `claude/sharp-darwin-o3pk1g` (748bc54, with
+  its plan at 047d127): each letter in the list is the persona's box with a one-line paper strip,
+  opening when tapped; a Letter box card on the persona's page; `choose_letter_box` in
+  heartbeats. One conflict, in the tour's seed, kept both sides. Every suite passes (core 208,
+  data 5, app 59, desktop 57) and the tours' 299 shots render. Seen once in the first run after
+  the merge, and not again in two: the app suite stalled in `LettersInThePostScreenTest` (a
+  `runBlocking` write on Robolectric's main thread), and one tour run lost the gallery for a
+  moment (`topWith("Aria")`). Both are worth watching.
