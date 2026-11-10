@@ -181,3 +181,6 @@ From `v0.5.md`, in short:
   the merge, and not again in two: the app suite stalled in `LettersInThePostScreenTest` (a
   `runBlocking` write on Robolectric's main thread), and one tour run lost the gallery for a
   moment (`topWith("Aria")`). Both are worth watching.
+- **The gallery's mark for the open persona** (2026-11-10, 01b282c, a fast-forward): in a wide
+  window, the open persona's polaroid has its corner folded down (your choice). Phone screens are
+  unchanged. Suites and tours pass (299 shots).
