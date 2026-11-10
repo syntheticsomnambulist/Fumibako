@@ -63,7 +63,7 @@ and attachments are files in the `blobs` folder (`data/.../Stores.kt`). Deleting
 files; Settings, Media, Storage finds the ones nothing refers to and clears them on request
 (`data/.../BlobSweep.kt`: it searches every table's text, the drafts and the settings for their
 refs). On the phone, videos are kept as a 720p copy and lossless songs as AAC instead of the
-originals (`app/media/Shrinker.kt`).
+originals (`app/media/Shrinker.kt`). What's planned next is in [`docs/storage.md`](docs/storage.md).
 
 ## Architecture
 
