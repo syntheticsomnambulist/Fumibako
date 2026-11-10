@@ -305,3 +305,33 @@ Updated 2026-11-10 (later).
     don't change between letters and heartbeats.
   - **Tests:** 5 in core (plain lines and pronouns, one line a letter, tidying what she writes,
     writing her own, the weekly rewrite). The tours show her page's card.
+- **Step 5, the stationery update: built** (2026-11-10), as designed and in full (your answer of
+  2026-11-10: no changes until the test build has been explored).
+  - **Thirteen patterns** (`TapePattern`: the four, and checks 市松, rings 七宝, waves 青海波, hemp
+    leaf 麻の葉, arrows 矢絣, hearts, scales 鱗, tortoiseshell 亀甲, basket 籠目), drawn from the
+    Tapes board's tiles (`ui/.../paper/TapeTiles.kt`) everywhere tape is drawn, and on a washi
+    letter box.
+  - **Patterns sit true:** laid out from the tape's centre, rows symmetric about the centreline and
+    repeating outwards from the middle; each tile scaled so whole repeats fit across the tape. The
+    pattern is drawn in one layer, so strokes don't darken where they cross.
+  - **Two shades** (`TapeShade` on personas and yours): light by day, dark at night, or Light or
+    Dark for good. A light tape is the ink mixed into the day's paper at 40%, the pattern in the
+    paper's colour at 95%; a dark one the ink, the pattern in white (dots 60%, stripes 38%,
+    gingham as before, the nine 55%). Light stays mixed with the day's paper at night. The nav
+    bar's label tape stays dark (it's written on in white). Every tape is made through `tape()`.
+  - **The tape picker:** a strip of the chosen tape, the thirteen in a grid with their Japanese
+    names, and the Shade row (With the time of day, Light, Dark), on her page and yours. Cards
+    from Fumibako carry the shade too.
+  - **Placements** (`TapePlacement`, from the Placements board): a strip, two corners, across an
+    edge, a pair, one corner, and the new four corners, top and bottom, and photo corners (paper
+    corners in the ink, no pattern). Each turns by quarter turns (four corners and photo corners
+    don't). The screens' cards choose among eleven layouts (strips left or right, corners either
+    way round, across or a pair at the top or bottom, four corners, top and bottom, photo
+    corners), never tape at the same corner of one card's bottom and the next one's top.
+  - **Longer corner pieces:** about 9dp in along the corner's diagonal, across it, 50dp long (44
+    for one corner, 46 for four), for corner tape, pairs, single pieces and four corners alike.
+  - **Month envelopes:** each earlier month in the memory book has its old name in the brush face
+    and in her ink, then the English month and what the name means (神無月 October “gods'
+    month”), from the planner's names.
+  - **Labels** wait for v0.6, as agreed.
+
