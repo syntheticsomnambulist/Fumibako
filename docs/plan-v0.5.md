@@ -334,4 +334,23 @@ Updated 2026-11-10 (later).
     and in her ink, then the English month and what the name means (神無月 October “gods'
     month”), from the planner's names.
   - **Labels** wait for v0.6, as agreed.
+- **Step 6, fonts: under way** (2026-11-10).
+  - **The faces** (bundled as Latin subsets, plus 〒): Zen Old Mincho for names and titles, Literata
+    for letters (and now your notes in a thread too, `PaperType.yourNote`), Zen Kaku Gothic New for
+    the interface, Yomogi for the hand, Yuji Syuku for seals, Old Standard TT for cuttings. The old
+    placeholders' italics went with them. The About page and `files/licenses/fonts.txt` name them.
+  - **The aligned scale** (the Type board's): names 20 everywhere, meta and labels 11, day dividers
+    17.5, letters 15.5 on 24, line heights on a 4dp step; the P.S. and mood words in the hand at 15.
+  - **No italics for her voice:** the P.S., mood words, her thoughts, the writing line and captions
+    are in her hand (`PaperType.postscript`, `mood` and `caption` read `LocalHand`); a P.S.'s
+    label stays printed (Literata, medium), as the Hand board has it. Literata's real italics stay
+    for emphasis in letters and quiet notes.
+  - **Her hand** (`Persona.hand`, and yours on `UserPersona.hand`; `Hands` in core): Yomogi, Klee
+    One, Zen Kurenaido, Hachi Maru Pop, Yusei Magic, each scaled to line up with the letters. Chosen
+    on her page under Look (and on yours); her letters, her card in the list, her page and her
+    memory book are written in it, your notes in yours. On the phone the others come through
+    Google Play services' font provider the first time they're chosen (the certificates are
+    Google's, from its Downloadable Fonts sample, `ui/src/androidMain/res/values/font_certs.xml`);
+    Yomogi stands in until they arrive, and on the computer for now (desktop step 6). Cards from
+    Fumibako name the hand.
 
