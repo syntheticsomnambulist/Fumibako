@@ -12,9 +12,11 @@ you'd made) waits for you, and is listed at the end.
 
 ## Choices
 
-None of my own yet. Three calls other sessions made and asked you to check: two by the build
-session, Kanna, in v0.5's step 6 (fonts), and one by the desktop installers session in desktop
-step 6 (fonts on the computer).
+None of my own yet. Calls other sessions made where the design doesn't settle a detail, for you
+to check: Kanna's in v0.5's step 6 (fonts) and step 7 (the planner redrawn), and the desktop
+installers session's in desktop step 6 (fonts on the computer).
+
+### Fonts
 
 1. **A Latin-only font file of yours** shows Japanese in the phone's own font, not in Yomogi.
    (In `main` 2026-11-10; `docs/plan-v0.5.md`, Progress, step 6.)
@@ -37,6 +39,29 @@ would be the other.
 I left this one too: the design's pairing can't be had this way, and the computer's own Japanese
 face is a readable fallback. If you want the pairing, it would take drawing text in runs, by
 script, which is a bigger change for later.
+
+### The planner redrawn (Kanna, step 7; `docs/plan-v0.5.md`, Progress, step 7)
+
+4. **The header is about 76dp tall**, not the board's 66, so the words and the Week and Month
+   switch keep 34 to 36dp tap targets.
+5. **The day page has no back arrow.** Week and Month go back up (to that view, with the day
+   shown), and the system back works.
+6. **A plan with no time, on the day page, works as in メモ:** a tap stamps it done, a long press
+   opens it. Before, a tap opened it. *Worth your look:* a tap that stamps can be done by
+   accident, though the stamp can be lifted.
+7. **Under an ended entry,** the stamps are 済 Done and 止 "Didn't happen" for yours, and Done and
+   "Not going" for the phone's events. 延 (move) stays on the week.
+8. **"Put it back"** is offered only right after a suggestion is taken down, while the page is
+   open; a suggestion declined earlier isn't shown again.
+9. **The grid's titles in Yomogi are at 10,** not the board's 12, since Yomogi is wider than the
+   mockup's Caveat; the floor of 9.5 holds.
+10. **The highlighter is see-through by alpha,** not a multiply blend, so it reads the same on
+    night paper.
+11. **メモ keeps each plan's day** (WED, FRI) beside it, which the board doesn't show.
+
+I'd keep all eight. Each either follows from a constraint (tap targets, a wider face, night
+paper) or matches how the rest of the planner already behaves; number 6 is the one that changes
+a habit.
 
 ## Waiting for you
 
