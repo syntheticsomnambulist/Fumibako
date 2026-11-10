@@ -123,40 +123,19 @@ fun HandPicker(selected: String?, ink: Color, about: String, onSelect: (String?)
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(about, style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 18.sp), color = paper.usuzumi0)
         dev.aiharness.core.model.Hands.BUILT_IN.forEach { hand ->
-            val on = hand == chosen
+            val on = hand == chosen && dev.aiharness.core.model.Hands.yours(selected, emptyList()) == null && selected?.startsWith("font:") != true
             // Only the chosen one, and Yomogi, are drawn in their own face: the others download when chosen.
             val face = if (on || hand == dev.aiharness.core.model.Hands.DEFAULT) dev.aiharness.app.ui.theme.rememberHand(hand.name) else null
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .selectable(selected = on, role = Role.RadioButton) { onSelect(hand.name.takeIf { hand != dev.aiharness.core.model.Hands.DEFAULT }) }
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Box(
-                    Modifier.size(18.dp).border(1.5.dp, ink, androidx.compose.foundation.shape.CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) { if (on) Box(Modifier.size(8.dp).background(ink, androidx.compose.foundation.shape.CircleShape)) }
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        "P.S. the window cat 窓辺の猫",
-                        style = androidx.compose.ui.text.TextStyle(
-                            fontFamily = face?.family ?: dev.aiharness.app.ui.theme.HarnessFonts.Hand,
-                            fontSize = (16 * (face?.scale ?: 1f)).sp,
-                            lineHeight = 22.sp,
-                        ),
-                        color = paper.sumi,
-                    )
-                    val note = when {
-                        hand == dev.aiharness.core.model.Hands.DEFAULT -> " · the default"
-                        on && face?.name != hand.name -> " · on its way"
-                        !on -> " · comes when chosen"
-                        else -> ""
-                    }
-                    Text(hand.name + note, style = PaperType.meta.copy(letterSpacing = 0.sp), color = paper.kasure2)
-                }
+            val note = when {
+                hand == dev.aiharness.core.model.Hands.DEFAULT -> " · the default"
+                on && face?.name != hand.name -> " · on its way"
+                !on -> " · comes when chosen"
+                else -> ""
+            }
+            HandRow(on, ink, face?.family ?: dev.aiharness.app.ui.theme.HarnessFonts.Hand, face?.scale ?: 1f, hand.name + note) {
+                onSelect(hand.name.takeIf { hand != dev.aiharness.core.model.Hands.DEFAULT })
             }
         }
+        YourFontsInPicker(selected, ink, onSelect)
     }
 }

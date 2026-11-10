@@ -205,6 +205,9 @@ expect fun rememberSaveAs(onSaved: (Boolean) -> Unit): (file: java.io.File, name
 @Composable
 expect fun downloadedHand(name: String): androidx.compose.ui.text.font.FontFamily?
 
+/** The face in a font file (one of yours), or null if this platform can't load it. */
+expect fun fontFromFile(file: java.io.File): androidx.compose.ui.text.font.FontFamily?
+
 /** Whether [text] has Japanese in it (kana or kanji; not the app's own 〒). */
 fun hasJapanese(text: String?): Boolean = text != null && text.any { c ->
     c in '\u3040'..'\u30FF' && c != '\u30FB' || c in '\u4E00'..'\u9FFF' || c in '\u3400'..'\u4DBF' || c in '\uFF66'..'\uFF9D'

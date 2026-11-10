@@ -84,6 +84,7 @@ internal fun Hint(text: String) {
 
 internal fun SettingsCards.lookPage(s: AppSettings, update: Update) {
     dev.aiharness.app.ui.settings.japaneseFontsCard(this)
+    card { dev.aiharness.app.ui.paper.YourFontsCard() }
     card { LookDayNight(s, update) }
     card { LookSeasons(s, update) }
     card { LookPaper(s, update) }

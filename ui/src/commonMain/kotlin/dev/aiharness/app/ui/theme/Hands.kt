@@ -2,6 +2,8 @@ package dev.aiharness.app.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.font.FontFamily
 import dev.aiharness.core.model.Hands
@@ -18,6 +20,15 @@ val LocalHand = staticCompositionLocalOf { HandFace(Hands.DEFAULT.name, HarnessF
  */
 @Composable
 fun rememberHand(name: String?): HandFace {
+    if (name?.startsWith("font:") == true) {
+        val container = dev.aiharness.app.ui.LocalAppContainer.current
+        val settings by androidx.compose.runtime.remember { container.harness.settings.settings }.collectAsState(null)
+        val font = Hands.yours(name, settings?.fonts.orEmpty())
+        val family = androidx.compose.runtime.remember(font?.ref) {
+            font?.ref?.let { container.blobStore.existingFile(it) }?.let { dev.aiharness.app.platform.fontFromFile(it) }
+        }
+        return if (font != null && family != null) HandFace(name, family, font.scale) else HandFace(Hands.DEFAULT.name, HarnessFonts.Hand)
+    }
     val hand = Hands.of(name)
     if (hand == Hands.DEFAULT) return HandFace(hand.name, HarnessFonts.Hand)
     val family = dev.aiharness.app.platform.downloadedHand(hand.name)

@@ -256,6 +256,13 @@ object Toasts {
 
 actual fun decodeImage(bytes: ByteArray): ImageBitmap? = runCatching { Image.makeFromEncoded(bytes).toComposeImageBitmap() }.getOrNull()
 
+actual fun fontFromFile(file: File): androidx.compose.ui.text.font.FontFamily? = runCatching {
+    val bytes = file.readBytes()
+    // Loading it once here refuses a file Skia can't use, before Compose meets it.
+    requireNotNull(org.jetbrains.skia.FontMgr.default.makeFromData(org.jetbrains.skia.Data.makeFromBytes(bytes)))
+    androidx.compose.ui.text.font.FontFamily(androidx.compose.ui.text.platform.Font(identity = file.path, data = bytes))
+}.getOrNull()
+
 @Composable
 actual fun rememberJapaneseFonts(): JapaneseFontsInfo? = null
 

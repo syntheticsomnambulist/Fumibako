@@ -296,6 +296,12 @@ private class AndroidOutside(private val context: Context, private val blobs: Fi
 
 actual fun decodeImage(bytes: ByteArray): ImageBitmap? = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
 
+actual fun fontFromFile(file: File): androidx.compose.ui.text.font.FontFamily? = runCatching {
+    // Loading it once here refuses a file Android can't use, before Compose meets it.
+    android.graphics.Typeface.createFromFile(file)
+    androidx.compose.ui.text.font.FontFamily(androidx.compose.ui.text.font.Font(file))
+}.getOrNull()
+
 @Composable
 actual fun rememberJapaneseFonts(): JapaneseFontsInfo? {
     val context = LocalContext.current

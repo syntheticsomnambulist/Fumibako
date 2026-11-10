@@ -222,8 +222,15 @@ object Hands {
     val DEFAULT = Hand("Yomogi")
     val BUILT_IN: List<Hand> = listOf(DEFAULT, Hand("Klee One"), Hand("Zen Kurenaido"), Hand("Hachi Maru Pop", 0.92f), Hand("Yusei Magic", 0.96f))
 
-    /** The hand called [name], or the default. */
+    /** The hand called [name], or the default (a font of yours is looked up with [yours]). */
     fun of(name: String?): Hand = BUILT_IN.firstOrNull { it.name == name } ?: DEFAULT
+
+    /** A hand that's one of your fonts: `font:<id>`. */
+    fun ofYours(font: YourFont): String = "font:${font.id}"
+
+    /** Your font that [name] is, when it's one. */
+    fun yours(name: String?, fonts: List<YourFont>): YourFont? =
+        name?.takeIf { it.startsWith("font:") }?.removePrefix("font:")?.let { id -> fonts.firstOrNull { it.id == id } }
 }
 
 /** One of a persona's lines for the postmark: [yours] when you wrote or edited it (then it stays as it is). */
