@@ -151,6 +151,13 @@ data class Persona(
     val letterTravel: LetterTravel? = null,
     /** Told in its next letter when its model changes ("Your model changed: ..."). The thread shows the change either way. */
     val tellModelChanges: Boolean = true,
+    /**
+     * Its lines for the 〒 postmark while a reply of its is on its way ("she's looking for a stamp");
+     * empty uses the plain ones ([dev.aiharness.core.letters.WayLines]).
+     */
+    val wayLines: List<WayLine> = emptyList(),
+    /** When it last wrote its own lines (asked on its page, or rewriting them in a heartbeat): at most weekly in a heartbeat. */
+    val wayLinesWrittenAt: Long? = null,
     /** When its model was last changed on its page, and what it was before, for "Since today, 15:40 · was ...". */
     val modelSince: Long? = null,
     val previousModelName: String? = null,
@@ -176,6 +183,10 @@ data class CardOrigin(
     val cardRef: String? = null,
     val importedAt: Long = 0,
 )
+
+/** One of a persona's lines for the postmark: [yours] when you wrote or edited it (then it stays as it is). */
+@Serializable
+data class WayLine(val text: String, val yours: Boolean = false)
 
 /** One of a persona's mood portraits: the mood's name (happy, flustered) and the picture. */
 @Serializable

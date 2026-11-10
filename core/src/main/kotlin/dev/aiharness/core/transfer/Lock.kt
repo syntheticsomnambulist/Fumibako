@@ -34,6 +34,9 @@ object Lock {
     private const val TAG_BITS = 128
     private const val TAG = TAG_BITS / 8
     private const val PREFIX = 7
+    private const val MIN_SEGMENT = 1 shl 10
+    private const val MAX_SEGMENT = 16 shl 20
+    private const val MAX_ITERATIONS = 10_000_000
 
     /** What a locked backup says of itself before it's unlocked. */
     @Serializable
@@ -106,6 +109,8 @@ object Lock {
         val source = BufferedInputStream(input, SEGMENT + TAG + 1)
         val (header, headerBytes) = readHeader(source) ?: throw Damaged()
         require(header.cipher == "AES-256-GCM" && header.kdf == "PBKDF2-HMAC-SHA256") { "Locked with something this version doesn't know" }
+        // The header comes from the file: a damaged or made-up one mustn't ask for gigabytes or hours.
+        if (header.segment !in MIN_SEGMENT..MAX_SEGMENT || header.iterations !in 1..MAX_ITERATIONS) throw Damaged()
         val key = key(password, unb64(header.salt), header.iterations)
         val prefix = unb64(header.noncePrefix)
         val full = header.segment + TAG

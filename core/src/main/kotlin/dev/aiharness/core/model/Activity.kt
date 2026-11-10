@@ -53,6 +53,9 @@ enum class ActivityKind {
 
     /** Chose a new box for its letters ([ActivityEntry.note]: the box in words). */
     CHOSE_LETTER_BOX,
+
+    /** Rewrote some of its lines for the postmark, in a quiet moment ([ActivityEntry.count] of them). */
+    REWROTE_LINES,
     ;
 
     /** Kinds that mark a heartbeat having happened. */

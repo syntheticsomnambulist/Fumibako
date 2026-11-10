@@ -285,11 +285,23 @@ Updated 2026-11-10 (later).
     ink (4) in core; on the desktop's SQLite, a failed restore leaving nothing behind and an
     Everything backup coming back on another install with its files and word index (2). The
     tours add the settings page, Export three ways, a card coming in, and four backups opened.
-- **To build next: her lines on the way** (settled with the design session, 2026-11-10; design
-  branch 90b0856, "Her lines on the way" and "Her page: On its way"). While a reply is in the post,
-  the 〒 postmark reads "Aria's reply is on its way · she's looking for a stamp", one of her lines in
-  her ink and hand, picked when the reply is kept back; the same line on her card in the letters
-  list. Straight away: a plain "Aria is writing…". No lines per tool. Her page's card is On its
-  way: lines, + Add a line, Let Aria write her own (under 1,000 tokens), "yours" marks; she may
-  rewrite hers at most weekly when she reflects. Heartbeat letters have no postmark.
-
+- **Her lines on the way: done** (2026-11-10; settled with the design session, design branch
+  90b0856).
+  - **The postmark:** while a reply is in the post, "Aria's reply is on its way · she's looking for a
+    stamp", her line in her ink; her card in the letters list reads "〒 On its way · …" (her name is
+    on the card). One line a letter: picked from the thread and the time of the note it answers, so
+    both places show the same one and it holds until the reply arrives.
+  - **Straight away:** a plain "Aria is writing", its ellipsis writing itself (all at once with
+    reduced motion). The per-tool lines ("Saving a memory") are gone.
+  - **Her lines** (`core/letters/WayLines`): the plain ones until there are others ("she's
+    addressing the envelope"; without pronouns, no subject, so her name doesn't come twice). Her
+    page's **On its way** card: take one out, change one or add your own (marked yours, kept as you
+    wrote it), and **Let Aria write her own** / **Ask her for new ones**: a turn in her voice (her
+    own role section, under 1,000 tokens).
+  - **In a heartbeat:** `WayLinesActivity` shows her lines in a quiet moment that's happening
+    anyway, at most weekly; `rewrite_postmark_lines` works only there (refused in letters, and
+    within a week of her last), keeps yours, and While you were away says "rewrote 2 lines for the
+    postmark". Like the letter box tool, it's always in her tool list, so the context's tools
+    don't change between letters and heartbeats.
+  - **Tests:** 5 in core (plain lines and pronouns, one line a letter, tidying what she writes,
+    writing her own, the weekly rewrite). The tours show her page's card.

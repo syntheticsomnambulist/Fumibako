@@ -308,6 +308,14 @@ class BackupsTest {
         val cut = locked.copyOf(header + 2 * (Lock.SEGMENT + 16))
         assertFailsWith<Lock.Damaged> { Lock.decrypt(cut.inputStream(), ByteArrayOutputStream(), "pw".toCharArray()) }
 
+        // A header asking for an enormous segment or countless rounds is refused, not obeyed.
+        val text = String(locked, Charsets.ISO_8859_1)
+        for ((field, value) in listOf("\"segment\":${Lock.SEGMENT}" to "\"segment\":2147483000", "\"iterations\":1000" to "\"iterations\":2000000000")) {
+            assertContains(text, field)
+            val bad = text.replaceFirst(field, value).toByteArray(Charsets.ISO_8859_1)
+            assertFailsWith<Lock.Damaged> { Lock.decrypt(bad.inputStream(), ByteArrayOutputStream(), "pw".toCharArray()) }
+        }
+
         val exact = Random(6).nextBytes(Lock.SEGMENT)
         val lockedExact = ByteArrayOutputStream().also { Lock.encrypt(exact.inputStream(), it, "pw".toCharArray(), 1, "0.5.0", iterations = 1_000) }.toByteArray()
         assertTrue(exact.contentEquals(ByteArrayOutputStream().also { Lock.decrypt(lockedExact.inputStream(), it, "pw".toCharArray()) }.toByteArray()))
