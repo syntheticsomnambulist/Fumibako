@@ -165,6 +165,21 @@ class BackupsTest {
     }
 
     @Test
+    fun herHandsFontGoesWithHerWhenItsOneOfYours() = runTest {
+        val home = phone()
+        val font = home.blobs.put(ByteArray(64) { 1 }, "ttf")
+        home.settings.update { it.copy(fonts = listOf(dev.aiharness.core.model.YourFont(id = "f1", name = "Sam's hand", ref = font))) }
+        home.personas.upsert(home.personas.get(ARIA)!!.copy(hand = "font:f1"))
+        val file = home.backUp(BackupRequest.OnePersona(ARIA, pictures = false))
+        val away = Phone()
+        val aria = away.backups.restorePersona(file)
+        assertEquals("font:f1", aria.hand)
+        val came = away.settings.current().fonts.single()
+        assertEquals("Sam's hand", came.name)
+        assertNotNull(away.blobs.get(came.ref), "the font file came too, even without pictures")
+    }
+
+    @Test
     fun withoutPicturesOnlyHerStickersFilesGo() = runTest {
         val home = phone()
         val survey = home.backups.survey(BackupRequest.OnePersona(ARIA))

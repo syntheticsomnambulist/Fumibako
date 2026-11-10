@@ -203,7 +203,7 @@ private fun HolidaysCard(s: AppSettings, update: Update) {
         )
         PaperButton("Change") { country = h.country; region = h.region; choosing = true }
     }
-    problem?.let { Text(it, style = PaperType.postscript, color = paper.usuzumi1, modifier = Modifier.padding(top = 2.dp)) }
+    problem?.let { Text(it, style = PaperType.quiet, color = paper.usuzumi1, modifier = Modifier.padding(top = 2.dp)) }
 }
 
 private fun countryName(code: String?): String = code?.let { Locale("", it).getDisplayCountry(Locale.US).ifBlank { it } } ?: ""
@@ -239,8 +239,8 @@ private fun PhoneCalendarsCard(s: AppSettings, update: Update) {
     } else {
         val list = calendars
         when {
-            list == null -> Text("Looking for your calendars…", style = PaperType.postscript, color = paper.usuzumi1)
-            list.isEmpty() -> Text("No calendars on this phone.", style = PaperType.postscript, color = paper.usuzumi1)
+            list == null -> Text("Looking for your calendars…", style = PaperType.quiet, color = paper.usuzumi1)
+            list.isEmpty() -> Text("No calendars on this phone.", style = PaperType.quiet, color = paper.usuzumi1)
             else -> list.forEach { cal ->
                 androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
                     androidx.compose.foundation.layout.Box(
@@ -267,7 +267,7 @@ private fun PhoneCalendarsCard(s: AppSettings, update: Update) {
         }
         Hint("To stop the app reading your calendars at all, turn off its Calendar permission in your phone's settings.")
     }
-    problem?.let { Text(it, style = PaperType.postscript, color = paper.usuzumi1) }
+    problem?.let { Text(it, style = PaperType.quiet, color = paper.usuzumi1) }
 }
 
 /**

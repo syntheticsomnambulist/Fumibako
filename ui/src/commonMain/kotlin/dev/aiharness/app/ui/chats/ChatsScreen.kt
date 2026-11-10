@@ -360,7 +360,7 @@ private fun AwayCard(entries: List<ActivityEntry>, personas: List<Persona>, onDi
             .padding(start = 16.dp, end = 14.dp, top = 12.dp, bottom = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("While you were away", style = PaperType.entryTitle.copy(fontStyle = FontStyle.Italic, fontSize = 18.sp), color = paper.sumi)
+        Text("While you were away", style = PaperType.entryTitle.copy(fontSize = 18.sp), color = paper.sumi)
         rows.take(5).forEach { row ->
             val persona = personas.firstOrNull { it.id == row.personaId } ?: return@forEach
             val ink = s.ink(persona.ink)
@@ -407,7 +407,12 @@ private fun summarise(entries: List<ActivityEntry>): List<AwayRow> =
  * paper tucked beneath its side: their name, mood and the time, and the latest line.
  */
 @Composable
-private fun LetterBoxRow(conversation: Conversation, persona: Persona?, now: Long, open: Boolean, modifier: Modifier = Modifier) {
+private fun LetterBoxRow(conversation: Conversation, persona: Persona?, now: Long, open: Boolean, modifier: Modifier = Modifier) =
+    dev.aiharness.app.ui.theme.InHand(persona?.hand) { LetterBoxRowInHand(conversation, persona, now, open, modifier) }
+
+@Composable
+private fun LetterBoxRowInHand(conversation: Conversation, persona: Persona?, now: Long, open: Boolean, modifier: Modifier) {
+    dev.aiharness.app.platform.NoticeJapanese((persona?.name ?: conversation.title) + " " + conversation.preview.orEmpty())
     val s = stationery
     val ink = s.ink(persona?.ink)
     val who = persona ?: Persona(id = conversation.personaId, name = conversation.title, createdAt = 0, updatedAt = 0)

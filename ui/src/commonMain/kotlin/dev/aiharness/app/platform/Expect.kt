@@ -197,6 +197,33 @@ expect fun rememberOutside(): Outside
 @Composable
 expect fun rememberSaveAs(onSaved: (Boolean) -> Unit): (file: java.io.File, name: String, mime: String) -> Unit
 
+/**
+ * A handwriting face that isn't bundled ([dev.aiharness.core.model.Hands]), once it's here: on the
+ * phone through Google Play services' font provider (asked for the first time it's wanted, and
+ * kept); null until then, or where it can't come.
+ */
+@Composable
+expect fun downloadedHand(name: String): androidx.compose.ui.text.font.FontFamily?
+
+/** The face in a font file (one of yours), or null if this platform can't load it. */
+expect fun fontFromFile(file: java.io.File): androidx.compose.ui.text.font.FontFamily?
+
+/** Whether [text] has Japanese in it (kana or kanji; not the app's own 〒). */
+fun hasJapanese(text: String?): Boolean = text != null && text.any { c ->
+    c in '\u3040'..'\u30FF' && c != '\u30FB' || c in '\u4E00'..'\u9FFF' || c in '\u3400'..'\u4DBF' || c in '\uFF66'..'\uFF9D'
+}
+
+/** The Japanese faces as Settings shows them: whether they're here, about how big, and getting them now. */
+class JapaneseFontsInfo(val state: String, val aboutMb: Int, val download: () -> Unit)
+
+/** The Japanese faces' state (null where they aren't offered: a computer, for now). */
+@Composable
+expect fun rememberJapaneseFonts(): JapaneseFontsInfo?
+
+/** Asks for the Japanese faces the first time [text] has Japanese in it. */
+@Composable
+expect fun NoticeJapanese(text: String?)
+
 /** [bytes] (a picture of any kind this platform reads) as a PNG; null if it isn't a picture. */
 expect fun pngOf(bytes: ByteArray): ByteArray?
 

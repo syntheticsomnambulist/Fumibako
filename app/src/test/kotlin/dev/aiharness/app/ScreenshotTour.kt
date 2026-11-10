@@ -203,6 +203,8 @@ class ScreenshotTour {
         assumeTrue(outDir != null)
         seed(TimeOfDay.YORU, Season.AKI)
         waitFor("Aria")
+        // Her box may be below the "While you were away" card on this small screen.
+        scrollTo("Aria", exact = true)
         click("Aria")
         // Her box opens before her letter comes in (the list's strip already holds the words).
         compose.waitUntilAtLeastOneExists(hasContentDescription("Draw a picture"), 10_000)
@@ -490,6 +492,9 @@ class ScreenshotTour {
         click("Edit")
         waitFor("EDITING")
         shot("${prefix}_05_persona_editor")
+        // v0.5: her hand, under her ink and tape.
+        scrollTo("Hachi Maru Pop")
+        shot("${prefix}_05d_persona_hand")
         scrollTo("Another set", exact = false)
         shot("${prefix}_05a_persona_pronouns")
         scrollTo("Drawing style")

@@ -76,6 +76,7 @@ fun ImportCardScreen(nav: NavController) {
         return
     }
     val preview = remember(file) { CardPreview(file) }
+    dev.aiharness.app.platform.NoticeJapanese(file.card.name + " " + file.card.description)
     val card = preview.card
     val portrait by produceState<ImageBitmap?>(null, file) { value = withContext(Dispatchers.Default) { file.portrait?.bytes?.let(::decodeImage) } }
     val inks = stationery.colors.inks

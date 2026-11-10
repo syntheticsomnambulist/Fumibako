@@ -77,7 +77,7 @@ fun StickerSheet(
                         ) {
                             StickerPicture(StickerRef.Art(art.id), ink, Modifier.size((60 * StickerBaker.BOX).dp), name = ":${art.name}: sticker")
                             Text(":${art.name}:", style = PaperType.meta.copy(fontSize = 11.sp, letterSpacing = 0.sp), color = colors.usuzumi1, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
-                            art.feeling?.let { Text(it, style = PaperType.postscript.copy(fontSize = 12.sp), color = ink, maxLines = 1) }
+                            art.feeling?.let { Text(it, style = PaperType.quiet.copy(fontSize = 12.sp), color = ink, maxLines = 1) }
                         }
                     }
                     repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
@@ -135,7 +135,7 @@ fun StickerArtDialog(
                 if (confirmRemove) {
                     Text(
                         "Take it off the sheet for good? It comes off wherever it's stuck, too.",
-                        style = PaperType.postscript.copy(fontStyle = FontStyle.Italic),
+                        style = PaperType.quiet,
                         color = stationery.ink("beni"),
                     )
                 }

@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
@@ -107,5 +109,33 @@ fun TapePicker(
             Text("SHADE", style = PaperType.meta, color = paper.kasure2, modifier = Modifier.padding(top = 4.dp))
             PaperChoice(TapeShade.entries.map { it to it.label }, shade, onShade, ink = ink, maxLines = 2)
         }
+    }
+}
+
+/**
+ * The hands to write in ([dev.aiharness.core.model.Hands]): each a line of P.S. in its own face
+ * (Yomogi's bundled; the others show in it until they've come, the first time they're chosen),
+ * with [about] saying what the hand covers.
+ */
+@Composable
+fun HandPicker(selected: String?, ink: Color, about: String, onSelect: (String?) -> Unit) {
+    val chosen = dev.aiharness.core.model.Hands.of(selected)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(about, style = PaperType.noteBody.copy(fontSize = 12.5.sp, lineHeight = 18.sp), color = paper.usuzumi0)
+        dev.aiharness.core.model.Hands.BUILT_IN.forEach { hand ->
+            val on = hand == chosen && dev.aiharness.core.model.Hands.yours(selected, emptyList()) == null && selected?.startsWith("font:") != true
+            // Only the chosen one, and Yomogi, are drawn in their own face: the others download when chosen.
+            val face = if (on || hand == dev.aiharness.core.model.Hands.DEFAULT) dev.aiharness.app.ui.theme.rememberHand(hand.name) else null
+            val note = when {
+                hand == dev.aiharness.core.model.Hands.DEFAULT -> " · the default"
+                on && face?.name != hand.name -> " · on its way"
+                !on -> " · comes when chosen"
+                else -> ""
+            }
+            HandRow(on, ink, face?.family ?: dev.aiharness.app.ui.theme.HarnessFonts.Hand, face?.scale ?: 1f, hand.name + note) {
+                onSelect(hand.name.takeIf { hand != dev.aiharness.core.model.Hands.DEFAULT })
+            }
+        }
+        YourFontsInPicker(selected, ink, onSelect)
     }
 }

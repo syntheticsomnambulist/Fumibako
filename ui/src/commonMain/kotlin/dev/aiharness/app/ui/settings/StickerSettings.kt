@@ -182,7 +182,7 @@ fun SharedStickersScreen(nav: NavController) {
             }
         }
         if (shared.isEmpty()) {
-            item { Text("Nothing here yet. Add a sticker from a picture, or draw one.", style = PaperType.postscript, color = paper.usuzumi1) }
+            item { Text("Nothing here yet. Add a sticker from a picture, or draw one.", style = PaperType.quiet, color = paper.usuzumi1) }
         }
         listOf(StickerArtKind.STICKER to "Stickers", StickerArtKind.STAMP to "Stamps", StickerArtKind.DECOR to "Decor").forEach { (kind, label) ->
             val these = shared.filter { it.kind == kind }
@@ -265,7 +265,7 @@ private fun AddShared(ink: Color) {
             PaperButton(working ?: "From a picture", Modifier.fillMaxWidth(), ink = ink, enabled = working == null) {
                 pick()
             }
-            Text("Its subject is cut out and outlined.", style = PaperType.postscript.copy(fontSize = 13.sp), color = paper.kasure2)
+            Text("Its subject is cut out and outlined.", style = PaperType.quiet.copy(fontSize = 13.sp), color = paper.kasure2)
             if (settings?.imageGen?.ready == true) {
                 IndexCardField("Or draw one: what it shows", shows, { shows = it }, placeholder = "a pressed maple leaf", ink = ink)
                 PaperButton("Draw one", Modifier.fillMaxWidth(), enabled = working == null && shows.isNotBlank()) { draw() }
@@ -286,7 +286,7 @@ private fun AddShared(ink: Color) {
                     StickerArtKind.STAMP -> "Inked onto the paper, no outline."
                     StickerArtKind.DECOR -> "Tape, leaves and the like. Name tape \"tape-…\" and it goes on without an outline."
                 },
-                style = PaperType.postscript.copy(fontSize = 13.sp),
+                style = PaperType.quiet.copy(fontSize = 13.sp),
                 color = paper.kasure2,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -301,6 +301,6 @@ private fun AddShared(ink: Color) {
                 PaperButton("Not this one", Modifier.weight(1f)) { discard() }
             }
         }
-        note?.let { Text(it, style = PaperType.postscript, color = paper.usuzumi1) }
+        note?.let { Text(it, style = PaperType.quiet, color = paper.usuzumi1) }
     }
 }

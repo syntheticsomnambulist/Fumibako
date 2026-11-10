@@ -185,7 +185,7 @@ private fun LazyGridScope.heading(label: String) {
 
 private fun LazyGridScope.note(text: String) {
     item(span = { GridItemSpan(maxLineSpan) }, key = "note") {
-        Text(text, style = PaperType.postscript, color = paper.kasure2, modifier = Modifier.padding(8.dp))
+        Text(text, style = PaperType.quiet, color = paper.kasure2, modifier = Modifier.padding(8.dp))
     }
 }
 

@@ -290,6 +290,8 @@ fun YouPageScreen(nav: NavController, userId: String) {
                     InkPicker(u.ink, { v -> draft = u.copy(ink = v) })
                     Text("TAPE", style = PaperType.meta, color = paper.kasure2)
                     TapePicker(u.ink, u.tapePattern, { v -> draft = u.copy(tapePattern = v) }, shade = u.tapeShade, onShade = { v -> draft = u.copy(tapeShade = v) })
+                    Text("YOUR HAND", style = PaperType.meta, color = paper.kasure2)
+                    dev.aiharness.app.ui.paper.HandPicker(u.hand, stationery.ink(u.ink), "Captions on what you send, and labels on your keepsakes.") { v -> draft = u.copy(hand = v) }
                 }
             }
             item {

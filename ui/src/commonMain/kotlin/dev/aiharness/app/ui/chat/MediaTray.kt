@@ -409,7 +409,7 @@ fun PlaylistEditor(
                         SmallButton("×", "Take it off the mix") { onChange(withTracks(tracks.filterIndexed { j, _ -> j != i })) }
                     }
                 }
-                if (tracks.size == 1) Text("One song goes as a ticket.", style = PaperType.postscript, color = colors.kasure2)
+                if (tracks.size == 1) Text("One song goes as a ticket.", style = PaperType.quiet, color = colors.kasure2)
                 TextButton(onClick = onAddSongs) { Text("Add songs") }
             }
         },

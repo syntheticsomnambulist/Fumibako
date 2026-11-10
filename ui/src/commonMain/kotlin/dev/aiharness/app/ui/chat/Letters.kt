@@ -203,7 +203,8 @@ fun LetterSheet(
                 Text(
                     buildAnnotatedString {
                         append("P.S. ")
-                        withStyle(SpanStyle(fontStyle = FontStyle.Normal, fontWeight = FontWeight.Medium, color = if (ps.isError) s.ink("beni") else ink)) { append(ps.label) }
+                        // The label is printed (the letters face), the rest in her hand, as the Hand board has it.
+                        withStyle(SpanStyle(fontFamily = dev.aiharness.app.ui.theme.HarnessFonts.Read, fontWeight = FontWeight.Medium, fontSize = 14.sp, color = if (ps.isError) s.ink("beni") else ink)) { append(ps.label) }
                         ps.text?.let {
                             append(" ")
                             append(it)
@@ -288,7 +289,7 @@ fun NoteSlip(
                     color = you,
                 )
                 if (message.displayText.isNotBlank()) {
-                    StickerText(message.displayText, you, PaperType.noteBody, paper.usuzumi1, find?.marks)
+                    StickerText(message.displayText, you, PaperType.yourNote, paper.usuzumi1, find?.marks)
                 }
                 val noteInk = s.dayColors.ink(user?.ink ?: "sora")
                 val notePaper = lerp(s.colors.kami, you, 0.06f)
@@ -325,6 +326,7 @@ val LocalInlineStickers = staticCompositionLocalOf<Map<String, StickerArt>> { em
 /** Letter text with its `:name:` stickers drawn inline at the text's height, and a search's words marked. */
 @Composable
 fun StickerText(text: String, accent: Color, style: androidx.compose.ui.text.TextStyle, color: Color, marks: Marks? = null) {
+    dev.aiharness.app.platform.NoticeJapanese(text)
     val stickers = LocalInlineStickers.current
     val formatted = formatChatText(text, accent, stickers.keys)
     val used = stickers.filterKeys { formatted.text.isNotEmpty() && text.contains(":$it:") }

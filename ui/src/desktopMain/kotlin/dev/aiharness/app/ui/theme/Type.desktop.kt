@@ -10,3 +10,6 @@ internal actual fun bundledFont(name: String, weight: FontWeight, style: FontSty
         ?: error("Missing bundled font $name")
     return androidx.compose.ui.text.platform.Font(identity = name, data = bytes, weight = weight, style = style)
 }
+
+/** Not yet on a computer (desktop step 6): the bundled Latin faces, and the system's Japanese. */
+internal actual fun japaneseFace(part: FontPart): androidx.compose.ui.text.font.FontFamily? = null

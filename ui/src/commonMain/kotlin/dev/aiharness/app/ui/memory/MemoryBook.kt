@@ -262,6 +262,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
         }, onDismiss = { lorebook = null })
     }
 
+    dev.aiharness.app.ui.theme.InHand(persona?.hand) {
     KeepsakeHost(personaId, persona, name) { below ->
     CompositionLocalProvider(LocalFeelingStickers provides sheet.filter { it.ownerPersonaId == personaId }) {
         val pageScroll = rememberLazyListState()
@@ -363,6 +364,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
                 }
             }
         }
+    }
     }
     }
 }

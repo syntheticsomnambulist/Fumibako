@@ -214,7 +214,7 @@ fun FullPlayer(now: NowPlaying, controls: PlayerControls, knows: String?, onClos
                 }
                 if (now.isPlaylist) JCard(now, ink) { controls.playTrack(it) }
                 if (!now.isPlaylist) WholeSongButton(now.attachment, whole = true)
-                knows?.let { Text(it, style = PaperType.postscript, color = colors.usuzumi1, modifier = Modifier.fillMaxWidth()) }
+                knows?.let { Text(it, style = PaperType.quiet, color = colors.usuzumi1, modifier = Modifier.fillMaxWidth()) }
                 Spacer(Modifier.height(8.dp))
             }
         }
@@ -428,7 +428,7 @@ fun EmbedPlayer(song: ContentPart.Attachment, embed: String, ink: Color, from: S
                 WholeSongButton(song, whole = false)
                 Text(
                     "From $from, playing from ${source?.label ?: "the web"} while this is open.",
-                    style = PaperType.postscript,
+                    style = PaperType.quiet,
                     color = colors.usuzumi1,
                     modifier = Modifier.fillMaxWidth(),
                 )

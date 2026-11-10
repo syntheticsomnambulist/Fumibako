@@ -94,8 +94,11 @@ internal fun SettingsCards.lookPage(s: AppSettings, update: Update) {
             { v -> update { it.copy(theme = it.theme.copy(clock = v)) } },
             maxLines = 2,
         )
-        Text("How times are written in the planner: \"4:00 pm\" or \"16:00\".", style = PaperType.postscript, color = paper.usuzumi1)
+        Text("How times are written in the planner: \"4:00 pm\" or \"16:00\".", style = PaperType.quiet, color = paper.usuzumi1)
     }
+    // v0.5's fonts: Japanese on first use, and the fonts you've added as hands.
+    dev.aiharness.app.ui.settings.japaneseFontsCard(this)
+    card { dev.aiharness.app.ui.paper.YourFontsCard() }
 }
 
 // --- 二 Heartbeat ------------------------------------------------------------------------------
@@ -518,7 +521,7 @@ internal fun SettingsCards.aboutPage() {
     card {
         CardTitle("Thanks and licenses")
         Text(
-            "Colors: madoromi by samhain (madoromi.moonwit.ch), MPL-2.0.\nFonts: Cormorant Garamond, Literata, LINE Seed JP, Yuji Syuku, Klee One and Old Standard TT, SIL Open Font License 1.1.",
+            "Colors: madoromi by samhain (madoromi.moonwit.ch), MPL-2.0.\nFonts: Zen Old Mincho, Literata, Zen Kaku Gothic New, Yomogi, Yuji Syuku and Old Standard TT, SIL Open Font License 1.1.",
             style = PaperType.prose,
             color = paper.usuzumi1,
         )
@@ -579,5 +582,15 @@ private fun FontLicence() {
             color = paper.usuzumi0,
             modifier = Modifier.background(lerp(paper.kami, paper.hyoshi, 0.5f)).padding(8.dp),
         )
+    }
+}
+
+/** Japanese fonts: whether they're here, and getting them now (for using the app offline). */
+internal fun japaneseFontsCard(cards: SettingsCards) = cards.card {
+    val fonts = dev.aiharness.app.platform.rememberJapaneseFonts() ?: return@card
+    CardTitle("Japanese")
+    Hint("The faces' Japanese downloads the first time Japanese shows. Until then it's in the ${dev.aiharness.app.platform.deviceNoun}'s own fonts. ${fonts.state}.")
+    if (fonts.state.startsWith("Not") || fonts.state.startsWith("Couldn't")) {
+        dev.aiharness.app.ui.paper.PaperButton("Download Japanese fonts now · about ${fonts.aboutMb} MB", Modifier.fillMaxWidth()) { fonts.download() }
     }
 }

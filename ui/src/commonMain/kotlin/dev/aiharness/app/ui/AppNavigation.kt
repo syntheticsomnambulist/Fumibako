@@ -137,6 +137,8 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
     }
     RequestNotificationPermission()
     dev.aiharness.app.ui.transfer.IncomingFiles(nav)
+    // On a phone set to Japanese, the Japanese faces come straight away.
+    dev.aiharness.app.platform.NoticeJapanese(if (java.util.Locale.getDefault().language == "ja") "日本語" else null)
 
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
