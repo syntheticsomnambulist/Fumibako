@@ -88,11 +88,11 @@ fun TypicalWeekScreen(nav: NavController) {
         ) {
             Text(
                 "What comes round each week, printed faintly on every day. Work and sleep make you busy: a persona who sees your planner is told you're at work, or asleep, and until when.",
-                style = PaperType.postscript,
+                style = PaperType.quiet,
                 color = colors.usuzumi1,
             )
             routines.forEach { r -> RoutineCard(r, clock, ink, onSave = vm::save, onDelete = vm::delete) }
-            if (routines.isEmpty()) Text("Nothing yet.", style = PaperType.postscript, color = colors.kasure2)
+            if (routines.isEmpty()) Text("Nothing yet.", style = PaperType.quiet, color = colors.kasure2)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val add = { kind: RoutineKind, title: String, days: List<Int>, from: Int, to: Int ->
                     vm.blank(EntryKind.ROUTINE)?.let { vm.save(it.copy(title = title, routine = kind, weekly = Weekly(days, from, to), busy = kind != RoutineKind.OTHER)) }
@@ -150,7 +150,7 @@ private fun RoutineCard(entry: PlannerEntry, clock: ClockFormat, ink: Color, onS
             TimeField("From", LocalTime.of(weekly.from / 60 % 24, weekly.from % 60), clock, ink, Modifier.weight(1f)) { t -> change(r.copy(weekly = weekly.copy(from = t.hour * 60 + t.minute))) }
             TimeField("To", LocalTime.of(weekly.to / 60 % 24, weekly.to % 60), clock, ink, Modifier.weight(1f)) { t -> change(r.copy(weekly = weekly.copy(to = t.hour * 60 + t.minute))) }
         }
-        if (weekly.crossesMidnight) Text("It runs past midnight, into the next morning.", style = PaperType.postscript, color = colors.usuzumi1)
+        if (weekly.crossesMidnight) Text("It runs past midnight, into the next morning.", style = PaperType.quiet, color = colors.usuzumi1)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             if (r.routine == RoutineKind.OTHER) LabeledTick("Busy", r.busy, ink) { change(r.copy(busy = it)) }
             PaperButton("Take it out") { onDelete(r) }

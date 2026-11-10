@@ -278,7 +278,7 @@ fun ModelEditScreen(nav: NavController, profileId: String) {
                 if (profile.provider == ProviderType.OPENAI_COMPATIBLE) {
                     SwitchRow("Sees pictures", profile.supportsVision, { v -> update { it.copy(supportsVision = v) } })
                 }
-                Text(takesIn(MediaSupport.of(profile)), style = PaperType.postscript, color = paper.usuzumi1)
+                Text(takesIn(MediaSupport.of(profile)), style = PaperType.quiet, color = paper.usuzumi1)
                 if (profile.provider != ProviderType.ANTHROPIC) {
                     IndexCardField("Extra request fields (JSON)", extraBodyText, { extraBodyText = it }, ink = you, style = PaperType.noteBody, placeholder = "{\"min_p\": 0.05}")
                 }

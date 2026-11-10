@@ -115,6 +115,8 @@ object PaperType {
     val letterBody: TextStyle get() = TextStyle(fontFamily = HarnessFonts.Read, fontSize = 15.5.sp, lineHeight = 24.sp)
     /** A P.S., her thoughts, a line in her voice: in the hand here ([LocalHand]). */
     val postscript: TextStyle @Composable get() = inHand(15f, 20f)
+    /** A quiet line in the interface (a hint under a setting, a tray's note): printed, in Literata's real italic. */
+    val quiet: TextStyle get() = TextStyle(fontFamily = HarnessFonts.Read, fontStyle = FontStyle.Italic, fontSize = 13.5.sp, lineHeight = 20.sp)
     /** Her mood word, in the hand here. */
     val mood: TextStyle @Composable get() = inHand(15f, 20f)
     val preview: TextStyle get() = TextStyle(fontFamily = HarnessFonts.Read, fontSize = 14.sp, lineHeight = 20.sp)

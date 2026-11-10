@@ -260,7 +260,7 @@ fun VideoPlayer(
                     Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                         Text(video.title ?: video.name ?: "A video", style = PaperType.noteBody, color = Light, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text("From $from", style = PaperType.meta, color = Dim)
-                        line(video)?.let { Text(it, style = PaperType.postscript, color = Dim) }
+                        line(video)?.let { Text(it, style = PaperType.quiet, color = Dim) }
                     }
                     if (videos.size > 1) {
                         ViewerButton(Icons.Rounded.ChevronLeft, "Previous clip", enabled = index > 0) { index-- }

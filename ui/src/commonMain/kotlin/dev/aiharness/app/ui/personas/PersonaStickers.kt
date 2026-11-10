@@ -100,7 +100,7 @@ fun PersonaStickersScreen(nav: NavController, personaId: String) {
             if (sheet.isEmpty()) {
                 Text(
                     "No stickers yet. Draw one below, or let ${p.name} draw some now and then.",
-                    style = PaperType.postscript,
+                    style = PaperType.quiet,
                     color = paper.usuzumi1,
                 )
             } else {
@@ -109,7 +109,7 @@ fun PersonaStickersScreen(nav: NavController, personaId: String) {
                     Text(
                         "Tap one to rename it, say what feeling it stands for, or take it off the sheet. A sticker's feeling " +
                             "lets it stand in for ${p.name}'s stamps in the memory book." + (mark?.let { " Unread letters wear :${it.name}:." } ?: ""),
-                        style = PaperType.postscript.copy(fontSize = 13.sp),
+                        style = PaperType.quiet.copy(fontSize = 13.sp),
                         color = paper.kasure2,
                     )
                 }
@@ -190,8 +190,8 @@ private fun DrawSticker(p: Persona, ready: Boolean, full: Boolean, ink: Color) {
     Column(Modifier.paperCard().fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Draw a new one", style = PaperType.entryTitle, color = paper.sumi)
         when {
-            !ready -> Text("To draw stickers, add an image profile in Settings, Pictures.", style = PaperType.postscript, color = paper.usuzumi1)
-            full -> Text("${p.name}'s sheet is full (${StickerMaker.SHEET_SIZE}). Take one off to draw another.", style = PaperType.postscript, color = paper.usuzumi1)
+            !ready -> Text("To draw stickers, add an image profile in Settings, Pictures.", style = PaperType.quiet, color = paper.usuzumi1)
+            full -> Text("${p.name}'s sheet is full (${StickerMaker.SHEET_SIZE}). Take one off to draw another.", style = PaperType.quiet, color = paper.usuzumi1)
             else -> {
                 IndexCardField("What it shows", shows, { shows = it }, placeholder = "sleepy, hugging a pillow", ink = ink)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -200,7 +200,7 @@ private fun DrawSticker(p: Persona, ready: Boolean, full: Boolean, ink: Color) {
                 }
                 Text(
                     "Drawn with how ${p.name} looks, what ${p.words(6).they} ${p.words(6).be} wearing and ${p.words(6).their} drawing style, on a plain background, then cut out.",
-                    style = PaperType.postscript.copy(fontSize = 13.sp),
+                    style = PaperType.quiet.copy(fontSize = 13.sp),
                     color = paper.kasure2,
                 )
                 val result = drawn
@@ -229,7 +229,7 @@ private fun DrawSticker(p: Persona, ready: Boolean, full: Boolean, ink: Color) {
                         }
                     }
                 }
-                problem?.let { Text(it, style = PaperType.postscript, color = stationery.ink("beni")) }
+                problem?.let { Text(it, style = PaperType.quiet, color = stationery.ink("beni")) }
             }
         }
     }
@@ -246,7 +246,7 @@ private fun PlannerMarks(p: Persona, sheet: List<StickerArt>, dayInk: Color, ink
     val marks = p.planner
     Column(Modifier.paperCard().fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("${p.name}'s marks in your planner", style = PaperType.entryTitle, color = paper.sumi)
-        Text("${p.name} can choose these too, and picks a seal when your planner is first shared.", style = PaperType.postscript.copy(fontSize = 13.sp), color = paper.kasure2)
+        Text("${p.name} can choose these too, and picks a seal when your planner is first shared.", style = PaperType.quiet.copy(fontSize = 13.sp), color = paper.kasure2)
         var seal by remember(marks.seal) { mutableStateOf(marks.seal.orEmpty()) }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             dev.aiharness.app.ui.planner.PersonaSeal(p, size = 30.dp)

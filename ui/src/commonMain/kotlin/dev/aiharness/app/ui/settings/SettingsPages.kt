@@ -83,8 +83,6 @@ internal fun Hint(text: String) {
 // --- 一 Look ------------------------------------------------------------------------------------
 
 internal fun SettingsCards.lookPage(s: AppSettings, update: Update) {
-    dev.aiharness.app.ui.settings.japaneseFontsCard(this)
-    card { dev.aiharness.app.ui.paper.YourFontsCard() }
     card { LookDayNight(s, update) }
     card { LookSeasons(s, update) }
     card { LookPaper(s, update) }
@@ -96,8 +94,11 @@ internal fun SettingsCards.lookPage(s: AppSettings, update: Update) {
             { v -> update { it.copy(theme = it.theme.copy(clock = v)) } },
             maxLines = 2,
         )
-        Text("How times are written in the planner: \"4:00 pm\" or \"16:00\".", style = PaperType.postscript, color = paper.usuzumi1)
+        Text("How times are written in the planner: \"4:00 pm\" or \"16:00\".", style = PaperType.quiet, color = paper.usuzumi1)
     }
+    // v0.5's fonts: Japanese on first use, and the fonts you've added as hands.
+    dev.aiharness.app.ui.settings.japaneseFontsCard(this)
+    card { dev.aiharness.app.ui.paper.YourFontsCard() }
 }
 
 // --- 二 Heartbeat ------------------------------------------------------------------------------
