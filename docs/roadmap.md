@@ -38,11 +38,12 @@ Updated 2026-11-10.
   - **Waiting for the user:** a debug APK for friends (signed with the shared key), and a GitHub
     Actions build for the installers (Windows by default; macOS and Linux if wanted). Until
     friends have 0.5.0, the database keeps its steps from version 2.
-  - Before the build: the day page showing the previous day's stickers after "Saturday >" (found
-    on the computer, shared code) is with the build session to fix.
+  - Fixed before the build (2026-11-10): a day page showed the day before's stickers after "‹ ›"
+    (c8c555a, in the shared sticker code, with a test), and on the computer emoji stickers drew in
+    black even with a color emoji font (a2a2b40).
   - Still open after step 8: the large-text phone tour fails now and then at different steps
-    here (6 of 11 runs on 2026-11-10, always on the personas gallery's waits, which can run while
-    the gallery is scrolled down; the build session saw 12 passes in a row), and the desktop tour doesn't visit the import and export pages yet (in the test harness,
+    here. The personas gallery's waits are fixed (49eac57, 1cab062); after them, 2 of 3 runs passed
+    and the third failed on the persona page's scrollTo("Open sheet"), the same kind of wait, and the desktop tour doesn't visit the import and export pages yet (in the test harness,
     Open a backup's preview card failed to show in 2 or 3 of 5 runs; it shows every time in a
     real window). The side rail's tab for the transfer pages is fixed.
   - The stationery update goes in whole, as designed, with no changes until friends have installed
