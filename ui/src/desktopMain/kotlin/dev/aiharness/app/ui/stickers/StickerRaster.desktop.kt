@@ -25,7 +25,12 @@ internal actual object StickerRaster {
     actual fun emoji(emoji: String): StickerPixels? {
         val size = StickerBaker.CONTENT
         val surface = Surface.makeRasterN32Premul(size, size)
-        val typeface = FontMgr.default.matchFamilyStyleCharacter(null, org.jetbrains.skia.FontStyle.NORMAL, null, emoji.codePointAt(0))
+        // Asked as emoji ("und-Zsye"), the system gives its color emoji face (Segoe UI Emoji, Apple Color
+        // Emoji, Noto Color Emoji); asked for any face with the character, it can give a plain one
+        // (DejaVu Sans, Unifont, Segoe UI Symbol), and the sticker comes out black.
+        val codePoint = emoji.codePointAt(0)
+        val typeface = FontMgr.default.matchFamilyStyleCharacter(null, org.jetbrains.skia.FontStyle.NORMAL, arrayOf("und-Zsye"), codePoint)
+            ?: FontMgr.default.matchFamilyStyleCharacter(null, org.jetbrains.skia.FontStyle.NORMAL, null, codePoint)
         val font = Font(typeface, size * 0.8f)
         val line = TextLine.make(emoji, font)
         surface.canvas.drawTextLine(line, (size - line.width) / 2f, size / 2f - (line.ascent + line.descent) / 2f, Paint().apply { isAntiAlias = true })
