@@ -326,6 +326,7 @@ val LocalInlineStickers = staticCompositionLocalOf<Map<String, StickerArt>> { em
 /** Letter text with its `:name:` stickers drawn inline at the text's height, and a search's words marked. */
 @Composable
 fun StickerText(text: String, accent: Color, style: androidx.compose.ui.text.TextStyle, color: Color, marks: Marks? = null) {
+    dev.aiharness.app.platform.NoticeJapanese(text)
     val stickers = LocalInlineStickers.current
     val formatted = formatChatText(text, accent, stickers.keys)
     val used = stickers.filterKeys { formatted.text.isNotEmpty() && text.contains(":$it:") }

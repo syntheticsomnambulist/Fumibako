@@ -83,6 +83,7 @@ internal fun Hint(text: String) {
 // --- 一 Look ------------------------------------------------------------------------------------
 
 internal fun SettingsCards.lookPage(s: AppSettings, update: Update) {
+    dev.aiharness.app.ui.settings.japaneseFontsCard(this)
     card { LookDayNight(s, update) }
     card { LookSeasons(s, update) }
     card { LookPaper(s, update) }
@@ -579,5 +580,15 @@ private fun FontLicence() {
             color = paper.usuzumi0,
             modifier = Modifier.background(lerp(paper.kami, paper.hyoshi, 0.5f)).padding(8.dp),
         )
+    }
+}
+
+/** Japanese fonts: whether they're here, and getting them now (for using the app offline). */
+internal fun japaneseFontsCard(cards: SettingsCards) = cards.card {
+    val fonts = dev.aiharness.app.platform.rememberJapaneseFonts() ?: return@card
+    CardTitle("Japanese")
+    Hint("The faces' Japanese downloads the first time Japanese shows. Until then it's in the ${dev.aiharness.app.platform.deviceNoun}'s own fonts. ${fonts.state}.")
+    if (fonts.state.startsWith("Not") || fonts.state.startsWith("Couldn't")) {
+        dev.aiharness.app.ui.paper.PaperButton("Download Japanese fonts now · about ${fonts.aboutMb} MB", Modifier.fillMaxWidth()) { fonts.download() }
     }
 }

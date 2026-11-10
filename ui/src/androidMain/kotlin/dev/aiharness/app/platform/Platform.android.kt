@@ -297,6 +297,26 @@ private class AndroidOutside(private val context: Context, private val blobs: Fi
 actual fun decodeImage(bytes: ByteArray): ImageBitmap? = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
 
 @Composable
+actual fun rememberJapaneseFonts(): JapaneseFontsInfo? {
+    val context = LocalContext.current
+    val fonts = dev.aiharness.app.ui.theme.JapaneseFonts
+    val state = when (fonts.state) {
+        dev.aiharness.app.ui.theme.JapaneseFonts.State.NOT_YET -> "Not downloaded yet"
+        dev.aiharness.app.ui.theme.JapaneseFonts.State.COMING -> "Downloading…"
+        dev.aiharness.app.ui.theme.JapaneseFonts.State.HERE -> "Downloaded"
+        dev.aiharness.app.ui.theme.JapaneseFonts.State.CANT -> "Couldn't download them (they come through Google Play services)"
+    }
+    return JapaneseFontsInfo(state, dev.aiharness.app.ui.theme.JapaneseFonts.ABOUT_MB) { fonts.need(context) }
+}
+
+@Composable
+actual fun NoticeJapanese(text: String?) {
+    if (!hasJapanese(text)) return
+    val context = LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(Unit) { dev.aiharness.app.ui.theme.JapaneseFonts.need(context) }
+}
+
+@Composable
 actual fun downloadedHand(name: String): androidx.compose.ui.text.font.FontFamily? {
     val context = LocalContext.current
     androidx.compose.runtime.LaunchedEffect(name) { ProvidedFonts.ask(context.applicationContext, name) }

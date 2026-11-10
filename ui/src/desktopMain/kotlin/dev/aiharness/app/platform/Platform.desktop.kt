@@ -256,6 +256,12 @@ object Toasts {
 
 actual fun decodeImage(bytes: ByteArray): ImageBitmap? = runCatching { Image.makeFromEncoded(bytes).toComposeImageBitmap() }.getOrNull()
 
+@Composable
+actual fun rememberJapaneseFonts(): JapaneseFontsInfo? = null
+
+@Composable
+actual fun NoticeJapanese(text: String?) = Unit
+
 /** Not yet on a computer (desktop step 6): Yomogi stands in. */
 @Composable
 actual fun downloadedHand(name: String): androidx.compose.ui.text.font.FontFamily? = null

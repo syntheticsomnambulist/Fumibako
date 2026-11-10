@@ -412,6 +412,7 @@ private fun LetterBoxRow(conversation: Conversation, persona: Persona?, now: Lon
 
 @Composable
 private fun LetterBoxRowInHand(conversation: Conversation, persona: Persona?, now: Long, open: Boolean, modifier: Modifier) {
+    dev.aiharness.app.platform.NoticeJapanese((persona?.name ?: conversation.title) + " " + conversation.preview.orEmpty())
     val s = stationery
     val ink = s.ink(persona?.ink)
     val who = persona ?: Persona(id = conversation.personaId, name = conversation.title, createdAt = 0, updatedAt = 0)
