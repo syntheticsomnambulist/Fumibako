@@ -835,6 +835,13 @@ class ScreenshotTour {
         compose.waitUntil(10_000) { runCatching { compose.onNode(hasClickActionLabel("Stick stickers on this day")).assertIsDisplayed() }.isSuccess }
         shot("${prefix}_24h_planner_day")
         back()
+        // Today's page: the now line, and what has ended waiting for its stamp.
+        val today = java.time.LocalDate.now()
+        compose.onAllNodes(hasClickActionLabel("Open ${today.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.US)} ${today.dayOfMonth}", substring = true)).onFirst().performClick()
+        compose.waitUntil(10_000) { runCatching { compose.onNode(hasClickActionLabel("Stick stickers on this day")).assertIsDisplayed() }.isSuccess }
+        compose.waitForIdle()
+        shot("${prefix}_24h2_planner_today")
+        back()
         // The month page, and back to the week.
         compose.onNode(hasClickActionLabel("Open the Month page")).performClick()
         compose.waitUntilAtLeastOneExists(hasContentDescription("Month, the page you're on"), 10_000)

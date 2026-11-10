@@ -152,8 +152,8 @@ data class PlanDraft(
 }
 
 /**
- * A day of the planner: everything on it in time order (your typical week's bands, your plans,
- * what's untimed), and "Add a plan", which opens a plan's card.
+ * A day of the planner: header B, then everything on it as a list in time order (see [DayList]),
+ * "Add a plan", which opens a plan's card, and who sees your planner at the foot.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -220,23 +220,24 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                 vm.holidaysOn(day).forEach { name ->
                     Text(name.uppercase() + " · PUBLIC HOLIDAY", style = PaperType.meta.copy(fontSize = 11.sp), color = beni())
                 }
-                val timed = occurrences.filter { it.start != null }.sortedBy { it.start }
-                val untimed = occurrences.filter { it.start == null }
                 // A phone calendar's event opens in the phone's calendar app; yours, its card.
                 val open = { o: Occurrence -> if (o.entry.phone != null) outside.openPhoneEvent(o.entry) else card = PlanDraft.of(o.entry, day, vm.zone) }
-                timed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { open(o) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
-                untimed.forEach { o -> DayRow(o, day, clock, vm.zone, ink, onOpen = { open(o) }, onStamp = { vm.stamp(o.entry, EntryState.DONE) }) }
-                if (occurrences.isEmpty()) Text("Nothing planned yet.", style = PaperType.postscript, color = colors.usuzumi1)
-                // What your personas wrote on this day.
-                theirs.forEach { o ->
-                    val persona = personas.firstOrNull { it.id == o.entry.byPersonaId } ?: return@forEach
-                    PersonaSlip(
-                        o, persona, vm.zone, { vm.hemisphere(settings) }, clock, onAdd = vm::addSuggestion,
-                        onDecline = { e -> vm.declineSuggestion(e); takenDown += e.id },
-                        takenDown = o.entry.id in takenDown,
-                        onPutBack = { e -> vm.putBackSuggestion(e); takenDown -= e.id },
-                    )
-                }
+                // Everything on the day in time order, what your personas wrote among it.
+                DayList(
+                    day = day, today = today, now = vm.now(), yours = occurrences, theirs = theirs, personas = personas, clock = clock, zone = vm.zone,
+                    actions = DayActions(
+                        open = open,
+                        stamp = { e, state -> vm.stamp(e, state) },
+                        slip = { o, persona ->
+                            PersonaSlip(
+                                o, persona, vm.zone, { vm.hemisphere(settings) }, clock, onAdd = vm::addSuggestion,
+                                onDecline = { e -> vm.declineSuggestion(e); takenDown += e.id },
+                                takenDown = o.entry.id in takenDown,
+                                onPutBack = { e -> vm.putBackSuggestion(e); takenDown -= e.id },
+                            )
+                        },
+                    ),
+                )
                 PaperButton("+ Add a plan", modifier = Modifier.padding(top = 6.dp)) { card = PlanDraft.new(day) }
                 // Who sees your planner, at the foot, quietly.
                 WhoSees(seenBy.map { it.name }) { nav.navigate(dev.aiharness.app.ui.Routes.settings("planner")) }
@@ -294,60 +295,6 @@ internal fun WhoSees(seenBy: List<String>, onWho: () -> Unit) {
             color = androidx.compose.ui.graphics.lerp(ink, colors.sumi, 0.3f),
             modifier = Modifier.heightIn(min = 32.dp).clickable(role = Role.Button, onClickLabel = "Choose who sees your planner", onClick = onWho).padding(vertical = 8.dp),
         )
-    }
-}
-
-/** One thing on a day: a band of your typical week, a plan at a time (○), or an untimed one (•). */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun DayRow(o: Occurrence, day: LocalDate, clock: ClockFormat, zone: ZoneId, ink: Color, onOpen: () -> Unit, onStamp: () -> Unit) {
-    val colors = paper
-    val e = o.entry
-    val busy = Planner.isBusy(e)
-    val start = o.start?.let { clock.time(PlannerDays.minuteOf(it, day, zone)) }
-    val end = o.end?.takeIf { it != o.start }?.let { clock.time(PlannerDays.minuteOf(it, day, zone)) }
-    if (e.kind == EntryKind.ROUTINE) {
-        val what = e.title.ifBlank { if (e.routine == RoutineKind.SLEEP) "Sleep" else if (e.routine == RoutineKind.WORK) "Work" else "Routine" }
-        // Until when it really ends: sleep from 23:00 runs to the morning, past this day's midnight.
-        val end = e.weekly?.let { clock.time(it.to) } ?: end
-        Row(
-            Modifier.fillMaxWidth().background(colors.chitsu, RoundedCornerShape(2.dp)).clickable(onClickLabel = "Open your typical week's $what") { onOpen() }
-                .padding(start = 4.dp, end = 10.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Box(Modifier.width(4.dp).heightIn(min = 18.dp).then(if (busy) Modifier.hatched(colors.kasure2) else Modifier))
-            Text(start ?: "", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp), color = colors.usuzumi1, modifier = Modifier.width(72.dp), maxLines = 1, softWrap = false)
-            Text(
-                listOfNotNull(what.uppercase() + (end?.let { " UNTIL $it" } ?: ""), "YOUR TYPICAL WEEK".takeIf { !busy }, "BUSY".takeIf { busy }).joinToString(" · "),
-                style = PaperType.meta.copy(fontSize = 10.5.sp),
-                color = colors.usuzumi1,
-            )
-        }
-        return
-    }
-    Row(
-        Modifier.fillMaxWidth()
-            .combinedClickable(onClickLabel = "Open ${e.title}", onLongClickLabel = "Stamp it done", onLongClick = onStamp, onClick = onOpen)
-            .onRightClick(onStamp)
-            .drawBehind { drawLine(colors.nijimi1, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx()) }
-            .padding(start = 4.dp, top = 6.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Box(Modifier.width(4.dp).heightIn(min = 18.dp).then(if (busy) Modifier.hatched(colors.kasure2) else Modifier))
-        Text(start ?: if (e.allDay) "all day" else "any time", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 11.5.sp), color = colors.usuzumi1, modifier = Modifier.width(72.dp), maxLines = 1, softWrap = false)
-        Column(Modifier.weight(1f)) {
-            val pencil = e.phone != null
-            Text(
-                (if (start != null) "○ " else "• ") + e.title.ifBlank { if (pencil) "Busy" else "A plan" } + (end?.let { ", until $it" } ?: ""),
-                style = TextStyle(fontFamily = if (pencil) HarnessFonts.Hand else HarnessFonts.Read, fontSize = 15.sp, textDecoration = if (e.state == EntryState.CANCELLED) TextDecoration.LineThrough else null),
-                color = if (pencil) Pencil else ink,
-            )
-            val meta = listOfNotNull(e.phone?.let { "PHONE · ${it.uppercase()}" }, e.place?.uppercase(), "BUSY".takeIf { busy }, "MOVED".takeIf { e.movedFrom != null }, "NOT GOING".takeIf { pencil && e.state == EntryState.CANCELLED }).joinToString(" · ")
-            if (meta.isNotEmpty()) Text(meta, style = PaperType.meta.copy(fontSize = 10.5.sp), color = colors.kasure2)
-        }
-        stampOf(e)?.let { Stamp(it, ink, size = 22.dp) }
     }
 }
 
