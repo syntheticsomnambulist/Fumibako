@@ -64,7 +64,8 @@ enum class SettingsSection(val key: String, val kanji: String, val title: String
     PROMPTING("prompting", "八", "Prompting"),
     MEDIA("media", "九", "Media"),
     PLANNER("planner", "十", "Planner"),
-    ABOUT("about", "十一", "About"),
+    TRANSFER("transfer", "十一", "Import and export"),
+    ABOUT("about", "十二", "About"),
     ;
 
     companion object {
@@ -158,6 +159,7 @@ private fun summary(section: SettingsSection, s: AppSettings, profileCount: Int,
         "Weeks from ${if (s.planner.weekStartsSunday) "Sun" else "Mon"}",
         s.planner.holidays.takeIf { it.show }?.country?.let { "$it holidays" },
     ).joinToString(" · ")
+    SettingsSection.TRANSFER -> "Cards and backups"
     SettingsSection.ABOUT -> listOfNotNull(version?.let { "v$it" }, "licenses").joinToString(" · ")
 }
 
@@ -189,6 +191,7 @@ fun SettingsSectionScreen(nav: NavController, key: String) {
             SettingsSection.PROMPTING -> promptingPage(s, update)
             SettingsSection.MEDIA -> mediaPage(s, update)
             SettingsSection.PLANNER -> plannerPage(nav, s, update)
+            SettingsSection.TRANSFER -> transferPage(nav)
             SettingsSection.ABOUT -> aboutPage()
             SettingsSection.YOU -> Unit
         }

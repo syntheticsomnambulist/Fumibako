@@ -191,6 +191,7 @@ interface HarnessDao {
     suspend fun stickers(conversationId: String): List<StickerEntity>
 
     @Query("SELECT * FROM stickers WHERE id = :id") suspend fun sticker(id: String): StickerEntity?
+    @Query("SELECT * FROM stickers ORDER BY rowid") suspend fun allStickers(): List<StickerEntity>
 
     @Query("SELECT * FROM stickers WHERE conversationId = :conversationId AND updatedAt > :since ORDER BY updatedAt, rowid")
     suspend fun stickersChangedSince(conversationId: String, since: Long): List<StickerEntity>

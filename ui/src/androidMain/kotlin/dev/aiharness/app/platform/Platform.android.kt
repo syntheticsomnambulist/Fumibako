@@ -58,6 +58,7 @@ import dev.aiharness.app.ui.media.FrameActions
 import dev.aiharness.core.model.ContentPart
 import dev.aiharness.core.model.PlannerEntry
 import java.io.File
+import kotlinx.coroutines.launch
 import java.time.LocalTime
 
 /*
@@ -259,6 +260,19 @@ private class AndroidOutside(private val context: Context, private val blobs: Fi
 
     override fun share(ref: String?, mime: String?, url: String?) = FrameActions.share(context, blobs, ref, mime, url)
 
+    /** Copied into the cache's exports folder first, which the file provider can hand out, under its own name. */
+    override fun shareFile(file: File, name: String, mime: String) {
+        runCatching {
+            val dir = File(context.cacheDir, "exports").apply { mkdirs() }
+            dir.listFiles()?.forEach { it.delete() }
+            val named = File(dir, name.replace('/', '-'))
+            file.copyTo(named, overwrite = true)
+            val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.files", named)
+            val send = Intent(Intent.ACTION_SEND).setType(mime).putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }.onFailure { toast("Couldn't share it.") }
+    }
+
     override suspend fun save(ref: String?, mime: String?, name: String?): Boolean = FrameActions.save(context, blobs, ref, mime, name)
 
     override fun copyText(text: String, label: String) {
@@ -281,6 +295,42 @@ private class AndroidOutside(private val context: Context, private val blobs: Fi
 }
 
 actual fun decodeImage(bytes: ByteArray): ImageBitmap? = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+
+actual fun pngOf(bytes: ByteArray): ByteArray? = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { bitmap ->
+    java.io.ByteArrayOutputStream().also { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+}
+
+/** Android's save dialog (a document the user names and places), then the file copied into it. */
+@Composable
+actual fun rememberSaveAs(onSaved: (Boolean) -> Unit): (file: File, name: String, mime: String) -> Unit {
+    val context = LocalContext.current
+    val saved by rememberUpdatedState(onSaved)
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var pending by remember { mutableStateOf<File?>(null) }
+    val launcher = rememberLauncherForActivityResult(SaveDocument) { uri ->
+        val file = pending
+        pending = null
+        if (uri == null || file == null) {
+            saved(false)
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
+            val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching { context.contentResolver.openOutputStream(uri)?.use { out -> file.inputStream().use { it.copyTo(out) } } != null }.getOrDefault(false)
+            }
+            dev.aiharness.app.ui.onMain { saved(ok) }
+        }
+    }
+    return remember(launcher) { { file, name, mime -> pending = file; launcher.launch(name to mime) } }
+}
+
+/** ACTION_CREATE_DOCUMENT with the type chosen per file (the stock contract fixes it once). */
+private object SaveDocument : androidx.activity.result.contract.ActivityResultContract<Pair<String, String>, Uri?>() {
+    override fun createIntent(context: Context, input: Pair<String, String>): Intent =
+        Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(input.second).putExtra(Intent.EXTRA_TITLE, input.first)
+
+    override fun parseResult(resultCode: Int, intent: Intent?): Uri? = intent?.data.takeIf { resultCode == Activity.RESULT_OK }
+}
 
 actual fun decodeSampledImage(file: File, maxSize: Int): ImageBitmap? {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }

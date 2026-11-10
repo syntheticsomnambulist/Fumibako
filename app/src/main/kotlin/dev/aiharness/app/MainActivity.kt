@@ -31,6 +31,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         openConversation.value = intent?.getStringExtra(EXTRA_CONVERSATION_ID)
         val container = (application as HarnessApp).container
+        // A card or backup opened or shared into the app (not again when the activity is recreated).
+        if (savedInstanceState == null) intent?.let(::fileFrom)?.let { container.transfers.incoming.value = it }
         setContent {
             CompositionLocalProvider(LocalAppContainer provides container) {
                 AppTheme { AppNavigation(openConversation) }
@@ -73,6 +75,22 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         intent.getStringExtra(EXTRA_CONVERSATION_ID)?.let { openConversation.value = it }
+        fileFrom(intent)?.let { (application as HarnessApp).container.transfers.incoming.value = it }
+    }
+
+    /** The file an intent brings: one opened with the app (VIEW) or shared to it (SEND). */
+    private fun fileFrom(intent: Intent): dev.aiharness.app.platform.Picked? {
+        val uri: android.net.Uri? = when (intent.action) {
+            Intent.ACTION_VIEW -> intent.data
+            Intent.ACTION_SEND -> if (android.os.Build.VERSION.SDK_INT >= 33) {
+                intent.getParcelableExtra(Intent.EXTRA_STREAM, android.net.Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(Intent.EXTRA_STREAM)
+            }
+            else -> null
+        }
+        return uri?.let { dev.aiharness.app.platform.Picked(it.toString()) }
     }
 
     companion object {

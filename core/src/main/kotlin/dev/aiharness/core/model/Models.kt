@@ -97,9 +97,15 @@ data class Persona(
     val personality: String = "",
     val scenario: String = "",
     val greeting: String = "",
+    /** Other first letters to pick from when you start writing (a card's `alternate_greetings`). */
+    val alternateGreetings: List<String> = emptyList(),
     val exampleDialogue: String = "",
     /** Replaces the generated role section of the system prompt. Supports {{char}} / {{user}}. */
     val systemPromptOverride: String? = null,
+    /** Goes at the end of each turn's context (a card's `post_history_instructions`). Supports {{char}} / {{user}}. */
+    val postHistoryInstructions: String? = null,
+    /** The character card it came from, when it came from one. */
+    val fromCard: CardOrigin? = null,
     /** The body and traits that never change (hair, eyes, build, glasses), as image tags. */
     @SerialName("appearanceTags")
     val selfPrompt: String = "",
@@ -112,6 +118,8 @@ data class Persona(
     /** The image profile its pictures are drawn with; null uses the default. */
     val imageProfileId: String? = null,
     val avatarRef: String? = null,
+    /** Portraits for its moods, beside its portrait (a card's `emotion` assets). */
+    val moodPortraits: List<MoodPortrait> = emptyList(),
     val defaultModelProfileId: String? = null,
     val heartbeatEnabled: Boolean = true,
     /** This persona's own heartbeat rhythm; null follows the usual settings. */
@@ -152,6 +160,26 @@ data class Persona(
     /** What the persona is wearing: the outfit it changed into, or its usual one. */
     val currentOutfit: String get() = outfit ?: defaultOutfit
 }
+
+/**
+ * Where a persona from a character card came from: what the card said of itself, and the card as
+ * it came ([cardRef], its JSON), so exporting her gives back the fields Fumibako doesn't use.
+ */
+@Serializable
+data class CardOrigin(
+    val creator: String = "",
+    val version: String = "",
+    val tags: List<String> = emptyList(),
+    /** "From the card's creator" (`creator_notes`): shown to you, never sent to the persona. */
+    val creatorNotes: String = "",
+    /** The card's JSON, as a file. */
+    val cardRef: String? = null,
+    val importedAt: Long = 0,
+)
+
+/** One of a persona's mood portraits: the mood's name (happy, flustered) and the picture. */
+@Serializable
+data class MoodPortrait(val name: String, val ref: String)
 
 /** How a persona uses stickers. Peeling is each side's own by default. */
 @Serializable
@@ -695,6 +723,8 @@ data class MemoryEntry(
     val wontFade: Boolean = false,
     /** Words that bring it to mind whenever a letter has them (a lorebook entry's keys). */
     val recallWords: List<String> = emptyList(),
+    /** The card's lorebook entry it came from (its id), so exporting the card gives back the entry's settings. */
+    val loreEntryId: String? = null,
 ) {
     val isCore: Boolean get() = pinned || kind == MemoryKind.CORE
     val isReplaced: Boolean get() = replacedById != null

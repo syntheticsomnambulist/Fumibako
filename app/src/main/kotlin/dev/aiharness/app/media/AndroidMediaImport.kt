@@ -363,6 +363,14 @@ class AndroidMediaImport(private val context: Context, private val blobs: FileBl
     override suspend fun read(item: Picked): ByteArray? =
         runCatching { context.contentResolver.openInputStream(Uri.parse(item.uri))?.use { it.readBytes() } }.getOrNull()
 
+    override suspend fun copy(item: Picked, into: File): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            context.contentResolver.openInputStream(Uri.parse(item.uri))?.use { input -> into.outputStream().use { input.copyTo(it) } } != null
+        }.getOrDefault(false)
+    }
+
+    override fun nameOf(item: Picked): String? = Uri.parse(item.uri).let { uri -> nameAndSize(uri).first ?: uri.lastPathSegment }
+
     override fun cameraTarget(): Picked = Picked(cameraFile().second.toString())
 
     override val keepsSmallerCopies: Boolean get() = true

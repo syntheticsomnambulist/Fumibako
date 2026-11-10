@@ -303,6 +303,12 @@ class DesktopMedia(private val blobs: FileBlobStore) : MediaImporter {
 
     override suspend fun read(item: Picked): ByteArray? = fileOf(item)?.let { runCatching { it.readBytes() }.getOrNull() }
 
+    override suspend fun copy(item: Picked, into: File): Boolean = withContext(Dispatchers.IO) {
+        fileOf(item)?.let { runCatching { it.copyTo(into, overwrite = true); true }.getOrDefault(false) } ?: false
+    }
+
+    override fun nameOf(item: Picked): String? = fileOf(item)?.name
+
     override fun cameraTarget(): Picked? = null
 
     private fun mimeOf(name: String): String? = when (name.substringAfterLast('.', "").lowercase()) {

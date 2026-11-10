@@ -4,6 +4,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
 import dev.aiharness.core.model.AppSettings
 import dev.aiharness.core.storage.BlobStore
 import dev.aiharness.core.storage.SettingsRepository
@@ -32,6 +34,12 @@ class DataStoreSettingsRepository(private val store: DataStore<Preferences>) : S
             prefs[key] = HarnessJson.encodeToString(AppSettings.serializer(), transform(current))
         }
     }
+}
+
+/** The database's transactions, for runs of changes that must all happen or none (restoring a backup). */
+class RoomTransactor(private val database: dev.aiharness.app.data.db.HarnessDatabase) : dev.aiharness.core.storage.Transactor {
+    override suspend fun <T> inTransaction(block: suspend () -> T): T =
+        database.useWriterConnection { connection -> connection.immediateTransaction { block() } }
 }
 
 /** Pictures, stickers and attachments as files in [dir] (the app's private `blobs` folder). Refs look like `file:<name>`. */
@@ -80,6 +88,30 @@ class FileBlobStore(private val dir: File) : BlobStore {
         withContext(Dispatchers.IO) { fileFor(ref)?.delete() }
     }
 
+    override suspend fun open(ref: String): java.io.InputStream? = withContext(Dispatchers.IO) {
+        fileFor(ref)?.takeIf { it.exists() }?.inputStream()
+    }
+
+    override suspend fun sizeOf(ref: String): Long? = withContext(Dispatchers.IO) {
+        fileFor(ref)?.takeIf { it.exists() }?.length()
+    }
+
+    /** A backup's file comes back under its own name, unless that isn't a name this store makes. */
+    override suspend fun restore(ref: String, input: java.io.InputStream): String = withContext(Dispatchers.IO) {
+        val name = ref.removePrefix(PREFIX)
+        if (!ref.startsWith(PREFIX) || !REF_NAME.matches(name)) return@withContext putStream(input, ref.substringAfterLast('.', "bin"))
+        val target = File(dir, name)
+        if (target.exists()) {
+            input.close()
+        } else {
+            // Written beside it first, so a file cut short never stands in for the real one.
+            val part = File(dir, "$name.part")
+            part.outputStream().use { out -> input.use { it.copyTo(out) } }
+            if (!part.renameTo(target)) part.delete()
+        }
+        ref
+    }
+
     /** Every file stored here. */
     fun files(): List<File> = dir.listFiles()?.filter { it.isFile }.orEmpty()
 
@@ -90,5 +122,8 @@ class FileBlobStore(private val dir: File) : BlobStore {
 
     private companion object {
         const val PREFIX = "file:"
+
+        /** A name this store makes: a UUID and an extension. */
+        val REF_NAME = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.[A-Za-z0-9]{1,10}")
     }
 }

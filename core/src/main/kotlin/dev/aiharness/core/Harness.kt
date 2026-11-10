@@ -34,6 +34,7 @@ import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.ModelProfile
 import dev.aiharness.core.model.MoodTags
+import dev.aiharness.core.model.Persona
 import dev.aiharness.core.storage.ActivityRepository
 import dev.aiharness.core.storage.BlobStore
 import dev.aiharness.core.storage.ConversationRepository
@@ -102,6 +103,8 @@ class Harness(
     stickerCutter: StickerCutter = StickerCutter { it },
     /** The phone's calendars, read-only; the app supplies them (none here). */
     phoneCalendars: dev.aiharness.core.planner.PhoneCalendars? = null,
+    /** Makes a run of storage changes all or nothing (restoring a backup); the app's database supplies one. */
+    transactor: dev.aiharness.core.storage.Transactor = dev.aiharness.core.storage.Transactor.None,
     val log: (String) -> Unit = {},
 ) {
     val memory = MemoryService(memories, settings, embedderFactory ?: EmbedderFactory.default(::apiKey), clock, log)
@@ -133,6 +136,15 @@ class Harness(
         tools.register(dev.aiharness.core.letters.LetterSearchTool(search, userPersonas, clock))
     }
     val prompts = PromptAssembler()
+
+    /** Character cards coming in (Import a card, a lorebook into her memory book). */
+    val cards = dev.aiharness.core.transfer.CardImport(personas, memories, blobs, clock)
+
+    /** `.fumibako` backups out and in. */
+    val backups = dev.aiharness.core.transfer.Backups(
+        personas, userPersonas, profiles, credentials, secrets, conversations, memories, stickers, marks,
+        plannerEntries, activity, settings, blobs, transactor, clock,
+    )
     val planner: dev.aiharness.core.planner.Planner = dev.aiharness.core.planner.Planner(plannerEntries, clock, phoneCalendars, settings).also { planner ->
         tools.register(dev.aiharness.core.planner.PlannerLookTool(planner, clock))
         tools.register(dev.aiharness.core.planner.PlannerWriteTool(planner, plannerEntries, personas, clock, stickerService))
@@ -229,6 +241,29 @@ class Harness(
         }
         return created
     }
+
+    /** A persona's first letters: its greeting, then the others to pick from (a card's alternate greetings). */
+    fun greetingsOf(persona: Persona): List<String> = (listOf(persona.greeting) + persona.alternateGreetings).filter { it.isNotBlank() }
+
+    /**
+     * While a thread holds only the persona's first letter, swaps it for another of its greetings
+     * ([index] into [greetingsOf]). Returns false once you've written (the letter is then kept).
+     */
+    suspend fun swapGreeting(conversationId: String, index: Int): Boolean {
+        val conversation = conversations.get(conversationId) ?: return false
+        val persona = personas.get(conversation.personaId) ?: return false
+        val text = greetingsOf(persona).getOrNull(index) ?: return false
+        val only = conversations.getMessages(conversationId).singleOrNull()?.takeIf { it.role == MessageRole.ASSISTANT } ?: return false
+        val userPersona = (conversation.userPersonaId ?: settings.current().activeUserPersonaId)?.let { userPersonas.get(it) }
+        val greeting = prompts.substitute(text, persona.name, userPersona?.name ?: "you")
+        conversations.updateMessage(only.copy(parts = listOf(ContentPart.Text(greeting))))
+        conversations.upsert(conversation.copy(preview = Conversation.previewOf(MoodTags.strip(greeting))))
+        return true
+    }
+
+    /** Which of [persona]'s greetings [text] is, as written to [userName]; null when it's none of them. */
+    fun greetingIndex(persona: Persona, text: String, userName: String): Int? =
+        greetingsOf(persona).indexOfFirst { prompts.substitute(it, persona.name, userName).trim() == text.trim() }.takeIf { it >= 0 }
 
     /**
      * Deletes or edits in the middle of a conversation rewrite history, so the next turn must start a

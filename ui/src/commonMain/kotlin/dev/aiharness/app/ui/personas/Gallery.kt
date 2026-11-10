@@ -74,6 +74,7 @@ fun PersonasScreen(nav: NavController) {
     }
 
     val openPersona = LocalOpenPersona.current
+    val importCard = dev.aiharness.app.ui.transfer.rememberOpenFile(nav)
     val pageScroll = rememberLazyListState()
     LazyColumn(
         Modifier.fillMaxSize().scrollbar(pageScroll),
@@ -88,7 +89,10 @@ fun PersonasScreen(nav: NavController) {
                 pair.forEachIndexed { index, persona ->
                     Box(Modifier.weight(1f)) {
                         if (persona == null) {
-                            NewPolaroid { nav.openFromList(Routes.personaPage(Routes.NEW), Routes.PERSONAS) }
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                NewPolaroid { nav.openFromList(Routes.personaPage(Routes.NEW), Routes.PERSONAS) }
+                                dev.aiharness.app.ui.paper.InkLink("Import a card…", stationery.you) { importCard() }
+                            }
                         } else {
                             val latest = conversations.filter { it.personaId == persona.id }.maxByOrNull { it.updatedAt }
                             GalleryPolaroid(persona, latest, memoryCounts[persona.id], index, open = persona.id == openPersona) {
