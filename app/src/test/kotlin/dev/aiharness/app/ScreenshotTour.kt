@@ -121,7 +121,15 @@ class ScreenshotTour {
         return bitmap
     }
 
-    private fun waitFor(text: String) = compose.waitUntilAtLeastOneExists(hasText(text, substring = true), 10_000)
+    private fun waitFor(text: String) = orPicture("waiting for $text") { compose.waitUntilAtLeastOneExists(hasText(text, substring = true), 10_000) }
+
+    /** [block]; if it fails, a picture of the screen as it was then (FAILED_…), to see why. */
+    private fun <T> orPicture(what: String, block: () -> T): T = try {
+        block()
+    } catch (e: Throwable) {
+        runCatching { shot("FAILED_" + what.replace(Regex("[^A-Za-z0-9]+"), "_").take(60)) }
+        throw e
+    }
 
     private fun click(text: String) = compose.onAllNodesWithText(text).onFirst().performClick()
 
@@ -463,7 +471,7 @@ class ScreenshotTour {
         back()
 
         click("Personas")
-        waitFor("Juno")
+        scrolledTo("Juno")
         shot("${prefix}_03_personas")
 
         // A new persona: Done is disabled until it has a name, and must show once it does.
@@ -473,12 +481,14 @@ class ScreenshotTour {
         compose.onAllNodes(hasSetTextAction()).onFirst().performTextInput("Wren")
         assertDrawn(compose.onNodeWithText("Done"), shot("${prefix}_03b_new_persona"))
         back()
+        // The question comes up a moment after the back.
+        compose.waitUntilAtLeastOneExists(hasText("Discard"), 10_000)
         click("Discard")
         // Back on the gallery, still scrolled down to "New persona": with large text its top (and
         // Juno's polaroid) isn't laid out until it's scrolled up.
-        waitFor("New persona")
+        scrolledTo("New persona")
         top()
-        waitFor("Juno")
+        scrolledTo("Juno")
 
         click("Aria")
         waitFor("Write a letter")
@@ -524,10 +534,9 @@ class ScreenshotTour {
         back()
         back()
 
-        // Once the gallery's list is the one there: on a busy machine the pages it came back from
-        // can still be leaving, and their list would be scrolled instead.
-        compose.waitUntil(10_000) { runCatching { scrollTo("All your personas") }.isSuccess }
-        click("All your personas")
+        scrolledTo("All your personas")
+        // By its action: scrolled to the list's foot, its middle can be under the tab bar.
+        compose.onAllNodesWithText("All your personas").onFirst().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         waitFor("Your personas")
         shot("${prefix}_07_your_personas")
         click("Sam")
@@ -1008,6 +1017,15 @@ class ScreenshotTour {
     private fun scrollTo(text: String, exact: Boolean = false) {
         compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(if (exact) hasText(text) else hasText(text, substring = true, ignoreCase = true))
         compose.waitForIdle()
+    }
+
+    /**
+     * [text] in a list, scrolled to once that list is there. A lazy list lays out only what's on
+     * screen, and just after going back, the page being left can still be the first list there
+     * (on a busy machine), so the scroll is tried until it finds [text].
+     */
+    private fun scrolledTo(text: String) = orPicture("scrolling to $text") {
+        compose.waitUntil(10_000) { runCatching { scrollTo(text) }.isSuccess }
     }
 
     private fun back() {

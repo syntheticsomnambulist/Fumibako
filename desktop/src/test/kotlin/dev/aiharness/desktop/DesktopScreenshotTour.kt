@@ -255,7 +255,8 @@ class DesktopScreenshotTour {
         back()
         // Her page again, scrolled about where it was (the heartbeat card; her memory book is above, off the screen).
         waitFor("Wakes now and then")
-        scrollTo("All your personas")
+        // Once the gallery's list holds it (just after going back, it can still be on its way).
+        compose.waitUntil(timeoutMillis = 10_000) { runCatching { scrollTo("All your personas") }.isSuccess }
         click("All your personas")
         waitFor("Your personas")
         shot("07_your_personas")
