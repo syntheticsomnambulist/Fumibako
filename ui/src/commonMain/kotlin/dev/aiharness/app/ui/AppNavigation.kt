@@ -66,6 +66,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.Dp
@@ -142,9 +144,13 @@ fun AppNavigation(openConversation: MutableStateFlow<String?>) {
 
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
+    // A page reached from more than one tab keeps the tab it was opened from.
+    var openedFrom by remember { mutableStateOf<String?>(null) }
+    val ownTab = tabOf(currentRoute)
+    androidx.compose.runtime.SideEffect { if (currentRoute !in sharedRoutes && ownTab != null) openedFrom = ownTab }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= WideLayout.MIN_WIDTH
-        val tab = tabOf(currentRoute)
+        val tab = if (currentRoute in sharedRoutes) openedFrom ?: ownTab else ownTab
         LastOpen(nav, wide, currentRoute, backStack)
         CompositionLocalProvider(LocalWide provides wide) {
             Row(
@@ -212,10 +218,17 @@ private fun NavGraphBuilder.screen(route: String, content: @Composable (NavBackS
 /** The tabs with a list beside the open side when wide. */
 private val listedTabs = setOf(Routes.CHATS, Routes.PERSONAS)
 
-/** Which tab a screen belongs to, for the index tabs and the list beside it. */
+/**
+ * Pages reached from more than one tab (a card coming in, opening a backup, exporting): each
+ * belongs to the tab it was opened from (Personas for a persona's Export, Settings for Import and
+ * export), and [tabOf]'s answer only when there's none.
+ */
+private val sharedRoutes = setOf(Routes.IMPORT_CARD, Routes.OPEN_BACKUP, Routes.EXPORT, "export/{id}")
+
 /** A persona's own pages, each with the persona's id: the open side shows one of these beside the gallery. */
 private val personaRoutes = setOf("page/{id}", "page/{id}/heartbeat", "page/{id}/stickers", "memory/{id}", "memory/{id}/{memory}")
 
+/** Which tab a screen belongs to, for the index tabs and the list beside it. */
 private fun tabOf(route: String?): String? = when {
     route == null -> null
     route == Routes.CHATS || route.startsWith("chat/") || route.startsWith(Routes.SEARCH) -> Routes.CHATS

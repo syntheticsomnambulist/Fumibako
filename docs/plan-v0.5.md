@@ -412,3 +412,18 @@ Updated 2026-11-10 (later).
   - **Nothing smaller than 9.5** on any planner page.
   - **Tests:** the tours go between weeks by the words, open today's page, and take a suggestion
     down and put it back before adding it.
+- **Step 8, polish, tests and 0.5.0** (2026-11-10).
+  - **The testers' guide and README:** the guide's planner paragraph follows the redraw, and "New
+    in 0.5" lists a letter's slips, the postmark's lines, a new model's notice, searching letters,
+    character cards, backups, the stationery and the hands. The README's features table has rows
+    for them.
+  - **The side rail on a computer:** Import a card, Open a backup and Export belong to the tab they
+    were opened from (a persona's Export keeps Personas lit, with the gallery beside it), not always
+    Settings. The wide night tour checks it.
+  - **Flakes:** the large-text tour passed five runs alone and every full run since step 7; the
+    letters-in-the-post test, which timed out once in a full run, passed five runs alone and every
+    full run since. The desktop tour run straight after the phone tours has passed in both runs
+    since `main`'s dispatcher fix came in; worth watching a while longer.
+  - **0.5.0:** `fumibako.versionName` 0.5.0, `versionCode` 28, for the phone and the computer.
+    Sending a build to friends, and the GitHub Actions build that makes the installers, wait for
+    the user.

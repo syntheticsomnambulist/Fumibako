@@ -206,17 +206,50 @@ phone's calendars are read, never changed or copied.
   motion switches. Its Storage card shows what letters' files take up, and clears files nothing
   uses any more (from deleted letters, replies written again, things taken out of a note). On the
   phone, videos you add are kept at 720p and lossless songs (FLAC, WAV) as AAC, to save space.
-- **The planner (帳):** a week of all 24 hours, your sleep folded to a band. Add a plan, and set
-  your typical week (work, sleep). Tap a plan for its stamps: 済 done, 延 move, 止 cancel. The
-  tabs at the right edge go to the month (月), the week or month before (‹), today (今) and
-  after (›), and the stickers. Hold the ribbon to put the bookmark on the page you're on; tap it
-  to come back. Settings, Planner has your phone's calendars, public holidays, the solar terms,
-  who sees your planner, and what happens to letters while you're busy (they can wait until
-  you're free). A persona's notification has "Busy for now".
+- **The planner (帳):** a week of all 24 hours, your sleep folded to a band, written in your
+  persona's hand: your plans in highlighter, your phone's events pencilled in. Add a plan, and set
+  your typical week (work, sleep). Tap a plan for its stamps: 済 done, 延 move, 止 cancel. Under
+  the month's name, "‹ Week before · Week after ›" turns the pages, and Week and Month switch
+  between them; tap a day for its page, where something that has ended asks "How did it go?".
+  The ribbon hangs longer when you're away from its page: tap it to go back, hold it to put the
+  bookmark on the page you're on. The corner curling up at the bottom right is the sticker sheet.
+  Settings, Planner has your phone's calendars, public holidays, the solar terms, who sees your
+  planner, and what happens to letters while you're busy (they can wait until you're free). A
+  persona's notification has "Busy for now".
 - **What personas do with it:** in letters and heartbeats, a persona that sees your planner
-  knows what's on, and can leave notes, suggest plans (add them, or "Not this time"), set
-  itself reminders (it wakes then to write), mark itself away, stick stickers, and write a haiku
-  when a new season begins. Its marks are on its Stickers page.
+  knows what's on, and can leave notes, suggest plans on a sticky note ("Add it", or "Not this
+  time", which peels it off; "Put it back" if you change your mind), set itself reminders (it
+  wakes then to write), mark itself away, stick stickers, and write a haiku when a new season
+  begins. Its marks are on its Stickers page.
+
+New in 0.5:
+
+- **A letter's slips:** two paper tabs at the top right of a persona's letter. One is an index
+  card of what it had in mind as it wrote (the time, your planner, the memories that came up,
+  letters it looked up) and how much the letter took; the other is a squared scrap of its
+  thoughts, when its model shares them. Hold a tab for its name.
+- **On its way:** while a letter is in the post, the postmark has a line in the persona's own
+  words; it writes its own now and then.
+- **A new model:** change a persona's model (its page, Behavior) and a change-of-address notice
+  appears in your letters, and the persona is told in its next one. The model row says since
+  when; "Tell her when her model changes" can be turned off.
+- **Searching letters:** the loupe beside the Letters title, or a letter's ⋯, Search these
+  letters. Words in pictures count too. Personas can look back through your letters themselves
+  (Settings, Memory, Letter search).
+- **Character cards:** Personas, Import a card… brings in a SillyTavern card (PNG, JSON or
+  `.charx`); tick what comes in (its greetings, example dialogue, lore, mood portraits).
+  A lorebook's entries become memories that won't fade; "Won't fade" works on any memory.
+- **Backups:** Settings, Import and export. Back up one persona or everything, with a password
+  if you like, and open a backup to bring a persona in beside the one here or in its place. A
+  persona's page, ⋯, Export also makes a character card of it. Your API keys never go in either.
+  A backup moves a persona between a phone and a computer.
+- **Stationery:** a persona's page, Look: thirteen tape patterns, each light or dark (or with
+  the time of day), and where the tape goes on a letter, turned as you like.
+- **Hands:** each persona has a hand, the face of its P.S., moods and thoughts (its page, Look,
+  Hand): Yomogi, four more that download when chosen, or a font file you add, perhaps your own
+  handwriting made into a font. Your persona has one too, and your planner is written in it.
+  The Japanese letters of the fonts download the first time they're needed (about 25 MB; Settings,
+  Look can fetch them now).
 
 ## If something goes wrong
 

@@ -279,6 +279,13 @@ class ScreenshotTour {
         click("Kestrel")
         waitFor("Write a letter")
         shot("wide_night_02_persona_page")
+        // Exporting her, from her page: Personas stays lit in the rail, with the gallery beside.
+        compose.onAllNodesWithContentDescription("More").onFirst().performClick()
+        click("Export Kestrel…")
+        waitFor("What goes in")
+        compose.waitForIdle()
+        compose.onNode(androidx.compose.ui.test.hasText("Personas") and androidx.compose.ui.test.isSelected()).assertExists()
+        shot("wide_night_03_export_from_her_page")
     }
 
     private fun tour(prefix: String, time: TimeOfDay, season: Season = Season.AKI) {
