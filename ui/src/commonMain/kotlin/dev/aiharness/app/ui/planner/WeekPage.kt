@@ -130,6 +130,8 @@ fun PlannerScreen(nav: NavController) {
     val layout = remember(folded) { HourLayout(folded) }
     var picked by remember { mutableStateOf<Picked?>(null) }
     var card by remember { mutableStateOf<PlanDraft?>(null) }
+    // Suggestions taken down while the page is open: they peel off, and can be put back.
+    val takenDown = remember { androidx.compose.runtime.mutableStateListOf<String>() }
     val colors = paper
     val ink = stationery.you
     val today = vm.today()
@@ -154,6 +156,7 @@ fun PlannerScreen(nav: NavController) {
     // A day's public holidays: a shown phone holiday calendar's, else Nager.Date's.
     val holidaysOf: (LocalDate) -> List<String> = remember(settings, phone) { { day -> vm.holidaysOn(day) } }
     PlannerStickerHost(you?.id, you) { stickers, bottom ->
+    dev.aiharness.app.ui.theme.InHand(you?.hand) {
     val dots = colors.sumi.copy(alpha = 0.12f)
     Box(Modifier.fillMaxSize().background(colors.kami).pageDots(dots)) {
         Column(Modifier.fillMaxSize().stitched(lerp(colors.nijimi2, colors.kami, 0.2f)).statusBarsPadding().padding(bottom = bottom)) {
@@ -204,7 +207,7 @@ fun PlannerScreen(nav: NavController) {
                     WeekGrid(
                         days = days, occurrences = occurrences, entries = entries, layout = layout, col = col, today = today,
                         now = vm.now(), zone = vm.zone, clock = clock, ink = ink, picked = picked,
-                        plannerId = you?.id, stickers = stickers, personas = personas,
+                        plannerId = you?.id, stickers = stickers, personas = personas, takenDown = takenDown.toSet(),
                         onPick = { picked = if (picked?.entryId == it.entryId && !it.moving) null else it },
                         onClose = { picked = null },
                         onStamp = { e, state -> vm.stamp(e, state); picked = null },
@@ -216,7 +219,10 @@ fun PlannerScreen(nav: NavController) {
                     Memo(
                         days = days, occurrences = occurrences, ink = ink, seenBy = seenBy.map { it.name },
                         personas = personas, zone = vm.zone, clock = clock, hemisphereOf = { hemisphere },
-                        onAddSuggestion = vm::addSuggestion, onDeclineSuggestion = vm::declineSuggestion,
+                        onAddSuggestion = vm::addSuggestion,
+                        takenDown = takenDown.toSet(),
+                        onDeclineSuggestion = { e -> vm.declineSuggestion(e); takenDown += e.id },
+                        onPutBack = { e -> vm.putBackSuggestion(e); takenDown -= e.id },
                         onToggle = { e -> vm.stamp(e, EntryState.DONE) },
                         onOpen = { o -> card = PlanDraft.of(o.entry, o.day) },
                         onAdd = { card = PlanDraft.new(if (today in days) today else days.first()) },
@@ -294,6 +300,7 @@ fun PlannerScreen(nav: NavController) {
         }
     }
     }
+    }
 }
 
 /** Space at the side for the hours. */
@@ -356,7 +363,8 @@ private fun DayHeads(days: List<LocalDate>, today: LocalDate, col: Dp, holidaysO
     val night = stationery.isNight
     val ink = stationery.you
     val red = beni()
-    Box(Modifier.height(44.dp).fillMaxWidth().inkRule(ink, y = 42.dp, start = GUTTER)) {
+    // As tall as the days' words need (they grow with large text, only so far), the rule at its foot.
+    Row(Modifier.fillMaxWidth().padding(start = GUTTER).inkRule(ink, y = 2.dp, fromBottom = true).padding(bottom = 4.dp)) {
         days.forEachIndexed { i, day ->
             // A public holiday's date is red, like a Sunday's.
             val holidays = holidaysOf(day)
@@ -370,8 +378,8 @@ private fun DayHeads(days: List<LocalDate>, today: LocalDate, col: Dp, holidaysO
             }
             Column(
                 Modifier
-                    .offset(x = GUTTER + col * i)
-                    .size(col, 40.dp)
+                    .width(col)
+                    .heightIn(min = 40.dp)
                     .clickable(role = Role.Button, onClickLabel = "Open ${dayName(day)}") { onDay(day) }
                     .semantics { contentDescription = words },
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -455,19 +463,16 @@ private fun AllDayRow(
                     Box {
                         Text(
                             e.title.ifBlank { if (pencil) "Busy" else "Plan" },
-                            style = TextStyle(
-                                fontFamily = if (pencil) HarnessFonts.Hand else HarnessFonts.Read, fontSize = grid(9f), lineHeight = grid(13f),
-                                textDecoration = if (cancelled) TextDecoration.LineThrough else null,
-                            ),
-                            color = (if (pencil) Pencil else lerp(ink, colors.sumi, 0.45f)).copy(alpha = if (cancelled) 0.55f else 1f),
+                            style = handText(grid(10.5f), grid(14f), crossed = cancelled),
+                            color = (if (pencil) graphite() else lerp(ink, colors.sumi, 0.45f)).copy(alpha = if (cancelled) 0.55f else 1f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.fillMaxWidth()
-                                .then(if (pencil) Modifier.border(1.dp, Pencil.copy(alpha = if (cancelled) 0.35f else 0.6f)) else Modifier.clip(Highlighter).background(ink.copy(alpha = if (cancelled) 0.14f else 0.3f)))
+                                .then(if (pencil) Modifier.pencilled(graphiteLine(), faded = cancelled) else Modifier.highlighter(ink, down = false, faded = cancelled))
                                 .combinedClickable(onClickLabel = "Stamps for ${e.title}", onLongClick = { onOpen(o) }) { onPick(Picked(e.id, o.day)) }
                                 .onRightClick { onOpen(o) }
                                 .semantics { contentDescription = allDayLabel(e, o) }
-                                .padding(horizontal = 3.dp),
+                                .padding(horizontal = 5.dp, vertical = 1.dp),
                         )
                         // Its stamp at the end, half off it, so the title still reads.
                         stampOf(e)?.let { s -> Stamp(s, ink, Modifier.align(Alignment.CenterEnd).offset(x = 7.dp), size = 15.dp, fresh = e.updatedAt > now - 1_500) }
@@ -495,6 +500,7 @@ private fun WeekGrid(
     plannerId: String?,
     stickers: PlannerStickers,
     personas: List<Persona>,
+    takenDown: Set<String>,
     onPick: (Picked) -> Unit,
     onClose: () -> Unit,
     onStamp: (PlannerEntry, EntryState) -> Unit,
@@ -521,9 +527,12 @@ private fun WeekGrid(
                     val i = days.indexOf(o.day).takeIf { it >= 0 } ?: continue
                     val top = y(minute(o.start!!, o.day)).toPx()
                     val bottom = y(minute(o.end!!, o.day)).toPx()
-                    val color = if (o.entry.routine == RoutineKind.SLEEP) sleepInk.copy(alpha = 0.06f) else Color(0x2BB49A84)
-                    if (o.entry.routine == RoutineKind.SLEEP && layout.folded.isNotEmpty()) continue
-                    drawRect(color, Offset(gutter + c * i + 2.dp.toPx(), top), androidx.compose.ui.geometry.Size(c - 4.dp.toPx(), bottom - top))
+                    if (o.entry.routine == RoutineKind.SLEEP) {
+                        if (layout.folded.isEmpty()) drawRect(sleepInk.copy(alpha = 0.06f), Offset(gutter + c * i, top), androidx.compose.ui.geometry.Size(c, bottom - top))
+                        continue
+                    }
+                    // Busy hours: a pale wash, and a bracket down the day's edge with a tick at each end.
+                    busyHours(gutter + c * i, top, c, bottom, bracket = dev.aiharness.core.planner.Planner.isBusy(o.entry))
                 }
                 for (k in 0..7) drawLine(colors.nijimi1.copy(alpha = 0.7f), Offset(gutter + c * k, 0f), Offset(gutter + c * k, size.height), 1.dp.toPx())
                 for (h in 0..23) {
@@ -542,7 +551,7 @@ private fun WeekGrid(
             if (layout.isFolded(h)) continue
             Text(
                 clock.hour(h),
-                style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(8.5f)),
+                style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(9.5f)),
                 color = colors.kasure2,
                 textAlign = TextAlign.End,
                 maxLines = 1,
@@ -556,11 +565,10 @@ private fun WeekGrid(
             val i = days.indexOf(o.day)
             Text(
                 o.entry.title.ifBlank { if (o.entry.routine == RoutineKind.WORK) "Work" else "Routine" }.uppercase(),
-                style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(7.5f), letterSpacing = 0.1.em),
+                style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(9.5f), letterSpacing = 0.08.em),
                 color = colors.usuzumi1,
                 maxLines = 1,
-                modifier = Modifier.offset(x = GUTTER + col * i + 4.dp, y = y(minute(o.start!!, o.day)) + 3.dp)
-                    .background(colors.kami.copy(alpha = 0.85f)).padding(horizontal = 1.dp),
+                modifier = Modifier.offset(x = GUTTER + col * i + 8.dp, y = y(minute(o.start!!, o.day)) + 3.dp),
             )
         }
         // Folded sleep: a thin band for each stretch; tap it to open the hours.
@@ -576,14 +584,14 @@ private fun WeekGrid(
                     .padding(start = GUTTER + 4.dp, end = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("☾ $label", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(8.5f)), color = sleepInk, modifier = Modifier.weight(1f), maxLines = 1)
-                Text("⌄", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 9.sp), color = sleepInk)
+                Text("☾ $label", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = grid(9.5f)), color = sleepInk, modifier = Modifier.weight(1f), maxLines = 1)
+                Text("⌄", style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 10.sp), color = sleepInk)
             }
         }
         if (layout.folded.isEmpty() && routines.any { it.entry.routine == RoutineKind.SLEEP }) {
             Text(
                 "☾ FOLD MY SLEEP",
-                style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 8.sp, letterSpacing = 0.08.em),
+                style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 9.5.sp, letterSpacing = 0.08.em),
                 color = sleepInk,
                 modifier = Modifier.align(Alignment.TopEnd).clickable(role = Role.Button, onClickLabel = "Fold your sleep hours") { onFold() }.padding(6.dp),
             )
@@ -634,27 +642,21 @@ private fun WeekGrid(
             val stamp = stampOf(e)
             stickers.On(StickerTarget.entry(e.id), Modifier.offset(x = GUTTER + col * i + 2.dp + width * lane, y = top).size(width, bottom - top)) {
             val pencil = e.phone != null
+            val cancelled = e.state == EntryState.CANCELLED
             Box(
                 Modifier
                     .fillMaxSize()
-                    .then(
-                        // A phone calendar's event in pencil: a graphite box, read-only.
-                        if (pencil) Modifier.background(colors.kami).border(1.dp, Pencil.copy(alpha = if (e.state == EntryState.CANCELLED) 0.35f else 0.7f))
-                        // Paper under the highlighter, so the page's lines don't run through the words.
-                        else Modifier.clip(Highlighter).background(colors.kami).background(ink.copy(alpha = if (e.state == EntryState.CANCELLED) 0.14f else 0.3f)),
-                    )
+                    // A phone calendar's event pencilled in; yours in highlighter, stroked down the column.
+                    .then(if (pencil) Modifier.pencilled(graphiteLine(), faded = cancelled) else Modifier.highlighter(ink, down = true, faded = cancelled))
                     .combinedClickable(onClickLabel = "Stamps for ${e.title}", onLongClick = { onOpen(o) }) { onPick(Picked(e.id, o.day)) }
                     .onRightClick { onOpen(o) }
                     .semantics { contentDescription = planLabel(e, o, clock, zone) },
             ) {
                 Text(
                     e.title.ifBlank { if (pencil) "Busy" else "Plan" },
-                    style = TextStyle(
-                        fontFamily = if (pencil) HarnessFonts.Hand else HarnessFonts.Read, fontSize = grid(9.5f), lineHeight = grid(10.5f),
-                        textDecoration = if (e.state == EntryState.CANCELLED) TextDecoration.LineThrough else null,
-                    ),
-                    color = (if (pencil) Pencil else lerp(ink, colors.sumi, 0.45f)).copy(alpha = if (e.state == EntryState.CANCELLED) 0.55f else 1f),
-                    modifier = Modifier.padding(start = 3.dp, top = 2.dp, end = 2.dp),
+                    style = handText(grid(10f), grid(11f), crossed = cancelled),
+                    color = (if (pencil) graphite() else lerp(ink, colors.sumi, 0.45f)).copy(alpha = if (cancelled) 0.55f else 1f),
+                    modifier = Modifier.padding(start = 4.dp, top = if (pencil) 3.dp else 5.dp, end = 3.dp),
                     maxLines = 4,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -679,18 +681,15 @@ private fun WeekGrid(
                     Modifier.offset(x = GUTTER + col * (i + 1) - 18.dp, y = top - 8.dp)
                         .semantics { contentDescription = "${persona.name} means to wake here: ${o.entry.title}" },
                 )
-            } else if (o.entry.state != EntryState.ADDED) {
-                Text(
-                    o.entry.title,
-                    style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = grid(8f), lineHeight = grid(9.5f), textDecoration = if (o.entry.state == EntryState.DECLINED) TextDecoration.LineThrough else null),
-                    color = colors.onInk(pInk),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.offset(x = GUTTER + col * i + col * 0.3f, y = top).width(col * 0.7f)
-                        .background(pInk.copy(alpha = if (o.entry.state == EntryState.DECLINED) 0.45f else 0.9f), RoundedCornerShape(topStart = 2.dp, bottomStart = 2.dp))
-                        .padding(horizontal = 3.dp, vertical = 1.dp)
-                        .semantics { contentDescription = "${persona.name} suggests: ${o.entry.title}" },
-                )
+            } else if (o.entry.state != EntryState.ADDED && (o.entry.state != EntryState.DECLINED || o.entry.id in takenDown)) {
+                // A 付箋 at its time, in its ink and hand; taken down, it peels off.
+                dev.aiharness.app.ui.theme.InHand(persona.hand) {
+                    SuggestionTab(
+                        o.entry.id + o.day, o.entry.title, pInk, takenDown = o.entry.id in takenDown,
+                        spoken = "${persona.name} suggests: ${o.entry.title}",
+                        modifier = Modifier.offset(x = GUTTER + col * i + 2.dp, y = top).size(col - 4.dp, 18.dp),
+                    )
+                }
             }
         }
 
@@ -809,7 +808,7 @@ private fun StampButton(glyph: String, label: String, spoken: String, ink: Color
         verticalArrangement = Arrangement.Center,
     ) {
         Text(glyph, style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 14.sp, lineHeight = 14.sp), color = ink)
-        Text(label, style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 8.5.sp), color = paper.usuzumi0)
+        Text(label, style = TextStyle(fontFamily = HarnessFonts.Ui, fontSize = 9.5.sp), color = paper.usuzumi0)
     }
 }
 
@@ -826,7 +825,7 @@ private fun MoveTo(days: List<LocalDate>, from: LocalDate, col: Dp, modifier: Mo
             .background(colors.hyoshi, RoundedCornerShape(2.dp))
             .border(1.dp, colors.nijimi1, RoundedCornerShape(2.dp)),
     ) {
-        Text("MOVE TO", style = PaperType.meta.copy(fontSize = 8.sp), color = colors.kasure2, modifier = Modifier.padding(start = 6.dp, top = 3.dp))
+        Text("MOVE TO", style = PaperType.meta.copy(fontSize = 9.5.sp), color = colors.kasure2, modifier = Modifier.padding(start = 6.dp, top = 3.dp))
         Row {
             days.forEach { day ->
                 val c = dayInk(day.dayOfWeek, colors.sumi, night)
@@ -859,7 +858,9 @@ private fun Memo(
     clock: ClockFormat,
     hemisphereOf: (LocalDate) -> Hemisphere,
     onAddSuggestion: (PlannerEntry) -> Unit,
+    takenDown: Set<String>,
     onDeclineSuggestion: (PlannerEntry) -> Unit,
+    onPutBack: (PlannerEntry) -> Unit,
     onToggle: (PlannerEntry) -> Unit,
     onOpen: (Occurrence) -> Unit,
     onAdd: () -> Unit,
@@ -869,12 +870,12 @@ private fun Memo(
     val untimed = occurrences.filter { it.entry.kind == EntryKind.PLAN && it.entry.byPersonaId == null && it.start == null && !it.entry.allDay }
     Column(Modifier.padding(top = 20.dp, start = 4.dp, end = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
-            Modifier.fillMaxWidth().drawBehind { drawLine(ink, Offset(0f, size.height), Offset(size.width, size.height), 1.5.dp.toPx()) }.padding(bottom = 4.dp),
+            Modifier.fillMaxWidth().drawBehind { drawLine(colors.nijimi1, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx()) }.padding(bottom = 4.dp),
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("メモ", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 16.sp), color = colors.sumi)
-            Text("Notes this week", style = TextStyle(fontFamily = HarnessFonts.Read, fontStyle = FontStyle.Italic, fontSize = 13.5.sp), color = colors.usuzumi1)
+            Text("メモ", style = TextStyle(fontFamily = HarnessFonts.Brush, fontSize = 14.sp), color = colors.usuzumi1)
+            Text("THIS WEEK, ANY TIME", style = TextStyle(fontFamily = HarnessFonts.Ui, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.12.em), color = colors.usuzumi1)
         }
         untimed.forEach { o ->
             val e = o.entry
@@ -887,12 +888,14 @@ private fun Memo(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                // A box to tick, in your ink; the 済 stamp lands beside it when it's done.
+                Box(Modifier.size(12.dp).border(1.3.dp, ink, RoundedCornerShape(2.dp)))
                 Text(
-                    "• ${e.title.ifBlank { "A plan" }}",
-                    style = TextStyle(fontFamily = HarnessFonts.Read, fontSize = 14.5.sp, textDecoration = if (e.state == EntryState.CANCELLED) TextDecoration.LineThrough else null),
-                    color = ink,
+                    e.title.ifBlank { "A plan" },
+                    style = handText(17.sp, crossed = e.state == EntryState.CANCELLED),
+                    color = lerp(ink, colors.sumi, 0.45f),
                 )
-                Text(o.day.dayOfWeek.getDisplayName(DayText.SHORT, Locale.US).uppercase(), style = PaperType.meta.copy(fontSize = 10.sp), color = colors.kasure2)
+                Text(o.day.dayOfWeek.getDisplayName(DayText.SHORT, Locale.US).uppercase(), style = PaperType.meta.copy(fontSize = 10.5.sp), color = colors.kasure2)
                 stampOf(e)?.let { Stamp(it, ink, size = 22.dp, fresh = e.updatedAt > System.currentTimeMillis() - 1_500) }
             }
         }
@@ -904,7 +907,10 @@ private fun Memo(
             .sortedWith(compareBy<Occurrence> { it.entry.kind != EntryKind.AWAY }.thenBy { it.day }.thenBy { it.start ?: Long.MIN_VALUE })
         theirs.forEach { o ->
             val persona = personas.firstOrNull { it.id == o.entry.byPersonaId } ?: return@forEach
-            PersonaSlip(o, persona, zone, hemisphereOf, clock, onAdd = onAddSuggestion, onDecline = onDeclineSuggestion)
+            PersonaSlip(
+                o, persona, zone, hemisphereOf, clock, onAdd = onAddSuggestion, onDecline = onDeclineSuggestion,
+                takenDown = o.entry.id in takenDown, onPutBack = onPutBack,
+            )
         }
         Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             dev.aiharness.app.ui.paper.PaperButton("+ Add a plan", onClick = onAdd)

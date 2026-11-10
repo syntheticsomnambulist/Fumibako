@@ -209,10 +209,14 @@ private fun DayCell(
                     maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 4.dp, end = 2.dp, top = 28.dp),
                 )
             } else if (first != null && inMonth) {
+                // Your plan's name in your hand, with the highlighter across it; the phone's in pencil.
+                val pencil = first.entry.phone != null
                 Text(
-                    first.entry.title.ifBlank { "Busy" }, style = TextStyle(fontFamily = HarnessFonts.Hand, fontSize = 12.sp, lineHeight = 13.sp),
-                    color = if (first.entry.phone != null) Pencil else lerp(ink, colors.sumi, 0.35f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(start = 4.dp, end = 2.dp, top = 28.dp),
+                    first.entry.title.ifBlank { "Busy" }, style = handText(12.sp, 13.sp),
+                    color = if (pencil) graphite() else lerp(ink, colors.sumi, 0.45f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 4.dp, end = 2.dp, top = 28.dp)
+                        .then(if (pencil) Modifier else Modifier.highlighter(ink, down = false))
+                        .padding(horizontal = 2.dp),
                 )
             }
             // Who has written here: you, and each persona, in their inks.

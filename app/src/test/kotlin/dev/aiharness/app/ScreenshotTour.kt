@@ -736,7 +736,7 @@ class ScreenshotTour {
     /** 帳 Planner: the week with Sam's typical week and plans, a plan's stamps, moving one, a day, a plan's card, the typical week. */
     private fun plannerTour(prefix: String) {
         click("Planner")
-        waitFor("Notes this week")
+        waitFor("THIS WEEK, ANY TIME")
         // Its plans come in from the database a moment later.
         compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
         compose.waitForIdle()
@@ -803,13 +803,21 @@ class ScreenshotTour {
         weekToTop()
         compose.onAllNodes(hasClickActionLabel("Fold your sleep hours")).onFirst().performScrollTo().performClick()
         // The メモ area, with Aria's slips, and a plan's card.
-        compose.onNodeWithText("Add to my planner").performScrollTo()
+        compose.onNodeWithText("Add it").performScrollTo()
         shot("${prefix}_24e_planner_memo")
         compose.onNodeWithText("Your typical week").performScrollTo()
         shot("${prefix}_24e2_planner_memo_slips")
-        // Her suggestion, added: it's your plan now, with her slip beside it.
-        compose.onNodeWithText("Add to my planner").performScrollTo().performClick()
-        waitFor("Added to your planner.")
+        // Her suggestion, taken down: it peels off, and a quiet line has "Put it back".
+        compose.onNodeWithText("Not this time").performScrollTo().performClick()
+        compose.waitUntilAtLeastOneExists(hasText("Taken down", substring = true), 10_000)
+        compose.onNodeWithText("Taken down", substring = true).performScrollTo()
+        compose.waitForIdle()
+        shot("${prefix}_24e3_planner_taken_down")
+        compose.onNodeWithText("Put it back").performClick()
+        // Then added: it's your plan now, with her note beside it.
+        compose.waitUntilAtLeastOneExists(hasText("Add it"), 10_000)
+        compose.onNodeWithText("Add it").performScrollTo().performClick()
+        compose.waitUntilAtLeastOneExists(hasText("ADDED TO YOUR PLANNER", substring = true), 10_000)
         click("+ Add a plan")
         waitFor("At a time")
         shot("${prefix}_24f_plan_card")

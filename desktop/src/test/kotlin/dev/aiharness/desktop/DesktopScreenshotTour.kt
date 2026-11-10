@@ -254,7 +254,7 @@ class DesktopScreenshotTour {
 
     private fun Tour.planner() {
         click("Planner")
-        waitFor("Notes this week")
+        waitFor("THIS WEEK, ANY TIME")
         compose.waitUntilAtLeastOneExists(hasContentDescription("Dinner with Jo", substring = true), 10_000)
         shot("24_planner_week")
         compose.onNode(hasClickActionLabel("Open the Month page")).performClick()

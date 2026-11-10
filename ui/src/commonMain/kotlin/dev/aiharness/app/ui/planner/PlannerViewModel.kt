@@ -136,6 +136,9 @@ class PlannerViewModel(private val container: AppContainer) : ViewModel() {
     /** "Not this time": the slip is crossed through gently, and the persona hears so on its next turn. */
     fun declineSuggestion(suggestion: PlannerEntry) = save(suggestion.copy(state = EntryState.DECLINED))
 
+    /** "Put it back": a suggestion just taken down is waiting again, as if it hadn't been. */
+    fun putBackSuggestion(suggestion: PlannerEntry) = save(suggestion.copy(state = EntryState.OPEN))
+
     /** Stamps [entry] [state] (done, cancelled), or lifts the stamp when it already has it. */
     fun stamp(entry: PlannerEntry, state: EntryState) {
         if (entry.phone != null) stampPhone(entry, state) else save(entry.copy(state = if (entry.state == state) EntryState.OPEN else state))

@@ -293,11 +293,18 @@ internal fun StickersCorner(modifier: Modifier = Modifier, spoken: String = "Sti
 /**
  * The coloured rule under the days, ruled by hand: a calligraphic stroke in [ink], heavier where
  * the pen goes down and thinning along the page, finished with a small loop past its end. [y] is
- * the line's centre from the top; the rule starts [start] in, and its loop reaches [overhang] past
- * the right edge.
+ * the line's centre from the top (or the bottom, [fromBottom]); the rule starts [start] in, and its
+ * loop reaches [overhang] past the right edge.
  */
-internal fun Modifier.inkRule(ink: Color, y: androidx.compose.ui.unit.Dp, start: androidx.compose.ui.unit.Dp = 0.dp, overhang: androidx.compose.ui.unit.Dp = 6.dp): Modifier = drawBehind {
-    translate(start.toPx(), 0f) { drawInkRule(ink, y.toPx(), size.width - start.toPx() + overhang.toPx()) }
+internal fun Modifier.inkRule(
+    ink: Color,
+    y: androidx.compose.ui.unit.Dp,
+    start: androidx.compose.ui.unit.Dp = 0.dp,
+    overhang: androidx.compose.ui.unit.Dp = 6.dp,
+    fromBottom: Boolean = false,
+): Modifier = drawBehind {
+    val cy = if (fromBottom) size.height - y.toPx() else y.toPx()
+    translate(start.toPx(), 0f) { drawInkRule(ink, cy, size.width - start.toPx() + overhang.toPx()) }
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawInkRule(ink: Color, cy: Float, reach: Float) {

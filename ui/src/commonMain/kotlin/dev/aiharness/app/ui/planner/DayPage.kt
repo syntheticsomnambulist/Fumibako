@@ -184,6 +184,7 @@ fun PlannerDayScreen(nav: NavController, date: String) {
     val theirs = all.filter { it.entry.byPersonaId != null }.sortedWith(compareBy<Occurrence> { it.entry.kind != EntryKind.AWAY }.thenBy { it.start ?: Long.MIN_VALUE })
     val personas by vm.personas.collectAsStateWithLifecycle()
     var card by remember { mutableStateOf<PlanDraft?>(null) }
+    val takenDown = remember { androidx.compose.runtime.mutableStateListOf<String>() }
     val colors = paper
     val ink = stationery.you
     val today = vm.today()
@@ -191,6 +192,7 @@ fun PlannerDayScreen(nav: NavController, date: String) {
     val dayTarget = you?.let { dev.aiharness.core.model.StickerTarget.day(it.id, day.toString()) }
     val weekday = { d: LocalDate -> d.dayOfWeek.getDisplayName(DayText.FULL, Locale.US) }
     PlannerStickerHost(you?.id, you) { stickers, bottom ->
+    dev.aiharness.app.ui.theme.InHand(you?.hand) {
     Box(Modifier.fillMaxSize().background(colors.kami).pageDots(colors.sumi.copy(alpha = 0.12f))) {
         Column(Modifier.fillMaxSize().stitched(androidx.compose.ui.graphics.lerp(colors.nijimi2, colors.kami, 0.2f)).statusBarsPadding().padding(bottom = bottom)) {
             PlannerHeader(
@@ -228,7 +230,12 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                 // What your personas wrote on this day.
                 theirs.forEach { o ->
                     val persona = personas.firstOrNull { it.id == o.entry.byPersonaId } ?: return@forEach
-                    PersonaSlip(o, persona, vm.zone, { vm.hemisphere(settings) }, clock, onAdd = vm::addSuggestion, onDecline = vm::declineSuggestion)
+                    PersonaSlip(
+                        o, persona, vm.zone, { vm.hemisphere(settings) }, clock, onAdd = vm::addSuggestion,
+                        onDecline = { e -> vm.declineSuggestion(e); takenDown += e.id },
+                        takenDown = o.entry.id in takenDown,
+                        onPutBack = { e -> vm.putBackSuggestion(e); takenDown -= e.id },
+                    )
                 }
                 PaperButton("+ Add a plan", modifier = Modifier.padding(top = 6.dp)) { card = PlanDraft.new(day) }
                 // Who sees your planner, at the foot, quietly.
@@ -253,6 +260,7 @@ fun PlannerDayScreen(nav: NavController, date: String) {
                 blank = { kind -> vm.blank(kind) },
             )
         }
+    }
     }
     }
 }
