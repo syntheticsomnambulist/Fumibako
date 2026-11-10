@@ -15,7 +15,8 @@ planner canvas (https://claude.ai/artifact/641ZZiMG4rVyRHyP1PDszb). The Fumibako
 
 - **Scope:** the design's six parts, and the updated Fumibako boxes (the letters list as little
   boxes, on the phone too), which the desktop layout session is drawing.
-- **Agreed as designed:** letter search, import and export, and most of the stationery update.
+- **Agreed as designed:** letter search, import and export, and the stationery update (all of
+  it, as of 2026-11-10).
 - **To revisit: thinking lines ("While she writes").** Letters in the post (0.4.4) wait two to
   three minutes by default, and the reply is written behind the 〒 postmark, so lines shown while
   a persona writes would seldom be seen. They wait for a second look with the design session; the
@@ -23,6 +24,13 @@ planner canvas (https://claude.ai/artifact/641ZZiMG4rVyRHyP1PDszb). The Fumibako
 - **The wide layouts merged first** (`claude/sharp-darwin-o3pk1g`; done, see *Progress*).
 - **No preview builds** unless something needs your eyes on the phone.
 - **The build session tells the other sessions** about the build branch.
+
+Later answers (2026-11-10):
+
+- **Japanese search** (only from the start of a phrase, see step 1): fine for v0.5; the Architect
+  has it to put in the roadmap for later.
+- **The stationery update in full,** as designed. No changes to it until the test build has been
+  installed and explored.
 
 ## What v0.5 includes
 
@@ -216,3 +224,7 @@ Updated 2026-11-10.
   the README for both apps, the roadmap in `docs/roadmap.md`, and Maven Central's mirror in the
   build itself. No conflicts. Every suite passes (core 208, data 7, app 60, desktop 57) without a
   local init script, and the tours render 305 shots.
+- **`main` merged in again** (2026-11-10, 7c0e5d5, from 642a3dc): desktop step 7 (smaller
+  installers, the desktop screenshot tour, the testers' guide for computers). No conflicts. Every
+  suite passes (core 208, data 7, app 60, desktop 60), and the desktop tour renders its 54 shots,
+  the index card and the search loupe among them.
