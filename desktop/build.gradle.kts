@@ -52,8 +52,11 @@ tasks.test {
     val shots = providers.environmentVariable("HARNESS_SCREENSHOTS_DIR")
     environment("HARNESS_SCREENSHOTS_DIR", shots.getOrElse(""))
     inputs.property("screenshotsDir", shots.orElse(""))
-    outputs.upToDateWhen { !shots.isPresent }
-    outputs.cacheIf { !shots.isPresent }
+    // The same for seeding a folder to look at in the real app (DesktopScreenshotTour.seedAFolder).
+    val seedHome = providers.environmentVariable("FUMIBAKO_SEED_HOME")
+    inputs.property("seedHome", seedHome.orElse(""))
+    outputs.upToDateWhen { !shots.isPresent && !seedHome.isPresent }
+    outputs.cacheIf { !shots.isPresent && !seedHome.isPresent }
     // About's version, as the installed app's launcher passes it.
     systemProperty("fumibako.version", versionName)
     testLogging {
