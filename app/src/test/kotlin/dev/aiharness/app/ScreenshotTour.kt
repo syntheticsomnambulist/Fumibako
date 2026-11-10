@@ -521,7 +521,9 @@ class ScreenshotTour {
         back()
         back()
 
-        scrollTo("All your personas")
+        // Once the gallery's list is the one there: on a busy machine the pages it came back from
+        // can still be leaving, and their list would be scrolled instead.
+        compose.waitUntil(10_000) { runCatching { scrollTo("All your personas") }.isSuccess }
         click("All your personas")
         waitFor("Your personas")
         shot("${prefix}_07_your_personas")
