@@ -285,11 +285,95 @@ Updated 2026-11-10 (later).
     ink (4) in core; on the desktop's SQLite, a failed restore leaving nothing behind and an
     Everything backup coming back on another install with its files and word index (2). The
     tours add the settings page, Export three ways, a card coming in, and four backups opened.
-- **To build next: her lines on the way** (settled with the design session, 2026-11-10; design
-  branch 90b0856, "Her lines on the way" and "Her page: On its way"). While a reply is in the post,
-  the 〒 postmark reads "Aria's reply is on its way · she's looking for a stamp", one of her lines in
-  her ink and hand, picked when the reply is kept back; the same line on her card in the letters
-  list. Straight away: a plain "Aria is writing…". No lines per tool. Her page's card is On its
-  way: lines, + Add a line, Let Aria write her own (under 1,000 tokens), "yours" marks; she may
-  rewrite hers at most weekly when she reflects. Heartbeat letters have no postmark.
+- **Her lines on the way: done** (2026-11-10; settled with the design session, design branch
+  90b0856).
+  - **The postmark:** while a reply is in the post, "Aria's reply is on its way · she's looking for a
+    stamp", her line in her ink; her card in the letters list reads "〒 On its way · …" (her name is
+    on the card). One line a letter: picked from the thread and the time of the note it answers, so
+    both places show the same one and it holds until the reply arrives.
+  - **Straight away:** a plain "Aria is writing", its ellipsis writing itself (all at once with
+    reduced motion). The per-tool lines ("Saving a memory") are gone.
+  - **Her lines** (`core/letters/WayLines`): the plain ones until there are others ("she's
+    addressing the envelope"; without pronouns, no subject, so her name doesn't come twice). Her
+    page's **On its way** card: take one out, change one or add your own (marked yours, kept as you
+    wrote it), and **Let Aria write her own** / **Ask her for new ones**: a turn in her voice (her
+    own role section, under 1,000 tokens).
+  - **In a heartbeat:** `WayLinesActivity` shows her lines in a quiet moment that's happening
+    anyway, at most weekly; `rewrite_postmark_lines` works only there (refused in letters, and
+    within a week of her last), keeps yours, and While you were away says "rewrote 2 lines for the
+    postmark". Like the letter box tool, it's always in her tool list, so the context's tools
+    don't change between letters and heartbeats.
+  - **Tests:** 5 in core (plain lines and pronouns, one line a letter, tidying what she writes,
+    writing her own, the weekly rewrite). The tours show her page's card.
+- **Step 5, the stationery update: built** (2026-11-10), as designed and in full (your answer of
+  2026-11-10: no changes until the test build has been explored).
+  - **Thirteen patterns** (`TapePattern`: the four, and checks 市松, rings 七宝, waves 青海波, hemp
+    leaf 麻の葉, arrows 矢絣, hearts, scales 鱗, tortoiseshell 亀甲, basket 籠目), drawn from the
+    Tapes board's tiles (`ui/.../paper/TapeTiles.kt`) everywhere tape is drawn, and on a washi
+    letter box.
+  - **Patterns sit true:** laid out from the tape's centre, rows symmetric about the centreline and
+    repeating outwards from the middle; each tile scaled so whole repeats fit across the tape. The
+    pattern is drawn in one layer, so strokes don't darken where they cross.
+  - **Two shades** (`TapeShade` on personas and yours): light by day, dark at night, or Light or
+    Dark for good. A light tape is the ink mixed into the day's paper at 40%, the pattern in the
+    paper's colour at 95%; a dark one the ink, the pattern in white (dots 60%, stripes 38%,
+    gingham as before, the nine 55%). Light stays mixed with the day's paper at night. The nav
+    bar's label tape stays dark (it's written on in white). Every tape is made through `tape()`.
+  - **The tape picker:** a strip of the chosen tape, the thirteen in a grid with their Japanese
+    names, and the Shade row (With the time of day, Light, Dark), on her page and yours. Cards
+    from Fumibako carry the shade too.
+  - **Placements** (`TapePlacement`, from the Placements board): a strip, two corners, across an
+    edge, a pair, one corner, and the new four corners, top and bottom, and photo corners (paper
+    corners in the ink, no pattern). Each turns by quarter turns (four corners and photo corners
+    don't). The screens' cards choose among eleven layouts (strips left or right, corners either
+    way round, across or a pair at the top or bottom, four corners, top and bottom, photo
+    corners), never tape at the same corner of one card's bottom and the next one's top.
+  - **Longer corner pieces:** about 9dp in along the corner's diagonal, across it, 50dp long (44
+    for one corner, 46 for four), for corner tape, pairs, single pieces and four corners alike.
+  - **Month envelopes:** each earlier month in the memory book has its old name in the brush face
+    and in her ink, then the English month and what the name means (神無月 October “gods'
+    month”), from the planner's names.
+  - **Labels** wait for v0.6, as agreed.
+- **Step 6, fonts: built** (2026-11-10).
+  - **The faces** (bundled as Latin subsets, plus 〒): Zen Old Mincho for names and titles, Literata
+    for letters (and now your notes in a thread too, `PaperType.yourNote`), Zen Kaku Gothic New for
+    the interface, Yomogi for the hand, Yuji Syuku for seals, Old Standard TT for cuttings. The old
+    placeholders' italics went with them. The About page and `files/licenses/fonts.txt` name them.
+  - **The aligned scale** (the Type board's): names 20 everywhere, meta and labels 11, day dividers
+    17.5, letters 15.5 on 24, line heights on a 4dp step; the P.S. and mood words in the hand at 15.
+  - **No italics for her voice:** the P.S., mood words, her thoughts, the writing line and captions
+    are in her hand (`PaperType.postscript`, `mood` and `caption` read `LocalHand`); a P.S.'s
+    label stays printed (Literata, medium), as the Hand board has it. Literata's real italics stay
+    for emphasis in letters and quiet notes.
+  - **Her hand** (`Persona.hand`, and yours on `UserPersona.hand`; `Hands` in core): Yomogi, Klee
+    One, Zen Kurenaido, Hachi Maru Pop, Yusei Magic, each scaled to line up with the letters. Chosen
+    on her page under Look (and on yours); her letters, her card in the list, her page and her
+    memory book are written in it, your notes in yours. On the phone the others come through
+    Google Play services' font provider the first time they're chosen (the certificates are
+    Google's, from its Downloadable Fonts sample, `ui/src/androidMain/res/values/font_certs.xml`);
+    Yomogi stands in until they arrive, and on the computer for now (desktop step 6). Cards from
+    Fumibako name the hand.
+  - **Japanese on first use** (phone): the first time Japanese shows (a letter or note, a name or
+    preview in the list, an imported card), or at once on a phone set to Japanese, the faces'
+    Japanese comes through the same provider. Zen Old Mincho, Zen Kaku Gothic New, Yomogi and Yuji
+    Syuku come whole and replace their Latin subsets. Literata and Old Standard TT keep theirs, with
+    Zen Old Mincho and Zen Antique chained behind them a character at a time
+    (`Typeface.CustomFallbackBuilder`, Android 10 and newer; before that their Japanese stays the
+    phone's). The families are read live, so text redraws in the full faces when they arrive.
+    Settings › Look has **Download Japanese fonts now · about 25 MB**, and says where they are.
+    Without Play services nothing comes and nothing changes.
+  - **Your own fonts:** **+ Add a font file…** under the hands takes a .ttf or .otf (a collection's
+    first face). `core/fonts/FontFiles` reads its name, whether it has Latin and Japanese, and its
+    x-height, so its size is matched to Yomogi's; the platform loads it once to refuse what it
+    can't use; up to 20 MB. The sheet: the file and its size, its name (editable), a sample with a
+    line of the letters under it, what it covers, Size − and +, and "Add only fonts you're allowed
+    to use". Added fonts are a library (`AppSettings.fonts`) for every persona and each of yours,
+    listed in Settings › Look to rename or remove (anyone writing in a removed one goes back to
+    Yomogi). Kept as files; a persona's backup carries her hand's font, Everything all of them;
+    cards only name the hand.
+  - **Not here yet:** the computer's side of downloads and Japanese (desktop step 6, the installers
+    session's); a Latin-only font of yours writes Japanese in the phone's own font rather than
+    Yomogi's (chaining it like Literata is for step 8 if wanted).
+  - **Tests:** the font reader (3), her font in her backup (1); the tours show the new faces, her
+    hand on her page, and the Look page's Japanese and Your fonts cards.
 

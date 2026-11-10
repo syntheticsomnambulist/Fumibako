@@ -1,10 +1,10 @@
-Fonts bundled with Fumibako (placeholders; subsetted to the characters the app uses)
+Fonts bundled with Fumibako (subsetted to the characters the app uses; Japanese comes later, downloaded)
 
-Cormorant Garamond: Copyright 2015 The Cormorant Project Authors (github.com/CatharsisFonts/Cormorant)
+Zen Old Mincho: Copyright 2021 The Zen Old Mincho Project Authors (https://github.com/googlefonts/zen-oldmincho)
 Literata: Copyright 2017 The Literata Project Authors (https://github.com/googlefonts/literata)
-LINE Seed JP: Copyright LY Corporation
+Zen Kaku Gothic New: Copyright 2022 The Zen Project Authors (https://github.com/googlefonts/zen-kakugothic)
+Yomogi: Copyright 2020 The Yomogi Project Authors (https://github.com/satsuyako/YomogiFont), all rights reserved.
 Yuji Syuku: Copyright 2021 The Yuji Project Authors (https://github.com/Kinutafontfactory/Yuji)
-Klee One: Copyright 2020 The Klee Project Authors (https://github.com/fontworks-fonts/Klee)
 Old Standard TT: Copyright 2011 The Old Standard Project Authors (amkryukov@gmail.com)
 
 All six are licensed under the SIL Open Font License, Version 1.1, reproduced below.

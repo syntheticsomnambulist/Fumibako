@@ -33,6 +33,8 @@ import dev.aiharness.core.model.Conversation
 import dev.aiharness.core.model.MessageOrigin
 import dev.aiharness.core.model.MessageRole
 import dev.aiharness.core.model.ModelProfile
+import dev.aiharness.core.letters.WayLines
+import dev.aiharness.core.llm.complete
 import dev.aiharness.core.model.MoodTags
 import dev.aiharness.core.model.Persona
 import dev.aiharness.core.storage.ActivityRepository
@@ -125,6 +127,7 @@ class Harness(
             GenerateImageTool(images, personas),
             ChangeOutfitTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
             dev.aiharness.core.tools.ChooseLetterBoxTool(personas, { id, kind, note -> logActivity(id, kind, note = note) }, clock::nowMillis),
+            dev.aiharness.core.tools.RewriteWayLinesTool(personas, { id, kind, count -> logActivity(id, kind, count = count) }, clock::nowMillis),
             PlaceStickerTool(stickerService, personas, conversations, { id, kind, conversationId, note -> logActivity(id, kind, conversationId, note = note) }, { planner }, clock),
             PeelStickerTool(stickerService, personas, conversations),
             DrawStickerTool(stickerMaker, personas, stickers),
@@ -240,6 +243,38 @@ class Harness(
             )
         }
         return created
+    }
+
+    /**
+     * "Let Aria write her own": a short turn in her own voice (under 1,000 tokens) for her postmark
+     * lines. Lines you wrote stay. Returns her as she is now, or null when she couldn't write them.
+     */
+    suspend fun writeOwnWayLines(personaId: String): Persona? {
+        val persona = personas.get(personaId) ?: return null
+        val settings = settings.current()
+        val userPersona = settings.activeUserPersonaId?.let { userPersonas.get(it) }
+        val profile = listOfNotNull(persona.defaultModelProfileId, settings.defaultModelProfileId).firstNotNullOfOrNull { profiles.get(it) }
+            ?: profiles.getAll().minByOrNull { it.name } ?: return null
+        val system = prompts.buildSystemPrompt(persona, userPersona, settings, coreMemories = emptyList(), summary = null, toolNames = emptySet())
+        val userName = userPersona?.name ?: "your correspondent"
+        val ask = "While a reply of yours is in the post to $userName, the postmark on it reads \"${persona.name}'s reply is on its way\" " +
+            "and then a short line about what you're doing as it goes, like \"${WayLines.plain(persona)[1]}\". " +
+            "Write four such lines in your own voice: in the third person, each under ten words, one to a line, nothing else."
+        val result = providers.forProfile(profile.copy(toolMode = dev.aiharness.core.model.ToolMode.NONE)).complete(
+            dev.aiharness.core.llm.LlmRequest(
+                profile = profile.copy(maxOutputTokens = 1_000),
+                apiKey = apiKey(profile.credentialId),
+                system = system,
+                messages = listOf(dev.aiharness.core.llm.LlmMessage.User(listOf(dev.aiharness.core.llm.LlmPart.Text(ask)))),
+            ),
+        )
+        if (result.stopReason == dev.aiharness.core.llm.StopReason.REFUSAL) return null
+        val lines = WayLines.parse(MoodTags.strip(result.text), persona.name)
+        if (lines.isEmpty()) return null
+        val now = clock.nowMillis()
+        val updated = WayLines.withTheirs(personas.get(personaId) ?: persona, lines, now).copy(updatedAt = now)
+        personas.upsert(updated)
+        return updated
     }
 
     /** A persona's first letters: its greeting, then the others to pick from (a card's alternate greetings). */

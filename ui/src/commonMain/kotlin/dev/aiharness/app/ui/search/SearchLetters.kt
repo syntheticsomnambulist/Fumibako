@@ -287,7 +287,7 @@ private fun ResultSlip(hit: LetterHit, persona: Persona?, user: UserPersona?, te
     val name = persona?.name ?: "…"
     val inkName = if (hit.byYou) user?.ink ?: "sora" else persona?.ink
     val ink = s.ink(inkName)
-    val tape = Tape(ink, if (hit.byYou) user?.tapePattern ?: s.youPattern else persona?.tapePattern ?: TapePattern.DOTS)
+    val tape = dev.aiharness.app.ui.paper.tape(ink, if (hit.byYou) user?.tapePattern ?: s.youPattern else persona?.tapePattern ?: TapePattern.DOTS, (if (hit.byYou) user?.tapeShade ?: s.youShade else persona?.tapeShade) ?: dev.aiharness.core.model.TapeShade.THEME)
     val day = shortDay(hit.at)
     val meta = when {
         hit.byYou && hit.inPicture -> "Your picture to $name, $day"

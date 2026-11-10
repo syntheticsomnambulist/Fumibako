@@ -60,7 +60,7 @@ fun PersonaHeartbeatScreen(nav: NavController, personaId: String) {
     val p = personas?.firstOrNull { it.id == personaId } ?: return
     val s = settings ?: return
     val ink = stationery.ink(p.ink)
-    val tape = Tape(ink, p.tapePattern)
+    val tape = dev.aiharness.app.ui.paper.tape(ink, p.tapePattern, p.tapeShade)
     val layouts = tapeLayouts("heartbeat-${p.id}", 4)
     fun save(transform: (Persona) -> Persona) = scope.launch { harness.personas.upsert(transform(p)) }
     fun rhythm(transform: (HeartbeatRhythm) -> HeartbeatRhythm) = save { it.copy(ownHeartbeat = transform(it.ownHeartbeat ?: s.heartbeat.rhythm)) }

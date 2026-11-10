@@ -156,7 +156,7 @@ fun MusicTray(
             if (note != null) {
                 Text(
                     note,
-                    style = PaperType.postscript,
+                    style = PaperType.quiet,
                     color = colors.usuzumi1,
                     modifier = Modifier.align(Alignment.TopStart).padding(horizontal = 16.dp, vertical = 14.dp),
                 )

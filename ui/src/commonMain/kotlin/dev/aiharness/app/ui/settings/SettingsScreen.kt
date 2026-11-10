@@ -93,7 +93,7 @@ fun SettingsScreen(nav: NavController) {
     ) {
         item { ScreenTitle("Settings", Modifier.statusBarsPadding()) }
         item {
-            TapedCard(dev.aiharness.app.ui.paper.TapeLayout.LEFT, Tape(stationery.you, stationery.youPattern), spacing = 0.dp) {
+            TapedCard(dev.aiharness.app.ui.paper.TapeLayout.LEFT, dev.aiharness.app.ui.paper.tape(stationery.you, stationery.youPattern, stationery.youShade), spacing = 0.dp) {
                 Text("CONTENTS", style = PaperType.label, color = paper.kasure2, modifier = Modifier.padding(bottom = 6.dp))
                 SettingsSection.entries.forEach { section ->
                     ContentsLine(section, summary(section, s, profiles.size, users.firstOrNull { it.id == s.activeUserPersonaId }?.name, version)) {
@@ -221,7 +221,7 @@ private fun SettingsPage(nav: NavController, section: SettingsSection, content: 
         cards.items.clear()
         cards.content()
         val layouts = tapeLayouts("settings-${section.key}", cards.items.size)
-        val tape = Tape(stationery.you, stationery.youPattern.takeIf { it != TapePattern.PLAIN } ?: TapePattern.STRIPES)
+        val tape = dev.aiharness.app.ui.paper.tape(stationery.you, stationery.youPattern.takeIf { it != TapePattern.PLAIN } ?: TapePattern.STRIPES, stationery.youShade)
         val pageScroll = rememberLazyListState()
         LazyColumn(
             Modifier.fillMaxSize().scrollbar(pageScroll),

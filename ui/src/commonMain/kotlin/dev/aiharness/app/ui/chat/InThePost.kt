@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.withStyle
 import dev.aiharness.app.ui.LocalAppContainer
 import dev.aiharness.app.ui.planner.AppClock
 import dev.aiharness.app.ui.theme.PaperType
@@ -42,7 +43,7 @@ import kotlin.math.sin
  * watch says when ([arrivesAt]); without it, only that it's coming.
  */
 @Composable
-fun OnItsWay(name: String, inkName: String?, arrivesAt: Long?, modifier: Modifier = Modifier) {
+fun OnItsWay(name: String, inkName: String?, arrivesAt: Long?, modifier: Modifier = Modifier, line: String? = null) {
     val ink = stationery.ink(inkName)
     Row(
         modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp),
@@ -56,7 +57,15 @@ fun OnItsWay(name: String, inkName: String?, arrivesAt: Long?, modifier: Modifie
             Text("〒", style = PaperType.label.copy(fontSize = 17.sp, letterSpacing = 0.sp), color = ink)
         }
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("$name's reply is on its way", style = PaperType.postscript, color = paper.usuzumi1)
+            Text(
+                androidx.compose.ui.text.buildAnnotatedString {
+                    append("$name's reply is on its way")
+                    // Her line, in her ink: what she's doing as it goes to the post.
+                    if (line != null) withStyle(androidx.compose.ui.text.SpanStyle(color = ink)) { append(" · $line") }
+                },
+                style = PaperType.postscript,
+                color = paper.usuzumi1,
+            )
             if (arrivesAt != null) {
                 val words = "arrives ${arrivalWords(arrivesAt, LocalAppContainer.current.harness.clock.nowMillis())}"
                 Row(

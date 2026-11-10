@@ -276,7 +276,7 @@ fun FumibakoWindow(container: AppContainer, backHandlers: BackHandlers = remembe
         val usersFlow = remember { container.harness.userPersonas.observeAll() }
         val users by usersFlow.collectAsStateWithLifecycle(initialValue = emptyList())
         val you = users.firstOrNull { it.id == settings?.activeUserPersonaId } ?: users.firstOrNull()
-        HarnessTheme(settings?.theme ?: ThemeSettings(), you?.ink, you?.tapePattern ?: TapePattern.STRIPES) {
+        HarnessTheme(settings?.theme ?: ThemeSettings(), you?.ink, you?.tapePattern ?: TapePattern.STRIPES, you?.tapeShade ?: dev.aiharness.core.model.TapeShade.THEME) {
             CompositionLocalProvider(
                 LocalStickerSettings provides (settings?.stickers ?: StickerSettings()),
                 LocalMediaSettings provides (settings?.media ?: MediaSettings()),

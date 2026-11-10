@@ -26,22 +26,31 @@ Updated 2026-11-10.
   - Done: the wide layouts (merged first), step 1 (the engine: letter search, model changes, lore
     memories, Won't fade), step 2 (in a letter, bar thinking lines), the Fumibako boxes, the
     gallery's folded corner for the open persona, step 3 (searching letters on screen), and step 4
-    (import and export: character cards in and out, `.fumibako` backups, optionally locked).
-  - Next: her lines on the postmark (below), then steps 5 to 8 (the stationery update, fonts, the
-    planner redrawn, then polish, tests and 0.5.0 for the phone and the computer).
+    (import and export: character cards in and out, `.fumibako` backups, optionally locked), and
+    her lines on the postmark (below), and step 5 (the stationery update, in full: thirteen
+    patterns in light and dark shades, the new tape picker, eight placements that turn, the months'
+    envelopes), and step 6 (fonts: the six faces and the aligned scale, a hand for each persona and
+    each of yours, your own font files, Japanese on first use).
+  - Next: steps 7 and 8 (the planner redrawn, then polish, tests and 0.5.0 for the phone and the
+    computer).
+  - Found, for step 8: the large-text phone tour fails now and then at different steps (3 of 7 runs
+    on 2026-11-10), and on a computer the Export and Open a backup pages light the side rail's
+    Settings tab even when reached from Personas.
   - The stationery update goes in whole, as designed, with no changes until friends have installed
     and explored the test build (the user, 2026-11-10, relayed by the build session).
   - Thinking lines became her lines on the postmark (the user, 2026-11-10; `v0.5.md`, *design
     branch*): while her reply is in the post, the postmark and her card in the letters list carry
-    one of her own lines, which she can rewrite when she reflects, at most once a week. Some details
-    are still marked proposed there; the build session builds it once they're settled (the v0.5
-    plan's step 2).
+    one of her own lines, which she can rewrite when she reflects, at most once a week. Built
+    (2026-11-10), with her page's On its way card and a plain "Aria is writing…" straight away.
 - **Desktop, shipping with v0.5** ([`plan-desktop.md`](plan-desktop.md)): Fumibako on Windows, macOS
   and Linux, with the wide layouts (the user, 2026-11-08). Steps 1 to 5 (the spike, the move, the
   shell, the desktop's services, mouse and keyboard) are done.
   - Step 6, v0.5 on the computer: the computer's side of each v0.5 part as it lands (save and open
     dialogs for import and export, Japanese fonts in the app-data folder). Taken by the desktop
-    installers session, part by part after Kanna lands each (the user, 2026-11-10).
+    installers session, part by part after Kanna lands each (the user, 2026-11-10). Import and
+    export: done (a backup or card opened with Fumibako goes to its page; `.fumibako` registered
+    with each installer). Next, the fonts' downloads and Japanese on the computer (v0.5's step 6
+    is in `main`).
   - Step 7, done: the libraries' notices, from the build (About, and beside the installed app);
     smaller installers (the Java runtime trimmed to the modules Fumibako uses); a desktop section
     in `testers.md` and the README; and a desktop screenshot tour (2026-11-10, the desktop

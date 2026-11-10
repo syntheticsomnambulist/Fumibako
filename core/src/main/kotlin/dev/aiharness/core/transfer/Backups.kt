@@ -107,6 +107,8 @@ data class BackupRecords(
     val planner: List<PlannerEntry> = emptyList(),
     val activity: List<ActivityEntry> = emptyList(),
     val settings: AppSettings? = null,
+    /** Fonts of yours a persona's backup carries: her hand's, when it's one (Everything has them in [settings]). */
+    val fonts: List<dev.aiharness.core.model.YourFont> = emptyList(),
 )
 
 /** What goes into a backup: the ticks on the Export page. */
@@ -329,6 +331,7 @@ class Backups(
             json("records/marks.json", list(AttachmentMark.serializer(), records.marks))
             json("records/planner.json", list(PlannerEntry.serializer(), records.planner))
             json("records/activity.json", list(ActivityEntry.serializer(), records.activity))
+            json("records/fonts.json", list(dev.aiharness.core.model.YourFont.serializer(), records.fonts))
             records.settings?.let { json("records/settings.json", HarnessJson.encodeToString(AppSettings.serializer(), it)) }
             zip.setLevel(Deflater.BEST_SPEED)
             files.forEach { f ->
@@ -450,6 +453,8 @@ class Backups(
             r.stickerArt.forEach { stickers.upsertArt(it) }
             addLetters(r)
         }
+        // Her hand's font, when it's one of yours and isn't here yet.
+        if (r.fonts.isNotEmpty()) settings.update { s -> s.copy(fonts = s.fonts + r.fonts.filter { f -> s.fonts.none { it.id == f.id } }) }
         persona
     }
 
@@ -515,6 +520,7 @@ class Backups(
             marks = list("records/marks.json", AttachmentMark.serializer()),
             planner = list("records/planner.json", PlannerEntry.serializer()),
             activity = list("records/activity.json", ActivityEntry.serializer()),
+            fonts = list("records/fonts.json", dev.aiharness.core.model.YourFont.serializer()),
             settings = text("records/settings.json")?.let { HarnessJson.decodeFromString(AppSettings.serializer(), it) },
         )
     }
@@ -554,6 +560,7 @@ class Backups(
                         personas = listOf(p),
                         profiles = profiles.getAll().filter { it.id in profileIds },
                         stickerArt = stickers.art(p.id),
+                        fonts = listOfNotNull(dev.aiharness.core.model.Hands.yours(p.hand, settings.current().fonts)),
                     ),
                     1,
                 )
@@ -678,6 +685,7 @@ class Backups(
         planner = parts.flatMap { it.planner },
         activity = parts.flatMap { it.activity },
         settings = parts.firstNotNullOfOrNull { it.settings },
+        fonts = parts.flatMap { it.fonts }.distinctBy { it.id },
     )
 
     private fun encode(r: BackupRecords) = HarnessJson.encodeToString(BackupRecords.serializer(), r)

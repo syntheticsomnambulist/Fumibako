@@ -118,7 +118,7 @@ private fun YouPolaroid(user: UserPersona, active: Boolean, letters: Int, column
     val s = stationery
     val seed = user.id.hashCode()
     PolaroidFrame(
-        tape = Tape(s.ink(user.ink), user.tapePattern),
+        tape = dev.aiharness.app.ui.paper.tape(s.ink(user.ink), user.tapePattern, user.tapeShade),
         modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = "Open ${user.name}") { onClick() },
         tiltDegrees = if (column == 0) -1.8f - (seed % 3) * 0.3f else 1.6f + (seed % 3) * 0.3f,
         tapeTiltDegrees = if (column == 0) 4f else -5f,
@@ -165,7 +165,7 @@ fun YouPageScreen(nav: NavController, userId: String) {
     }
     val u = (if (editing) draft else stored) ?: return
     val ink = stationery.ink(u.ink)
-    val tape = Tape(ink, u.tapePattern)
+    val tape = dev.aiharness.app.ui.paper.tape(ink, u.tapePattern, u.tapeShade)
     val active = settings?.activeUserPersonaId == u.id
     val layouts = tapeLayouts("you-${u.id}", 4)
     val back = discardGuard(
@@ -289,7 +289,9 @@ fun YouPageScreen(nav: NavController, userId: String) {
                     Text("INK", style = PaperType.meta, color = paper.kasure2)
                     InkPicker(u.ink, { v -> draft = u.copy(ink = v) })
                     Text("TAPE", style = PaperType.meta, color = paper.kasure2)
-                    TapePicker(u.ink, u.tapePattern, { v -> draft = u.copy(tapePattern = v) })
+                    TapePicker(u.ink, u.tapePattern, { v -> draft = u.copy(tapePattern = v) }, shade = u.tapeShade, onShade = { v -> draft = u.copy(tapeShade = v) })
+                    Text("YOUR HAND", style = PaperType.meta, color = paper.kasure2)
+                    dev.aiharness.app.ui.paper.HandPicker(u.hand, stationery.ink(u.ink), "Captions on what you send, and labels on your keepsakes.") { v -> draft = u.copy(hand = v) }
                 }
             }
             item {

@@ -76,6 +76,7 @@ fun ImportCardScreen(nav: NavController) {
         return
     }
     val preview = remember(file) { CardPreview(file) }
+    dev.aiharness.app.platform.NoticeJapanese(file.card.name + " " + file.card.description)
     val card = preview.card
     val portrait by produceState<ImageBitmap?>(null, file) { value = withContext(Dispatchers.Default) { file.portrait?.bytes?.let(::decodeImage) } }
     val inks = stationery.colors.inks
@@ -99,7 +100,7 @@ fun ImportCardScreen(nav: NavController) {
     val w = Persona(id = "", name = card.name, pronouns = preview.fumibako?.pronouns, createdAt = 0, updatedAt = 0).words
     val scope = rememberCoroutineScope()
 
-    val tape = Tape(inkColor, preview.fumibako?.tapePattern ?: TapePattern.DOTS)
+    val tape = dev.aiharness.app.ui.paper.tape(inkColor, preview.fumibako?.tapePattern ?: TapePattern.DOTS, preview.fumibako?.tapeShade ?: dev.aiharness.core.model.TapeShade.THEME)
     val layouts = tapeLayouts("import-${card.name}", 6)
     TransferPage(nav, "Import a card", "Cancel") {
         item {

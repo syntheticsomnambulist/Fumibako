@@ -84,9 +84,34 @@ data class ProviderOptions(
 // Personas
 // ---------------------------------------------------------------------------
 
-/** Washi tape patterns, part of a persona's (and the user's) look alongside its ink. */
+/**
+ * Washi tape patterns, part of a persona's (and the user's) look alongside its ink: the first four,
+ * and (v0.5) nine traditional ones from the planner pass. [japanese] is the pattern's own name.
+ */
 @Serializable
-enum class TapePattern { PLAIN, DOTS, STRIPES, GINGHAM }
+enum class TapePattern(val label: String, val japanese: String? = null) {
+    PLAIN("Plain"),
+    DOTS("Dots"),
+    STRIPES("Stripes"),
+    GINGHAM("Gingham"),
+    ICHIMATSU("Checks", "市松"),
+    SHIPPO("Rings", "七宝"),
+    SEIGAIHA("Waves", "青海波"),
+    ASANOHA("Hemp leaf", "麻の葉"),
+    YAGASURI("Arrows", "矢絣"),
+    HEARTS("Hearts"),
+    UROKO("Scales", "鱗"),
+    KIKKO("Tortoiseshell", "亀甲"),
+    KAGOME("Basket", "籠目"),
+}
+
+/**
+ * Which shade a tape shows: with the time of day (light with the day palettes, dark with the night
+ * ones), or always light or always dark. A light tape is the ink mixed into the day's paper, with
+ * the pattern in the paper's colour; a dark one is the ink itself with the pattern in white.
+ */
+@Serializable
+enum class TapeShade(val label: String) { THEME("With the time of day"), LIGHT("Light"), DARK("Dark") }
 
 /** An agent persona. Each persona owns its own memories. */
 @Serializable
@@ -129,6 +154,9 @@ data class Persona(
     /** Signature ink: one of the madoromi accent ink names (see `docs/design`). */
     val ink: String = "sakura",
     val tapePattern: TapePattern = TapePattern.DOTS,
+    val tapeShade: TapeShade = TapeShade.THEME,
+    /** Its hand (see [Hands]): the face of its P.S., mood words, thoughts and captions; null is Yomogi. */
+    val hand: String? = null,
     /**
      * What an unread letter from this persona wears: the id of one of its stickers, or null for its
      * "hello" sticker (the seal when it has none).
@@ -151,6 +179,13 @@ data class Persona(
     val letterTravel: LetterTravel? = null,
     /** Told in its next letter when its model changes ("Your model changed: ..."). The thread shows the change either way. */
     val tellModelChanges: Boolean = true,
+    /**
+     * Its lines for the 〒 postmark while a reply of its is on its way ("she's looking for a stamp");
+     * empty uses the plain ones ([dev.aiharness.core.letters.WayLines]).
+     */
+    val wayLines: List<WayLine> = emptyList(),
+    /** When it last wrote its own lines (asked on its page, or rewriting them in a heartbeat): at most weekly in a heartbeat. */
+    val wayLinesWrittenAt: Long? = null,
     /** When its model was last changed on its page, and what it was before, for "Since today, 15:40 · was ...". */
     val modelSince: Long? = null,
     val previousModelName: String? = null,
@@ -176,6 +211,31 @@ data class CardOrigin(
     val cardRef: String? = null,
     val importedAt: Long = 0,
 )
+
+/**
+ * The handwriting faces a persona (or one of yours) can write in: Yomogi (the default, bundled),
+ * and four that download when chosen. [scale] lines their x-heights up with the letters'.
+ */
+object Hands {
+    data class Hand(val name: String, val scale: Float = 1f)
+
+    val DEFAULT = Hand("Yomogi")
+    val BUILT_IN: List<Hand> = listOf(DEFAULT, Hand("Klee One"), Hand("Zen Kurenaido"), Hand("Hachi Maru Pop", 0.92f), Hand("Yusei Magic", 0.96f))
+
+    /** The hand called [name], or the default (a font of yours is looked up with [yours]). */
+    fun of(name: String?): Hand = BUILT_IN.firstOrNull { it.name == name } ?: DEFAULT
+
+    /** A hand that's one of your fonts: `font:<id>`. */
+    fun ofYours(font: YourFont): String = "font:${font.id}"
+
+    /** Your font that [name] is, when it's one. */
+    fun yours(name: String?, fonts: List<YourFont>): YourFont? =
+        name?.takeIf { it.startsWith("font:") }?.removePrefix("font:")?.let { id -> fonts.firstOrNull { it.id == id } }
+}
+
+/** One of a persona's lines for the postmark: [yours] when you wrote or edited it (then it stays as it is). */
+@Serializable
+data class WayLine(val text: String, val yours: Boolean = false)
 
 /** One of a persona's mood portraits: the mood's name (happy, flustered) and the picture. */
 @Serializable
@@ -207,6 +267,9 @@ data class UserPersona(
     val outfit: String = "",
     val ink: String = "sora",
     val tapePattern: TapePattern = TapePattern.STRIPES,
+    val tapeShade: TapeShade = TapeShade.THEME,
+    /** Your hand for captions on what you send and labels on your keepsakes (see [Hands]); null is Yomogi. */
+    val hand: String? = null,
     /**
      * Whether personas see this one's planner: null follows the rule, which shares your default
      * persona's (the one you write as) and not the others', which may be fictional.

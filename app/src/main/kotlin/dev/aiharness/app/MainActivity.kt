@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
         val usersFlow = remember { container.harness.userPersonas.observeAll() }
         val users by usersFlow.collectAsStateWithLifecycle(initialValue = emptyList())
         val you = users.firstOrNull { it.id == settings?.activeUserPersonaId } ?: users.firstOrNull()
-        HarnessTheme(settings?.theme ?: ThemeSettings(), you?.ink, you?.tapePattern ?: TapePattern.STRIPES) {
+        HarnessTheme(settings?.theme ?: ThemeSettings(), you?.ink, you?.tapePattern ?: TapePattern.STRIPES, you?.tapeShade ?: dev.aiharness.core.model.TapeShade.THEME) {
             val night = stationery.isNight
             SideEffect {
                 WindowCompat.getInsetsController(window, window.decorView).apply {

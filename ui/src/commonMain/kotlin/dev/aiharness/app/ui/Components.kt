@@ -269,5 +269,6 @@ fun activityPhrase(kind: dev.aiharness.core.model.ActivityKind, count: Int = 1, 
         dev.aiharness.core.model.ActivityKind.WROTE_IN_PLANNER -> n("wrote in your planner", "wrote in your planner # times")
         dev.aiharness.core.model.ActivityKind.WROTE_HAIKU -> "wrote a haiku in your planner" + (note?.let { " for $it" } ?: "")
         dev.aiharness.core.model.ActivityKind.CHOSE_LETTER_BOX -> "chose a new letter box"
+        dev.aiharness.core.model.ActivityKind.REWROTE_LINES -> n("rewrote a line for the postmark", "rewrote # lines for the postmark")
     }
 }

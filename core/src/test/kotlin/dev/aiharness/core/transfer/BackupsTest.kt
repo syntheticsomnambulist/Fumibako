@@ -165,6 +165,21 @@ class BackupsTest {
     }
 
     @Test
+    fun herHandsFontGoesWithHerWhenItsOneOfYours() = runTest {
+        val home = phone()
+        val font = home.blobs.put(ByteArray(64) { 1 }, "ttf")
+        home.settings.update { it.copy(fonts = listOf(dev.aiharness.core.model.YourFont(id = "f1", name = "Sam's hand", ref = font))) }
+        home.personas.upsert(home.personas.get(ARIA)!!.copy(hand = "font:f1"))
+        val file = home.backUp(BackupRequest.OnePersona(ARIA, pictures = false))
+        val away = Phone()
+        val aria = away.backups.restorePersona(file)
+        assertEquals("font:f1", aria.hand)
+        val came = away.settings.current().fonts.single()
+        assertEquals("Sam's hand", came.name)
+        assertNotNull(away.blobs.get(came.ref), "the font file came too, even without pictures")
+    }
+
+    @Test
     fun withoutPicturesOnlyHerStickersFilesGo() = runTest {
         val home = phone()
         val survey = home.backups.survey(BackupRequest.OnePersona(ARIA))
@@ -307,6 +322,14 @@ class BackupsTest {
         val header = Lock.readHeader(locked.inputStream())!!.second.size
         val cut = locked.copyOf(header + 2 * (Lock.SEGMENT + 16))
         assertFailsWith<Lock.Damaged> { Lock.decrypt(cut.inputStream(), ByteArrayOutputStream(), "pw".toCharArray()) }
+
+        // A header asking for an enormous segment or countless rounds is refused, not obeyed.
+        val text = String(locked, Charsets.ISO_8859_1)
+        for ((field, value) in listOf("\"segment\":${Lock.SEGMENT}" to "\"segment\":2147483000", "\"iterations\":1000" to "\"iterations\":2000000000")) {
+            assertContains(text, field)
+            val bad = text.replaceFirst(field, value).toByteArray(Charsets.ISO_8859_1)
+            assertFailsWith<Lock.Damaged> { Lock.decrypt(bad.inputStream(), ByteArrayOutputStream(), "pw".toCharArray()) }
+        }
 
         val exact = Random(6).nextBytes(Lock.SEGMENT)
         val lockedExact = ByteArrayOutputStream().also { Lock.encrypt(exact.inputStream(), it, "pw".toCharArray(), 1, "0.5.0", iterations = 1_000) }.toByteArray()

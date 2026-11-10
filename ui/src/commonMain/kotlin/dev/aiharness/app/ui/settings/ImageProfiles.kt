@@ -97,7 +97,7 @@ fun ImageProfileScreen(nav: NavController, profileId: String) {
     var trial by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     val you = stationery.you
-    val tape = Tape(you, stationery.youPattern)
+    val tape = dev.aiharness.app.ui.paper.tape(you, stationery.youPattern, stationery.youShade)
     val layouts = tapeLayouts("image-$profileId", 5)
     val s = settings ?: return
     if (!isNew && draft == null) draft = s.imageGen.profiles.firstOrNull { it.id == profileId }

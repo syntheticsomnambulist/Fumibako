@@ -402,10 +402,13 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                 contentPadding = PaddingValues(horizontal = LocalReadingSides.current ?: 18.dp, vertical = 18.dp),
             ) {
                 if (arriving != null || (generation.active && postage.travels)) {
-                    item(key = "on-its-way") { OnItsWay(personaName, persona?.ink, arriving.takeIf { postage.showArrival }) }
+                    item(key = "on-its-way") {
+                        val line = persona?.let { dev.aiharness.core.letters.WayLines.pick(it, conversationId, header.conversation?.lastUserMessageAt) }
+                        OnItsWay(personaName, persona?.ink, arriving.takeIf { postage.showArrival }, line = line)
+                    }
                 }
                 if (writing != null && writingInto == null) {
-                    item(key = "writing") { LetterSheet(null, persona, writing, onLongPress = {}, onImage = { viewing = it }) }
+                    item(key = "writing") { dev.aiharness.app.ui.theme.InHand(persona?.hand) { LetterSheet(null, persona, writing, onLongPress = {}, onImage = { viewing = it }) } }
                 }
                 if (greetingAt != null) {
                     item(key = "greetings") {
@@ -430,7 +433,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                     Box(Modifier.zIndex(if (lifted) 1f else 0f)) {
                     when (row) {
                         is ThreadRow.Day -> DayHeading(row.date)
-                        is ThreadRow.Note -> NoteSlip(
+                        is ThreadRow.Note -> dev.aiharness.app.ui.theme.InHand(header.userPersona?.hand) { NoteSlip(
                             row.message,
                             header.userPersona,
                             onLongPress = { selected = listOf(row.message) },
@@ -440,8 +443,8 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                             stickerName = stickerName,
                             handling = handling,
                             find = findFor(listOf(row.message), byYou = true),
-                        )
-                        is ThreadRow.Letter -> LetterSheet(
+                        ) }
+                        is ThreadRow.Letter -> dev.aiharness.app.ui.theme.InHand(persona?.hand) { LetterSheet(
                             row,
                             persona,
                             writing.takeIf { row === writingInto },
@@ -453,7 +456,7 @@ fun ChatScreen(nav: NavController, conversationId: String) {
                             handling = handling,
                             onOpenLetter = openLetter,
                             find = findFor(row.messages, byYou = false),
-                        )
+                        ) }
                         is ThreadRow.ModelChange -> ModelChangeNotice(
                             row,
                             persona?.words ?: dev.aiharness.core.model.Words(personaName, null),

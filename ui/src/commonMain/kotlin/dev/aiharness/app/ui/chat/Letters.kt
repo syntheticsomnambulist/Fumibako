@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
@@ -151,7 +152,7 @@ fun LetterSheet(
         Column(
             Modifier
                 .matchRing(find?.ringed == true, ink)
-                .washiStrip(Tape(ink, persona?.tapePattern ?: TapePattern.DOTS), tiltDegrees = -0.7f, overhang = 8.dp)
+                .washiStrip(dev.aiharness.app.ui.paper.tape(ink, persona?.tapePattern ?: TapePattern.DOTS, persona?.tapeShade ?: dev.aiharness.core.model.TapeShade.THEME), tiltDegrees = -0.7f, overhang = 8.dp)
                 .paperCard()
                 .fillMaxWidth()
                 .combinedClickable(onClick = {}, onLongClick = onLongPress, onLongClickLabel = "Letter options")
@@ -189,7 +190,8 @@ fun LetterSheet(
             if (writing != null) {
                 val text = dev.aiharness.core.model.MoodTags.stripStreaming(writing.text)
                 if (text.isNotBlank()) StickerText(text, ink, PaperType.letterBody, paper.sumi)
-                Text(writing.status.ifBlank { "writing…" }, style = PaperType.postscript, color = paper.kasure2)
+                // Straight away: a plain line, its ellipsis writing itself (no lines of her own, none per tool).
+                StillWriting(persona?.name ?: "They")
             }
             find?.inPicture?.takeIf { find.ringed }?.let { Text(it, style = PaperType.meta.copy(fontSize = 11.sp, letterSpacing = 0.sp, lineHeight = 15.sp), color = paper.usuzumi0) }
             letter?.errors?.forEach { Text(it, style = PaperType.postscript, color = s.ink("beni")) }
@@ -201,7 +203,8 @@ fun LetterSheet(
                 Text(
                     buildAnnotatedString {
                         append("P.S. ")
-                        withStyle(SpanStyle(fontStyle = FontStyle.Normal, fontWeight = FontWeight.Medium, color = if (ps.isError) s.ink("beni") else ink)) { append(ps.label) }
+                        // The label is printed (the letters face), the rest in her hand, as the Hand board has it.
+                        withStyle(SpanStyle(fontFamily = dev.aiharness.app.ui.theme.HarnessFonts.Read, fontWeight = FontWeight.Medium, fontSize = 14.sp, color = if (ps.isError) s.ink("beni") else ink)) { append(ps.label) }
                         ps.text?.let {
                             append(" ")
                             append(it)
@@ -273,7 +276,7 @@ fun NoteSlip(
             Column(
                 Modifier
                     .matchRing(find?.ringed == true, s.ink(persona?.ink))
-                    .washiStrip(Tape(you, pattern), side = TapeSide.End, tiltDegrees = 0.9f, overhang = 7.dp)
+                    .washiStrip(dev.aiharness.app.ui.paper.tape(you, pattern, stationery.youShade), side = TapeSide.End, tiltDegrees = 0.9f, overhang = 7.dp)
                     .paperCard(color = lerp(s.colors.kami, you, 0.06f))
                     .combinedClickable(onClick = {}, onLongClick = onLongPress, onLongClickLabel = "Note options")
                     .onRightClick(onLongPress)
@@ -286,7 +289,7 @@ fun NoteSlip(
                     color = you,
                 )
                 if (message.displayText.isNotBlank()) {
-                    StickerText(message.displayText, you, PaperType.noteBody, paper.usuzumi1, find?.marks)
+                    StickerText(message.displayText, you, PaperType.yourNote, paper.usuzumi1, find?.marks)
                 }
                 val noteInk = s.dayColors.ink(user?.ink ?: "sora")
                 val notePaper = lerp(s.colors.kami, you, 0.06f)
@@ -323,6 +326,7 @@ val LocalInlineStickers = staticCompositionLocalOf<Map<String, StickerArt>> { em
 /** Letter text with its `:name:` stickers drawn inline at the text's height, and a search's words marked. */
 @Composable
 fun StickerText(text: String, accent: Color, style: androidx.compose.ui.text.TextStyle, color: Color, marks: Marks? = null) {
+    dev.aiharness.app.platform.NoticeJapanese(text)
     val stickers = LocalInlineStickers.current
     val formatted = formatChatText(text, accent, stickers.keys)
     val used = stickers.filterKeys { formatted.text.isNotEmpty() && text.contains(":$it:") }
@@ -354,3 +358,27 @@ fun letterStamp(millis: Long, zone: ZoneId = ZoneId.systemDefault()): String {
 
 /** A soft tint of [ink] over paper for small surfaces (notes, banners). */
 fun tint(paper: Color, ink: Color, amount: Float = 0.06f): Color = lerp(paper, ink, amount)
+
+/** "Aria is writing", its ellipsis writing itself a dot at a time (all three at once with reduced motion). */
+@Composable
+private fun StillWriting(name: String) {
+    val still = dev.aiharness.app.platform.systemReducedMotion()
+    var dots by remember { mutableStateOf(3) }
+    if (!still) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                dots = 0
+                repeat(3) {
+                    kotlinx.coroutines.delay(380)
+                    dots++
+                }
+                kotlinx.coroutines.delay(700)
+            }
+        }
+    }
+    Box {
+        // The full line sets the width, so the words don't move as the dots come.
+        Text("$name is writing…", style = PaperType.postscript, color = androidx.compose.ui.graphics.Color.Transparent)
+        Text("$name is writing" + ".".repeat(dots).let { if (dots == 3) "…" else it }, style = PaperType.postscript, color = paper.kasure2)
+    }
+}

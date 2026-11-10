@@ -240,8 +240,8 @@ class DesktopScreenshotTour {
         waitFor("Wakes up")
         shot("06_persona_heartbeat")
         back()
-        // Her page again, scrolled about where it was.
-        waitFor("Memory book")
+        // Her page again, scrolled about where it was (the heartbeat card; her memory book is above, off the screen).
+        waitFor("Wakes now and then")
         scrollTo("All your personas")
         click("All your personas")
         waitFor("Your personas")

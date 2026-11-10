@@ -55,6 +55,7 @@ class HeartbeatEngine(private val h: Harness) {
         LookAheadActivity(),
         SeasonHaikuActivity(),
         LetterBoxActivity(),
+        WayLinesActivity(),
     )
 
     /** Runs a heartbeat for every persona that is due ([force]: all of them, e.g. "Run a heartbeat now"). */

@@ -207,7 +207,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
     val persona = personas.firstOrNull { it.id == personaId }
     val name = persona?.name ?: "…"
     val ink = stationery.ink(persona?.ink)
-    val tape = Tape(ink, persona?.tapePattern ?: TapePattern.DOTS)
+    val tape = dev.aiharness.app.ui.paper.tape(ink, persona?.tapePattern ?: TapePattern.DOTS, persona?.tapeShade ?: dev.aiharness.core.model.TapeShade.THEME)
     val all = memories ?: return
     val s = settings ?: return
     val canEdit = s.memory.userCanEdit
@@ -262,6 +262,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
         }, onDismiss = { lorebook = null })
     }
 
+    dev.aiharness.app.ui.theme.InHand(persona?.hand) {
     KeepsakeHost(personaId, persona, name) { below ->
     CompositionLocalProvider(LocalFeelingStickers provides sheet.filter { it.ownerPersonaId == personaId }) {
         val pageScroll = rememberLazyListState()
@@ -288,7 +289,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
             if (searching) {
                 item("search") { IndexCardField("Search $name's memories", query, { query = it }, ink = ink, style = PaperType.prose, singleLine = true, placeholder = "A word, a name, a feeling") }
             }
-            item("tabs") { BookTabs(tab, ink, persona?.tapePattern ?: TapePattern.DOTS) { tab = it } }
+            item("tabs") { BookTabs(tab, ink, persona?.tapePattern ?: TapePattern.DOTS, persona?.tapeShade ?: dev.aiharness.core.model.TapeShade.THEME) { tab = it } }
             item("filters") {
                 Row(Modifier.fillMaxWidth().padding(top = 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FilterTag(
@@ -333,6 +334,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
                             open = open,
                             ink = ink,
                             peek = peek,
+                            oldName = dev.aiharness.app.ui.planner.PlannerDays.months[month.monthValue - 1],
                         ) {
                             if (month in openMonths) {
                                 openMonths.remove(month)
@@ -362,6 +364,7 @@ fun MemoryBookScreen(nav: NavController, personaId: String) {
                 }
             }
         }
+    }
     }
     }
 }
@@ -422,16 +425,16 @@ private fun AddLoreDialog(name: String, book: dev.aiharness.core.transfer.Lorebo
  * (the persona's for All, yours for About you). The chosen one sticks up further, in full colour.
  */
 @Composable
-private fun BookTabs(selected: BookTab, ink: Color, pattern: TapePattern, onSelect: (BookTab) -> Unit) {
+private fun BookTabs(selected: BookTab, ink: Color, pattern: TapePattern, shade: dev.aiharness.core.model.TapeShade, onSelect: (BookTab) -> Unit) {
     val colors = paper
     val s = stationery
     val tapes = mapOf(
-        BookTab.ALL to Tape(ink, pattern),
-        BookTab.ALWAYS to Tape(s.ink("yamabuki"), TapePattern.PLAIN),
-        BookTab.ABOUT_YOU to Tape(s.you, s.youPattern),
-        BookTab.HAPPENED to Tape(s.ink("wakaba"), TapePattern.STRIPES),
-        BookTab.THOUGHTS to Tape(s.ink("fuji"), TapePattern.DOTS),
-        BookTab.KEEPSAKES to Tape(s.ink("beni"), TapePattern.GINGHAM),
+        BookTab.ALL to dev.aiharness.app.ui.paper.tape(ink, pattern, shade),
+        BookTab.ALWAYS to dev.aiharness.app.ui.paper.tape(s.ink("yamabuki"), TapePattern.PLAIN),
+        BookTab.ABOUT_YOU to dev.aiharness.app.ui.paper.tape(s.you, s.youPattern, s.youShade),
+        BookTab.HAPPENED to dev.aiharness.app.ui.paper.tape(s.ink("wakaba"), TapePattern.STRIPES),
+        BookTab.THOUGHTS to dev.aiharness.app.ui.paper.tape(s.ink("fuji"), TapePattern.DOTS),
+        BookTab.KEEPSAKES to dev.aiharness.app.ui.paper.tape(s.ink("beni"), TapePattern.GINGHAM),
     )
     Row(
         Modifier
@@ -447,7 +450,7 @@ private fun BookTabs(selected: BookTab, ink: Color, pattern: TapePattern, onSele
             val tape = tapes.getValue(t)
             val lift by animateDpAsState(if (on) 9.dp else 3.dp, label = "tab lift")
             // Only the chosen tab shows its pattern; the others are plain, paler tape, so every label reads.
-            val shown = if (on) tape else Tape(lerp(tape.ink, colors.kami, 0.5f), TapePattern.PLAIN, shadow = false)
+            val shown = if (on) tape else dev.aiharness.app.ui.paper.tape(lerp(tape.ink, colors.kami, 0.5f), TapePattern.PLAIN, shadow = false)
             Text(
                 t.label,
                 style = PaperType.noteBody.copy(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal),
@@ -502,7 +505,7 @@ private fun AlwaysInMind(pages: List<BookPage>, ink: Color, onOpen: (String) -> 
     Column(
         Modifier
             .rotate(0.5f)
-            .cornerTape(Tape(ink, TapePattern.PLAIN), length = 32.dp, thickness = 12.dp, reach = 10.dp)
+            .cornerTape(dev.aiharness.app.ui.paper.tape(ink, TapePattern.PLAIN), length = 46.dp, thickness = 12.dp)
             .background(colors.kami, PaperCorner)
             .drawBehind { drawRect(colors.nijimi1, style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx())) }
             .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 4.dp),

@@ -35,6 +35,8 @@
   user writes.
 - **Where things are:**
   - The roadmap: [`docs/roadmap.md`](docs/roadmap.md), kept by the Architect session.
+  - Design details the Architect chose while the user was away, for the user to check:
+    [`docs/architect-decisions.md`](docs/architect-decisions.md).
   - Plans and progress: [`docs/plan-v0.5.md`](docs/plan-v0.5.md) (current),
     [`docs/plan-v0.4.md`](docs/plan-v0.4.md), [`docs/plan-v0.3.5.md`](docs/plan-v0.3.5.md), [`docs/plan-v0.3.md`](docs/plan-v0.3.md), [`docs/plan-v0.2.md`](docs/plan-v0.2.md),
     [`docs/plan-v0.1.md`](docs/plan-v0.1.md).

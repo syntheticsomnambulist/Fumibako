@@ -46,6 +46,8 @@ data class Stationery(
     val frameInks: MadoromiColors,
     val you: Color,
     val youPattern: TapePattern,
+    /** Your tape's shade (see [dev.aiharness.core.model.TapeShade]). */
+    val youShade: dev.aiharness.core.model.TapeShade = dev.aiharness.core.model.TapeShade.THEME,
     val inkSignature: Boolean,
     /** The outline setting as chosen: a hex colour, or paper or ink (see [ThemeSettings.outlineColor]). */
     val outlineSetting: String = "#FFFFFF",
@@ -56,7 +58,7 @@ data class Stationery(
     fun ink(name: String?): Color = colors.ink(name)
 
     companion object {
-        fun of(choice: ThemeChoice, settings: ThemeSettings, youInk: String?, youPattern: TapePattern): Stationery {
+        fun of(choice: ThemeChoice, settings: ThemeSettings, youInk: String?, youPattern: TapePattern, youShade: dev.aiharness.core.model.TapeShade = dev.aiharness.core.model.TapeShade.THEME): Stationery {
             val colors = Madoromi.byKey(choice.key)
             val day = Madoromi.byKey("${choice.season.name.lowercase()}-hiru")
             val night = Madoromi.byKey("${choice.season.name.lowercase()}-yoru")
@@ -72,6 +74,7 @@ data class Stationery(
                 frameInks = if (lightFrame) day else night,
                 you = colors.ink(youInk ?: "sora"),
                 youPattern = youPattern,
+                youShade = youShade,
                 inkSignature = settings.inkSignature,
                 outlineSetting = settings.outlineColor,
                 lamplight = settings.lamplight,
@@ -101,6 +104,7 @@ fun HarnessTheme(
     settings: ThemeSettings = ThemeSettings(),
     youInk: String? = null,
     youPattern: TapePattern = TapePattern.STRIPES,
+    youShade: dev.aiharness.core.model.TapeShade = dev.aiharness.core.model.TapeShade.THEME,
     nowMillis: (() -> Long)? = null,
     content: @Composable () -> Unit,
 ) {
@@ -116,7 +120,7 @@ fun HarnessTheme(
         now = clock()
         onPauseOrDispose { }
     }
-    val stationery = remember(choice, settings, youInk, youPattern) { Stationery.of(choice, settings, youInk, youPattern) }
+    val stationery = remember(choice, settings, youInk, youPattern, youShade) { Stationery.of(choice, settings, youInk, youPattern, youShade) }
     // The clock setting, for every time of day the app writes.
     val system24 = dev.aiharness.app.platform.systemUses24HourClock()
     val clockFormat = remember(settings.clock) { dev.aiharness.app.ui.planner.ClockFormat(settings.clock, system24) }

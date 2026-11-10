@@ -25,6 +25,8 @@ data class AppSettings(
     val letters: LetterSettings = LetterSettings(),
     /** Mood words the built-in list didn't know, sorted once by a model and remembered. */
     val learnedFeelings: Map<String, Feeling> = emptyMap(),
+    /** Fonts you added as hands, for every persona and each of yours (v0.5). */
+    val fonts: List<YourFont> = emptyList(),
 ) {
     companion object {
         const val DEFAULT_BASE_INSTRUCTIONS: String =
@@ -433,3 +435,22 @@ data class StickerSettings(
     /** The most stickers on one letter or note, yours and the persona's together. */
     val maxPerLetter: Int = 6,
 )
+
+/**
+ * A font you added as a hand ("+ Add a font file…"): kept on the device as a file ([ref]), named
+ * ([name], from the font, editable), scaled to sit with the letters ([scale]), and what it covers.
+ * A hand that's one of these is named `font:<id>` (see [Hands.yours]).
+ */
+@Serializable
+data class YourFont(
+    val id: String,
+    val name: String,
+    val ref: String,
+    val scale: Float = 1f,
+    val latin: Boolean = true,
+    val japanese: Boolean = false,
+    val fileName: String? = null,
+    val sizeBytes: Long = 0,
+    val addedAt: Long = 0,
+)
+
