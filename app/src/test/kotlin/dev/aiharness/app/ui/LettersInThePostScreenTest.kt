@@ -62,12 +62,12 @@ class LettersInThePostScreenTest {
         // The letters list says it's on its way, without its words.
         // (Below the getting-started card, on Robolectric's small screen.)
         compose.waitUntil(10_000) {
-            runCatching { compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("reply is on its way", substring = true)) }.isSuccess
+            runCatching { compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("〒 On its way", substring = true)) }.isSuccess
         }
         assertTrue(!shown(reply), "the list doesn't give the reply away")
 
         // The thread: the postmark, and still not the words.
-        compose.onAllNodesWithText("reply is on its way", substring = true).onFirst().performClick()
+        compose.onAllNodesWithText("〒 On its way", substring = true).onFirst().performClick()
         compose.waitUntilAtLeastOneExists(hasText("Look what I found"), 10_000)
         assertTrue(shown("reply is on its way"))
         assertTrue(!shown(reply))
