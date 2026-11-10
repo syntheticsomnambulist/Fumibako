@@ -12,8 +12,10 @@ Updated 2026-11-10.
   next tester build is **v0.5**. See `docs/plan-v0.4.md` and `docs/testers.md` on the build branch.
 - **Desktop, alongside v0.5** (`docs/plan-desktop.md` on the build branch): Fumibako on Windows,
   macOS and Linux, shipping with v0.5. The screens and storage have moved into shared modules and
-  a first desktop shell runs; v0.5 uses the phone's layouts in a resizable window. Wider desktop
-  layouts come later.
+  a first desktop shell runs. Wide layouts come with v0.5 too (the user, 2026-11-08): index tabs
+  down the left, the letters list beside the open letter as little Fumibako boxes, and the gallery
+  beside the open page, its polaroid's corner folded down. The margins beside a letter come later
+  (below).
 - **v0.5: in a letter, letter search, import and export, the stationery update, fonts, and the
   planner redrawn** (added 2026-11-09; the third pass in [`calendar.md`](calendar.md)). Designed
   ([`v0.5.md`](v0.5.md)), nothing left open; the build starts after the desktop move.
@@ -36,6 +38,11 @@ Updated 2026-11-10.
   copies made for models once they're described, scaling link pictures, drawn pictures as lossless
   WebP, tidying the database, and clearing unused files on its own. None of them changes what
   plays, shows or saves. Details in `docs/storage.md` on the storage branch.
+- **The margins beside a wide letter, unscheduled** (the user, 2026-11-10): in a wide window a
+  letter keeps a reading width of about 640, and the room on each side is wanted for things. Ideas
+  drawn in the wide-layout study (`docs/design/wide-studies.html` on the build branch): the day
+  beside its first letter, what she kept as a slip, her index card of what she had in mind, and
+  today's planner page. Which ones is still to choose.
 
 ## Name and icon
 
