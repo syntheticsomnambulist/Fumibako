@@ -471,7 +471,7 @@ class ScreenshotTour {
         back()
 
         click("Personas")
-        scrolledTo("Juno")
+        scrollTo("Juno")
         shot("${prefix}_03_personas")
 
         // A new persona: Done is disabled until it has a name, and must show once it does.
@@ -486,9 +486,9 @@ class ScreenshotTour {
         click("Discard")
         // Back on the gallery, still scrolled down to "New persona": with large text its top (and
         // Juno's polaroid) isn't laid out until it's scrolled up.
-        scrolledTo("New persona")
+        scrollTo("New persona")
         top()
-        scrolledTo("Juno")
+        scrollTo("Juno")
 
         click("Aria")
         waitFor("Write a letter")
@@ -534,7 +534,7 @@ class ScreenshotTour {
         back()
         back()
 
-        scrolledTo("All your personas")
+        scrollTo("All your personas")
         // By its action: scrolled to the list's foot, its middle can be under the tab bar.
         compose.onAllNodesWithText("All your personas").onFirst().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         waitFor("Your personas")
@@ -1014,18 +1014,15 @@ class ScreenshotTour {
         compose.waitForIdle()
     }
 
-    private fun scrollTo(text: String, exact: Boolean = false) {
-        compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(if (exact) hasText(text) else hasText(text, substring = true, ignoreCase = true))
-        compose.waitForIdle()
-    }
-
     /**
-     * [text] in a list, scrolled to once that list is there. A lazy list lays out only what's on
-     * screen, and just after going back, the page being left can still be the first list there
-     * (on a busy machine), so the scroll is tried until it finds [text].
+     * Scrolls the first list to [text], once that list holds it. A lazy list lays out only what's on
+     * screen, and just after going back, the page being left can still be the first list there (on a
+     * busy machine), so the scroll is tried again until it finds [text].
      */
-    private fun scrolledTo(text: String) = orPicture("scrolling to $text") {
-        compose.waitUntil(10_000) { runCatching { scrollTo(text) }.isSuccess }
+    private fun scrollTo(text: String, exact: Boolean = false) = orPicture("scrolling to $text") {
+        val matcher = if (exact) hasText(text) else hasText(text, substring = true, ignoreCase = true)
+        compose.waitUntil(10_000) { runCatching { compose.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(matcher) }.isSuccess }
+        compose.waitForIdle()
     }
 
     private fun back() {
