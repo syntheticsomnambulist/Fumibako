@@ -15,6 +15,7 @@ import kotlin.test.assertTrue
 
 class ThemeClockTest {
     private val newYork = ZoneId.of("America/New_York")
+    private val london = ZoneId.of("Europe/London")
 
     private fun at(text: String, zone: ZoneId = newYork) = LocalDateTime.parse(text).atZone(zone).toInstant().toEpochMilli()
 
@@ -66,10 +67,10 @@ class ThemeClockTest {
 
     @Test
     fun sunriseAndSunsetMatchPublishedTimes() {
-        // Boston, 5 Nov 2026: sunrise about 06:22, sunset about 16:28 (EST).
-        val boston = Sun.riseAndSet(LocalDate.of(2026, 11, 5), 42.3601, -71.0589) as SunDay.Normal
-        assertNear(at("2026-11-05T06:22"), boston.riseMillis)
-        assertNear(at("2026-11-05T16:28"), boston.setMillis)
+        // Edinburgh, 5 Nov 2026: sunrise about 07:27, sunset about 16:24 (GMT).
+        val edinburgh = Sun.riseAndSet(LocalDate.of(2026, 11, 5), 55.9533, -3.1883) as SunDay.Normal
+        assertNear(at("2026-11-05T07:27", london), edinburgh.riseMillis)
+        assertNear(at("2026-11-05T16:24", london), edinburgh.setMillis)
 
         // Tokyo, 21 Jun 2026: sunrise about 04:25, sunset about 19:00 (JST).
         val tokyoZone = ZoneId.of("Asia/Tokyo")
@@ -83,12 +84,12 @@ class ThemeClockTest {
 
     @Test
     fun sunModeUsesTheLocationAndFallsBackToFixedHours() {
-        val boston = ThemeSettings(dayNight = DayNightMode.SUN, latitude = 42.3601, longitude = -71.0589)
-        assertEquals(TimeOfDay.YORU, ThemeClock.choose(boston, at("2026-11-05T06:00"), newYork).time)
-        assertEquals(TimeOfDay.HIRU, ThemeClock.choose(boston, at("2026-11-05T07:00"), newYork).time)
-        val dusk = ThemeClock.choose(boston, at("2026-11-05T17:00"), newYork)
+        val edinburgh = ThemeSettings(dayNight = DayNightMode.SUN, latitude = 55.9533, longitude = -3.1883)
+        assertEquals(TimeOfDay.YORU, ThemeClock.choose(edinburgh, at("2026-11-05T06:00", london), london).time)
+        assertEquals(TimeOfDay.HIRU, ThemeClock.choose(edinburgh, at("2026-11-05T08:00", london), london).time)
+        val dusk = ThemeClock.choose(edinburgh, at("2026-11-05T17:00", london), london)
         assertEquals(TimeOfDay.YORU, dusk.time, "dark before the fixed 18:00 boundary")
-        assertEquals(at("2026-11-06T00:00"), dusk.nextChangeAt)
+        assertEquals(at("2026-11-06T00:00", london), dusk.nextChangeAt)
 
         val noLocation = ThemeSettings(dayNight = DayNightMode.SUN)
         assertEquals(TimeOfDay.HIRU, ThemeClock.choose(noLocation, at("2026-11-05T17:00"), newYork).time)
